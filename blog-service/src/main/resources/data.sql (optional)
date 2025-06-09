@@ -1,0 +1,5 @@
+// blog-service/src/main/resources/data.sql (optional initial data)
+```sql
+-- This file is optional and will be executed automatically by Spring Boot
+-- Insert initial roles if using SQL initialization instead of DataInitializer
+INSERT INTO roles (name) VALUES ('ADMIN'), ('WRITER'), ('READER') ON DUPLICATE KEY UPDATE name=name;

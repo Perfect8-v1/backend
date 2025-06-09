@@ -1,0 +1,73 @@
+  // docker-compose.yml
+
+  version: '3.8'
+
+  services:
+    mysql-main:
+      image: mysql:8.0
+      container_name: blog-mysql-main
+      environment:
+        MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+        MYSQL_DATABASE: ${MYSQL_DATABASE}
+        MYSQL_USER: ${MYSQL_USER}
+        MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      ports:
+        - "3306:3306"
+      volumes:
+        - mysql_main_data:/var/lib/mysql
+      networks:
+        - blog-network
+
+    mysql-images:
+      image: mysql:8.0
+      container_name: blog-mysql-images
+      environment:
+        MYSQL_ROOT_PASSWORD: ${MYSQL_IMAGES_ROOT_PASSWORD}
+        MYSQL_DATABASE: ${MYSQL_IMAGES_DATABASE}
+        MYSQL_USER: ${MYSQL_IMAGES_USER}
+        MYSQL_PASSWORD: ${MYSQL_IMAGES_PASSWORD}
+      ports:
+        - "3307:3306"
+      volumes:
+        - mysql_images_data:/var/lib/mysql
+      networks:
+        - blog-network
+
+    blog-service:
+      build: ./blog-service
+      container_name: blog-service
+      depends_on:
+        - mysql-main
+      environment:
+        SPRING_PROFILES_ACTIVE: dev
+        SPRING_DATASOURCE_URL: jdbc:mysql://mysql-main:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+        SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+        SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+        IMAGE_SERVICE_URL: http://image-service:8081
+      ports:
+        - "8080:8080"
+      networks:
+        - blog-network
+
+    image-service:
+      build: ./image-service
+      container_name: image-service
+      depends_on:
+        - mysql-images
+      environment:
+        SPRING_PROFILES_ACTIVE: dev
+        SPRING_DATASOURCE_URL: jdbc:mysql://mysql-images:3306/${MYSQL_IMAGES_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+        SPRING_DATASOURCE_USERNAME: ${MYSQL_IMAGES_USER}
+        SPRING_DATASOURCE_PASSWORD: ${MYSQL_IMAGES_PASSWORD}
+      ports:
+        - "8081:8081"
+      networks:
+        - blog-network
+
+  volumes:
+    mysql_main_data:
+    mysql_images_data:
+
+  networks:
+    blog-network:
+      driver: bridge
