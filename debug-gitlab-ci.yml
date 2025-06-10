@@ -1,0 +1,24 @@
+#!/bin/bash
+
+echo "Debugging .gitlab-ci.yml content..."
+echo "=================================="
+
+if [ -f ".gitlab-ci.yml" ]; then
+echo "File exists. First 20 lines:"
+head -20 .gitlab-ci.yml
+
+echo -e "\n\nChecking for stages section:"
+grep -n "stages:" .gitlab-ci.yml
+
+echo -e "\nChecking for individual stage definitions:"
+grep -n "build" .gitlab-ci.yml | head -5
+grep -n "test" .gitlab-ci.yml | head -5
+
+echo -e "\nChecking for hidden characters:"
+cat -A .gitlab-ci.yml | head -20
+
+echo -e "\nFile encoding:"
+file .gitlab-ci.yml
+else
+echo ".gitlab-ci.yml not found!"
+fi
