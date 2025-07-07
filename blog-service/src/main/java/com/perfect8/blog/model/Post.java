@@ -1,5 +1,3 @@
-
-// blog-service/src/main/java/com/perfect8/blog/model/Post.java
 package com.perfect8.blog.model;
 
 import jakarta.persistence.*;

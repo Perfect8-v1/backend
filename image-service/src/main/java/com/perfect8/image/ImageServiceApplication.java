@@ -1,7 +1,4 @@
-// image-service/src/main/java/com/perfect8/image/ImageServiceApplication.java
-//
-
-        package com.perfect8.image;
+package com.perfect8.image;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
