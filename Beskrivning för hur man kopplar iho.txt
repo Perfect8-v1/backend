@@ -1,0 +1,15 @@
+Beskrivning för hur man kopplar ihop IntelliJ, VS Code and GitLab
+
+Mediciner
+
+Mailjet konto
+
+Beskrivning för hur jag sätter upp mailjet
+
+Backend för 
+a) transactional email
+b) Marketing email
+
+Frontend för a) och b)
+
+Desktop klient för allt ovanför

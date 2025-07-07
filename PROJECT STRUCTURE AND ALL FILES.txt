@@ -1,0 +1,2840 @@
+// PROJECT STRUCTURE AND ALL FILES
+// ================================
+
+// docker-compose.yml
+```yaml
+version: '3.8'
+
+services:
+  mysql-main:
+    image: mysql:8.0
+    container_name: blog-mysql-main
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_main_data:/var/lib/mysql
+    networks:
+      - blog-network
+
+  mysql-images:
+    image: mysql:8.0
+    container_name: blog-mysql-images
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_IMAGES_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_IMAGES_DATABASE}
+      MYSQL_USER: ${MYSQL_IMAGES_USER}
+      MYSQL_PASSWORD: ${MYSQL_IMAGES_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_images_data:/var/lib/mysql
+    networks:
+      - blog-network
+
+  blog-service:
+    build: ./blog-service
+    container_name: blog-service
+    depends_on:
+      - mysql-main
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-main:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      IMAGE_SERVICE_URL: http://image-service:8081
+    ports:
+      - "8080:8080"
+    networks:
+      - blog-network
+
+  image-service:
+    build: ./image-service
+    container_name: image-service
+    depends_on:
+      - mysql-images
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-images:3306/${MYSQL_IMAGES_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_IMAGES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_IMAGES_PASSWORD}
+    ports:
+      - "8081:8081"
+    networks:
+      - blog-network
+
+volumes:
+  mysql_main_data:
+  mysql_images_data:
+
+networks:
+  blog-network:
+    driver: bridge
+```
+
+// .env (root level)
+```
+MYSQL_ROOT_PASSWORD=rootpassword123
+MYSQL_DATABASE=blogdb
+MYSQL_USER=bloguser
+MYSQL_PASSWORD=blogpass123
+
+MYSQL_IMAGES_ROOT_PASSWORD=rootpassword456
+MYSQL_IMAGES_DATABASE=imagedb
+MYSQL_IMAGES_USER=imageuser
+MYSQL_IMAGES_PASSWORD=imagepass456
+
+JWT_SECRET=mySecretKey123456789012345678901234567890
+```
+
+// .gitlab-ci.yml
+
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+cache:
+  paths:
+    - .m2/repository/
+
+build:
+  stage: build
+  image: maven:3.8.4-openjdk-17
+  script:
+    - cd blog-service && mvn clean compile
+    - cd ../image-service && mvn clean compile
+  artifacts:
+    paths:
+      - blog-service/target/
+      - image-service/target/
+
+test:
+  stage: test
+  image: maven:3.8.4-openjdk-17
+  script:
+    - cd blog-service && mvn test
+    - cd ../image-service && mvn test
+  artifacts:
+    reports:
+      junit:
+        - blog-service/target/surefire-reports/TEST-*.xml
+        - image-service/target/surefire-reports/TEST-*.xml
+
+package:
+  stage: package
+  image: maven:3.8.4-openjdk-17
+  script:
+    - cd blog-service && mvn package -DskipTests
+    - cd ../image-service && mvn package -DskipTests
+  artifacts:
+    paths:
+      - blog-service/target/*.jar
+      - image-service/target/*.jar
+
+docker-build:
+  stage: deploy
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/blog-service:$CI_COMMIT_SHA ./blog-service
+    - docker build -t $CI_REGISTRY_IMAGE/image-service:$CI_COMMIT_SHA ./image-service
+    - docker push $CI_REGISTRY_IMAGE/blog-service:$CI_COMMIT_SHA
+    - docker push $CI_REGISTRY_IMAGE/image-service:$CI_COMMIT_SHA
+  only:
+    - main
+```
+
+// blog-service/Dockerfile
+```dockerfile
+FROM openjdk:17-jdk-slim
+VOLUME /tmp
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+// blog-service/pom.xml (updated)
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.perfect8</groupId>
+    <artifactId>blog-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>blog-service</name>
+    <description>Perfect8 Blog Service</description>
+    
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2023.0.0</spring-cloud.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+// image-service/src/main/java/com/perfect8/image/ImageServiceApplication.java
+```java
+package com.perfect8.image;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class ImageServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ImageServiceApplication.class, args);
+    }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/config/SecurityConfig.java
+```java
+package com.perfect8.image.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/images/view/**").permitAll()
+                .anyRequest().authenticated()
+            );
+
+        return http.build();
+    }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/config/StorageConfig.java
+```java
+package com.perfect8.image.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class StorageConfig {
+    
+    @Value("${storage.max-file-size}")
+    private Long maxFileSize;
+    
+    @Value("${storage.allowed-extensions}")
+    private String[] allowedExtensions;
+    
+    public Long getMaxFileSize() {
+        return maxFileSize;
+    }
+    
+    public String[] getAllowedExtensions() {
+        return allowedExtensions;
+    }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/model/Image.java
+```java
+package com.perfect8.image.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "images")
+public class Image {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+    
+    @Column(name = "filename", nullable = false)
+    private String filename;
+    
+    @Column(name = "content_type", nullable = false)
+    private String contentType;
+    
+    @Column(name = "size", nullable = false)
+    private Long size;
+    
+    @Lob
+    @Column(name = "data", nullable = false)
+    private byte[] data;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    // Getters and setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    
+    public String getFilename() { return filename; }
+    public void setFilename(String filename) { this.filename = filename; }
+    
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
+    
+    public Long getSize() { return size; }
+    public void setSize(Long size) { this.size = size; }
+    
+    public byte[] getData() { return data; }
+    public void setData(byte[] data) { this.data = data; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/repository/ImageRepository.java
+```java
+package com.perfect8.image.repository;
+
+import com.perfect8.image.model.Image;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ImageRepository extends JpaRepository<Image, String> {
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/dto/ImageDto.java
+```java
+package com.perfect8.image.dto;
+
+import java.time.LocalDateTime;
+
+public class ImageDto {
+    private String id;
+    private String filename;
+    private String contentType;
+    private Long size;
+    private String url;
+    private LocalDateTime createdAt;
+    
+    // Getters and setters
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    
+    public String getFilename() { return filename; }
+    public void setFilename(String filename) { this.filename = filename; }
+    
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
+    
+    public Long getSize() { return size; }
+    public void setSize(Long size) { this.size = size; }
+    
+    public String getUrl() { return url; }
+    public void setUrl(String url) { this.url = url; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/service/ImageService.java
+```java
+package com.perfect8.image.service;
+
+import com.perfect8.image.config.StorageConfig;
+import com.perfect8.image.dto.ImageDto;
+import com.perfect8.image.exception.StorageException;
+import com.perfect8.image.model.Image;
+import com.perfect8.image.repository.ImageRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
+import java.util.Arrays;
+
+@Service
+@Transactional
+public class ImageService {
+    
+    private final ImageRepository imageRepository;
+    private final StorageConfig storageConfig;
+    
+    public ImageService(ImageRepository imageRepository, StorageConfig storageConfig) {
+        this.imageRepository = imageRepository;
+        this.storageConfig = storageConfig;
+    }
+    
+    public ImageDto uploadImage(MultipartFile file) {
+        validateFile(file);
+        
+        try {
+            Image image = new Image();
+            image.setFilename(file.getOriginalFilename());
+            image.setContentType(file.getContentType());
+            image.setSize(file.getSize());
+            image.setData(file.getBytes());
+            
+            Image savedImage = imageRepository.save(image);
+            return convertToDto(savedImage);
+        } catch (IOException e) {
+            throw new StorageException("Failed to store file", e);
+        }
+    }
+    
+    public Image getImage(String id) {
+        return imageRepository.findById(id)
+                .orElseThrow(() -> new StorageException("Image not found"));
+    }
+    
+    public ImageDto getImageDto(String id) {
+        return convertToDto(getImage(id));
+    }
+    
+    public void deleteImage(String id) {
+        imageRepository.deleteById(id);
+    }
+    
+    private void validateFile(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new StorageException("Failed to store empty file");
+        }
+        
+        if (file.getSize() > storageConfig.getMaxFileSize()) {
+            throw new StorageException("File size exceeds maximum allowed size");
+        }
+        
+        String filename = file.getOriginalFilename();
+        if (filename == null || filename.isEmpty()) {
+            throw new StorageException("Invalid filename");
+        }
+        
+        String extension = getFileExtension(filename);
+        if (!isAllowedExtension(extension)) {
+            throw new StorageException("File type not allowed");
+        }
+    }
+    
+    private String getFileExtension(String filename) {
+        int lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex > 0) {
+            return filename.substring(lastDotIndex + 1).toLowerCase();
+        }
+        return "";
+    }
+    
+    private boolean isAllowedExtension(String extension) {
+        return Arrays.asList(storageConfig.getAllowedExtensions()).contains(extension);
+    }
+    
+    private ImageDto convertToDto(Image image) {
+        ImageDto dto = new ImageDto();
+        dto.setId(image.getId());
+        dto.setFilename(image.getFilename());
+        dto.setContentType(image.getContentType());
+        dto.setSize(image.getSize());
+        dto.setUrl("/api/images/view/" + image.getId());
+        dto.setCreatedAt(image.getCreatedAt());
+        return dto;
+    }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/controller/ImageController.java
+```java
+package com.perfect8.image.controller;
+
+import com.perfect8.image.dto.ImageDto;
+import com.perfect8.image.model.Image;
+import com.perfect8.image.service.ImageService;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/api/images")
+public class ImageController {
+    
+    private final ImageService imageService;
+    
+    public ImageController(ImageService imageService) {
+        this.imageService = imageService;
+    }
+    
+    @PostMapping("/upload")
+    public ResponseEntity<ImageDto> uploadImage(@RequestParam("file") MultipartFile file) {
+        ImageDto imageDto = imageService.uploadImage(file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(imageDto);
+    }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<ImageDto> getImageInfo(@PathVariable String id) {
+        return ResponseEntity.ok(imageService.getImageDto(id));
+    }
+    
+    @GetMapping("/view/{id}")
+    public ResponseEntity<byte[]> viewImage(@PathVariable String id) {
+        Image image = imageService.getImage(id);
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(image.getContentType()));
+        headers.setContentLength(image.getSize());
+        
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(image.getData());
+    }
+    
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteImage(@PathVariable String id) {
+        imageService.deleteImage(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/exception/StorageException.java
+```java
+package com.perfect8.image.exception;
+
+public class StorageException extends RuntimeException {
+    public StorageException(String message) {
+        super(message);
+    }
+    
+    public StorageException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+```
+
+// image-service/src/main/java/com/perfect8/image/exception/GlobalExceptionHandler.java
+```java
+package com.perfect8.image.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(StorageException.class)
+    public ResponseEntity<ErrorResponse> handleStorageException(StorageException e) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            e.getMessage(),
+            LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception e) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            "Internal server error",
+            LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    
+    static class ErrorResponse {
+        private int status;
+        private String message;
+        private LocalDateTime timestamp;
+        
+        public ErrorResponse(int status, String message, LocalDateTime timestamp) {
+            this.status = status;
+            this.message = message;
+            this.timestamp = timestamp;
+        }
+        
+        // Getters and setters
+        public int getStatus() { return status; }
+        public void setStatus(int status) { this.status = status; }
+        
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        
+        public LocalDateTime getTimestamp() { return timestamp; }
+        public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    }
+}
+```
+
+// image-service/src/main/resources/application.properties
+```properties
+spring.application.name=image-service
+server.port=8081
+
+# Database
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.properties.hibernate.format_sql=true
+
+# File Upload
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+
+# Storage
+storage.max-file-size=10485760
+storage.allowed-extensions=jpg,jpeg,png,gif,webp
+
+# Logging
+logging.level.com.perfect8.image=DEBUG
+```
+
+// image-service/src/main/resources/application-dev.properties
+```properties
+# Development specific properties
+spring.jpa.show-sql=true
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+```
+
+// DATABASE SCHEMA (for reference)
+```sql
+-- Blog Service Database Schema
+CREATE DATABASE IF NOT EXISTS blogdb;
+USE blogdb;
+
+CREATE TABLE roles (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE user_roles (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
+CREATE TABLE posts (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    slug VARCHAR(255) UNIQUE,
+    excerpt TEXT,
+    published BOOLEAN DEFAULT FALSE,
+    author_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    published_at TIMESTAMP NULL,
+    FOREIGN KEY (author_id) REFERENCES users(id)
+);
+
+CREATE TABLE image_references (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    image_id VARCHAR(255) NOT NULL,
+    image_url VARCHAR(500),
+    alt_text VARCHAR(255),
+    caption TEXT,
+    post_id BIGINT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
+CREATE TABLE post_links (
+    post_id BIGINT NOT NULL,
+    url VARCHAR(500) NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+);
+
+-- Insert default roles
+INSERT INTO roles (name) VALUES ('ADMIN'), ('WRITER'), ('READER');
+
+-- Image Service Database Schema
+CREATE DATABASE IF NOT EXISTS imagedb;
+USE imagedb;
+
+CREATE TABLE images (
+    id VARCHAR(36) PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    size BIGINT NOT NULL,
+    data LONGBLOB NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+// README.md
+```markdown
+# Perfect8 Blog Microservice
+
+A microservice-based blog application built with Spring Boot, featuring separate services for blog content and image storage.
+
+## Architecture
+
+- **Blog Service**: Handles posts, users, authentication, and authorization
+- **Image Service**: Manages image storage in MySQL BLOB format
+- **Two MySQL Containers**: Separate databases for blog data and images
+
+## Features
+
+- JWT Authentication
+- Three user roles: ADMIN, WRITER, READER
+- Post management with rich content
+- Image storage in database BLOBs
+- Link management
+- RESTful APIs
+- Docker containerization
+- GitLab CI/CD pipeline
+
+## Prerequisites
+
+- Java 17+
+- Docker & Docker Compose
+- Maven 3.8+
+- MySQL 8.0+
+
+## Quick Start
+
+1. Clone the repository
+2. Copy `.env.example` to `.env` and configure your environment variables
+3. Run with Docker Compose:
+
+```bash
+docker-compose up -d
+```
+
+## API Endpoints
+
+### Authentication
+- POST /api/auth/login
+- POST /api/auth/register
+
+### Posts
+- GET /api/posts/public (All published posts)
+- GET /api/posts/public/{slug} (Single post by slug)
+- POST /api/posts/create (Writers only)
+- PUT /api/posts/update/{id} (Writers only)
+- DELETE /api/posts/delete/{id} (Writers only)
+
+### Images
+- POST /api/images/upload
+- GET /api/images/{id}
+- GET /api/images/view/{id}
+- DELETE /api/images/{id}
+
+### Admin
+- GET /api/admin/users
+- DELETE /api/admin/users/{id}
+
+## Development
+
+Run services locally:
+
+```bash
+# Blog Service
+cd blog-service
+mvn spring-boot:run
+
+# Image Service
+cd image-service
+mvn spring-boot:run
+```
+
+## Testing
+
+```bash
+mvn test
+```
+
+## Deployment
+
+The project includes a GitLab CI/CD pipeline that:
+1. Builds the applications
+2. Runs tests
+3. Creates Docker images
+4. Pushes to GitLab Container Registry
+
+## Security
+
+- JWT-based authentication
+- Role-based access control
+- Passwords encrypted with BCrypt
+- Environment variables for sensitive data
+
+## License
+
+MIT License
+```
+
+// ADDITIONAL MISSING FILES
+// ======================
+
+// blog-service/src/main/java/com/perfect8/blog/repository/RoleRepository.java
+```java
+package com.perfect8.blog.repository;
+
+import com.perfect8.blog.model.Role;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface RoleRepository extends JpaRepository<Role, Long> {
+    Optional<Role> findByName(String name);
+    boolean existsByName(String name);
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/config/DataInitializer.java
+```java
+package com.perfect8.blog.config;
+
+import com.perfect8.blog.model.Role;
+import com.perfect8.blog.model.User;
+import com.perfect8.blog.repository.RoleRepository;
+import com.perfect8.blog.repository.UserRepository;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import java.util.HashSet;
+import java.util.Set;
+
+@Configuration
+public class DataInitializer {
+    
+    @Bean
+    CommandLineRunner init(RoleRepository roleRepository, UserRepository userRepository, 
+                          PasswordEncoder passwordEncoder) {
+        return args -> {
+            // Create roles if they don't exist
+            if (!roleRepository.existsByName("ADMIN")) {
+                Role adminRole = new Role();
+                adminRole.setName("ADMIN");
+                roleRepository.save(adminRole);
+            }
+            
+            if (!roleRepository.existsByName("WRITER")) {
+                Role writerRole = new Role();
+                writerRole.setName("WRITER");
+                roleRepository.save(writerRole);
+            }
+            
+            if (!roleRepository.existsByName("READER")) {
+                Role readerRole = new Role();
+                readerRole.setName("READER");
+                roleRepository.save(readerRole);
+            }
+            
+            // Create default admin user if doesn't exist
+            if (!userRepository.existsByUsername("admin")) {
+                User admin = new User();
+                admin.setUsername("admin");
+                admin.setEmail("admin@perfect8.com");
+                admin.setPassword(passwordEncoder.encode("admin123"));
+                
+                Set<Role> adminRoles = new HashSet<>();
+                adminRoles.add(roleRepository.findByName("ADMIN").orElseThrow());
+                adminRoles.add(roleRepository.findByName("WRITER").orElseThrow());
+                adminRoles.add(roleRepository.findByName("READER").orElseThrow());
+                admin.setRoles(adminRoles);
+                
+                userRepository.save(admin);
+            }
+        };
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/config/FeignConfig.java
+```java
+package com.perfect8.blog.config;
+
+import feign.RequestInterceptor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.core.context.SecurityContextHolder;
+
+@Configuration
+public class FeignConfig {
+    
+    @Bean
+    public RequestInterceptor requestInterceptor() {
+        return requestTemplate -> {
+            // Forward JWT token to image service
+            var authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getCredentials() != null) {
+                requestTemplate.header("Authorization", "Bearer " + authentication.getCredentials());
+            }
+        };
+    }
+}
+```
+
+// blog-service/src/test/java/com/perfect8/blog/service/PostServiceTest.java
+```java
+package com.perfect8.blog.service;
+
+import com.perfect8.blog.dto.PostDto;
+import com.perfect8.blog.model.Post;
+import com.perfect8.blog.model.User;
+import com.perfect8.blog.repository.PostRepository;
+import com.perfect8.blog.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.Optional;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class PostServiceTest {
+    
+    @Mock
+    private PostRepository postRepository;
+    
+    @Mock
+    private UserRepository userRepository;
+    
+    @InjectMocks
+    private PostService postService;
+    
+    private User testUser;
+    private Post testPost;
+    
+    @BeforeEach
+    void setUp() {
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("testuser");
+        testUser.setEmail("test@test.com");
+        
+        testPost = new Post();
+        testPost.setId(1L);
+        testPost.setTitle("Test Post");
+        testPost.setContent("Test Content");
+        testPost.setAuthor(testUser);
+    }
+    
+    @Test
+    void createPost_Success() {
+        PostDto postDto = new PostDto();
+        postDto.setTitle("New Post");
+        postDto.setContent("New Content");
+        postDto.setPublished(false);
+        
+        when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
+        when(postRepository.save(any(Post.class))).thenReturn(testPost);
+        
+        PostDto result = postService.createPost(postDto, "testuser");
+        
+        assertNotNull(result);
+        assertEquals("Test Post", result.getTitle());
+        verify(postRepository, times(1)).save(any(Post.class));
+    }
+    
+    @Test
+    void getPostBySlug_Success() {
+        when(postRepository.findBySlug("test-post")).thenReturn(Optional.of(testPost));
+        
+        PostDto result = postService.getPostBySlug("test-post");
+        
+        assertNotNull(result);
+        assertEquals("Test Post", result.getTitle());
+    }
+}
+```
+
+// image-service/src/test/java/com/perfect8/image/service/ImageServiceTest.java
+```java
+package com.perfect8.image.service;
+
+import com.perfect8.image.config.StorageConfig;
+import com.perfect8.image.exception.StorageException;
+import com.perfect8.image.model.Image;
+import com.perfect8.image.repository.ImageRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class ImageServiceTest {
+    
+    @Mock
+    private ImageRepository imageRepository;
+    
+    @Mock
+    private StorageConfig storageConfig;
+    
+    @InjectMocks
+    private ImageService imageService;
+    
+    @BeforeEach
+    void setUp() {
+        when(storageConfig.getMaxFileSize()).thenReturn(10485760L); // 10MB
+        when(storageConfig.getAllowedExtensions()).thenReturn(new String[]{"jpg", "jpeg", "png", "gif"});
+    }
+    
+    @Test
+    void uploadImage_Success() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "test.jpg", "image/jpeg", "test image".getBytes()
+        );
+        
+        Image savedImage = new Image();
+        savedImage.setId("123");
+        savedImage.setFilename("test.jpg");
+        
+        when(imageRepository.save(any(Image.class))).thenReturn(savedImage);
+        
+        var result = imageService.uploadImage(file);
+        
+        assertNotNull(result);
+        assertEquals("123", result.getId());
+        verify(imageRepository, times(1)).save(any(Image.class));
+    }
+    
+    @Test
+    void uploadImage_EmptyFile_ThrowsException() {
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "test.jpg", "image/jpeg", new byte[0]
+        );
+        
+        assertThrows(StorageException.class, () -> imageService.uploadImage(file));
+    }
+}
+```
+
+// .env.example
+```
+# MySQL Main Database
+MYSQL_ROOT_PASSWORD=changeme
+MYSQL_DATABASE=blogdb
+MYSQL_USER=bloguser
+MYSQL_PASSWORD=changeme
+
+# MySQL Images Database
+MYSQL_IMAGES_ROOT_PASSWORD=changeme
+MYSQL_IMAGES_DATABASE=imagedb
+MYSQL_IMAGES_USER=imageuser
+MYSQL_IMAGES_PASSWORD=changeme
+
+# JWT Configuration
+JWT_SECRET=changeThisToAVeryLongSecretKeyAtLeast256BitsForHS256Algorithm
+
+# Service URLs
+IMAGE_SERVICE_URL=http://image-service:8081
+```
+
+// blog-service/src/main/resources/data.sql (optional initial data)
+```sql
+-- This file is optional and will be executed automatically by Spring Boot
+-- Insert initial roles if using SQL initialization instead of DataInitializer
+INSERT INTO roles (name) VALUES ('ADMIN'), ('WRITER'), ('READER') ON DUPLICATE KEY UPDATE name=name;
+```
+
+// API_DOCUMENTATION.md
+```markdown
+# API Documentation
+
+## Authentication
+
+All protected endpoints require JWT token in Authorization header:
+```
+Authorization: Bearer <token>
+```
+
+### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+Response:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "type": "Bearer",
+  "username": "admin",
+  "email": "admin@perfect8.com"
+}
+```
+
+### Register
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "username": "newuser",
+  "email": "newuser@example.com",
+  "password": "password123"
+}
+```
+
+## Posts API
+
+### Get All Published Posts
+```http
+GET /api/posts/public?page=0&size=10&sort=publishedAt,desc
+```
+
+### Get Post by Slug
+```http
+GET /api/posts/public/my-first-post
+```
+
+### Create Post (WRITER/ADMIN only)
+```http
+POST /api/posts/create
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "My New Post",
+  "content": "Post content here...",
+  "excerpt": "Short description",
+  "published": true,
+  "links": ["https://example.com", "https://google.com"]
+}
+```
+
+### Update Post (WRITER/ADMIN only)
+```http
+PUT /api/posts/update/1
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "Updated Title",
+  "content": "Updated content...",
+  "excerpt": "Updated excerpt",
+  "published": true,
+  "links": ["https://example.com"]
+}
+```
+
+### Delete Post (WRITER/ADMIN only)
+```http
+DELETE /api/posts/delete/1
+Authorization: Bearer <token>
+```
+
+## Image API
+
+### Upload Image
+```http
+POST /api/images/upload
+Authorization: Bearer <token>
+Content-Type: multipart/form-data
+
+file: <binary>
+```
+
+Response:
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "filename": "image.jpg",
+  "contentType": "image/jpeg",
+  "size": 102400,
+  "url": "/api/images/view/550e8400-e29b-41d4-a716-446655440000",
+  "createdAt": "2024-01-01T12:00:00"
+}
+```
+
+### View Image (Public)
+```http
+GET /api/images/view/550e8400-e29b-41d4-a716-446655440000
+```
+
+### Get Image Info
+```http
+GET /api/images/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer <token>
+```
+
+### Delete Image
+```http
+DELETE /api/images/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer <token>
+```
+
+## Admin API
+
+### Get All Users (ADMIN only)
+```http
+GET /api/admin/users?page=0&size=20
+Authorization: Bearer <token>
+```
+
+### Delete User (ADMIN only)
+```http
+DELETE /api/admin/users/2
+Authorization: Bearer <token>
+```
+
+## Error Responses
+
+All errors follow this format:
+```json
+{
+  "status": 404,
+  "message": "Resource not found",
+  "timestamp": "2024-01-01T12:00:00"
+}
+```
+
+Validation errors include field details:
+```json
+{
+  "status": 400,
+  "message": "Validation failed",
+  "timestamp": "2024-01-01T12:00:00",
+  "errors": {
+    "title": "Title is required",
+    "content": "Content is required"
+  }
+}
+```
+```>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>
+```
+
+// blog-service/src/main/java/com/perfect8/blog/BlogServiceApplication.java
+```java
+package com.perfect8.blog;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+
+@SpringBootApplication
+@EnableFeignClients
+public class BlogServiceApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(BlogServiceApplication.class, args);
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/config/SecurityConfig.java
+```java
+package com.perfect8.blog.config;
+
+import com.perfect8.blog.security.JwtAuthenticationFilter;
+import com.perfect8.blog.security.JwtTokenProvider;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    private final JwtTokenProvider tokenProvider;
+
+    public SecurityConfig(JwtTokenProvider tokenProvider) {
+        this.tokenProvider = tokenProvider;
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**", "/api/posts/public/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/posts/create", "/api/posts/update/**", "/api/posts/delete/**").hasRole("WRITER")
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(new JwtAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/config/JwtConfig.java
+```java
+package com.perfect8.blog.config;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class JwtConfig {
+    
+    @Value("${jwt.secret}")
+    private String secret;
+    
+    @Value("${jwt.expiration}")
+    private Long expiration;
+    
+    public String getSecret() {
+        return secret;
+    }
+    
+    public Long getExpiration() {
+        return expiration;
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/model/User.java
+```java
+package com.perfect8.blog.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "users")
+public class User {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(unique = true, nullable = false)
+    private String username;
+    
+    @Column(unique = true, nullable = false)
+    private String email;
+    
+    @Column(nullable = false)
+    private String password;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "user_roles",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles = new HashSet<>();
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/security/JwtTokenProvider.java
+```java
+package com.perfect8.blog.security;
+
+import com.perfect8.blog.config.JwtConfig;
+import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Component;
+import java.security.Key;
+import java.util.Date;
+
+@Component
+public class JwtTokenProvider {
+    
+    private final JwtConfig jwtConfig;
+    private final Key key;
+    
+    public JwtTokenProvider(JwtConfig jwtConfig) {
+        this.jwtConfig = jwtConfig;
+        this.key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
+    }
+    
+    public String generateToken(Authentication authentication) {
+        String username = authentication.getName();
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtConfig.getExpiration());
+        
+        return Jwts.builder()
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(key)
+                .compact();
+    }
+    
+    public String getUsernameFromToken(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+        
+        return claims.getSubject();
+    }
+    
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/security/JwtAuthenticationFilter.java
+```java
+package com.perfect8.blog.security;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.web.filter.OncePerRequestFilter;
+import java.io.IOException;
+
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+    
+    private final JwtTokenProvider tokenProvider;
+    private UserDetailsService userDetailsService;
+    
+    public JwtAuthenticationFilter(JwtTokenProvider tokenProvider) {
+        this.tokenProvider = tokenProvider;
+    }
+    
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, 
+                                  FilterChain filterChain) throws ServletException, IOException {
+        String token = extractTokenFromRequest(request);
+        
+        if (token != null && tokenProvider.validateToken(token)) {
+            String username = tokenProvider.getUsernameFromToken(token);
+            
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (userDetailsService != null) {
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    
+                    UsernamePasswordAuthenticationToken authentication = 
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            }
+        }
+        
+        filterChain.doFilter(request, response);
+    }
+    
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+    
+    public void setUserDetailsService(UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/security/UserDetailsServiceImpl.java
+```java
+package com.perfect8.blog.security;
+
+import com.perfect8.blog.model.User;
+import com.perfect8.blog.repository.UserRepository;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class UserDetailsServiceImpl implements UserDetailsService {
+    
+    private final UserRepository userRepository;
+    
+    public UserDetailsServiceImpl(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+    
+    @Override
+    @Transactional
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+        
+        List<GrantedAuthority> authorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .collect(Collectors.toList());
+        
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getUsername())
+                .password(user.getPassword())
+                .authorities(authorities)
+                .accountExpired(false)
+                .accountLocked(false)
+                .credentialsExpired(false)
+                .disabled(false)
+                .build();
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/service/PostService.java
+```java
+package com.perfect8.blog.service;
+
+import com.perfect8.blog.dto.PostDto;
+import com.perfect8.blog.exception.ResourceNotFoundException;
+import com.perfect8.blog.model.Post;
+import com.perfect8.blog.model.ImageReference;
+import com.perfect8.blog.repository.PostRepository;
+import com.perfect8.blog.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class PostService {
+    
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
+    
+    public PostService(PostRepository postRepository, UserRepository userRepository) {
+        this.postRepository = postRepository;
+        this.userRepository = userRepository;
+    }
+    
+    public Page<PostDto> getAllPublishedPosts(Pageable pageable) {
+        return postRepository.findByPublishedTrue(pageable).map(this::convertToDto);
+    }
+    
+    public PostDto getPostBySlug(String slug) {
+        Post post = postRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        return convertToDto(post);
+    }
+    
+    public PostDto createPost(PostDto postDto, String username) {
+        Post post = new Post();
+        post.setTitle(postDto.getTitle());
+        post.setContent(postDto.getContent());
+        post.setSlug(generateSlug(postDto.getTitle()));
+        post.setExcerpt(postDto.getExcerpt());
+        post.setPublished(postDto.isPublished());
+        
+        if (postDto.isPublished()) {
+            post.setPublishedAt(LocalDateTime.now());
+        }
+        
+        post.setAuthor(userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found")));
+        
+        if (postDto.getLinks() != null) {
+            post.setLinks(postDto.getLinks());
+        }
+        
+        Post savedPost = postRepository.save(post);
+        return convertToDto(savedPost);
+    }
+    
+    public PostDto updatePost(Long id, PostDto postDto, String username) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        
+        // Check if user is the author
+        if (!post.getAuthor().getUsername().equals(username)) {
+            throw new RuntimeException("You can only edit your own posts");
+        }
+        
+        post.setTitle(postDto.getTitle());
+        post.setContent(postDto.getContent());
+        post.setExcerpt(postDto.getExcerpt());
+        post.setPublished(postDto.isPublished());
+        
+        if (postDto.isPublished() && post.getPublishedAt() == null) {
+            post.setPublishedAt(LocalDateTime.now());
+        }
+        
+        if (postDto.getLinks() != null) {
+            post.setLinks(postDto.getLinks());
+        }
+        
+        Post updatedPost = postRepository.save(post);
+        return convertToDto(updatedPost);
+    }
+    
+    public void deletePost(Long id, String username) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        
+        // Check if user is the author or admin
+        if (!post.getAuthor().getUsername().equals(username)) {
+            throw new RuntimeException("You can only delete your own posts");
+        }
+        
+        postRepository.delete(post);
+    }
+    
+    private PostDto convertToDto(Post post) {
+        PostDto dto = new PostDto();
+        dto.setId(post.getId());
+        dto.setTitle(post.getTitle());
+        dto.setContent(post.getContent());
+        dto.setSlug(post.getSlug());
+        dto.setExcerpt(post.getExcerpt());
+        dto.setPublished(post.isPublished());
+        dto.setCreatedAt(post.getCreatedAt());
+        dto.setUpdatedAt(post.getUpdatedAt());
+        dto.setPublishedAt(post.getPublishedAt());
+        dto.setAuthorName(post.getAuthor().getUsername());
+        dto.setLinks(post.getLinks());
+        
+        if (post.getImages() != null) {
+            dto.setImages(post.getImages().stream().map(this::convertImageToDto).collect(Collectors.toList()));
+        }
+        
+        return dto;
+    }
+    
+    private PostDto.ImageReferenceDto convertImageToDto(ImageReference image) {
+        PostDto.ImageReferenceDto dto = new PostDto.ImageReferenceDto();
+        dto.setImageId(image.getImageId());
+        dto.setImageUrl(image.getImageUrl());
+        dto.setAltText(image.getAltText());
+        dto.setCaption(image.getCaption());
+        return dto;
+    }
+    
+    private String generateSlug(String title) {
+        String slug = title.toLowerCase()
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-+", "-")
+                .trim();
+        
+        // Check if slug exists and make unique if necessary
+        String baseSlug = slug;
+        int counter = 1;
+        while (postRepository.existsBySlug(slug)) {
+            slug = baseSlug + "-" + counter++;
+        }
+        
+        return slug;
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/service/AuthService.java
+```java
+package com.perfect8.blog.service;
+
+import com.perfect8.blog.dto.AuthDto;
+import com.perfect8.blog.model.Role;
+import com.perfect8.blog.model.User;
+import com.perfect8.blog.repository.UserRepository;
+import com.perfect8.blog.security.JwtTokenProvider;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.HashSet;
+import java.util.Set;
+
+@Service
+@Transactional
+public class AuthService {
+    
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider tokenProvider;
+    
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                      AuthenticationManager authenticationManager, JwtTokenProvider tokenProvider) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.tokenProvider = tokenProvider;
+    }
+    
+    public AuthDto.JwtResponse login(AuthDto.LoginRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+        
+        String token = tokenProvider.generateToken(authentication);
+        User user = userRepository.findByUsername(request.getUsername()).orElseThrow();
+        
+        return new AuthDto.JwtResponse(token, user.getUsername(), user.getEmail());
+    }
+    
+    public AuthDto.JwtResponse register(AuthDto.RegisterRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+        
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        
+        // Default role is READER
+        Set<Role> roles = new HashSet<>();
+        Role readerRole = new Role();
+        readerRole.setName("READER");
+        roles.add(readerRole);
+        user.setRoles(roles);
+        
+        userRepository.save(user);
+        
+        Authentication authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
+        );
+        
+        String token = tokenProvider.generateToken(authentication);
+        
+        return new AuthDto.JwtResponse(token, user.getUsername(), user.getEmail());
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/service/UserService.java
+```java
+package com.perfect8.blog.service;
+
+import com.perfect8.blog.dto.UserDto;
+import com.perfect8.blog.exception.ResourceNotFoundException;
+import com.perfect8.blog.model.User;
+import com.perfect8.blog.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class UserService {
+    
+    private final UserRepository userRepository;
+    
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+    
+    public UserDto getUserByUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        return convertToDto(user);
+    }
+    
+    private UserDto convertToDto(User user) {
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setRoles(user.getRoles().stream()
+                .map(role -> role.getName())
+                .collect(Collectors.toSet()));
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        return dto;
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/service/AdminService.java
+```java
+package com.perfect8.blog.service;
+
+import com.perfect8.blog.dto.UserDto;
+import com.perfect8.blog.model.User;
+import com.perfect8.blog.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class AdminService {
+    
+    private final UserRepository userRepository;
+    
+    public AdminService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+    
+    public Page<UserDto> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable).map(this::convertToDto);
+    }
+    
+    public void deleteUser(Long userId) {
+        userRepository.deleteById(userId);
+    }
+    
+    private UserDto convertToDto(User user) {
+        UserDto dto = new UserDto();
+        dto.setId(user.getId());
+        dto.setUsername(user.getUsername());
+        dto.setEmail(user.getEmail());
+        dto.setRoles(user.getRoles().stream()
+                .map(role -> role.getName())
+                .collect(Collectors.toSet()));
+        dto.setCreatedAt(user.getCreatedAt());
+        dto.setUpdatedAt(user.getUpdatedAt());
+        return dto;
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/client/ImageServiceClient.java
+```java
+package com.perfect8.blog.client;
+
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@FeignClient(name = "image-service", url = "${image.service.url}")
+public interface ImageServiceClient {
+    
+    @PostMapping(value = "/api/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ImageResponse uploadImage(@RequestPart("file") MultipartFile file);
+    
+    @GetMapping("/api/images/{id}")
+    ImageResponse getImage(@PathVariable String id);
+    
+    @DeleteMapping("/api/images/{id}")
+    void deleteImage(@PathVariable String id);
+    
+    class ImageResponse {
+        private String id;
+        private String url;
+        private String contentType;
+        private Long size;
+        
+        // Getters and setters
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+        
+        public String getUrl() { return url; }
+        public void setUrl(String url) { this.url = url; }
+        
+        public String getContentType() { return contentType; }
+        public void setContentType(String contentType) { this.contentType = contentType; }
+        
+        public Long getSize() { return size; }
+        public void setSize(Long size) { this.size = size; }
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/controller/AuthController.java
+```java
+package com.perfect8.blog.controller;
+
+import com.perfect8.blog.dto.AuthDto;
+import com.perfect8.blog.service.AuthService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+    
+    private final AuthService authService;
+    
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
+    
+    @PostMapping("/login")
+    public ResponseEntity<AuthDto.JwtResponse> login(@Valid @RequestBody AuthDto.LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
+    
+    @PostMapping("/register")
+    public ResponseEntity<AuthDto.JwtResponse> register(@Valid @RequestBody AuthDto.RegisterRequest request) {
+        return ResponseEntity.ok(authService.register(request));
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/controller/PostController.java
+```java
+package com.perfect8.blog.controller;
+
+import com.perfect8.blog.dto.PostDto;
+import com.perfect8.blog.service.PostService;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/posts")
+public class PostController {
+    
+    private final PostService postService;
+    
+    public PostController(PostService postService) {
+        this.postService = postService;
+    }
+    
+    @GetMapping("/public")
+    public ResponseEntity<Page<PostDto>> getAllPublishedPosts(Pageable pageable) {
+        return ResponseEntity.ok(postService.getAllPublishedPosts(pageable));
+    }
+    
+    @GetMapping("/public/{slug}")
+    public ResponseEntity<PostDto> getPostBySlug(@PathVariable String slug) {
+        return ResponseEntity.ok(postService.getPostBySlug(slug));
+    }
+    
+    @PostMapping("/create")
+    public ResponseEntity<PostDto> createPost(@Valid @RequestBody PostDto postDto,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(postService.createPost(postDto, userDetails.getUsername()));
+    }
+    
+    @PutMapping("/update/{id}")
+    public ResponseEntity<PostDto> updatePost(@PathVariable Long id,
+                                            @Valid @RequestBody PostDto postDto,
+                                            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(postService.updatePost(id, postDto, userDetails.getUsername()));
+    }
+    
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id,
+                                         @AuthenticationPrincipal UserDetails userDetails) {
+        postService.deletePost(id, userDetails.getUsername());
+        return ResponseEntity.noContent().build();
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/controller/AdminController.java
+```java
+package com.perfect8.blog.controller;
+
+import com.perfect8.blog.dto.UserDto;
+import com.perfect8.blog.service.AdminService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/admin")
+public class AdminController {
+    
+    private final AdminService adminService;
+    
+    public AdminController(AdminService adminService) {
+        this.adminService = adminService;
+    }
+    
+    @GetMapping("/users")
+    public ResponseEntity<Page<UserDto>> getAllUsers(Pageable pageable) {
+        return ResponseEntity.ok(adminService.getAllUsers(pageable));
+    }
+    
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        adminService.deleteUser(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/exception/ResourceNotFoundException.java
+```java
+package com.perfect8.blog.exception;
+
+public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String message) {
+        super(message);
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/exception/GlobalExceptionHandler.java
+```java
+package com.perfect8.blog.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException e) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.NOT_FOUND.value(),
+            e.getMessage(),
+            LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+    
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException e) {
+        Map<String, String> errors = new HashMap<>();
+        e.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            "Validation failed",
+            LocalDateTime.now(),
+            errors
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+    
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGlobalException(Exception e) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            e.getMessage(),
+            LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+    
+    static class ErrorResponse {
+        private int status;
+        private String message;
+        private LocalDateTime timestamp;
+        private Map<String, String> errors;
+        
+        public ErrorResponse(int status, String message, LocalDateTime timestamp) {
+            this.status = status;
+            this.message = message;
+            this.timestamp = timestamp;
+        }
+        
+        public ErrorResponse(int status, String message, LocalDateTime timestamp, Map<String, String> errors) {
+            this.status = status;
+            this.message = message;
+            this.timestamp = timestamp;
+            this.errors = errors;
+        }
+        
+        // Getters and setters
+        public int getStatus() { return status; }
+        public void setStatus(int status) { this.status = status; }
+        
+        public String getMessage() { return message; }
+        public void setMessage(String message) { this.message = message; }
+        
+        public LocalDateTime getTimestamp() { return timestamp; }
+        public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+        
+        public Map<String, String> getErrors() { return errors; }
+        public void setErrors(Map<String, String> errors) { this.errors = errors; }
+    }
+}
+```
+
+// blog-service/src/main/resources/application.properties
+```properties
+spring.application.name=blog-service
+server.port=8080
+
+# Database
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+spring.jpa.properties.hibernate.format_sql=true
+
+# JWT
+jwt.secret=${JWT_SECRET}
+jwt.expiration=86400000
+
+# Image Service
+image.service.url=${IMAGE_SERVICE_URL:http://localhost:8081}
+
+# Logging
+logging.level.com.perfect8.blog=DEBUG
+```
+
+// blog-service/src/main/resources/application-dev.properties
+```properties
+# Development specific properties
+spring.jpa.show-sql=true
+logging.level.org.springframework.security=DEBUG
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+```
+
+// blog-service/src/main/resources/application-prod.properties
+```properties
+# Production specific properties
+spring.jpa.show-sql=false
+logging.level.root=WARN
+logging.level.com.perfect8.blog=INFO
+```
+
+// image-service/Dockerfile
+```dockerfile
+FROM openjdk:17-jdk-slim
+VOLUME /tmp
+COPY target/*.jar app.jar
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+// image-service/pom.xml
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.0</version>
+        <relativePath/>
+    </parent>
+    
+    <groupId>com.perfect8</groupId>
+    <artifactId>image-service</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>image-service</name>
+    <description>Perfect8 Image Service</description>
+    
+    <properties>
+        <java.version>17</java.version>
+    </properties>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency this.updatedAt = updatedAt; }
+    
+    public Set<Role> getRoles() { return roles; }
+    public void setRoles(Set<Role> roles) { this.roles = roles; }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/model/Role.java
+```java
+package com.perfect8.blog.model;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "roles")
+public class Role {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(unique = true, nullable = false)
+    private String name;
+    
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/model/Post.java
+```java
+package com.perfect8.blog.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "posts")
+public class Post {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String title;
+    
+    @Column(nullable = false, columnDefinition = "TEXT")
+    private String content;
+    
+    @Column(name = "slug", unique = true)
+    private String slug;
+    
+    @Column(name = "excerpt")
+    private String excerpt;
+    
+    @Column(name = "published")
+    private boolean published = false;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "author_id", nullable = false)
+    private User author;
+    
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ImageReference> images = new ArrayList<>();
+    
+    @ElementCollection
+    @CollectionTable(name = "post_links", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "url")
+    private List<String> links = new ArrayList<>();
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+    
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+    
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+    
+    public String getExcerpt() { return excerpt; }
+    public void setExcerpt(String excerpt) { this.excerpt = excerpt; }
+    
+    public boolean isPublished() { return published; }
+    public void setPublished(boolean published) { this.published = published; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public LocalDateTime getPublishedAt() { return publishedAt; }
+    public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
+    
+    public User getAuthor() { return author; }
+    public void setAuthor(User author) { this.author = author; }
+    
+    public List<ImageReference> getImages() { return images; }
+    public void setImages(List<ImageReference> images) { this.images = images; }
+    
+    public List<String> getLinks() { return links; }
+    public void setLinks(List<String> links) { this.links = links; }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/model/ImageReference.java
+```java
+package com.perfect8.blog.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "image_references")
+public class ImageReference {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "image_id", nullable = false)
+    private String imageId;
+    
+    @Column(name = "image_url")
+    private String imageUrl;
+    
+    @Column(name = "alt_text")
+    private String altText;
+    
+    @Column(name = "caption")
+    private String caption;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getImageId() { return imageId; }
+    public void setImageId(String imageId) { this.imageId = imageId; }
+    
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    
+    public String getAltText() { return altText; }
+    public void setAltText(String altText) { this.altText = altText; }
+    
+    public String getCaption() { return caption; }
+    public void setCaption(String caption) { this.caption = caption; }
+    
+    public Post getPost() { return post; }
+    public void setPost(Post post) { this.post = post; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/repository/UserRepository.java
+```java
+package com.perfect8.blog.repository;
+
+import com.perfect8.blog.model.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
+    boolean existsByUsername(String username);
+    boolean existsByEmail(String email);
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/repository/PostRepository.java
+```java
+package com.perfect8.blog.repository;
+
+import com.perfect8.blog.model.Post;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public interface PostRepository extends JpaRepository<Post, Long> {
+    Page<Post> findByPublishedTrue(Pageable pageable);
+    Page<Post> findByAuthorIdAndPublishedTrue(Long authorId, Pageable pageable);
+    Optional<Post> findBySlug(String slug);
+    boolean existsBySlug(String slug);
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/repository/ImageReferenceRepository.java
+```java
+package com.perfect8.blog.repository;
+
+import com.perfect8.blog.model.ImageReference;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+
+@Repository
+public interface ImageReferenceRepository extends JpaRepository<ImageReference, Long> {
+    List<ImageReference> findByPostId(Long postId);
+    void deleteByImageId(String imageId);
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/dto/PostDto.java
+```java
+package com.perfect8.blog.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.util.List;
+
+public class PostDto {
+    
+    private Long id;
+    
+    @NotBlank(message = "Title is required")
+    @Size(max = 255, message = "Title must be less than 255 characters")
+    private String title;
+    
+    @NotBlank(message = "Content is required")
+    private String content;
+    
+    private String slug;
+    private String excerpt;
+    private boolean published;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private LocalDateTime publishedAt;
+    private String authorName;
+    private List<ImageReferenceDto> images;
+    private List<String> links;
+    
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+    
+    public String getSlug() { return slug; }
+    public void setSlug(String slug) { this.slug = slug; }
+    
+    public String getExcerpt() { return excerpt; }
+    public void setExcerpt(String excerpt) { this.excerpt = excerpt; }
+    
+    public boolean isPublished() { return published; }
+    public void setPublished(boolean published) { this.published = published; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    
+    public LocalDateTime getPublishedAt() { return publishedAt; }
+    public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
+    
+    public String getAuthorName() { return authorName; }
+    public void setAuthorName(String authorName) { this.authorName = authorName; }
+    
+    public List<ImageReferenceDto> getImages() { return images; }
+    public void setImages(List<ImageReferenceDto> images) { this.images = images; }
+    
+    public List<String> getLinks() { return links; }
+    public void setLinks(List<String> links) { this.links = links; }
+    
+    public static class ImageReferenceDto {
+        private String imageId;
+        private String imageUrl;
+        private String altText;
+        private String caption;
+        
+        // Getters and setters
+        public String getImageId() { return imageId; }
+        public void setImageId(String imageId) { this.imageId = imageId; }
+        
+        public String getImageUrl() { return imageUrl; }
+        public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+        
+        public String getAltText() { return altText; }
+        public void setAltText(String altText) { this.altText = altText; }
+        
+        public String getCaption() { return caption; }
+        public void setCaption(String caption) { this.caption = caption; }
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/dto/AuthDto.java
+```java
+package com.perfect8.blog.dto;
+
+import jakarta.validation.constraints.NotBlank;
+
+public class AuthDto {
+    
+    public static class LoginRequest {
+        @NotBlank(message = "Username is required")
+        private String username;
+        
+        @NotBlank(message = "Password is required")
+        private String password;
+        
+        // Getters and setters
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+    }
+    
+    public static class RegisterRequest {
+        @NotBlank(message = "Username is required")
+        private String username;
+        
+        @NotBlank(message = "Email is required")
+        private String email;
+        
+        @NotBlank(message = "Password is required")
+        private String password;
+        
+        // Getters and setters
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+        
+        public String getPassword() { return password; }
+        public void setPassword(String password) { this.password = password; }
+    }
+    
+    public static class JwtResponse {
+        private String token;
+        private String type = "Bearer";
+        private String username;
+        private String email;
+        
+        public JwtResponse(String token, String username, String email) {
+            this.token = token;
+            this.username = username;
+            this.email = email;
+        }
+        
+        // Getters and setters
+        public String getToken() { return token; }
+        public void setToken(String token) { this.token = token; }
+        
+        public String getType() { return type; }
+        public void setType(String type) { this.type = type; }
+        
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+    }
+}
+```
+
+// blog-service/src/main/java/com/perfect8/blog/dto/UserDto.java
+```java
+package com.perfect8.blog.dto;
+
+import java.time.LocalDateTime;
+import java.util.Set;
+
+public class UserDto {
+    private Long id;
+    private String username;
+    private String email;
+    private Set<String> roles;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    
+    // Getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+    
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    
+    public Set<String> getRoles() { return roles; }
+    public void setRoles(Set<String> roles) { this.roles = roles; }
+    
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) {
