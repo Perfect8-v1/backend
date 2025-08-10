@@ -13,10 +13,10 @@
     </parent>
 
     <groupId>com.perfect8</groupId>
-    <artifactId>blog-service</artifactId>
+    <artifactId>Web-Shop-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>blog-service</name>
-    <description>Perfect8 Blog Service</description>
+    <name>Web-shop-service</name>
+    <description>Perfect8 Web-Shop Service</description>
 
     <properties>
         <java.version>17</java.version>
@@ -66,6 +66,21 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+
+        <!-- PayPal Integration -->
+        <dependency>
+            <groupId>com.paypal.sdk</groupId>
+            <artifactId>rest-api-sdk</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+
+        <!-- Email Integration -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+
+
 
         <!-- Mockito Inline for mocking final classes -->
         <dependency>

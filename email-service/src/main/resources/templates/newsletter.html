@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${subject}">Perfect8 Blog Nyhetsbrev</title>
+    <style>
+        body { font-family: Georgia, serif; line-height: 1.8; color: #333; background-color: #f9f9f9; }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; background-color: white; }
+        .header { border-bottom: 3px solid #007bff; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { color: #007bff; margin: 0; font-size: 32px; }
+        .content { font-size: 16px; }
+        .content h2 { color: #333; margin-top: 30px; }
+        .button { display: inline-block; padding: 12px 30px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 14px; color: #666; }
+        .unsubscribe { font-size: 12px; color: #999; text-align: center; margin-top: 20px; }
+        .article-preview { background-color: #f8f9fa; padding: 20px; margin: 20px 0; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Perfect8 Blog</h1>
+        <p style="color: #666; margin: 5px 0;">Ditt nyhetsbrev för teknik och utveckling</p>
+    </div>
+
+    <div class="content">
+        <div class="article-preview">
+            <h2 th:text="${subject}">Rubrik</h2>
+            <div th:utext="${content}">Innehåll kommer här...</div>
+            <p style="text-align: center; margin-top: 30px;">
+                <a th:href="${blogPostUrl}" class="button">Läs hela artikeln</a>
+            </p>
+        </div>
+
+        <div style="margin-top: 40px;">
+            <h3>Senaste från bloggen</h3>
+            <ul>
+                <li><a href="https://perfect8blog.com/posts/microservices-best-practices">Microservices Best Practices</a></li>
+                <li><a href="https://perfect8blog.com/posts/spring-boot-tips">10 Spring Boot Tips Du Behöver Veta</a></li>
+                <li><a href="https://perfect8blog.com/posts/docker-deployment">Docker Deployment Guide</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p><strong>Följ oss:</strong></p>
+        <p>
+            <a href="https://twitter.com/perfect8blog">Twitter</a> |
+            <a href="https://linkedin.com/company/perfect8blog">LinkedIn</a> |
+            <a href="https://github.com/perfect8">GitHub</a>
+        </p>
+    </div>
+
+    <div class="unsubscribe">
+        <p>Du får detta nyhetsbrev eftersom du prenumererar på Perfect8 Blog.</p>
+        <p><a th:href="${unsubscribeUrl}">Avsluta prenumeration</a></p>
+    </div>
+</div>
+</body>
+</html>

@@ -1,9 +1,7 @@
-// blog-service/src/main/java/com/perfect8/blog/controller/AuthController.java
+package com.perfect8.webshop.controller;
 
-        package com.perfect8.blog.controller;
-
-import com.perfect8.blog.dto.AuthDto;
-import com.perfect8.blog.service.AuthService;
+import com.perfect8.webshop.dto.AuthDto;
+import com.perfect8.webshop.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

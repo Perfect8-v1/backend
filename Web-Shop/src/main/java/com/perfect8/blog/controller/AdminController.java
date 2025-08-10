@@ -1,6 +1,4 @@
-// blog-service/src/main/java/com/perfect8/blog/controller/AdminController.java
-
-        package com.perfect8.blog.controller;
+package com.perfect8.web-shop.controller;
 
 import com.perfect8.blog.dto.UserDto;
 import com.perfect8.blog.service.AdminService;
