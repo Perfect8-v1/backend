@@ -7,10 +7,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="Web-Shop" />
+        <module name="Web-Shop-service" />
+        <module name="admin-service" />
+        <module name="email-service" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="blog-service" target="17" />
       <module name="image-service" target="17" />
       <module name="mail-service" target="17" />
     </bytecodeTargetLevel>
@@ -19,7 +21,10 @@
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="P8" options="" />
       <module name="Web-Shop" options="-parameters" />
-      <module name="blog-service" options="-parameters" />
+      <module name="Web-Shop-service" options="-parameters" />
+      <module name="admin-service" options="-parameters" />
+      <module name="blog-service" options="" />
+      <module name="email-service" options="-parameters" />
       <module name="image-service" options="-parameters" />
       <module name="mail-service" options="-parameters" />
     </option>

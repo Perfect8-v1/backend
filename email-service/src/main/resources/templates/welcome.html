@@ -3,38 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Välkommen till Perfect8 Blog!</title>
+    <title>Welcome to Perfect8</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #007bff; color: white; padding: 20px; text-align: center; }
-        .content { padding: 20px; background-color: #f4f4f4; }
-        .button { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; }
-        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .welcome-message {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 20px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #0056b3;
+        }
+        .features {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        .feature-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        .feature-list li:before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #666;
+            font-size: 14px;
+        }
+        .social-links {
+            margin: 20px 0;
+        }
+        .social-links a {
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
     </style>
 </head>
 <body>
-<div class="container">
+<div class="email-container">
     <div class="header">
-        <h1>Välkommen till Perfect8 Blog!</h1>
+        <div class="logo" th:text="${companyName}">Perfect8</div>
+        <div class="tagline">Your Premium E-commerce Experience</div>
     </div>
+
     <div class="content">
-        <h2>Hej <span th:text="${username}">Användare</span>!</h2>
-        <p>Tack för att du registrerat dig på Perfect8 Blog. Vi är glada att ha dig som medlem!</p>
-        <p>Du kan nu:</p>
-        <ul>
-            <li>Läsa alla publicerade blogginlägg</li>
-            <li>Prenumerera på vårt nyhetsbrev</li>
-            <li th:if="${isWriter}">Skapa och publicera egna blogginlägg</li>
-            <li th:if="${isAdmin}">Administrera användare och innehåll</li>
-        </ul>
-        <p style="text-align: center; margin-top: 30px;">
-            <a href="https://perfect8blog.com/login" class="button">Logga in nu</a>
-        </p>
+        <h1 class="welcome-message">
+            Welcome <span th:text="${customerName}">Customer</span>!
+        </h1>
+
+        <p>Thank you for joining the <span th:text="${companyName}">Perfect8</span> community! We're thrilled to have you on board and can't wait for you to explore our amazing products.</p>
+
+        <p>Your account has been successfully created, and you're now ready to:</p>
+
+        <div class="features">
+            <ul class="feature-list">
+                <li>Browse our curated collection of premium products</li>
+                <li>Enjoy exclusive member discounts and early access</li>
+                <li>Track your orders in real-time</li>
+                <li>Save your favorite items to your wishlist</li>
+                <li>Receive personalized product recommendations</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="#" th:href="${websiteUrl}" class="cta-button">Start Shopping Now</a>
+        </div>
+
+        <p>As a welcome gift, use code <strong>WELCOME10</strong> for 10% off your first order!</p>
+
+        <p>If you have any questions or need assistance, our friendly support team is here to help.</p>
     </div>
+
     <div class="footer">
-        <p>Detta är ett automatiskt meddelande. Svara inte på detta e-postmeddelande.</p>
-        <p>&copy; 2024 Perfect8 Blog. Alla rättigheter förbehållna.</p>
+        <p>
+            <strong th:text="${companyName}">Perfect8</strong><br>
+            Need help? Contact us at
+            <a href="#" th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@perfect8.com</a>
+        </p>
+
+        <div class="social-links">
+            <a href="#">Facebook</a> |
+            <a href="#">Twitter</a> |
+            <a href="#">Instagram</a>
+        </div>
+
+        <p style="font-size: 12px; color: #999;">
+            This email was sent to <span th:text="${customerEmail}">customer@email.com</span><br>
+            © 2024 <span th:text="${companyName}">Perfect8</span>. All rights reserved.
+        </p>
     </div>
 </div>
 </body>
