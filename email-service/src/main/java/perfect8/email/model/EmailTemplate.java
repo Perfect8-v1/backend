@@ -1,4 +1,4 @@
-package com.perfect8.email.model;
+package perfect8.email.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

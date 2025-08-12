@@ -1,12 +1,12 @@
-package com.perfect8.email.controller;
+package perfect8.email.controller;
 
-import com.perfect8.email.dto.EmailRequestDto;
-import com.perfect8.email.dto.EmailResponseDto;
-import com.perfect8.email.dto.NewsletterRequestDto;
-import com.perfect8.email.model.EmailLog;
-import com.perfect8.email.model.EmailStatus;
-import com.perfect8.email.service.EmailService;
-import com.perfect8.email.service.NewsletterService;
+import perfect8.email.dto.EmailRequestDto;
+import perfect8.email.dto.EmailResponseDto;
+import perfect8.email.dto.NewsletterRequestDto;
+import perfect8.email.model.EmailLog;
+import perfect8.email.model.EmailStatus;
+import perfect8.email.service.EmailService;
+import perfect8.email.service.NewsletterService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

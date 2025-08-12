@@ -1,15 +1,14 @@
-package com.perfect8.email.controller;
+package perfect8.email.config;
 
-import com.perfect8.email.dto.BulkEmailRequestDto;
-import com.perfect8.email.dto.EmailRequestDto;
-import com.perfect8.email.dto.EmailResponseDto;
-import com.perfect8.email.dto.EmailStatusDto;
-import com.perfect8.email.service.EmailService;
+import perfect8.email.dto.BulkEmailRequestDto;
+import perfect8.email.dto.EmailRequestDto;
+import perfect8.email.dto.EmailResponseDto;
+import perfect8.email.dto.EmailStatusDto;
+import perfect8.email.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

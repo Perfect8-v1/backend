@@ -1,6 +1,6 @@
-package com.perfect8.email.client;
+package perfect8.email.client;
 
-import com.perfect8.email.dto.OrderDto;
+import perfect8.email.dto.OrderDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

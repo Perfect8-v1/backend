@@ -1,4 +1,4 @@
-package com.perfect8.email.model;
+package perfect8.email.model;
 
 public enum EmailStatus {
     PENDING,

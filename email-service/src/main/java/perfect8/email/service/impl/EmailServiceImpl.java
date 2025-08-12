@@ -1,4 +1,4 @@
-package com.perfect8.webshop.service.impl;
+package perfect8.email.service.impl;
 
 import com.perfect8.webshop.dto.EmailRequest;
 import com.perfect8.webshop.model.Order;
@@ -16,14 +16,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -32,9 +26,6 @@ public class EmailServiceImpl implements EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
-
-    @Autowired
-    private TemplateEngine templateEngine;
 
     @Value("${spring.mail.username}")
     private String fromEmail;
@@ -93,8 +84,7 @@ public class EmailServiceImpl implements EmailService {
                 return;
             }
 
-            Context context = createOrderContext(order);
-            String htmlContent = templateEngine.process("order-confirmation", context);
+            String htmlContent = createOrderConfirmationHtml(order);
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -122,11 +112,7 @@ public class EmailServiceImpl implements EmailService {
                 return;
             }
 
-            Context context = createOrderContext(order);
-            context.setVariable("trackingNumber", trackingNumber);
-            context.setVariable("shippedDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-
-            String htmlContent = templateEngine.process("order-shipped", context);
+            String htmlContent = createOrderShippedHtml(order, trackingNumber);
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -154,11 +140,7 @@ public class EmailServiceImpl implements EmailService {
                 return;
             }
 
-            Context context = createOrderContext(order);
-            context.setVariable("cancellationReason", reason);
-            context.setVariable("cancelledDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-
-            String htmlContent = templateEngine.process("order-cancelled", context);
+            String htmlContent = createOrderCancelledHtml(order, reason);
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -180,13 +162,7 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendPasswordResetEmail(String email, String resetToken) {
         try {
-            Context context = new Context();
-            context.setVariable("resetLink", frontendUrl + "/reset-password?token=" + resetToken);
-            context.setVariable("companyName", companyName);
-            context.setVariable("supportEmail", supportEmail);
-            context.setVariable("expirationTime", "24 hours");
-
-            String htmlContent = templateEngine.process("password-reset", context);
+            String htmlContent = createPasswordResetHtml(email, resetToken);
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -212,13 +188,7 @@ public class EmailServiceImpl implements EmailService {
                 return;
             }
 
-            Context context = new Context();
-            context.setVariable("customerName", customer.getFirstName());
-            context.setVariable("companyName", companyName);
-            context.setVariable("supportEmail", supportEmail);
-            context.setVariable("websiteUrl", frontendUrl);
-
-            String htmlContent = templateEngine.process("welcome", context);
+            String htmlContent = createWelcomeHtml(customer);
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
@@ -236,49 +206,130 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    /**
-     * Creates a Thymeleaf context with common order-related variables
-     */
-    private Context createOrderContext(Order order) {
-        Context context = new Context();
-        Customer customer = order.getCustomer();
+    // Enkla HTML-generators (kan senare ersättas med Flutter-genererat innehåll)
+    private String createOrderConfirmationHtml(Order order) {
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #007bff;">Order Confirmation</h2>
+                <p>Dear %s,</p>
+                <p>Thank you for your order! Your order #%s has been confirmed.</p>
+                <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <h3>Order Details:</h3>
+                    <p><strong>Order ID:</strong> %s</p>
+                    <p><strong>Order Date:</strong> %s</p>
+                    <p><strong>Total Amount:</strong> $%.2f</p>
+                </div>
+                <p>We'll send you another email when your order ships.</p>
+                <p>Best regards,<br>%s Team</p>
+            </body>
+            </html>
+            """,
+                order.getCustomer().getFirstName(),
+                order.getId(),
+                order.getId(),
+                order.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                order.getTotalAmount(),
+                companyName
+        );
+    }
 
-        // Customer information
-        context.setVariable("customerName", customer.getFirstName() + " " + customer.getLastName());
-        context.setVariable("customerEmail", customer.getEmail());
+    private String createOrderShippedHtml(Order order, String trackingNumber) {
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #007bff;">Your Order Has Shipped!</h2>
+                <p>Dear %s,</p>
+                <p>Great news! Your order #%s has been shipped.</p>
+                <div style="background-color: #e7f3ff; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <h3>Tracking Information:</h3>
+                    <p><strong>Tracking Number:</strong> %s</p>
+                    <p><strong>Expected Delivery:</strong> 2-3 business days</p>
+                </div>
+                <p>Best regards,<br>%s Team</p>
+            </body>
+            </html>
+            """,
+                order.getCustomer().getFirstName(),
+                order.getId(),
+                trackingNumber,
+                companyName
+        );
+    }
 
-        // Order information
-        context.setVariable("orderId", order.getId());
-        context.setVariable("orderDate", order.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-        context.setVariable("orderStatus", order.getStatus().toString());
-        context.setVariable("orderItems", order.getOrderItems());
+    private String createOrderCancelledHtml(Order order, String reason) {
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #dc3545;">Order Cancelled</h2>
+                <p>Dear %s,</p>
+                <p>We're sorry to inform you that your order #%s has been cancelled.</p>
+                <div style="background-color: #f8d7da; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <h3>Cancellation Details:</h3>
+                    <p><strong>Reason:</strong> %s</p>
+                    <p><strong>Refund:</strong> Your refund of $%.2f will be processed within 3-5 business days.</p>
+                </div>
+                <p>Best regards,<br>%s Team</p>
+            </body>
+            </html>
+            """,
+                order.getCustomer().getFirstName(),
+                order.getId(),
+                reason,
+                order.getTotalAmount(),
+                companyName
+        );
+    }
 
-        // Calculate totals
-        BigDecimal subtotal = order.getOrderItems().stream()
-                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    private String createPasswordResetHtml(String email, String resetToken) {
+        String resetLink = frontendUrl + "/reset-password?token=" + resetToken;
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #dc3545;">Password Reset Request</h2>
+                <p>Hello,</p>
+                <p>We received a request to reset your password for your %s account.</p>
+                <div style="background-color: #fff3cd; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <p>Click the link below to reset your password:</p>
+                    <a href="%s" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                </div>
+                <p>This link expires in 24 hours.</p>
+                <p>If you didn't request this, please ignore this email.</p>
+                <p>Best regards,<br>%s Team</p>
+            </body>
+            </html>
+            """,
+                companyName,
+                resetLink,
+                companyName
+        );
+    }
 
-        context.setVariable("subtotal", subtotal);
-        context.setVariable("shipping", order.getShippingCost());
-        context.setVariable("tax", order.getTaxAmount());
-        context.setVariable("totalAmount", order.getTotalAmount());
-
-        // Shipping information
-        if (order.getShippingAddress() != null) {
-            context.setVariable("shippingAddress", order.getShippingAddress());
-        }
-
-        // Billing information
-        if (order.getBillingAddress() != null) {
-            context.setVariable("billingAddress", order.getBillingAddress());
-        }
-
-        // Company information
-        context.setVariable("companyName", companyName);
-        context.setVariable("supportEmail", supportEmail);
-        context.setVariable("websiteUrl", frontendUrl);
-
-        return context;
+    private String createWelcomeHtml(Customer customer) {
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #28a745;">Welcome to %s!</h2>
+                <p>Dear %s,</p>
+                <p>Thank you for joining %s! We're excited to have you as part of our community.</p>
+                <div style="background-color: #d4edda; padding: 20px; border-radius: 5px; margin: 20px 0;">
+                    <h3>What's Next?</h3>
+                    <ul>
+                        <li>Browse our latest products</li>
+                        <li>Enjoy member-exclusive discounts</li>
+                        <li>Get personalized recommendations</li>
+                    </ul>
+                </div>
+                <p>Use code <strong>WELCOME10</strong> for 10%% off your first order!</p>
+                <p>Happy shopping!<br>%s Team</p>
+            </body>
+            </html>
+            """,
+                companyName,
+                customer.getFirstName(),
+                companyName,
+                companyName
+        );
     }
 
     @Override
@@ -294,7 +345,6 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void testEmailConnection() {
         try {
-            // Test by creating a simple message without sending
             SimpleMailMessage testMessage = new SimpleMailMessage();
             testMessage.setFrom(fromEmail);
             testMessage.setTo("test@example.com");

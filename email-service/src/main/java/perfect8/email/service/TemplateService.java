@@ -1,6 +1,6 @@
-package com.perfect8.email.service;
+package perfect8.email.service;
 
-import com.perfect8.email.exception.EmailException;
+import perfect8.email.exception.EmailException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,4 @@
-package com.perfect8.email.entity;
+package perfect8.email.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,4 +1,4 @@
-package com.perfect8.email.exception;
+package perfect8.email.exception;
 
 public class EmailException extends RuntimeException {
 

@@ -1,4 +1,4 @@
-package com.perfect8.email;
+package perfect8.email;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

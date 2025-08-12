@@ -1,4 +1,4 @@
-package com.perfect8.email.dto;
+package perfect8.email.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

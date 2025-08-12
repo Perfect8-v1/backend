@@ -1,7 +1,7 @@
-package com.perfect8.email.service;
+package perfect8.email.service;
 
-import com.perfect8.email.dto.NewsletterRequestDto;
-import com.perfect8.email.model.EmailLog;
+import perfect8.email.dto.NewsletterRequestDto;
+import perfect8.email.model.EmailLog;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.HashMap;

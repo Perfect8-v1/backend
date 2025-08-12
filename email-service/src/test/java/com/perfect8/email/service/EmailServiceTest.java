@@ -1,9 +1,9 @@
 package com.perfect8.email.service;
 
-import com.perfect8.email.dto.EmailRequestDto;
-import com.perfect8.email.model.EmailLog;
-import com.perfect8.email.model.EmailStatus;
-import com.perfect8.email.repository.EmailLogRepository;
+import perfect8.email.dto.EmailRequestDto;
+import perfect8.email.model.EmailLog;
+import perfect8.email.model.EmailStatus;
+import perfect8.email.repository.EmailLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,4 +1,4 @@
-package com.perfect8.email.config;
+package perfect8.email.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

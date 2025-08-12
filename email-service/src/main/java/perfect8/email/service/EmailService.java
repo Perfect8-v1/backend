@@ -1,9 +1,9 @@
-package com.perfect8.email.service;
+package perfect8.email.service;
 
-import com.perfect8.email.dto.BulkEmailRequestDto;
-import com.perfect8.email.dto.EmailRequestDto;
-import com.perfect8.email.dto.EmailResponseDto;
-import com.perfect8.email.dto.EmailStatusDto;
+import perfect8.email.dto.BulkEmailRequestDto;
+import perfect8.email.dto.EmailRequestDto;
+import perfect8.email.dto.EmailResponseDto;
+import perfect8.email.dto.EmailStatusDto;
 
 import java.util.List;
 
