@@ -1,5 +1,3 @@
-// image-service/src/main/java/com/perfect8/image/config/SecurityConfig.java
-//
 
         package com.perfect8.image.config;
 
