@@ -1,4 +1,0 @@
-Jag skall bygga en frontend för min blogg. jag har redan en backend som ligger i en annan chat. Där hittar du vilka endpoint som min frontend skall använda.
-Jag kommer så småningom att bygga även ett ärendehanteringsystem, en webbbshop och en funktion för att skicka emejl till alla kunder. Eventuellt bygger vi in en fjärrkontroll
-Så en knapp för bloggen bör ligga överst i en portalsida. Alternativt så lägger vi bloggen rakt på portalsidan och låter övriga funktioner ligga som knappar på bloggsidan.
-Så nu skall jag bygga en frontend i flutter/dart. Och denna frontend kommer att resultera i en webbklient, en windowsklient, en androidklient och en iOS klient.

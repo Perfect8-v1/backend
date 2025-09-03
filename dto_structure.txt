@@ -1,0 +1,163 @@
+Folder PATH listing
+Volume serial number is FE0A-2804
+C:\_PERFECT8\BLOG\WEB-SHOP\SRC\MAIN\JAVA\COM\PERFECT8\SHOP
+|   ShopServiceApplication.java
+|   
++---controller
+|       AdminDashboardController.java
+|       CartController.java
+|       CategoryController.java
+|       CustomerController.java
+|       OrderController.java
+|       PaymentController.java
+|       ProductController.java
+|       ShipmentController.java
+|       
++---dto
+|       AddressDTO.java
+|       AddToCartRequest.java
+|       AdminDashboardResponse.java
+|       ApiPerformanceResponse.java
+|       ApiResponse.java
+|       ApplyCouponRequest.java
+|       AuthDto.java
+|       CartCalculationResponse.java
+|       CartHistoryResponse.java
+|       CartItemResponse.java
+|       CartResponse.java
+|       CartSummaryResponse.java
+|       CategoryCreateRequest.java
+|       CategoryDTO.java
+|       CategoryResponse.java
+|       CategoryTreeResponse.java
+|       CategoryUpdateRequest.java
+|       CheckoutPreparationRequest.java
+|       CheckoutPreparationResponse.java
+|       CheckoutValidationResponse.java
+|       CohortAnalysisResponse.java
+|       CouponValidationResponse.java
+|       CreateCustomerRequest.java
+|       CreateOrderRequest.java
+|       CustomerDTO.java
+|       CustomerMetricsResponse.java
+|       CustomerRegistrationDTO.java
+|       CustomerReportResponse.java
+|       CustomerUpdateDTO.java
+|       DashboardSummaryResponse.java
+|       DatabasePerformanceResponse.java
+|       ExecutiveSummaryResponse.java
+|       GeographicAnalyticsResponse.java
+|       InventoryMetricsResponse.java
+|       InventoryReportResponse.java
+|       InventoryUpdateDTO.java
+|       JwtResponse.java
+|       LowStockAlertResponse.java
+|       NewCustomerResponse.java
+|       OrderAttentionResponse.java
+|       OrderDTO.java
+|       OrderItemDTO.java
+|       OrderRequestDTO.java
+|       OrderStatusUpdateDTO.java
+|       PaymentIssueResponse.java
+|       PaymentMetricsResponse.java
+|       PaymentRequestDTO.java
+|       PaymentResponseDTO.java
+|       ProductAnalyticsResponse.java
+|       ProductCreateRequest.java
+|       ProductDTO.java
+|       ProductRecommendationResponse.java
+|       ProductResponse.java
+|       ProductUpdateRequest.java
+|       RefundRequestDTO.java
+|       RevenueAnalyticsResponse.java
+|       SalesMetricsResponse.java
+|       SalesReportResponse.java
+|       SaveCartRequest.java
+|       SavedCartResponse.java
+|       ShipmentDTO.java
+|       ShipmentUpdateDTO.java
+|       ShippingCalculationRequest.java
+|       ShippingOptionResponse.java
+|       StockAdjustmentDTO.java
+|       SystemPerformanceResponse.java
+|       TaxCalculationRequest.java
+|       TaxCalculationResponse.java
+|       TaxEstimationResponse.java
+|       TrackingUpdateDTO.java
+|       TrendAnalysisResponse.java
+|       UpdateCartItemRequest.java
+|       UpdateCustomerRequest.java
+|       UpdateOrderStatusRequest.java
+|       
++---entity
+|       Address.java
+|       Category.java
+|       Customer.java
+|       InventoryTransaction.java
+|       Order.java
+|       OrderItem.java
+|       Payment.java
+|       Product.java
+|       Shipment.java
+|       ShipmentTracking.java
+|       
++---enums
+|       OrderStatus.java
+|       TransactionType.java
+|       
++---exception
+|       CategoryNotFoundException.java
+|       CustomerNotFoundException.java
+|       DuplicateSkuException.java
+|       EmailAlreadyExistsException.java
+|       InsufficientStockException.java
+|       InvalidOrderStatusException.java
+|       OrderNotFoundException.java
+|       PaymentException.java
+|       ProductNotFoundException.java
+|       ResourceNotFoundException.java
+|       UnauthorizedAccessException.java
+|       ValidationException.java
+|       
++---model
+|       Category.java
+|       Customer.java
+|       Order.java
+|       OrderItem.java
+|       OrderStatus.java
+|       Payment.java
+|       PaymentMethod.java
+|       PaymentStatus.java
+|       Product.java
+|       Shipment.java
+|       ShipmentStatus.java
+|       ShippingMethod.java
+|       
++---repository
+|       AddressRepository.java
+|       CategoryRepository.java
+|       CustomerRepository.java
+|       InventoryTransactionRepository.java
+|       OrderItemRepository.java
+|       OrderRepository.java
+|       PaymentRepository.java
+|       ProductRepository.java
+|       
++---security
+|       JwtTokenProvider.java
+|       
+\---service
+        AnalyticsService.java
+        AuthService.java
+        CartService.java
+        CategoryService.java
+        CustomerService.java
+        DashboardService.java
+        EmailService.java
+        InventoryService.java
+        OrderService.java
+        PaymentService.java
+        ProductService.java
+        ShipmentService.java
+        ShippingService.java
+        

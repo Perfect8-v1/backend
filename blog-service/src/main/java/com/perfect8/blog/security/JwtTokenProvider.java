@@ -1,54 +1,67 @@
-// blog-service/src/main/java/com/perfect8/blog/security/JwtTokenProvider.java
+package com.perfect8.blog.security;
 
-        package com.perfect8.blog.security;
-
-import com.perfect8.blog.config.JwtConfig;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
-import java.security.Key;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    private final JwtConfig jwtConfig;
-    private final Key key;
+    @Value("${jwt.secret}")
+    private String jwtSecret;
 
-    public JwtTokenProvider(JwtConfig jwtConfig) {
-        this.jwtConfig = jwtConfig;
-        this.key = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
+    @Value("${jwt.expiration:86400000}")
+    private int jwtExpirationMs;
+
+    private SecretKey getSigningKey() {
+        // Ensure the secret is at least 512 bits (64 bytes) for HS512
+        String paddedSecret = jwtSecret;
+        while (paddedSecret.getBytes(StandardCharsets.UTF_8).length < 64) {
+            paddedSecret += jwtSecret;
+        }
+        byte[] keyBytes = paddedSecret.substring(0, Math.min(paddedSecret.length(), 128))
+                .getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String generateToken(Authentication authentication) {
         String username = authentication.getName();
         Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + jwtConfig.getExpiration());
+        Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(key)
+                .subject(username)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(key)
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims.getSubject();
     }
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
             return true;
-        } catch (JwtException | IllegalArgumentException e) {
+        } catch (Exception e) {
             return false;
         }
     }
