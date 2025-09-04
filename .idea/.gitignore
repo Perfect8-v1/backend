@@ -3,15 +3,33 @@
 /workspace.xml
 # Environment-dependent path to Maven home directory
 /mavenHomeManager.xml
-/out/
-/target/
+
+# IDE
 .idea/
 *.iml
-*.ipr
-*.iws
 .vscode/
-desktop.ini
+
+# Build
+target/
+build/
+out/
+.env
+
+
+# Logs
 *.log
+
+# Archives/binaries
+*.zip
+*.tar.gz
+*.rar
+*.jar
+*.war
+*.ear
+
+# Egna deploy-mappar
+deploy/
+
+#Övrigt
 *.tmp
 *.swp
-.env
