@@ -7,7 +7,6 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="Web-Shop" />
       </profile>
       <profile name="Annotation profile for Perfect8 Parent" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
@@ -30,12 +29,10 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="P8" options="" />
-      <module name="Web-Shop" options="-parameters" />
       <module name="admin-service" options="-parameters" />
       <module name="blog-service" options="-parameters" />
       <module name="email-service" options="-parameters" />
       <module name="image-service" options="-parameters" />
-      <module name="mail-service" options="-parameters" />
       <module name="perfect8.com" options="" />
       <module name="shop-service" options="-parameters" />
     </option>
