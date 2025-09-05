@@ -33,7 +33,7 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;  // Changed from orderId to id for consistency
+    private Long id;
 
     @Column(name = "order_number", nullable = false, unique = true, length = 50)
     private String orderNumber;
@@ -45,7 +45,7 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false, length = 50)
     @Builder.Default
-    private OrderStatus status = OrderStatus.PENDING;  // Changed from orderStatus to status
+    private OrderStatus status = OrderStatus.PENDING;
 
     // Order items
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -174,6 +174,86 @@ public class Order {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // ========================================
+    // Backward compatibility methods
+    // ========================================
+
+    /**
+     * Backward compatibility getter for orderId
+     * @return the order id
+     */
+    public Long getOrderId() {
+        return this.id;
+    }
+
+    /**
+     * Backward compatibility setter for orderId
+     * @param orderId the order id to set
+     */
+    public void setOrderId(Long orderId) {
+        this.id = orderId;
+    }
+
+    /**
+     * Backward compatibility getter for orderStatus
+     * @return the order status
+     */
+    public OrderStatus getOrderStatus() {
+        return this.status;
+    }
+
+    /**
+     * Backward compatibility setter for orderStatus
+     * @param orderStatus the order status to set
+     */
+    public void setOrderStatus(OrderStatus orderStatus) {
+        this.status = orderStatus;
+    }
+
+    /**
+     * Get total amount (alias for totalAmount)
+     * @return the total amount
+     */
+    public BigDecimal getTotal() {
+        return this.totalAmount;
+    }
+
+    /**
+     * Set total amount (alias for totalAmount)
+     * @param total the total amount to set
+     */
+    public void setTotal(BigDecimal total) {
+        this.totalAmount = total;
+    }
+
+    /**
+     * Get order date (alias for createdAt)
+     * @return the order creation date
+     */
+    public LocalDateTime getOrderDate() {
+        return this.createdAt;
+    }
+
+    /**
+     * Set order date (alias for createdAt)
+     * @param orderDate the order date to set
+     */
+    public void setOrderDate(LocalDateTime orderDate) {
+        this.createdAt = orderDate;
+    }
+
+    /**
+     * Set order items (alias for orderItems)
+     * @param items the order items to set
+     */
+    public void setItems(List<OrderItem> items) {
+        this.orderItems = items;
+    }
+
+    // ========================================
+    // Business logic methods
+    // ========================================
 
     /**
      * Generate order number if not set
