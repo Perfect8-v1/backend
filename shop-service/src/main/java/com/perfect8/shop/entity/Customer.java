@@ -15,21 +15,22 @@ import java.util.List;
  */
 @Entity
 @Table(name = "customers", indexes = {
-        @Index(name = "idx_customer_email", columnList = "email", unique = true),
-        @Index(name = "idx_customer_phone", columnList = "phone_number")
+        @Index(name = "idx_email", columnList = "email", unique = true),
+        @Index(name = "idx_phone", columnList = "phone"),
+        @Index(name = "idx_created_at", columnList = "created_at")
 })
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"orders", "addresses", "cart"})
-@ToString(exclude = {"orders", "addresses", "cart"})
+@EqualsAndHashCode(exclude = {"addresses", "orders", "cart"})
+@ToString(exclude = {"addresses", "orders", "cart", "passwordHash"})
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
-    private Long id;  // Changed from customerId to id for consistency
+    private Long id;
 
     @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
@@ -40,89 +41,98 @@ public class Customer {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "phone_number", length = 20)
-    private String phoneNumber;
+    @Column(name = "phone", length = 20)
+    private String phone;
 
-    @Column(name = "password", nullable = false)
-    private String password;  // Changed from passwordHash to password for simplicity
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
 
-    @Column(name = "email_verified")
+    @Column(name = "email_verified", nullable = false)
     @Builder.Default
     private Boolean emailVerified = false;
 
-    @Column(name = "is_active")
+    @Column(name = "email_verification_token", length = 255)
+    private String emailVerificationToken;
+
+    @Column(name = "email_verification_sent_at")
+    private LocalDateTime emailVerificationSentAt;
+
+    @Column(name = "password_reset_token", length = 255)
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_token_expires_at")
+    private LocalDateTime passwordResetTokenExpiresAt;
+
+    // Customer status
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
 
-    // Relationships
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Column(name = "is_blocked", nullable = false)
     @Builder.Default
-    private List<Order> orders = new ArrayList<>();
+    private Boolean isBlocked = false;
 
+    @Column(name = "blocked_reason", columnDefinition = "TEXT")
+    private String blockedReason;
+
+    @Column(name = "blocked_at")
+    private LocalDateTime blockedAt;
+
+    // Marketing preferences
+    @Column(name = "accepts_marketing", nullable = false)
+    @Builder.Default
+    private Boolean acceptsMarketing = false;
+
+    @Column(name = "marketing_consent_updated_at")
+    private LocalDateTime marketingConsentUpdatedAt;
+
+    // Customer preferences
+    @Column(name = "preferred_language", length = 5)
+    @Builder.Default
+    private String preferredLanguage = "en";
+
+    @Column(name = "preferred_currency", length = 3)
+    @Builder.Default
+    private String preferredCurrency = "USD";
+
+    // Relationships
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
 
+    @OneToMany(mappedBy = "customer", fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Order> orders = new ArrayList<>();
+
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Cart cart;
 
-    // Default address references
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "default_shipping_address_id")
-    private Address defaultShippingAddress;
+    // Customer notes (internal use)
+    @Column(name = "internal_notes", columnDefinition = "TEXT")
+    private String internalNotes;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "default_billing_address_id")
-    private Address defaultBillingAddress;
+    // Customer tags for segmentation (comma-separated)
+    @Column(name = "tags", length = 500)
+    private String tags;
 
-    // Marketing preferences
-    @Column(name = "newsletter_subscribed")
+    // Total spent (cached for performance)
+    @Column(name = "total_spent", precision = 10, scale = 2)
     @Builder.Default
-    private Boolean newsletterSubscribed = false;
+    private java.math.BigDecimal totalSpent = java.math.BigDecimal.ZERO;
 
-    @Column(name = "sms_notifications")
+    @Column(name = "order_count")
     @Builder.Default
-    private Boolean smsNotifications = false;
+    private Integer orderCount = 0;
 
-    // Additional fields that were missing but referenced in services
-    @Column(name = "phone", length = 20)
-    private String phone;  // Alias for phoneNumber, some code uses this
+    // Important dates
+    @Column(name = "last_order_date")
+    private LocalDateTime lastOrderDate;
 
-    @Column(name = "date_of_birth")
-    private LocalDateTime dateOfBirth;
+    @Column(name = "first_order_date")
+    private LocalDateTime firstOrderDate;
 
-    @Column(name = "gender", length = 10)
-    private String gender;
-
-    @Column(name = "accepts_marketing")
-    @Builder.Default
-    private Boolean acceptsMarketing = false;
-
-    @Column(name = "preferred_language", length = 10)
-    @Builder.Default
-    private String preferredLanguage = "en";
-
-    // Security
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
-
-    @Column(name = "failed_login_attempts")
-    @Builder.Default
-    private Integer failedLoginAttempts = 0;
-
-    @Column(name = "account_locked")
-    @Builder.Default
-    private Boolean accountLocked = false;
-
-    @Column(name = "password_reset_token")
-    private String passwordResetToken;
-
-    @Column(name = "password_reset_token_expires")
-    private LocalDateTime passwordResetTokenExpires;
-
-    // Metadata
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
+    @Column(name = "birth_date")
+    private java.time.LocalDate birthDate;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -132,20 +142,61 @@ public class Customer {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Add registration date as alias for createdAt (some code uses this)
-    public LocalDateTime getRegistrationDate() {
-        return createdAt;
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
+    @Column(name = "last_login_ip", length = 45)
+    private String lastLoginIp;
+
+    // ========================================
+    // Backward compatibility methods
+    // ========================================
+
+    /**
+     * Backward compatibility getter for customerId
+     * @return the customer id
+     */
+    public Long getCustomerId() {
+        return this.id;
     }
 
     /**
-     * Get full name
+     * Backward compatibility setter for customerId
+     * @param customerId the customer id to set
+     */
+    public void setCustomerId(Long customerId) {
+        this.id = customerId;
+    }
+
+    /**
+     * Backward compatibility method for emailVerified check
+     * @return true if email is verified
+     */
+    public boolean isEmailVerified() {
+        return Boolean.TRUE.equals(this.emailVerified);
+    }
+
+    /**
+     * Backward compatibility setter for emailVerified
+     * @param emailVerified whether email is verified
+     */
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }
+
+    // ========================================
+    // Business logic methods
+    // ========================================
+
+    /**
+     * Get customer's full name
      */
     public String getFullName() {
         return String.format("%s %s", firstName, lastName);
     }
 
     /**
-     * Add an address
+     * Add an address to the customer
      */
     public void addAddress(Address address) {
         if (addresses == null) {
@@ -156,56 +207,124 @@ public class Customer {
     }
 
     /**
-     * Remove an address
+     * Remove an address from the customer
      */
     public void removeAddress(Address address) {
         if (addresses != null) {
             addresses.remove(address);
             address.setCustomer(null);
         }
-
-        // Clear default if removed
-        if (address.equals(defaultShippingAddress)) {
-            defaultShippingAddress = null;
-        }
-        if (address.equals(defaultBillingAddress)) {
-            defaultBillingAddress = null;
-        }
     }
 
     /**
-     * Check if account is usable
+     * Get default shipping address
      */
-    public boolean canLogin() {
+    public Address getDefaultShippingAddress() {
+        if (addresses == null || addresses.isEmpty()) {
+            return null;
+        }
+        return addresses.stream()
+                .filter(Address::isDefaultShipping)
+                .findFirst()
+                .orElse(addresses.get(0));
+    }
+
+    /**
+     * Get default billing address
+     */
+    public Address getDefaultBillingAddress() {
+        if (addresses == null || addresses.isEmpty()) {
+            return null;
+        }
+        return addresses.stream()
+                .filter(Address::isDefaultBilling)
+                .findFirst()
+                .orElse(getDefaultShippingAddress());
+    }
+
+    /**
+     * Check if customer can place orders
+     */
+    public boolean canPlaceOrder() {
         return Boolean.TRUE.equals(isActive) &&
-                !Boolean.TRUE.equals(accountLocked) &&
+                !Boolean.TRUE.equals(isBlocked) &&
                 Boolean.TRUE.equals(emailVerified);
     }
 
     /**
-     * Record successful login
+     * Block customer with reason
      */
-    public void recordSuccessfulLogin() {
-        this.lastLoginAt = LocalDateTime.now();
-        this.failedLoginAttempts = 0;
+    public void block(String reason) {
+        this.isBlocked = true;
+        this.blockedReason = reason;
+        this.blockedAt = LocalDateTime.now();
+        this.isActive = false;
     }
 
     /**
-     * Record failed login attempt
+     * Unblock customer
      */
-    public void recordFailedLogin() {
-        this.failedLoginAttempts = (failedLoginAttempts == null ? 0 : failedLoginAttempts) + 1;
-        if (this.failedLoginAttempts >= 5) {
-            this.accountLocked = true;
+    public void unblock() {
+        this.isBlocked = false;
+        this.blockedReason = null;
+        this.blockedAt = null;
+        this.isActive = true;
+    }
+
+    /**
+     * Update marketing consent
+     */
+    public void updateMarketingConsent(boolean consent) {
+        this.acceptsMarketing = consent;
+        this.marketingConsentUpdatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * Record login
+     */
+    public void recordLogin(String ipAddress) {
+        this.lastLoginAt = LocalDateTime.now();
+        this.lastLoginIp = ipAddress;
+    }
+
+    /**
+     * Update order statistics
+     */
+    public void updateOrderStatistics(java.math.BigDecimal orderAmount) {
+        if (orderAmount != null) {
+            this.totalSpent = this.totalSpent.add(orderAmount);
         }
+        this.orderCount = this.orderCount + 1;
+        this.lastOrderDate = LocalDateTime.now();
+        if (this.firstOrderDate == null) {
+            this.firstOrderDate = LocalDateTime.now();
+        }
+    }
+
+    /**
+     * Check if password reset token is valid
+     */
+    public boolean isPasswordResetTokenValid(String token) {
+        return token != null &&
+                token.equals(this.passwordResetToken) &&
+                this.passwordResetTokenExpiresAt != null &&
+                LocalDateTime.now().isBefore(this.passwordResetTokenExpiresAt);
+    }
+
+    /**
+     * Generate email verification token
+     */
+    public void generateEmailVerificationToken() {
+        this.emailVerificationToken = java.util.UUID.randomUUID().toString();
+        this.emailVerificationSentAt = LocalDateTime.now();
     }
 
     /**
      * Generate password reset token
      */
-    public void generatePasswordResetToken(String token) {
-        this.passwordResetToken = token;
-        this.passwordResetTokenExpires = LocalDateTime.now().plusHours(24);
+    public void generatePasswordResetToken() {
+        this.passwordResetToken = java.util.UUID.randomUUID().toString();
+        this.passwordResetTokenExpiresAt = LocalDateTime.now().plusHours(24);
     }
 
     /**
@@ -213,25 +332,41 @@ public class Customer {
      */
     public void clearPasswordResetToken() {
         this.passwordResetToken = null;
-        this.passwordResetTokenExpires = null;
+        this.passwordResetTokenExpiresAt = null;
     }
 
     /**
-     * Check if password reset token is valid
+     * Verify email with token
      */
-    public boolean isPasswordResetTokenValid(String token) {
-        return passwordResetToken != null &&
-                passwordResetToken.equals(token) &&
-                passwordResetTokenExpires != null &&
-                passwordResetTokenExpires.isAfter(LocalDateTime.now());
+    public boolean verifyEmail(String token) {
+        if (token != null && token.equals(this.emailVerificationToken)) {
+            this.emailVerified = true;
+            this.emailVerificationToken = null;
+            this.emailVerificationSentAt = null;
+            return true;
+        }
+        return false;
     }
 
-    // Method aliases for code compatibility
-    public void setIsEmailVerified(boolean verified) {
-        this.emailVerified = verified;
+    /**
+     * Check if customer is new (no completed orders)
+     */
+    public boolean isNewCustomer() {
+        return orderCount == null || orderCount == 0;
     }
 
-    public boolean isActive() {
-        return Boolean.TRUE.equals(this.isActive);
+    /**
+     * Get customer segment
+     */
+    public String getCustomerSegment() {
+        if (totalSpent == null || totalSpent.compareTo(java.math.BigDecimal.ZERO) == 0) {
+            return "NEW";
+        } else if (totalSpent.compareTo(new java.math.BigDecimal("1000")) < 0) {
+            return "REGULAR";
+        } else if (totalSpent.compareTo(new java.math.BigDecimal("5000")) < 0) {
+            return "VIP";
+        } else {
+            return "PREMIUM";
+        }
     }
 }
