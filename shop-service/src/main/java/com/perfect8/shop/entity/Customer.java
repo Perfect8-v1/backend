@@ -369,4 +369,26 @@ public class Customer {
             return "PREMIUM";
         }
     }
+
+    /**
+     * Handle password synchronization
+     */
+    @PrePersist
+    @PreUpdate
+    public void handlePasswordSync() {
+        if (this.password != null && !this.password.isEmpty()) {
+            this.passwordHash = this.password;
+        }
+        if (this.passwordHash == null) {
+            this.passwordHash = "";
+        }
+    }
+
+    /**
+     * Load password after entity is loaded
+     */
+    @PostLoad
+    public void loadPassword() {
+        this.password = this.passwordHash;
+    }
 }
