@@ -1,6 +1,8 @@
 package com.perfect8.shop.service;
 
 import com.perfect8.shop.entity.Product;
+import com.perfect8.shop.entity.InventoryTransaction;
+import com.perfect8.shop.enums.TransactionType;
 import com.perfect8.shop.repository.ProductRepository;
 import com.perfect8.shop.repository.InventoryTransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,19 +11,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Inventory Service - Version 1.0 STUB
+ * Inventory Service - Version 1.0
+ * Core inventory functionality for order processing
  *
- * This is a placeholder service for v1.0 to allow compilation.
- * Basic inventory tracking is handled directly in ProductService and OrderService.
- * Advanced inventory management will be implemented in v2.0.
- *
- * IMPORTANT: This service returns mock/empty data for v1.0!
+ * CRITICAL: Stock accuracy is essential for customer satisfaction!
  */
 @Slf4j
 @Service
@@ -30,27 +30,41 @@ import java.util.List;
 public class InventoryService {
 
     private final ProductRepository productRepository;
+    private final InventoryTransactionRepository inventoryTransactionRepository;
 
     /**
-     * V1.0 - Check if product is in stock
-     * This is actually functional for v1.0
+     * Check if product is available for order
+     * Used by OrderService during order creation
      */
-    public boolean isInStock(Long productId, Integer quantity) {
+    public boolean checkAvailability(Long productId, Integer quantity) {
         try {
             Product product = productRepository.findById(productId).orElse(null);
             if (product == null) {
+                log.warn("Product {} not found when checking availability", productId);
                 return false;
             }
-            return product.getStockQuantity() >= quantity;
+
+            boolean available = product.getStockQuantity() >= quantity;
+            if (!available) {
+                log.info("Product {} insufficient stock: requested {}, available {}",
+                        productId, quantity, product.getStockQuantity());
+            }
+            return available;
         } catch (Exception e) {
-            log.error("Error checking stock for product {}: {}", productId, e.getMessage());
+            log.error("Error checking availability for product {}: {}", productId, e.getMessage());
             return false;
         }
     }
 
     /**
-     * V1.0 - Get current stock level
-     * This is actually functional for v1.0
+     * Check if product is in stock
+     */
+    public boolean isInStock(Long productId, Integer quantity) {
+        return checkAvailability(productId, quantity);
+    }
+
+    /**
+     * Get current stock level
      */
     public Integer getStockLevel(Long productId) {
         try {
@@ -63,118 +77,144 @@ public class InventoryService {
     }
 
     /**
-     * V1.0 - Reserve stock for order
-     * Basic implementation for v1.0
+     * Reserve stock for pending order
+     * Used when order is created but payment not yet confirmed
      */
     @Transactional
     public boolean reserveStock(Long productId, Integer quantity) {
         try {
             Product product = productRepository.findById(productId).orElse(null);
-            if (product == null || product.getStockQuantity() < quantity) {
+            if (product == null) {
+                log.error("Product {} not found for stock reservation", productId);
                 return false;
             }
 
+            if (product.getStockQuantity() < quantity) {
+                log.warn("Insufficient stock for product {}: requested {}, available {}",
+                        productId, quantity, product.getStockQuantity());
+                return false;
+            }
+
+            // Decrease stock
             product.setStockQuantity(product.getStockQuantity() - quantity);
             productRepository.save(product);
+
+            // Log transaction
+            logInventoryTransaction(productId, TransactionType.RESERVE, quantity,
+                    "Stock reserved for order");
 
             log.info("Reserved {} units of product {}", quantity, productId);
             return true;
 
         } catch (Exception e) {
-            log.error("Error reserving stock for product {}: {}", productId, e.getMessage());
+            log.error("Error reserving stock for product {}: {}", productId, e.getMessage(), e);
             return false;
         }
     }
 
     /**
-     * V1.0 - Release reserved stock (for cancelled orders)
-     * Basic implementation for v1.0
+     * Release reserved stock (for cancelled/failed orders)
+     * Used when order is cancelled before payment
      */
     @Transactional
-    public boolean releaseStock(Long productId, Integer quantity) {
+    public boolean releaseReservedStock(Long productId, Integer quantity) {
         try {
             Product product = productRepository.findById(productId).orElse(null);
             if (product == null) {
+                log.error("Product {} not found for stock release", productId);
                 return false;
             }
 
+            // Increase stock back
             product.setStockQuantity(product.getStockQuantity() + quantity);
             productRepository.save(product);
 
-            log.info("Released {} units of product {}", quantity, productId);
+            // Log transaction
+            logInventoryTransaction(productId, TransactionType.RELEASE, quantity,
+                    "Reserved stock released");
+
+            log.info("Released {} reserved units of product {}", quantity, productId);
             return true;
 
         } catch (Exception e) {
-            log.error("Error releasing stock for product {}: {}", productId, e.getMessage());
+            log.error("Error releasing reserved stock for product {}: {}", productId, e.getMessage(), e);
             return false;
         }
     }
 
     /**
-     * V1.0 STUB - Returns empty inventory metrics
-     */
-    public Map<String, Object> getInventoryMetrics() {
-        log.debug("InventoryService.getInventoryMetrics() called - returning empty data (v2.0 feature)");
-
-        Map<String, Object> emptyData = new HashMap<>();
-        emptyData.put("totalProducts", productRepository.count());
-        emptyData.put("totalValue", BigDecimal.ZERO);
-        emptyData.put("lowStockItems", 0);
-        emptyData.put("outOfStockItems", 0);
-        emptyData.put("message", "Inventory metrics not available in v1.0");
-
-        return emptyData;
-    }
-
-    /**
-     * V1.0 STUB - Returns empty inventory report
-     */
-    public Map<String, Object> getInventoryReport(String period) {
-        log.debug("InventoryService.getInventoryReport() called - returning empty data (v2.0 feature)");
-
-        Map<String, Object> emptyData = new HashMap<>();
-        emptyData.put("period", period);
-        emptyData.put("stockMovements", 0);
-        emptyData.put("turnoverRate", 0.0);
-        emptyData.put("message", "Inventory reports not available in v1.0");
-
-        return emptyData;
-    }
-
-    /**
-     * V1.0 STUB - Returns empty low stock alerts
-     */
-    public List<Map<String, Object>> getLowStockAlerts(Integer threshold) {
-        log.debug("InventoryService.getLowStockAlerts() called - returning empty data (v2.0 feature)");
-        return new ArrayList<>();
-    }
-
-    /**
-     * V1.0 STUB - Returns empty stock adjustment history
-     */
-    public List<Map<String, Object>> getStockAdjustmentHistory(Long productId) {
-        log.debug("InventoryService.getStockAdjustmentHistory() called - returning empty data (v2.0 feature)");
-        return new ArrayList<>();
-    }
-
-    /**
-     * V1.0 STUB - Returns empty reorder suggestions
-     */
-    public List<Map<String, Object>> getReorderSuggestions() {
-        log.debug("InventoryService.getReorderSuggestions() called - returning empty data (v2.0 feature)");
-        return new ArrayList<>();
-    }
-
-    /**
-     * V1.0 STUB - Adjust stock with reason
+     * Confirm stock allocation when payment is successful
+     * Converts reserved stock to sold
      */
     @Transactional
-    public boolean adjustStock(Long productId, Integer adjustment, String reason) {
-        log.debug("InventoryService.adjustStock() - simplified implementation for v1.0");
-
+    public boolean confirmStock(Long productId, Integer quantity) {
         try {
             Product product = productRepository.findById(productId).orElse(null);
             if (product == null) {
+                log.error("Product {} not found for stock confirmation", productId);
+                return false;
+            }
+
+            // Stock already decreased during reservation
+            // Just log the confirmation
+            logInventoryTransaction(productId, TransactionType.SALE, quantity,
+                    "Stock confirmed after payment");
+
+            log.info("Confirmed {} units sold for product {}", quantity, productId);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error confirming stock for product {}: {}", productId, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Release stock (generic method for backwards compatibility)
+     */
+    @Transactional
+    public boolean releaseStock(Long productId, Integer quantity) {
+        return releaseReservedStock(productId, quantity);
+    }
+
+    /**
+     * Return stock to inventory (for returns)
+     */
+    @Transactional
+    public boolean returnToStock(Long productId, Integer quantity) {
+        try {
+            Product product = productRepository.findById(productId).orElse(null);
+            if (product == null) {
+                log.error("Product {} not found for return to stock", productId);
+                return false;
+            }
+
+            // Increase stock for returned items
+            product.setStockQuantity(product.getStockQuantity() + quantity);
+            productRepository.save(product);
+
+            // Log transaction
+            logInventoryTransaction(productId, TransactionType.RETURN, quantity,
+                    "Items returned to stock");
+
+            log.info("Returned {} units to stock for product {}", quantity, productId);
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error returning stock for product {}: {}", productId, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Adjust stock with reason
+     */
+    @Transactional
+    public boolean adjustStock(Long productId, Integer adjustment, String reason) {
+        try {
+            Product product = productRepository.findById(productId).orElse(null);
+            if (product == null) {
+                log.error("Product {} not found for stock adjustment", productId);
                 return false;
             }
 
@@ -187,29 +227,166 @@ public class InventoryService {
             product.setStockQuantity(newStock);
             productRepository.save(product);
 
+            // Log transaction
+            TransactionType type = adjustment > 0 ? TransactionType.ADJUSTMENT_UP : TransactionType.ADJUSTMENT_DOWN;
+            logInventoryTransaction(productId, type, Math.abs(adjustment), reason);
+
             log.info("Adjusted stock for product {} by {} units. Reason: {}",
                     productId, adjustment, reason);
             return true;
 
         } catch (Exception e) {
-            log.error("Error adjusting stock for product {}: {}", productId, e.getMessage());
+            log.error("Error adjusting stock for product {}: {}", productId, e.getMessage(), e);
             return false;
         }
     }
 
     /**
-     * V1.0 - Check if inventory service is enabled
+     * Log inventory transaction for audit trail
      */
-    public boolean isInventoryTrackingEnabled() {
-        return true; // Basic inventory tracking is always enabled in v1.0
+    private void logInventoryTransaction(Long productId, TransactionType type,
+                                         Integer quantity, String notes) {
+        try {
+            InventoryTransaction transaction = InventoryTransaction.builder()
+                    .productId(productId)
+                    .transactionType(type)
+                    .quantity(quantity)
+                    .transactionDate(LocalDateTime.now())
+                    .notes(notes)
+                    .build();
+
+            inventoryTransactionRepository.save(transaction);
+
+        } catch (Exception e) {
+            log.error("Failed to log inventory transaction: {}", e.getMessage());
+            // Don't fail the main operation if logging fails
+        }
     }
 
     /**
-     * V1.0 - Get inventory status
+     * Check if product is low on stock
+     */
+    public boolean isLowStock(Long productId) {
+        try {
+            Product product = productRepository.findById(productId).orElse(null);
+            if (product == null) {
+                return false;
+            }
+
+            // Check against reorder point if set
+            if (product.getReorderPoint() != null && product.getReorderPoint() > 0) {
+                return product.getStockQuantity() <= product.getReorderPoint();
+            }
+
+            // Default low stock threshold
+            return product.getStockQuantity() <= 10;
+
+        } catch (Exception e) {
+            log.error("Error checking low stock for product {}: {}", productId, e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get products that are low on stock
+     */
+    public List<Product> getLowStockProducts(Integer threshold) {
+        try {
+            if (threshold == null) {
+                threshold = 10;
+            }
+            return productRepository.findByStockQuantityLessThanEqual(threshold);
+        } catch (Exception e) {
+            log.error("Error getting low stock products: {}", e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Check if inventory service is enabled
+     */
+    public boolean isInventoryTrackingEnabled() {
+        return true; // Always enabled in v1.0
+    }
+
+    /**
+     * Get inventory status
      */
     public String getInventoryStatus() {
-        return "Basic inventory tracking enabled (v1.0) - Advanced features coming in v2.0";
+        return "Core inventory tracking active (v1.0)";
     }
+
+    // ========== VERSION 2.0 STUB METHODS ==========
+    // These return minimal data for v2.0 features
+
+    /**
+     * V1.0 STUB - Returns basic inventory metrics
+     */
+    public Map<String, Object> getInventoryMetrics() {
+        log.debug("InventoryService.getInventoryMetrics() - minimal v1.0 implementation");
+
+        Map<String, Object> basicMetrics = new HashMap<>();
+        basicMetrics.put("totalProducts", productRepository.count());
+        basicMetrics.put("totalValue", BigDecimal.ZERO);
+        basicMetrics.put("lowStockItems", getLowStockProducts(10).size());
+        basicMetrics.put("outOfStockItems", productRepository.countByStockQuantity(0));
+        basicMetrics.put("version", "1.0-basic");
+
+        return basicMetrics;
+    }
+
+    /**
+     * V1.0 STUB - Returns empty inventory report
+     */
+    public Map<String, Object> getInventoryReport(String period) {
+        log.debug("InventoryService.getInventoryReport() - not implemented in v1.0");
+
+        Map<String, Object> emptyData = new HashMap<>();
+        emptyData.put("period", period);
+        emptyData.put("message", "Detailed reports available in v2.0");
+
+        return emptyData;
+    }
+
+    /**
+     * V1.0 STUB - Returns empty low stock alerts
+     */
+    public List<Map<String, Object>> getLowStockAlerts(Integer threshold) {
+        log.debug("InventoryService.getLowStockAlerts() - simplified v1.0 implementation");
+
+        List<Map<String, Object>> alerts = new ArrayList<>();
+        List<Product> lowStock = getLowStockProducts(threshold);
+
+        for (Product product : lowStock) {
+            Map<String, Object> alert = new HashMap<>();
+            alert.put("productId", product.getId());
+            alert.put("productName", product.getName());
+            alert.put("currentStock", product.getStockQuantity());
+            alerts.add(alert);
+        }
+
+        return alerts;
+    }
+
+    /**
+     * V1.0 STUB - Returns basic stock adjustment history
+     */
+    public List<Map<String, Object>> getStockAdjustmentHistory(Long productId) {
+        log.debug("InventoryService.getStockAdjustmentHistory() - minimal v1.0 implementation");
+
+        // Simplified for v1.0 - return empty list
+        // Full transaction history will be implemented in v2.0
+        return new ArrayList<>();
+    }
+
+    /**
+     * V1.0 STUB - Returns empty reorder suggestions
+     */
+    public List<Map<String, Object>> getReorderSuggestions() {
+        log.debug("InventoryService.getReorderSuggestions() - not implemented in v1.0");
+        return new ArrayList<>();
+    }
+}
 
     /* VERSION 2.0 - FULL IMPLEMENTATION
      *
@@ -237,7 +414,7 @@ public class InventoryService {
      * - Include stock movement webhooks
      * - Add inventory snapshot functionality
      */
-}
+
 
 /*
 package com.perfect8.shop.service;

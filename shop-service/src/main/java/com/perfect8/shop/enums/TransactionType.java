@@ -37,6 +37,16 @@ public enum TransactionType {
     ADJUSTMENT("Adjustment", "Inventory level correction"),
 
     /**
+     * Adjustment upward for inventory corrections
+     */
+    ADJUSTMENT_UP("Adjustment Up", "Inventory increased by adjustment"),
+
+    /**
+     * Adjustment downward for inventory corrections
+     */
+    ADJUSTMENT_DOWN("Adjustment Down", "Inventory decreased by adjustment"),
+
+    /**
      * Damaged goods removal
      */
     DAMAGE("Damage", "Product removed due to damage"),
@@ -57,9 +67,19 @@ public enum TransactionType {
     TRANSFER_IN("Transfer In", "Product transferred in"),
 
     /**
+     * Reserve inventory for pending orders (alias for RESERVATION)
+     */
+    RESERVE("Reserve", "Product reserved for order"),
+
+    /**
      * Reserved for pending orders
      */
     RESERVATION("Reservation", "Product reserved for order"),
+
+    /**
+     * Release reserved inventory (alias for UNRESERVATION)
+     */
+    RELEASE("Release", "Product reservation released"),
 
     /**
      * Unreserved - cancelled reservation
@@ -141,8 +161,8 @@ public enum TransactionType {
     public boolean increasesStock() {
         return switch (this) {
             case STOCK_IN, RETURN, PURCHASE, TRANSFER_IN,
-                 UNRESERVATION, INITIAL_STOCK, RESTOCK,
-                 MANUFACTURING -> true;
+                 UNRESERVATION, RELEASE, INITIAL_STOCK, RESTOCK,
+                 MANUFACTURING, ADJUSTMENT_UP -> true;
             default -> false;
         };
     }
@@ -155,8 +175,8 @@ public enum TransactionType {
     public boolean decreasesStock() {
         return switch (this) {
             case STOCK_OUT, SALE, DAMAGE, EXPIRED, TRANSFER_OUT,
-                 RESERVATION, PROMOTION, LOSS, QUALITY_REJECT,
-                 DISASSEMBLY -> true;
+                 RESERVATION, RESERVE, PROMOTION, LOSS, QUALITY_REJECT,
+                 DISASSEMBLY, ADJUSTMENT_DOWN -> true;
             default -> false;
         };
     }
@@ -198,9 +218,10 @@ public enum TransactionType {
      */
     public boolean isInternalOperation() {
         return switch (this) {
-            case ADJUSTMENT, DAMAGE, EXPIRED, TRANSFER_OUT, TRANSFER_IN,
-                 RESERVATION, UNRESERVATION, INITIAL_STOCK, LOSS,
-                 QUALITY_REJECT, RESTOCK, MANUFACTURING, DISASSEMBLY -> true;
+            case ADJUSTMENT, ADJUSTMENT_UP, ADJUSTMENT_DOWN, DAMAGE, EXPIRED,
+                 TRANSFER_OUT, TRANSFER_IN, RESERVATION, RESERVE, RELEASE,
+                 UNRESERVATION, INITIAL_STOCK, LOSS, QUALITY_REJECT, RESTOCK,
+                 MANUFACTURING, DISASSEMBLY -> true;
             default -> false;
         };
     }
@@ -213,7 +234,8 @@ public enum TransactionType {
     public static TransactionType[] getStockIncreasingTypes() {
         return new TransactionType[]{
                 STOCK_IN, RETURN, PURCHASE, TRANSFER_IN,
-                UNRESERVATION, INITIAL_STOCK, RESTOCK, MANUFACTURING
+                UNRESERVATION, RELEASE, INITIAL_STOCK, RESTOCK,
+                MANUFACTURING, ADJUSTMENT_UP
         };
     }
 
@@ -225,7 +247,8 @@ public enum TransactionType {
     public static TransactionType[] getStockDecreasingTypes() {
         return new TransactionType[]{
                 STOCK_OUT, SALE, DAMAGE, EXPIRED, TRANSFER_OUT,
-                RESERVATION, PROMOTION, LOSS, QUALITY_REJECT, DISASSEMBLY
+                RESERVATION, RESERVE, PROMOTION, LOSS, QUALITY_REJECT,
+                DISASSEMBLY, ADJUSTMENT_DOWN
         };
     }
 
@@ -277,19 +300,19 @@ public enum TransactionType {
     /**
      * Get transaction type for order cancellation
      *
-     * @return UNRESERVATION transaction type
+     * @return RELEASE transaction type (or UNRESERVATION)
      */
     public static TransactionType forOrderCancellation() {
-        return UNRESERVATION;
+        return RELEASE;
     }
 
     /**
      * Get transaction type for order reservation
      *
-     * @return RESERVATION transaction type
+     * @return RESERVE transaction type (or RESERVATION)
      */
     public static TransactionType forOrderReservation() {
-        return RESERVATION;
+        return RESERVE;
     }
 
     @Override

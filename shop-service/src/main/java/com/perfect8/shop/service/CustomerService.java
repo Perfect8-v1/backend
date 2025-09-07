@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -54,18 +55,15 @@ public class CustomerService {
                 .lastName(registrationDTO.getLastName())
                 .email(registrationDTO.getEmail())
                 .password(passwordEncoder.encode(registrationDTO.getPassword()))
-                .phone(registrationDTO.getPhoneNumber())
-                .dateOfBirth(registrationDTO.getDateOfBirth() != null ?
-                        registrationDTO.getDateOfBirth().atStartOfDay() : null)
+                .phoneNumber(registrationDTO.getPhoneNumber())
+                .dateOfBirth(registrationDTO.getDateOfBirth())
                 .isActive(true)
                 .isEmailVerified(false)
-                .acceptsMarketing(registrationDTO.getAcceptMarketingEmails() != null ?
-                        registrationDTO.getAcceptMarketingEmails() : false)
                 .registrationDate(LocalDateTime.now())
                 .build();
 
         Customer savedCustomer = customerRepository.save(customer);
-        log.info("Customer registered successfully with ID: {}", savedCustomer.getId());
+        log.info("Customer registered successfully with ID: {}", savedCustomer.getCustomerId());
 
         // Convert to DTO and return
         return convertToDTO(savedCustomer);
@@ -87,13 +85,10 @@ public class CustomerService {
             customer.setLastName(updateDTO.getLastName());
         }
         if (updateDTO.getPhoneNumber() != null) {
-            customer.setPhone(updateDTO.getPhoneNumber());
+            customer.setPhoneNumber(updateDTO.getPhoneNumber());
         }
         if (updateDTO.getDateOfBirth() != null) {
-            customer.setDateOfBirth(updateDTO.getDateOfBirth().atStartOfDay());
-        }
-        if (updateDTO.getSubscribeToNewsletter() != null) {
-            customer.setAcceptsMarketing(updateDTO.getSubscribeToNewsletter());
+            customer.setDateOfBirth(updateDTO.getDateOfBirth());
         }
         if (updateDTO.getPreferredLanguage() != null) {
             customer.setPreferredLanguage(updateDTO.getPreferredLanguage());
@@ -141,17 +136,18 @@ public class CustomerService {
 
         Address address = new Address();
         address.setCustomer(customer);
-        address.setStreetAddress(addressDTO.getStreetAddress());
+        address.setAddressLine1(addressDTO.getStreetAddress());
         address.setAddressLine2(addressDTO.getAddressLine2());
         address.setCity(addressDTO.getCity());
         address.setState(addressDTO.getState());
         address.setPostalCode(addressDTO.getPostalCode());
         address.setCountry(addressDTO.getCountry());
-        address.setDefaultAddress(addressDTO.isDefaultAddress());
+        address.setDefaultShipping(addressDTO.isDefaultAddress());
+        address.setDefaultBilling(addressDTO.isDefaultAddress());
         address.setAddressType(addressDTO.getAddressType());
 
         Address savedAddress = addressRepository.save(address);
-        log.info("Address added successfully with ID: {}", savedAddress.getId());
+        log.info("Address added successfully with ID: {}", savedAddress.getAddressId());
 
         return convertAddressToDTO(savedAddress);
     }
@@ -168,12 +164,12 @@ public class CustomerService {
                 .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
 
         // Verify address belongs to customer
-        if (!address.getCustomer().getId().equals(customerId)) {
+        if (!address.getCustomer().getCustomerId().equals(customerId)) {
             throw new RuntimeException("Address does not belong to customer");
         }
 
         // Update fields
-        address.setStreetAddress(addressDTO.getStreetAddress());
+        address.setAddressLine1(addressDTO.getStreetAddress());
         address.setAddressLine2(addressDTO.getAddressLine2());
         address.setCity(addressDTO.getCity());
         address.setState(addressDTO.getState());
@@ -199,20 +195,22 @@ public class CustomerService {
                 .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
 
         // Verify address belongs to customer
-        if (!address.getCustomer().getId().equals(customerId)) {
+        if (!address.getCustomer().getCustomerId().equals(customerId)) {
             throw new RuntimeException("Address does not belong to customer");
         }
 
         // Remove default from other addresses
         customer.getAddresses().forEach(addr -> {
-            if (addr.isDefaultAddress() && !addr.getId().equals(addressId)) {
-                addr.setDefaultAddress(false);
+            if (addr.isDefaultShipping() && !addr.getAddressId().equals(addressId)) {
+                addr.setDefaultShipping(false);
+                addr.setDefaultBilling(false);
                 addressRepository.save(addr);
             }
         });
 
-        // Set this as default
-        address.setDefaultAddress(true);
+        // Set this as default for both shipping and billing
+        address.setDefaultShipping(true);
+        address.setDefaultBilling(true);
         Address updatedAddress = addressRepository.save(address);
 
         log.info("Default address set successfully");
@@ -232,7 +230,7 @@ public class CustomerService {
                 .orElseThrow(() -> new RuntimeException("Address not found with ID: " + addressId));
 
         // Verify address belongs to customer
-        if (!address.getCustomer().getId().equals(customerId)) {
+        if (!address.getCustomer().getCustomerId().equals(customerId)) {
             throw new RuntimeException("Address does not belong to customer");
         }
 
@@ -336,7 +334,7 @@ public class CustomerService {
         return customers.stream()
                 .map(c -> {
                     Map<String, Object> customerInfo = new HashMap<>();
-                    customerInfo.put("id", c.getId());
+                    customerInfo.put("customerId", c.getCustomerId());
                     customerInfo.put("name", c.getFullName());
                     customerInfo.put("email", c.getEmail());
                     customerInfo.put("registrationDate", c.getRegistrationDate());
@@ -376,12 +374,13 @@ public class CustomerService {
 
     private CustomerDTO convertToDTO(Customer customer) {
         CustomerDTO dto = new CustomerDTO();
-        dto.setId(customer.getId());
+        dto.setId(customer.getCustomerId());
         dto.setFirstName(customer.getFirstName());
         dto.setLastName(customer.getLastName());
         dto.setEmail(customer.getEmail());
-        dto.setPhoneNumber(customer.getPhone());
-        dto.setDateOfBirth(customer.getDateOfBirth());
+        dto.setPhoneNumber(customer.getPhoneNumber());
+        dto.setDateOfBirth(customer.getDateOfBirth() != null ?
+                customer.getDateOfBirth().atStartOfDay() : null);
         dto.setGender(customer.getGender());
         dto.setIsActive(customer.getIsActive());
         dto.setRegistrationDate(customer.getRegistrationDate());
@@ -390,16 +389,16 @@ public class CustomerService {
 
     private AddressDTO convertAddressToDTO(Address address) {
         return AddressDTO.builder()
-                .id(address.getId())
+                .id(address.getAddressId())
                 .recipientName(address.getCustomer().getFullName())
-                .streetAddress(address.getStreetAddress())
+                .streetAddress(address.getAddressLine1())
                 .addressLine2(address.getAddressLine2())
                 .city(address.getCity())
                 .state(address.getState())
                 .postalCode(address.getPostalCode())
                 .country(address.getCountry())
                 .addressType(address.getAddressType())
-                .defaultAddress(address.isDefaultAddress())
+                .defaultAddress(address.isDefaultShipping())
                 .build();
     }
 }

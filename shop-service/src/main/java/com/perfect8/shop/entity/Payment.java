@@ -25,6 +25,10 @@ public class Payment {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
+    @Column(length = 3)
+    @Builder.Default
+    private String currency = "USD";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
     private PaymentMethod paymentMethod;
@@ -36,20 +40,33 @@ public class Payment {
     @Column(name = "transaction_id", unique = true, length = 100)
     private String transactionId;
 
+    @Column(name = "gateway_payment_id", length = 100)
+    private String gatewayPaymentId;
+
     @Column(name = "gateway_response_code", length = 50)
     private String gatewayResponseCode;
 
     @Column(name = "gateway_response_message", columnDefinition = "TEXT")
     private String gatewayResponseMessage;
 
+    @Column(name = "payer_email", length = 100)
+    private String payerEmail;
+
+    @Column(name = "payer_name", length = 100)
+    private String payerName;
+
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
     @Column(name = "is_verified")
+    @Builder.Default
     private Boolean isVerified = false;
 
     @Column(name = "verification_date")
     private LocalDateTime verificationDate;
+
+    @Column(name = "failure_reason", columnDefinition = "TEXT")
+    private String failureReason;
 
     // Refund fields
     @Column(name = "refund_amount", precision = 10, scale = 2)
@@ -65,10 +82,12 @@ public class Payment {
     private String refundReason;
 
     @Column(name = "is_partial_refund")
+    @Builder.Default
     private Boolean isPartialRefund = false;
 
     // Retry fields for failed payments
     @Column(name = "retry_count")
+    @Builder.Default
     private Integer retryCount = 0;
 
     @Column(name = "last_retry_date")
@@ -121,6 +140,9 @@ public class Payment {
         }
         if (isPartialRefund == null) {
             isPartialRefund = false;
+        }
+        if (currency == null) {
+            currency = "USD";
         }
     }
 

@@ -1,15 +1,24 @@
 package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "inventory_transactions")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class InventoryTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long inventoryTransactionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
@@ -19,7 +28,8 @@ public class InventoryTransaction {
     private String transactionType; // STOCK_IN, STOCK_OUT, ADJUSTMENT, RESERVED, RELEASED, CYCLE_COUNT
 
     @Column(name = "transaction_date", nullable = false)
-    private LocalDateTime transactionDate;
+    @Builder.Default
+    private LocalDateTime transactionDate = LocalDateTime.now();
 
     @Column(name = "quantity_before", nullable = false)
     private Integer quantityBefore;
@@ -46,160 +56,24 @@ public class InventoryTransaction {
     private LocalDateTime expiryDate;
 
     @Column(name = "cost_per_unit", precision = 10, scale = 2)
-    private java.math.BigDecimal costPerUnit;
+    private BigDecimal costPerUnit;
 
     @Column(name = "total_cost", precision = 10, scale = 2)
-    private java.math.BigDecimal totalCost;
+    private BigDecimal totalCost;
 
     @Column(length = 1000)
     private String notes;
-
-    // Default constructor
-    public InventoryTransaction() {}
-
-    // Constructor
-    public InventoryTransaction(Product product, String transactionType,
-                                Integer quantityBefore, Integer quantityAfter,
-                                Integer quantityChange, String reason, String userId) {
-        this.product = product;
-        this.transactionType = transactionType;
-        this.transactionDate = LocalDateTime.now();
-        this.quantityBefore = quantityBefore;
-        this.quantityAfter = quantityAfter;
-        this.quantityChange = quantityChange;
-        this.reason = reason;
-        this.userId = userId;
-    }
 
     @PrePersist
     protected void onCreate() {
         if (transactionDate == null) {
             transactionDate = LocalDateTime.now();
         }
-    }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
-
-    public String getTransactionType() {
-        return transactionType;
-    }
-
-    public void setTransactionType(String transactionType) {
-        this.transactionType = transactionType;
-    }
-
-    public LocalDateTime getTransactionDate() {
-        return transactionDate;
-    }
-
-    public void setTransactionDate(LocalDateTime transactionDate) {
-        this.transactionDate = transactionDate;
-    }
-
-    public Integer getQuantityBefore() {
-        return quantityBefore;
-    }
-
-    public void setQuantityBefore(Integer quantityBefore) {
-        this.quantityBefore = quantityBefore;
-    }
-
-    public Integer getQuantityAfter() {
-        return quantityAfter;
-    }
-
-    public void setQuantityAfter(Integer quantityAfter) {
-        this.quantityAfter = quantityAfter;
-    }
-
-    public Integer getQuantityChange() {
-        return quantityChange;
-    }
-
-    public void setQuantityChange(Integer quantityChange) {
-        this.quantityChange = quantityChange;
-    }
-
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getBatchNumber() {
-        return batchNumber;
-    }
-
-    public void setBatchNumber(String batchNumber) {
-        this.batchNumber = batchNumber;
-    }
-
-    public LocalDateTime getExpiryDate() {
-        return expiryDate;
-    }
-
-    public void setExpiryDate(LocalDateTime expiryDate) {
-        this.expiryDate = expiryDate;
-    }
-
-    public java.math.BigDecimal getCostPerUnit() {
-        return costPerUnit;
-    }
-
-    public void setCostPerUnit(java.math.BigDecimal costPerUnit) {
-        this.costPerUnit = costPerUnit;
+        // Calculate total cost if cost per unit and quantity change are present
         if (costPerUnit != null && quantityChange != null) {
-            this.totalCost = costPerUnit.multiply(java.math.BigDecimal.valueOf(Math.abs(quantityChange)));
+            totalCost = costPerUnit.multiply(BigDecimal.valueOf(Math.abs(quantityChange)));
         }
-    }
-
-    public java.math.BigDecimal getTotalCost() {
-        return totalCost;
-    }
-
-    public void setTotalCost(java.math.BigDecimal totalCost) {
-        this.totalCost = totalCost;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
     }
 
     // Business methods
@@ -242,12 +116,20 @@ public class InventoryTransaction {
         return description.toString();
     }
 
+    // Helper method to set cost and auto-calculate total
+    public void setCostPerUnitWithTotal(BigDecimal costPerUnit) {
+        this.costPerUnit = costPerUnit;
+        if (costPerUnit != null && quantityChange != null) {
+            this.totalCost = costPerUnit.multiply(BigDecimal.valueOf(Math.abs(quantityChange)));
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof InventoryTransaction)) return false;
         InventoryTransaction that = (InventoryTransaction) o;
-        return id != null && id.equals(that.id);
+        return inventoryTransactionId != null && inventoryTransactionId.equals(that.inventoryTransactionId);
     }
 
     @Override
@@ -258,7 +140,7 @@ public class InventoryTransaction {
     @Override
     public String toString() {
         return "InventoryTransaction{" +
-                "id=" + id +
+                "inventoryTransactionId=" + inventoryTransactionId +
                 ", transactionType='" + transactionType + '\'' +
                 ", transactionDate=" + transactionDate +
                 ", quantityBefore=" + quantityBefore +

@@ -1,70 +1,128 @@
 package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "addresses")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Address {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long addressId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     @Column(name = "address_type", length = 20)
-    private String addressType; // BILLING, SHIPPING, BOTH
+    @Builder.Default
+    private String addressType = "BOTH"; // SHIPPING, BILLING, BOTH
 
-    @Column(name = "street_address", nullable = false, length = 255)
-    private String streetAddress;
+    @Column(name = "address_line1", nullable = false, length = 100)
+    private String addressLine1;
 
-    @Column(name = "address_line_2", length = 255)
+    @Column(name = "address_line2", length = 100)
     private String addressLine2;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "street", length = 100)
+    private String street;
+
+    @Column(nullable = false, length = 50)
     private String city;
 
-    @Column(length = 100)
+    @Column(name = "state_province", length = 50)
     private String state;
 
     @Column(name = "postal_code", nullable = false, length = 20)
     private String postalCode;
 
-    @Column(nullable = false, length = 100)
-    private String country;
+    @Column(nullable = false, length = 2)
+    @Builder.Default
+    private String country = "US";
 
-    @Column(name = "is_default", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean defaultAddress;
+    @Column(name = "is_default_shipping")
+    @Builder.Default
+    private Boolean defaultShipping = false;
 
-    @Column(name = "created_at")
+    @Column(name = "is_default_billing")
+    @Builder.Default
+    private Boolean defaultBilling = false;
+
+    @Column(name = "recipient_first_name", length = 50)
+    private String recipientFirstName;
+
+    @Column(name = "recipient_last_name", length = 50)
+    private String recipientLastName;
+
+    @Column(name = "recipient_phone", length = 20)
+    private String recipientPhone;
+
+    @Column(name = "recipient_email", length = 100)
+    private String recipientEmail;
+
+    @Column(name = "delivery_instructions", columnDefinition = "TEXT")
+    private String deliveryInstructions;
+
+    @Column(name = "is_business_address")
+    @Builder.Default
+    private Boolean isBusinessAddress = false;
+
+    @Column(name = "company_name", length = 100)
+    private String companyName;
+
+    @Column(name = "tax_id", length = 50)
+    private String taxId;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private Boolean isActive = true;
+
+    @Column(name = "is_verified")
+    @Builder.Default
+    private Boolean isVerified = false;
+
+    @Column(name = "verification_date")
+    private LocalDateTime verificationDate;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Default constructor
-    public Address() {}
-
-    // Constructor
-    public Address(Customer customer, String streetAddress, String city,
-                   String state, String postalCode, String country) {
-        this.customer = customer;
-        this.streetAddress = streetAddress;
-        this.city = city;
-        this.state = state;
-        this.postalCode = postalCode;
-        this.country = country;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
+    // Lifecycle callbacks
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (defaultShipping == null) {
+            defaultShipping = false;
+        }
+        if (defaultBilling == null) {
+            defaultBilling = false;
+        }
+        if (isActive == null) {
+            isActive = true;
+        }
+        if (isVerified == null) {
+            isVerified = false;
+        }
+        if (isBusinessAddress == null) {
+            isBusinessAddress = false;
+        }
+        if (country == null) {
+            country = "US";
+        }
+        if (addressType == null) {
+            addressType = "BOTH";
+        }
     }
 
     @PreUpdate
@@ -72,156 +130,113 @@ public class Address {
         updatedAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Customer getCustomer() {
-        return customer;
-    }
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
-    }
-
-    public String getAddressType() {
-        return addressType;
-    }
-
-    public void setAddressType(String addressType) {
-        this.addressType = addressType;
-    }
-
-    public String getStreetAddress() {
-        return streetAddress;
-    }
-
-    public void setStreetAddress(String streetAddress) {
-        this.streetAddress = streetAddress;
-    }
-
-    public String getAddressLine2() {
-        return addressLine2;
-    }
-
-    public void setAddressLine2(String addressLine2) {
-        this.addressLine2 = addressLine2;
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    public void setCity(String city) {
-        this.city = city;
-    }
-
-    public String getState() {
-        return state;
-    }
-
-    public void setState(String state) {
-        this.state = state;
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        this.postalCode = postalCode;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public void setCountry(String country) {
-        this.country = country;
-    }
-
-    public boolean isDefaultAddress() {
-        return defaultAddress;
-    }
-
-    public void setDefaultAddress(boolean defaultAddress) {
-        this.defaultAddress = defaultAddress;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    // Business methods
+    // Helper methods
     public String getFullAddress() {
-        StringBuilder fullAddress = new StringBuilder();
-        fullAddress.append(streetAddress);
-
-        if (addressLine2 != null && !addressLine2.trim().isEmpty()) {
-            fullAddress.append(", ").append(addressLine2);
+        StringBuilder sb = new StringBuilder();
+        if (addressLine1 != null) {
+            sb.append(addressLine1);
         }
-
-        fullAddress.append(", ").append(city);
-
-        if (state != null && !state.trim().isEmpty()) {
-            fullAddress.append(", ").append(state);
+        if (addressLine2 != null && !addressLine2.isEmpty()) {
+            sb.append(", ").append(addressLine2);
         }
-
-        fullAddress.append(" ").append(postalCode);
-        fullAddress.append(", ").append(country);
-
-        return fullAddress.toString();
+        if (city != null) {
+            sb.append(", ").append(city);
+        }
+        if (state != null) {
+            sb.append(", ").append(state);
+        }
+        if (postalCode != null) {
+            sb.append(" ").append(postalCode);
+        }
+        if (country != null) {
+            sb.append(", ").append(country);
+        }
+        return sb.toString();
     }
 
-    public boolean isBillingAddress() {
-        return "BILLING".equals(addressType) || "BOTH".equals(addressType);
+    public String getRecipientFullName() {
+        if (recipientFirstName != null && recipientLastName != null) {
+            return recipientFirstName + " " + recipientLastName;
+        } else if (recipientFirstName != null) {
+            return recipientFirstName;
+        } else if (recipientLastName != null) {
+            return recipientLastName;
+        } else if (customer != null) {
+            return customer.getFullName();
+        }
+        return "";
     }
 
-    public boolean isShippingAddress() {
-        return "SHIPPING".equals(addressType) || "BOTH".equals(addressType);
+    public boolean isDefaultShipping() {
+        return Boolean.TRUE.equals(defaultShipping);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Address)) return false;
-        Address address = (Address) o;
-        return id != null && id.equals(address.id);
+    public void setDefaultShipping(boolean defaultShipping) {
+        this.defaultShipping = defaultShipping;
     }
 
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
+    public boolean isDefaultBilling() {
+        return Boolean.TRUE.equals(defaultBilling);
+    }
+
+    public void setDefaultBilling(boolean defaultBilling) {
+        this.defaultBilling = defaultBilling;
+    }
+
+    public boolean canBeUsedForShipping() {
+        return isActive() && ("SHIPPING".equals(addressType) || "BOTH".equals(addressType));
+    }
+
+    public boolean canBeUsedForBilling() {
+        return isActive() && ("BILLING".equals(addressType) || "BOTH".equals(addressType));
+    }
+
+    public boolean isActive() {
+        return Boolean.TRUE.equals(isActive);
+    }
+
+    public boolean isVerified() {
+        return Boolean.TRUE.equals(isVerified);
+    }
+
+    public boolean isBusinessAddress() {
+        return Boolean.TRUE.equals(isBusinessAddress);
+    }
+
+    public void markAsVerified() {
+        this.isVerified = true;
+        this.verificationDate = LocalDateTime.now();
+    }
+
+    public void deactivate() {
+        this.isActive = false;
+        this.defaultShipping = false;
+        this.defaultBilling = false;
+    }
+
+    // Backwards compatibility - some code may use "street" instead of addressLine1
+    public String getStreet() {
+        return street != null ? street : addressLine1;
+    }
+
+    public void setStreet(String street) {
+        this.street = street;
+        if (this.addressLine1 == null) {
+            this.addressLine1 = street;
+        }
     }
 
     @Override
     public String toString() {
         return "Address{" +
-                "id=" + id +
-                ", addressType='" + addressType + '\'' +
-                ", streetAddress='" + streetAddress + '\'' +
+                "addressId=" + addressId +
+                ", addressLine1='" + addressLine1 + '\'' +
                 ", city='" + city + '\'' +
                 ", state='" + state + '\'' +
                 ", postalCode='" + postalCode + '\'' +
                 ", country='" + country + '\'' +
-                ", defaultAddress=" + defaultAddress +
+                ", isDefaultShipping=" + defaultShipping +
+                ", isDefaultBilling=" + defaultBilling +
                 '}';
     }
 }

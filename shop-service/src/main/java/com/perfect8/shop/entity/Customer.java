@@ -2,101 +2,92 @@ package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Entity representing a customer.
- * Version 1.0 - Core functionality only
- */
 @Entity
-@Table(name = "customers", indexes = {
-        @Index(name = "idx_email", columnList = "email", unique = true),
-        @Index(name = "idx_phone", columnList = "phone"),
-        @Index(name = "idx_created_at", columnList = "created_at")
-})
-@Data
-@Builder
+@Table(name = "customers")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"addresses", "orders", "cart"})
-@ToString(exclude = {"addresses", "orders", "cart", "passwordHash"})
+@Builder
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+    private Long customerId;
 
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
 
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 
-    @Column(name = "email", nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true, length = 100)
     private String email;
 
-    @Column(name = "phone", length = 20)
-    private String phone;
+    @Column(nullable = false)
+    private String password;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
-    private String passwordHash;
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
 
-    @Column(name = "email_verified", nullable = false)
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(length = 10)
+    private String gender;
+
+    @Column(name = "registration_date", nullable = false)
+    private LocalDateTime registrationDate;
+
+    @Column(name = "last_login_date")
+    private LocalDateTime lastLoginDate;
+
+    @Column(name = "is_email_verified")
     @Builder.Default
-    private Boolean emailVerified = false;
+    private Boolean isEmailVerified = false;
 
-    @Column(name = "email_verification_token", length = 255)
+    @Column(name = "email_verification_token", length = 100)
     private String emailVerificationToken;
 
-    @Column(name = "email_verification_sent_at")
-    private LocalDateTime emailVerificationSentAt;
+    @Column(name = "email_verification_sent_date")
+    private LocalDateTime emailVerificationSentDate;
 
-    @Column(name = "password_reset_token", length = 255)
+    @Column(name = "password_reset_token", length = 100)
     private String passwordResetToken;
 
-    @Column(name = "password_reset_token_expires_at")
-    private LocalDateTime passwordResetTokenExpiresAt;
+    @Column(name = "password_reset_token_expiry")
+    private LocalDateTime passwordResetTokenExpiry;
 
-    // Customer status
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "is_active")
     @Builder.Default
     private Boolean isActive = true;
 
-    @Column(name = "is_blocked", nullable = false)
+    @Column(name = "is_deleted")
     @Builder.Default
-    private Boolean isBlocked = false;
+    private Boolean isDeleted = false;
 
-    @Column(name = "blocked_reason", columnDefinition = "TEXT")
-    private String blockedReason;
-
-    @Column(name = "blocked_at")
-    private LocalDateTime blockedAt;
-
-    // Marketing preferences
-    @Column(name = "accepts_marketing", nullable = false)
-    @Builder.Default
-    private Boolean acceptsMarketing = false;
-
-    @Column(name = "marketing_consent_updated_at")
-    private LocalDateTime marketingConsentUpdatedAt;
-
-    // Customer preferences
-    @Column(name = "preferred_language", length = 5)
-    @Builder.Default
-    private String preferredLanguage = "en";
+    @Column(name = "deleted_date")
+    private LocalDateTime deletedDate;
 
     @Column(name = "preferred_currency", length = 3)
     @Builder.Default
     private String preferredCurrency = "USD";
 
+    @Column(name = "preferred_language", length = 5)
+    @Builder.Default
+    private String preferredLanguage = "en";
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
     // Relationships
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
 
@@ -107,288 +98,165 @@ public class Customer {
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Cart cart;
 
-    // Customer notes (internal use)
-    @Column(name = "internal_notes", columnDefinition = "TEXT")
-    private String internalNotes;
-
-    // Customer tags for segmentation (comma-separated)
-    @Column(name = "tags", length = 500)
-    private String tags;
-
-    // Total spent (cached for performance)
-    @Column(name = "total_spent", precision = 10, scale = 2)
-    @Builder.Default
-    private java.math.BigDecimal totalSpent = java.math.BigDecimal.ZERO;
-
-    @Column(name = "order_count")
-    @Builder.Default
-    private Integer orderCount = 0;
-
-    // Important dates
-    @Column(name = "last_order_date")
-    private LocalDateTime lastOrderDate;
-
-    @Column(name = "first_order_date")
-    private LocalDateTime firstOrderDate;
-
-    @Column(name = "birth_date")
-    private java.time.LocalDate birthDate;
-
-    @CreationTimestamp
+    // Timestamps
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
-
-    @Column(name = "last_login_ip", length = 45)
-    private String lastLoginIp;
-
-    // ========================================
-    // Backward compatibility methods
-    // ========================================
-
-    /**
-     * Backward compatibility getter for customerId
-     * @return the customer id
-     */
-    public Long getCustomerId() {
-        return this.id;
-    }
-
-    /**
-     * Backward compatibility setter for customerId
-     * @param customerId the customer id to set
-     */
-    public void setCustomerId(Long customerId) {
-        this.id = customerId;
-    }
-
-    /**
-     * Backward compatibility method for emailVerified check
-     * @return true if email is verified
-     */
-    public boolean isEmailVerified() {
-        return Boolean.TRUE.equals(this.emailVerified);
-    }
-
-    /**
-     * Backward compatibility setter for emailVerified
-     * @param emailVerified whether email is verified
-     */
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
-
-    // ========================================
-    // Business logic methods
-    // ========================================
-
-    /**
-     * Get customer's full name
-     */
-    public String getFullName() {
-        return String.format("%s %s", firstName, lastName);
-    }
-
-    /**
-     * Add an address to the customer
-     */
-    public void addAddress(Address address) {
-        if (addresses == null) {
-            addresses = new ArrayList<>();
+    // Lifecycle callbacks
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (registrationDate == null) {
+            registrationDate = LocalDateTime.now();
         }
+        if (isActive == null) {
+            isActive = true;
+        }
+        if (isDeleted == null) {
+            isDeleted = false;
+        }
+        if (isEmailVerified == null) {
+            isEmailVerified = false;
+        }
+        if (preferredCurrency == null) {
+            preferredCurrency = "USD";
+        }
+        if (preferredLanguage == null) {
+            preferredLanguage = "en";
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // Helper methods
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
+
+    public void addAddress(Address address) {
         addresses.add(address);
         address.setCustomer(this);
     }
 
-    /**
-     * Remove an address from the customer
-     */
     public void removeAddress(Address address) {
-        if (addresses != null) {
-            addresses.remove(address);
-            address.setCustomer(null);
-        }
+        addresses.remove(address);
+        address.setCustomer(null);
     }
 
-    /**
-     * Get default shipping address
-     */
     public Address getDefaultShippingAddress() {
-        if (addresses == null || addresses.isEmpty()) {
-            return null;
-        }
         return addresses.stream()
                 .filter(Address::isDefaultShipping)
                 .findFirst()
-                .orElse(addresses.get(0));
+                .orElse(null);
     }
 
-    /**
-     * Get default billing address
-     */
     public Address getDefaultBillingAddress() {
-        if (addresses == null || addresses.isEmpty()) {
-            return null;
-        }
         return addresses.stream()
                 .filter(Address::isDefaultBilling)
                 .findFirst()
-                .orElse(getDefaultShippingAddress());
+                .orElse(null);
     }
 
-    /**
-     * Check if customer can place orders
-     */
-    public boolean canPlaceOrder() {
-        return Boolean.TRUE.equals(isActive) &&
-                !Boolean.TRUE.equals(isBlocked) &&
-                Boolean.TRUE.equals(emailVerified);
+    public void setDefaultShippingAddress(Address address) {
+        // Clear other defaults
+        addresses.forEach(a -> a.setDefaultShipping(false));
+        // Set new default
+        if (addresses.contains(address)) {
+            address.setDefaultShipping(true);
+        }
     }
 
-    /**
-     * Block customer with reason
-     */
-    public void block(String reason) {
-        this.isBlocked = true;
-        this.blockedReason = reason;
-        this.blockedAt = LocalDateTime.now();
+    public void setDefaultBillingAddress(Address address) {
+        // Clear other defaults
+        addresses.forEach(a -> a.setDefaultBilling(false));
+        // Set new default
+        if (addresses.contains(address)) {
+            address.setDefaultBilling(true);
+        }
+    }
+
+    public boolean hasVerifiedEmail() {
+        return Boolean.TRUE.equals(isEmailVerified);
+    }
+
+    public boolean isActive() {
+        return Boolean.TRUE.equals(isActive) && !Boolean.TRUE.equals(isDeleted);
+    }
+
+    public void markAsDeleted() {
+        this.isDeleted = true;
         this.isActive = false;
+        this.deletedDate = LocalDateTime.now();
+        // Clear sensitive data
+        this.email = "deleted_" + customerId + "@deleted.com";
+        this.password = "DELETED";
+        this.phoneNumber = null;
+        this.dateOfBirth = null;
     }
 
-    /**
-     * Unblock customer
-     */
-    public void unblock() {
-        this.isBlocked = false;
-        this.blockedReason = null;
-        this.blockedAt = null;
-        this.isActive = true;
+    public void updateLastLogin() {
+        this.lastLoginDate = LocalDateTime.now();
     }
 
-    /**
-     * Update marketing consent
-     */
-    public void updateMarketingConsent(boolean consent) {
-        this.acceptsMarketing = consent;
-        this.marketingConsentUpdatedAt = LocalDateTime.now();
+    public boolean hasOrders() {
+        return orders != null && !orders.isEmpty();
     }
 
-    /**
-     * Record login
-     */
-    public void recordLogin(String ipAddress) {
-        this.lastLoginAt = LocalDateTime.now();
-        this.lastLoginIp = ipAddress;
+    public int getOrderCount() {
+        return orders != null ? orders.size() : 0;
     }
 
-    /**
-     * Update order statistics
-     */
-    public void updateOrderStatistics(java.math.BigDecimal orderAmount) {
-        if (orderAmount != null) {
-            this.totalSpent = this.totalSpent.add(orderAmount);
+    public Optional<Order> getLatestOrder() {
+        if (orders == null || orders.isEmpty()) {
+            return Optional.empty();
         }
-        this.orderCount = this.orderCount + 1;
-        this.lastOrderDate = LocalDateTime.now();
-        if (this.firstOrderDate == null) {
-            this.firstOrderDate = LocalDateTime.now();
-        }
+        return orders.stream()
+                .max((o1, o2) -> o1.getCreatedAt().compareTo(o2.getCreatedAt()));
     }
 
-    /**
-     * Check if password reset token is valid
-     */
-    public boolean isPasswordResetTokenValid(String token) {
-        return token != null &&
-                token.equals(this.passwordResetToken) &&
-                this.passwordResetTokenExpiresAt != null &&
-                LocalDateTime.now().isBefore(this.passwordResetTokenExpiresAt);
+    // Password reset methods
+    public void setPasswordResetToken(String token) {
+        this.passwordResetToken = token;
+        this.passwordResetTokenExpiry = LocalDateTime.now().plusHours(24);
     }
 
-    /**
-     * Generate email verification token
-     */
-    public void generateEmailVerificationToken() {
-        this.emailVerificationToken = java.util.UUID.randomUUID().toString();
-        this.emailVerificationSentAt = LocalDateTime.now();
+    public boolean isPasswordResetTokenValid() {
+        return passwordResetToken != null &&
+                passwordResetTokenExpiry != null &&
+                passwordResetTokenExpiry.isAfter(LocalDateTime.now());
     }
 
-    /**
-     * Generate password reset token
-     */
-    public void generatePasswordResetToken() {
-        this.passwordResetToken = java.util.UUID.randomUUID().toString();
-        this.passwordResetTokenExpiresAt = LocalDateTime.now().plusHours(24);
-    }
-
-    /**
-     * Clear password reset token
-     */
     public void clearPasswordResetToken() {
         this.passwordResetToken = null;
-        this.passwordResetTokenExpiresAt = null;
+        this.passwordResetTokenExpiry = null;
     }
 
-    /**
-     * Verify email with token
-     */
-    public boolean verifyEmail(String token) {
-        if (token != null && token.equals(this.emailVerificationToken)) {
-            this.emailVerified = true;
-            this.emailVerificationToken = null;
-            this.emailVerificationSentAt = null;
-            return true;
-        }
-        return false;
+    // Email verification methods
+    public void setEmailVerificationToken(String token) {
+        this.emailVerificationToken = token;
+        this.emailVerificationSentDate = LocalDateTime.now();
     }
 
-    /**
-     * Check if customer is new (no completed orders)
-     */
-    public boolean isNewCustomer() {
-        return orderCount == null || orderCount == 0;
+    public void verifyEmail() {
+        this.isEmailVerified = true;
+        this.emailVerificationToken = null;
+        this.emailVerificationSentDate = null;
     }
 
-    /**
-     * Get customer segment
-     */
-    public String getCustomerSegment() {
-        if (totalSpent == null || totalSpent.compareTo(java.math.BigDecimal.ZERO) == 0) {
-            return "NEW";
-        } else if (totalSpent.compareTo(new java.math.BigDecimal("1000")) < 0) {
-            return "REGULAR";
-        } else if (totalSpent.compareTo(new java.math.BigDecimal("5000")) < 0) {
-            return "VIP";
-        } else {
-            return "PREMIUM";
-        }
-    }
-
-    /**
-     * Handle password synchronization
-     */
-    @PrePersist
-    @PreUpdate
-    public void handlePasswordSync() {
-        if (this.password != null && !this.password.isEmpty()) {
-            this.passwordHash = this.password;
-        }
-        if (this.passwordHash == null) {
-            this.passwordHash = "";
-        }
-    }
-
-    /**
-     * Load password after entity is loaded
-     */
-    @PostLoad
-    public void loadPassword() {
-        this.password = this.passwordHash;
+    @Override
+    public String toString() {
+        return "Customer{" +
+                "customerId=" + customerId +
+                ", email='" + email + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                '}';
     }
 }
