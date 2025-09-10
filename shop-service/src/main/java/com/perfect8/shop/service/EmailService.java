@@ -14,8 +14,8 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
 
 /**
  * Email Service - Version 1.0
@@ -43,27 +43,133 @@ public class EmailService {
     @Value("${spring.mail.enabled:false}")
     private boolean emailEnabled;
 
+    @Value("${app.support.email:support@perfect8shop.com}")
+    private String supportEmail;
+
+    /**
+     * Generic email sending method - used by OrderService
+     * This is the main method that OrderService calls
+     */
+    public void sendEmail(String toEmail, String subject, String body) {
+        if (!emailEnabled) {
+            log.info("Email disabled - would send email to {} with subject: {}", toEmail, subject);
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+
+            mailSender.send(message);
+            log.info("Email sent to {} with subject: {}", toEmail, subject);
+
+        } catch (Exception e) {
+            log.error("Failed to send email to {}: {}", toEmail, e.getMessage());
+            // Don't throw - email failure shouldn't stop business operations
+        }
+    }
+
+    /**
+     * Send password reset email - CRITICAL for account recovery!
+     */
+    public void sendPasswordResetEmail(Customer customer, String resetToken) {
+        if (!emailEnabled) {
+            log.info("Email disabled - would send password reset email to {}", customer.getEmail());
+            return;
+        }
+
+        try {
+            String subject = String.format("%s - Password Reset Request", appName);
+            String content = buildPasswordResetEmail(
+                    customer.getEmail(),
+                    resetToken,
+                    customer.getCustomerDisplayName()
+            );
+
+            sendHtmlEmail(customer.getEmail(), subject, content);
+            log.info("Password reset email sent to {}", customer.getEmail());
+
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to {}: {}", customer.getEmail(), e.getMessage());
+            // Don't throw - but this is critical, should be monitored
+        }
+    }
+
+    /**
+     * Send email verification - IMPORTANT for account security!
+     */
+    public void sendEmailVerification(Customer customer) {
+        if (!emailEnabled) {
+            log.info("Email disabled - would send verification email to {}", customer.getEmail());
+            return;
+        }
+
+        try {
+            String subject = String.format("Verify your email address - %s", appName);
+            String content = buildEmailVerificationEmail(
+                    customer.getEmail(),
+                    customer.getEmailVerificationToken(),
+                    customer.getCustomerDisplayName()
+            );
+
+            sendHtmlEmail(customer.getEmail(), subject, content);
+            log.info("Email verification sent to {}", customer.getEmail());
+
+        } catch (Exception e) {
+            log.error("Failed to send verification email to {}: {}", customer.getEmail(), e.getMessage());
+            // Don't throw - but log for monitoring
+        }
+    }
+
+    /**
+     * Send password change confirmation
+     */
+    public void sendPasswordChangeConfirmation(Customer customer) {
+        if (!emailEnabled) {
+            log.info("Email disabled - would send password change confirmation to {}", customer.getEmail());
+            return;
+        }
+
+        try {
+            String subject = String.format("%s - Password Changed Successfully", appName);
+            String content = buildPasswordChangeConfirmationEmail(
+                    customer.getEmail(),
+                    customer.getCustomerDisplayName()
+            );
+
+            sendHtmlEmail(customer.getEmail(), subject, content);
+            log.info("Password change confirmation sent to {}", customer.getEmail());
+
+        } catch (Exception e) {
+            log.error("Failed to send password change confirmation to {}: {}",
+                    customer.getEmail(), e.getMessage());
+        }
+    }
+
     /**
      * Send order confirmation email - CRITICAL for customer trust!
      */
     public void sendOrderConfirmation(Order order) {
         if (!emailEnabled) {
-            log.info("Email disabled - would send order confirmation for order {}", order.getId());
+            log.info("Email disabled - would send order confirmation for order {}", order.getOrderId());
             return;
         }
 
         try {
-            String to = order.getCustomer().getEmail();
-            String subject = String.format("Order Confirmation - #%d", order.getId());
+            String toEmail = order.getShippingEmail();
+            String subject = String.format("Order Confirmation - #%s", order.getOrderNumber());
 
             String content = buildOrderConfirmationEmail(order);
 
-            sendHtmlEmail(to, subject, content);
-            log.info("Order confirmation email sent to {} for order {}", to, order.getId());
+            sendHtmlEmail(toEmail, subject, content);
+            log.info("Order confirmation email sent to {} for order {}", toEmail, order.getOrderId());
 
         } catch (Exception e) {
             log.error("Failed to send order confirmation email for order {}: {}",
-                    order.getId(), e.getMessage());
+                    order.getOrderId(), e.getMessage());
             // Don't throw - email failure shouldn't stop order processing
         }
     }
@@ -74,19 +180,19 @@ public class EmailService {
     public void sendShippingNotification(Shipment shipment) {
         if (!emailEnabled) {
             log.info("Email disabled - would send shipping notification for shipment {}",
-                    shipment.getId());
+                    shipment.getShipmentId());
             return;
         }
 
         try {
             Order order = shipment.getOrder();
-            String to = order.getCustomer().getEmail();
-            String subject = String.format("Your Order #%d Has Shipped!", order.getId());
+            String toEmail = order.getShippingEmail();
+            String subject = String.format("Your Order #%s Has Shipped!", order.getOrderNumber());
 
             String content = buildShippingNotificationEmail(shipment);
 
-            sendHtmlEmail(to, subject, content);
-            log.info("Shipping notification sent to {} for order {}", to, order.getId());
+            sendHtmlEmail(toEmail, subject, content);
+            log.info("Shipping notification sent to {} for order {}", toEmail, order.getOrderId());
 
         } catch (Exception e) {
             log.error("Failed to send shipping notification: {}", e.getMessage());
@@ -98,18 +204,18 @@ public class EmailService {
      */
     public void sendDeliveryConfirmation(Order order) {
         if (!emailEnabled) {
-            log.info("Email disabled - would send delivery confirmation for order {}", order.getId());
+            log.info("Email disabled - would send delivery confirmation for order {}", order.getOrderId());
             return;
         }
 
         try {
-            String to = order.getCustomer().getEmail();
-            String subject = String.format("Order #%d Delivered Successfully", order.getId());
+            String toEmail = order.getShippingEmail();
+            String subject = String.format("Order #%s Delivered Successfully", order.getOrderNumber());
 
             String content = buildDeliveryConfirmationEmail(order);
 
-            sendHtmlEmail(to, subject, content);
-            log.info("Delivery confirmation sent to {} for order {}", to, order.getId());
+            sendHtmlEmail(toEmail, subject, content);
+            log.info("Delivery confirmation sent to {} for order {}", toEmail, order.getOrderId());
 
         } catch (Exception e) {
             log.error("Failed to send delivery confirmation: {}", e.getMessage());
@@ -121,18 +227,18 @@ public class EmailService {
      */
     public void sendOrderCancellation(Order order, String reason) {
         if (!emailEnabled) {
-            log.info("Email disabled - would send cancellation email for order {}", order.getId());
+            log.info("Email disabled - would send cancellation email for order {}", order.getOrderId());
             return;
         }
 
         try {
-            String to = order.getCustomer().getEmail();
-            String subject = String.format("Order #%d Cancelled", order.getId());
+            String toEmail = order.getShippingEmail();
+            String subject = String.format("Order #%s Cancelled", order.getOrderNumber());
 
             String content = buildCancellationEmail(order, reason);
 
-            sendHtmlEmail(to, subject, content);
-            log.info("Cancellation email sent to {} for order {}", to, order.getId());
+            sendHtmlEmail(toEmail, subject, content);
+            log.info("Cancellation email sent to {} for order {}", toEmail, order.getOrderId());
 
         } catch (Exception e) {
             log.error("Failed to send cancellation email: {}", e.getMessage());
@@ -144,18 +250,18 @@ public class EmailService {
      */
     public void sendPaymentConfirmation(Order order, BigDecimal amount) {
         if (!emailEnabled) {
-            log.info("Email disabled - would send payment confirmation for order {}", order.getId());
+            log.info("Email disabled - would send payment confirmation for order {}", order.getOrderId());
             return;
         }
 
         try {
-            String to = order.getCustomer().getEmail();
-            String subject = String.format("Payment Received - Order #%d", order.getId());
+            String toEmail = order.getShippingEmail();
+            String subject = String.format("Payment Received - Order #%s", order.getOrderNumber());
 
             String content = buildPaymentConfirmationEmail(order, amount);
 
-            sendHtmlEmail(to, subject, content);
-            log.info("Payment confirmation sent to {} for order {}", to, order.getId());
+            sendHtmlEmail(toEmail, subject, content);
+            log.info("Payment confirmation sent to {} for order {}", toEmail, order.getOrderId());
 
         } catch (Exception e) {
             log.error("Failed to send payment confirmation: {}", e.getMessage());
@@ -167,18 +273,18 @@ public class EmailService {
      */
     public void sendRefundNotification(Order order, BigDecimal refundAmount) {
         if (!emailEnabled) {
-            log.info("Email disabled - would send refund notification for order {}", order.getId());
+            log.info("Email disabled - would send refund notification for order {}", order.getOrderId());
             return;
         }
 
         try {
-            String to = order.getCustomer().getEmail();
-            String subject = String.format("Refund Processed - Order #%d", order.getId());
+            String toEmail = order.getShippingEmail();
+            String subject = String.format("Refund Processed - Order #%s", order.getOrderNumber());
 
             String content = buildRefundEmail(order, refundAmount);
 
-            sendHtmlEmail(to, subject, content);
-            log.info("Refund notification sent to {} for order {}", to, order.getId());
+            sendHtmlEmail(toEmail, subject, content);
+            log.info("Refund notification sent to {} for order {}", toEmail, order.getOrderId());
 
         } catch (Exception e) {
             log.error("Failed to send refund notification: {}", e.getMessage());
@@ -195,46 +301,143 @@ public class EmailService {
         }
 
         try {
-            String to = customer.getEmail();
+            String toEmail = customer.getEmail();
             String subject = String.format("Welcome to %s!", appName);
 
             String content = buildWelcomeEmail(customer);
 
-            sendHtmlEmail(to, subject, content);
-            log.info("Welcome email sent to {}", to);
+            sendHtmlEmail(toEmail, subject, content);
+            log.info("Welcome email sent to {}", toEmail);
 
         } catch (Exception e) {
             log.error("Failed to send welcome email: {}", e.getMessage());
         }
     }
 
-    // Private helper methods
+    // ========== Private helper methods ==========
 
-    private void sendHtmlEmail(String to, String subject, String htmlContent) throws MessagingException {
+    private void sendHtmlEmail(String toEmail, String subject, String htmlContent) throws MessagingException {
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
         helper.setFrom(fromEmail);
-        helper.setTo(to);
+        helper.setTo(toEmail);
         helper.setSubject(subject);
         helper.setText(htmlContent, true);
 
         mailSender.send(message);
     }
 
-    private void sendSimpleEmail(String to, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(fromEmail);
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
+    // ========== Email template builders - simplified for v1.0 ==========
 
-        mailSender.send(message);
+    private String buildPasswordResetEmail(String email, String resetToken, String displayName) {
+        String resetLink = String.format("%s/reset-password?token=%s&email=%s", appUrl, resetToken, email);
+
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>Password Reset Request</h2>
+                <p>Dear %s,</p>
+                <p>We received a request to reset your password for your %s account.</p>
+                <p>To reset your password, click the link below:</p>
+                <p><a href="%s" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a></p>
+                <p>Or copy and paste this link into your browser:</p>
+                <p style="word-break: break-all;">%s</p>
+                <p><strong>This link will expire in 24 hours for security reasons.</strong></p>
+                <p>If you didn't request this password reset, please ignore this email. Your password won't be changed.</p>
+                <p>For security reasons, if you didn't make this request, please contact our support team immediately at %s</p>
+                <p>Best regards,<br>%s Team</p>
+                <hr>
+                <p style="font-size: 12px; color: #666;">This is an automated message. Please do not reply to this email.</p>
+            </body>
+            </html>
+            """,
+                displayName,
+                appName,
+                resetLink,
+                resetLink,
+                supportEmail,
+                appName
+        );
     }
 
-    // Email template builders - simplified for v1.0
+    private String buildEmailVerificationEmail(String email, String verificationToken, String displayName) {
+        String verificationLink = String.format("%s/verify-email?token=%s&email=%s",
+                appUrl, verificationToken, email);
+
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>Verify Your Email Address</h2>
+                <p>Dear %s,</p>
+                <p>Thank you for registering with %s!</p>
+                <p>Please verify your email address by clicking the button below:</p>
+                <p><a href="%s" style="background-color: #2196F3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email Address</a></p>
+                <p>Or copy and paste this link into your browser:</p>
+                <p style="word-break: break-all;">%s</p>
+                <p><strong>This verification link will expire in 48 hours.</strong></p>
+                <p>Verifying your email address helps us ensure that we can:</p>
+                <ul>
+                    <li>Send you important order updates</li>
+                    <li>Help you recover your account if needed</li>
+                    <li>Keep your account secure</li>
+                </ul>
+                <p>If you didn't create an account with us, please ignore this email.</p>
+                <p>Best regards,<br>%s Team</p>
+                <hr>
+                <p style="font-size: 12px; color: #666;">This is an automated message. Please do not reply to this email.</p>
+            </body>
+            </html>
+            """,
+                displayName,
+                appName,
+                verificationLink,
+                verificationLink,
+                appName
+        );
+    }
+
+    private String buildPasswordChangeConfirmationEmail(String email, String displayName) {
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        return String.format("""
+            <html>
+            <body style="font-family: Arial, sans-serif;">
+                <h2>Password Changed Successfully</h2>
+                <p>Dear %s,</p>
+                <p>Your password for %s has been successfully changed.</p>
+                <p><strong>Changed on:</strong> %s</p>
+                <p>If you made this change, no further action is required.</p>
+                <p style="color: #d32f2f;"><strong>If you did NOT make this change:</strong></p>
+                <ul style="color: #d32f2f;">
+                    <li>Your account may be compromised</li>
+                    <li>Contact our support team immediately at %s</li>
+                    <li>Request a password reset using the "Forgot Password" link</li>
+                </ul>
+                <p>For your security, we recommend:</p>
+                <ul>
+                    <li>Using a unique password for each online account</li>
+                    <li>Enabling two-factor authentication when available</li>
+                    <li>Regularly updating your passwords</li>
+                </ul>
+                <p>Best regards,<br>%s Security Team</p>
+                <hr>
+                <p style="font-size: 12px; color: #666;">This is a security notification. Please do not reply to this email.</p>
+            </body>
+            </html>
+            """,
+                displayName,
+                appName,
+                timestamp,
+                supportEmail,
+                appName
+        );
+    }
 
     private String buildOrderConfirmationEmail(Order order) {
+        // Use Order's helper method to get customer name
+        String customerName = order.getCustomerFullName();
+
         return String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">
@@ -243,29 +446,35 @@ public class EmailService {
                 <p>Thank you for your order! We've received your order and it's being processed.</p>
                 <h3>Order Details:</h3>
                 <ul>
-                    <li>Order Number: <strong>#%d</strong></li>
+                    <li>Order Number: <strong>%s</strong></li>
                     <li>Order Date: %s</li>
-                    <li>Total Amount: $%.2f</li>
+                    <li>Total Amount: %s %.2f</li>
                     <li>Status: %s</li>
                 </ul>
-                <p>You can track your order at: <a href="%s/orders/%d">Track Order</a></p>
+                <h3>Shipping Address:</h3>
+                <p>%s</p>
+                <p>You can track your order at: <a href="%s/orders/%s">Track Order</a></p>
                 <p>Thank you for shopping with us!</p>
                 <p>Best regards,<br>%s Team</p>
             </body>
             </html>
             """,
-                order.getCustomer().getFullName(),
-                order.getId(),
+                customerName,
+                order.getOrderNumber(),
                 order.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")),
+                order.getCurrency(),
                 order.getTotalAmount(),
-                order.getStatus(),
-                appUrl, order.getId(),
+                order.getOrderStatus(),
+                order.getFormattedShippingAddress().replace("\n", "<br>"),
+                appUrl, order.getOrderNumber(),
                 appName
         );
     }
 
     private String buildShippingNotificationEmail(Shipment shipment) {
         Order order = shipment.getOrder();
+        String customerName = order.getCustomerFullName();
+
         return String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">
@@ -274,7 +483,7 @@ public class EmailService {
                 <p>Great news! Your order has been shipped and is on its way to you.</p>
                 <h3>Shipping Details:</h3>
                 <ul>
-                    <li>Order Number: <strong>#%d</strong></li>
+                    <li>Order Number: <strong>%s</strong></li>
                     <li>Tracking Number: <strong>%s</strong></li>
                     <li>Carrier: %s</li>
                     <li>Estimated Delivery: %s</li>
@@ -285,42 +494,48 @@ public class EmailService {
             </body>
             </html>
             """,
-                order.getCustomer().getFullName(),
-                order.getId(),
+                customerName,
+                order.getOrderNumber(),
                 shipment.getTrackingNumber(),
                 shipment.getCarrier(),
-                shipment.getEstimatedDeliveryDate(),
+                shipment.getEstimatedDeliveryDate() != null ?
+                        shipment.getEstimatedDeliveryDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) :
+                        "To be determined",
                 appUrl, shipment.getTrackingNumber(),
                 appName
         );
     }
 
     private String buildDeliveryConfirmationEmail(Order order) {
+        String customerName = order.getCustomerFullName();
+
         return String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">
                 <h2>Order Delivered Successfully!</h2>
                 <p>Dear %s,</p>
-                <p>Your order #%d has been delivered successfully.</p>
+                <p>Your order %s has been delivered successfully.</p>
                 <p>We hope you're happy with your purchase!</p>
                 <p>If you have any questions or concerns, please don't hesitate to contact us.</p>
                 <p>Best regards,<br>%s Team</p>
             </body>
             </html>
             """,
-                order.getCustomer().getFullName(),
-                order.getId(),
+                customerName,
+                order.getOrderNumber(),
                 appName
         );
     }
 
     private String buildCancellationEmail(Order order, String reason) {
+        String customerName = order.getCustomerFullName();
+
         return String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">
                 <h2>Order Cancellation Confirmation</h2>
                 <p>Dear %s,</p>
-                <p>Your order #%d has been cancelled.</p>
+                <p>Your order %s has been cancelled.</p>
                 %s
                 <p>If you paid for this order, a refund will be processed within 3-5 business days.</p>
                 <p>If you have any questions, please contact our customer service.</p>
@@ -328,49 +543,55 @@ public class EmailService {
             </body>
             </html>
             """,
-                order.getCustomer().getFullName(),
-                order.getId(),
+                customerName,
+                order.getOrderNumber(),
                 reason != null ? "<p>Reason: " + reason + "</p>" : "",
                 appName
         );
     }
 
     private String buildPaymentConfirmationEmail(Order order, BigDecimal amount) {
+        String customerName = order.getCustomerFullName();
+
         return String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">
                 <h2>Payment Received</h2>
                 <p>Dear %s,</p>
-                <p>We've received your payment of $%.2f for order #%d.</p>
+                <p>We've received your payment of %s %.2f for order %s.</p>
                 <p>Your order will be processed and shipped soon.</p>
                 <p>Thank you!</p>
                 <p>Best regards,<br>%s Team</p>
             </body>
             </html>
             """,
-                order.getCustomer().getFullName(),
+                customerName,
+                order.getCurrency(),
                 amount,
-                order.getId(),
+                order.getOrderNumber(),
                 appName
         );
     }
 
     private String buildRefundEmail(Order order, BigDecimal refundAmount) {
+        String customerName = order.getCustomerFullName();
+
         return String.format("""
             <html>
             <body style="font-family: Arial, sans-serif;">
                 <h2>Refund Processed</h2>
                 <p>Dear %s,</p>
-                <p>A refund of $%.2f has been processed for order #%d.</p>
+                <p>A refund of %s %.2f has been processed for order %s.</p>
                 <p>The refund should appear in your account within 3-5 business days.</p>
                 <p>If you have any questions, please contact us.</p>
                 <p>Best regards,<br>%s Team</p>
             </body>
             </html>
             """,
-                order.getCustomer().getFullName(),
+                customerName,
+                order.getCurrency(),
                 refundAmount,
-                order.getId(),
+                order.getOrderNumber(),
                 appName
         );
     }
@@ -395,27 +616,33 @@ public class EmailService {
             </html>
             """,
                 appName,
-                customer.getFullName(),
+                customer.getCustomerFullName(),
                 appUrl,
                 appName
         );
     }
 
-    /* VERSION 2.0 - ADVANCED EMAIL FEATURES
+    /* VERSION 2.0 - ADVANCED EMAIL FEATURES (kommenterat bort för v1.0)
      *
-     * In v2.0, this service will include:
+     * I v2.0 kommer denna service inkludera:
      * - Template engine integration (Thymeleaf/Freemarker)
-     * - Marketing emails and newsletters
-     * - Abandoned cart reminders
-     * - Product recommendations
-     * - Customer segmentation
-     * - Email tracking and analytics
-     * - A/B testing for email campaigns
-     * - Unsubscribe management
-     * - Email queue with retry logic
-     * - Rich HTML templates with images
-     * - Multi-language support
-     * - SMS notifications
-     * - Push notifications
+     * - Marketing emails och nyhetsbrev
+     * - Påminnelser om övergivna kundvagnar
+     * - Produktrekommendationer
+     * - Kundsegmentering
+     * - Email tracking och analytics
+     * - A/B-testning för email-kampanjer
+     * - Hantering av avprenumerationer
+     * - Email-kö med retry-logik
+     * - Rich HTML-mallar med bilder
+     * - Flerspråksstöd
+     * - SMS-notifieringar
+     * - Push-notifieringar
+     * - Two-factor authentication emails
+     * - Account activity alerts
+     * - Order status change notifications
+     * - Back-in-stock notifications
+     * - Review request emails
+     * - Birthday/anniversary emails
      */
 }

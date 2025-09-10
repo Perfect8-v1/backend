@@ -14,7 +14,7 @@ public enum OrderStatus {
     /**
      * Payment has been successfully processed
      */
-    CONFIRMED("Confirmed", "Order has been confirmed and payment received"),
+    PAID("Paid", "Payment has been received and confirmed"),
 
     /**
      * Order is being prepared for shipment
@@ -79,12 +79,12 @@ public enum OrderStatus {
 
         switch (this) {
             case PENDING:
-                return newStatus == CONFIRMED ||
+                return newStatus == PAID ||
                         newStatus == PAYMENT_FAILED ||
                         newStatus == CANCELLED ||
                         newStatus == ON_HOLD;
 
-            case CONFIRMED:
+            case PAID:
                 return newStatus == PROCESSING ||
                         newStatus == CANCELLED ||
                         newStatus == ON_HOLD;
@@ -104,7 +104,7 @@ public enum OrderStatus {
             case ON_HOLD:
                 return newStatus == PROCESSING ||
                         newStatus == CANCELLED ||
-                        newStatus == CONFIRMED;
+                        newStatus == PAID;
 
             case PAYMENT_FAILED:
                 return newStatus == PENDING ||
@@ -125,7 +125,7 @@ public enum OrderStatus {
      */
     public boolean canBeCancelled() {
         return this == PENDING ||
-                this == CONFIRMED ||
+                this == PAID ||
                 this == PROCESSING ||
                 this == ON_HOLD;
     }
@@ -161,7 +161,7 @@ public enum OrderStatus {
      * @return true if payment was successful
      */
     public boolean isPaymentSuccessful() {
-        return this == CONFIRMED ||
+        return this == PAID ||
                 this == PROCESSING ||
                 this == SHIPPED ||
                 this == DELIVERED;
@@ -183,8 +183,8 @@ public enum OrderStatus {
     public OrderStatus[] getNextPossibleStatuses() {
         switch (this) {
             case PENDING:
-                return new OrderStatus[]{CONFIRMED, PAYMENT_FAILED, CANCELLED, ON_HOLD};
-            case CONFIRMED:
+                return new OrderStatus[]{PAID, PAYMENT_FAILED, CANCELLED, ON_HOLD};
+            case PAID:
                 return new OrderStatus[]{PROCESSING, ON_HOLD, CANCELLED};
             case PROCESSING:
                 return new OrderStatus[]{SHIPPED, ON_HOLD, CANCELLED};
@@ -193,7 +193,7 @@ public enum OrderStatus {
             case DELIVERED:
                 return new OrderStatus[]{RETURNED};
             case ON_HOLD:
-                return new OrderStatus[]{PROCESSING, CONFIRMED, CANCELLED};
+                return new OrderStatus[]{PROCESSING, PAID, CANCELLED};
             case PAYMENT_FAILED:
                 return new OrderStatus[]{PENDING, CANCELLED};
             default:
@@ -240,7 +240,7 @@ public enum OrderStatus {
      */
     public static OrderStatus[] getActiveStatuses() {
         return new OrderStatus[]{
-                PENDING, CONFIRMED, PROCESSING, SHIPPED, ON_HOLD, PAYMENT_FAILED
+                PENDING, PAID, PROCESSING, SHIPPED, ON_HOLD, PAYMENT_FAILED
         };
     }
 

@@ -15,66 +15,66 @@ import java.util.List;
 @AllArgsConstructor
 public class CheckoutPreparationResponse {
 
-    // Cart information
-    private Long cartId;  // FIXED: Changed from 'id' to 'cartId' to match CartService usage
+    private Long cartId;
     private Long customerId;
     private Integer itemCount;
     private Integer totalQuantity;
-
-    // Cart items
     private List<CartItemResponse> items;
 
-    // Pricing breakdown
+    // Amounts
     private BigDecimal subtotal;
     private BigDecimal shippingCost;
     private BigDecimal taxAmount;
-    private BigDecimal discountAmount;
+    private BigDecimal taxRate;
     private BigDecimal totalAmount;
+    private String currency;
 
-    // Shipping information
+    // Address information
     private AddressDTO shippingAddress;
     private AddressDTO billingAddress;
-    private ShippingOptionDTO selectedShippingOption;
-    private List<ShippingOptionDTO> availableShippingOptions;
 
     // Payment information
     private String paymentMethod;
-    private List<String> availablePaymentMethods;
+    private String paymentStatus;
 
-    // Tax information
-    private BigDecimal taxRate;
-    private String taxJurisdiction;
+    // Shipping information
+    private String shippingMethod;
+    private String estimatedDeliveryDate;
 
-    // Validation and status
-    private boolean isValid;
+    // Validation status
+    private Boolean isValid;
     private List<String> validationErrors;
     private List<String> warnings;
 
-    // Session and timing
-    private String checkoutSessionId;
-    private LocalDateTime sessionExpiresAt;
+    // Timestamps
     private LocalDateTime preparedAt;
+    private LocalDateTime expiresAt;
 
     // Additional information
-    private String currency;
-    private String orderNotes;
-    private boolean giftOrder;
-    private String giftMessage;
+    private String notes;
+    private String promoCode;
+    private BigDecimal discountAmount;
 
-    // Discounts and promotions
-    private String appliedCouponCode;
-    private BigDecimal couponDiscount;
-    private List<String> appliedPromotions;
+    /* ============================================
+     * VERSION 2.0 FIELDS - Commented out for v1.0
+     * ============================================
+     * These fields will be added in version 2.0:
+     * - Advanced analytics
+     * - Loyalty points
+     * - Gift wrapping options
+     */
 
-    // Estimated delivery
-    private String estimatedDeliveryDate;
-    private String estimatedDeliveryTimeframe;
+    // Version 2.0 fields (commented out)
+    // private BigDecimal loyaltyPointsEarned;
+    // private BigDecimal loyaltyPointsUsed;
+    // private Boolean giftWrapRequested;
+    // private String giftMessage;
+    // private BigDecimal giftWrapCost;
+    // private List<RecommendedProductDTO> recommendedProducts;
+    // private CustomerSegmentDTO customerSegment;
+    // private BigDecimal estimatedProfitMargin;
 
-    // Terms and conditions
-    private boolean termsAccepted;
-    private boolean newsletterOptIn;
-
-    // Helper methods for validation
+    // Helper methods for adding validation issues
     public void addValidationError(String error) {
         if (this.validationErrors == null) {
             this.validationErrors = new java.util.ArrayList<>();
@@ -90,7 +90,7 @@ public class CheckoutPreparationResponse {
         this.warnings.add(warning);
     }
 
-    public boolean hasErrors() {
+    public boolean hasValidationErrors() {
         return validationErrors != null && !validationErrors.isEmpty();
     }
 
@@ -98,6 +98,7 @@ public class CheckoutPreparationResponse {
         return warnings != null && !warnings.isEmpty();
     }
 
+    // Calculate final total with all adjustments
     public BigDecimal calculateFinalTotal() {
         BigDecimal total = subtotal != null ? subtotal : BigDecimal.ZERO;
 
@@ -113,39 +114,15 @@ public class CheckoutPreparationResponse {
             total = total.subtract(discountAmount);
         }
 
-        if (couponDiscount != null) {
-            total = total.subtract(couponDiscount);
-        }
-
         return total;
     }
 
+    // Check if checkout is ready to proceed
     public boolean isReadyForCheckout() {
-        return isValid &&
-                shippingAddress != null &&
-                paymentMethod != null &&
-                items != null &&
-                !items.isEmpty();
-    }
-
-    public boolean requiresShipping() {
-        // Can be enhanced to check if any items are digital/downloadable
-        return true;
-    }
-
-    public boolean hasBillingAddress() {
-        return billingAddress != null;
-    }
-
-    public boolean hasShippingAddress() {
-        return shippingAddress != null;
-    }
-
-    public boolean hasSelectedShipping() {
-        return selectedShippingOption != null;
-    }
-
-    public boolean hasPaymentMethod() {
-        return paymentMethod != null && !paymentMethod.trim().isEmpty();
+        return Boolean.TRUE.equals(isValid)
+                && shippingAddress != null
+                && paymentMethod != null
+                && items != null
+                && !items.isEmpty();
     }
 }

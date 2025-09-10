@@ -12,111 +12,97 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Entity representing a customer order.
- * Version 1.0 - Core functionality only
+ * Order entity representing a customer order.
+ * Version 1.0 - Core functionality with descriptive field names
  */
 @Entity
-@Table(name = "orders", indexes = {
-        @Index(name = "idx_order_number", columnList = "order_number", unique = true),
-        @Index(name = "idx_customer_id", columnList = "customer_id"),
-        @Index(name = "idx_order_status", columnList = "order_status"),
-        @Index(name = "idx_created_at", columnList = "created_at")
-})
+@Table(name = "orders")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"customer", "orderItems", "payment", "shipment"})
-@ToString(exclude = {"customer", "orderItems", "payment", "shipment"})
+@EqualsAndHashCode(exclude = {"orderItems", "payment", "shipment", "customer"})
+@ToString(exclude = {"orderItems", "payment", "shipment", "customer"})
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
+    @Column(name = "order_id")
+    private Long orderId;
 
-    @Column(name = "order_number", nullable = false, unique = true, length = 50)
+    @Column(name = "order_number", unique = true, nullable = false)
     private String orderNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "order_status", nullable = false)
+    private OrderStatus orderStatus;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "order_status", nullable = false, length = 50)
-    @Builder.Default
-    private OrderStatus status = OrderStatus.PENDING;
-
-    // Order items
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    // Payment information
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Payment payment;
 
-    // Shipment information
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Shipment shipment;
 
-    // Pricing
-    @Column(name = "subtotal", nullable = false, precision = 10, scale = 2)
-    @Builder.Default
-    private BigDecimal subtotal = BigDecimal.ZERO;
+    // Financial fields with descriptive names
+    @Column(name = "subtotal", precision = 10, scale = 2, nullable = false)
+    private BigDecimal subtotal;
 
-    @Column(name = "tax_amount", nullable = false, precision = 10, scale = 2)
-    @Builder.Default
-    private BigDecimal taxAmount = BigDecimal.ZERO;
+    @Column(name = "tax_amount", precision = 10, scale = 2)
+    private BigDecimal taxAmount;
 
-    @Column(name = "shipping_amount", nullable = false, precision = 10, scale = 2)
-    @Builder.Default
-    private BigDecimal shippingAmount = BigDecimal.ZERO;
+    @Column(name = "shipping_amount", precision = 10, scale = 2)
+    private BigDecimal shippingAmount;
 
-    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
-    @Builder.Default
-    private BigDecimal totalAmount = BigDecimal.ZERO;
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private BigDecimal discountAmount;
 
-    // Currency for international support
-    @Column(name = "currency", nullable = false, length = 3)
-    @Builder.Default
+    @Column(name = "total_amount", precision = 10, scale = 2, nullable = false)
+    private BigDecimal totalAmount;
+
+    @Column(name = "currency", length = 3)
     private String currency = "USD";
 
-    // Shipping address (snapshot at time of order)
-    @Column(name = "shipping_first_name", nullable = false, length = 100)
+    // Shipping address fields with descriptive names
+    @Column(name = "shipping_first_name", length = 100)
     private String shippingFirstName;
 
-    @Column(name = "shipping_last_name", nullable = false, length = 100)
+    @Column(name = "shipping_last_name", length = 100)
     private String shippingLastName;
 
-    @Column(name = "shipping_email", nullable = false, length = 255)
+    @Column(name = "shipping_email", length = 150)
     private String shippingEmail;
 
     @Column(name = "shipping_phone", length = 20)
     private String shippingPhone;
 
-    @Column(name = "shipping_address_line1", nullable = false, length = 255)
+    @Column(name = "shipping_address_line1", length = 255)
     private String shippingAddressLine1;
 
     @Column(name = "shipping_address_line2", length = 255)
     private String shippingAddressLine2;
 
-    @Column(name = "shipping_city", nullable = false, length = 100)
+    @Column(name = "shipping_city", length = 100)
     private String shippingCity;
 
-    @Column(name = "shipping_state", nullable = false, length = 100)
+    @Column(name = "shipping_state", length = 100)
     private String shippingState;
 
-    @Column(name = "shipping_postal_code", nullable = false, length = 20)
+    @Column(name = "shipping_postal_code", length = 20)
     private String shippingPostalCode;
 
-    @Column(name = "shipping_country", nullable = false, length = 2)
-    @Builder.Default
-    private String shippingCountry = "US";
+    @Column(name = "shipping_country", length = 100)
+    private String shippingCountry = "USA";
 
-    // Billing address (if different from shipping)
+    // Billing address fields with descriptive names
     @Column(name = "billing_same_as_shipping")
-    @Builder.Default
     private Boolean billingSameAsShipping = true;
 
     @Column(name = "billing_first_name", length = 100)
@@ -124,6 +110,12 @@ public class Order {
 
     @Column(name = "billing_last_name", length = 100)
     private String billingLastName;
+
+    @Column(name = "billing_email", length = 150)
+    private String billingEmail;
+
+    @Column(name = "billing_phone", length = 20)
+    private String billingPhone;
 
     @Column(name = "billing_address_line1", length = 255)
     private String billingAddressLine1;
@@ -140,20 +132,30 @@ public class Order {
     @Column(name = "billing_postal_code", length = 20)
     private String billingPostalCode;
 
-    @Column(name = "billing_country", length = 2)
-    private String billingCountry;
+    @Column(name = "billing_country", length = 100)
+    private String billingCountry = "USA";
 
-    // Customer notes
+    // Notes fields with descriptive names
     @Column(name = "customer_notes", columnDefinition = "TEXT")
     private String customerNotes;
 
-    // Internal notes (not visible to customer)
     @Column(name = "internal_notes", columnDefinition = "TEXT")
     private String internalNotes;
 
-    // Important dates
-    @Column(name = "confirmed_at")
-    private LocalDateTime confirmedAt;
+    @Column(name = "gift_message", columnDefinition = "TEXT")
+    private String giftMessage;
+
+    // Timestamps with descriptive names
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
 
     @Column(name = "shipped_at")
     private LocalDateTime shippedAt;
@@ -164,246 +166,107 @@ public class Order {
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
-    @Column(name = "returned_at")
-    private LocalDateTime returnedAt;
+    // Additional fields for v1.0
+    @Column(name = "is_gift")
+    private Boolean isGift = false;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "requires_shipping")
+    private Boolean requiresShipping = true;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "ip_address", length = 45)
+    private String ipAddress;
 
-    // ========================================
-    // Backward compatibility methods
-    // ========================================
+    @Column(name = "user_agent", columnDefinition = "TEXT")
+    private String userAgent;
 
-    /**
-     * Backward compatibility getter for orderId
-     * @return the order id
-     */
-    public Long getOrderId() {
-        return this.id;
-    }
-
-    /**
-     * Backward compatibility setter for orderId
-     * @param orderId the order id to set
-     */
-    public void setOrderId(Long orderId) {
-        this.id = orderId;
-    }
-
-    /**
-     * Backward compatibility getter for orderStatus
-     * @return the order status
-     */
-    public OrderStatus getOrderStatus() {
-        return this.status;
-    }
-
-    /**
-     * Backward compatibility setter for orderStatus
-     * @param orderStatus the order status to set
-     */
-    public void setOrderStatus(OrderStatus orderStatus) {
-        this.status = orderStatus;
-    }
-
-    /**
-     * Get total amount (alias for totalAmount)
-     * @return the total amount
-     */
-    public BigDecimal getTotal() {
-        return this.totalAmount;
-    }
-
-    /**
-     * Set total amount (alias for totalAmount)
-     * @param total the total amount to set
-     */
-    public void setTotal(BigDecimal total) {
-        this.totalAmount = total;
-    }
-
-    /**
-     * Get order date (alias for createdAt)
-     * @return the order creation date
-     */
-    public LocalDateTime getOrderDate() {
-        return this.createdAt;
-    }
-
-    /**
-     * Set order date (alias for createdAt)
-     * @param orderDate the order date to set
-     */
-    public void setOrderDate(LocalDateTime orderDate) {
-        this.createdAt = orderDate;
-    }
-
-    /**
-     * Set order items (alias for orderItems)
-     * @param items the order items to set
-     */
-    public void setItems(List<OrderItem> items) {
-        this.orderItems = items;
-    }
-
-    // ========================================
-    // Business logic methods
-    // ========================================
-
-    /**
-     * Generate order number if not set
-     */
+    // Lifecycle hooks
     @PrePersist
-    public void generateOrderNumber() {
+    protected void onCreate() {
         if (orderNumber == null) {
-            // Format: ORD-YYYYMMDD-XXXXXX (where X is random alphanumeric)
-            String timestamp = LocalDateTime.now().toString()
-                    .replaceAll("[^0-9]", "").substring(0, 14);
-            String random = String.valueOf(System.nanoTime()).substring(7, 13);
-            this.orderNumber = String.format("ORD-%s-%s", timestamp, random);
+            // Generate order number: ORD-timestamp
+            orderNumber = "ORD-" + System.currentTimeMillis();
         }
-
-        // Copy billing address from shipping if same
-        if (Boolean.TRUE.equals(billingSameAsShipping)) {
-            this.billingFirstName = this.shippingFirstName;
-            this.billingLastName = this.shippingLastName;
-            this.billingAddressLine1 = this.shippingAddressLine1;
-            this.billingAddressLine2 = this.shippingAddressLine2;
-            this.billingCity = this.shippingCity;
-            this.billingState = this.shippingState;
-            this.billingPostalCode = this.shippingPostalCode;
-            this.billingCountry = this.shippingCountry;
+        if (orderStatus == null) {
+            orderStatus = OrderStatus.PENDING;
+        }
+        if (currency == null) {
+            currency = "USD";
         }
     }
 
-    /**
-     * Calculate order totals
-     */
-    public void calculateTotals() {
-        // Calculate subtotal from items
-        this.subtotal = orderItems.stream()
-                .map(OrderItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // Calculate total
-        this.totalAmount = subtotal
-                .add(taxAmount != null ? taxAmount : BigDecimal.ZERO)
-                .add(shippingAmount != null ? shippingAmount : BigDecimal.ZERO);
-    }
-
-    /**
-     * Add an order item
-     */
-    public void addOrderItem(OrderItem item) {
-        if (orderItems == null) {
-            orderItems = new ArrayList<>();
+    @PreUpdate
+    protected void onUpdate() {
+        // Update status-specific timestamps
+        if (orderStatus == OrderStatus.PAID && paidAt == null) {
+            paidAt = LocalDateTime.now();
         }
-        orderItems.add(item);
-        item.setOrder(this);
-        calculateTotals();
-    }
-
-    /**
-     * Remove an order item
-     */
-    public void removeOrderItem(OrderItem item) {
-        if (orderItems != null) {
-            orderItems.remove(item);
-            item.setOrder(null);
-            calculateTotals();
+        if (orderStatus == OrderStatus.SHIPPED && shippedAt == null) {
+            shippedAt = LocalDateTime.now();
+        }
+        if (orderStatus == OrderStatus.DELIVERED && deliveredAt == null) {
+            deliveredAt = LocalDateTime.now();
+        }
+        if (orderStatus == OrderStatus.CANCELLED && cancelledAt == null) {
+            cancelledAt = LocalDateTime.now();
         }
     }
 
-    /**
-     * Check if order can be cancelled
-     * Delegates to OrderStatus enum method
-     */
-    public boolean isCancellable() {
-        return status != null && status.canBeCancelled();
-    }
+    // ========== Helper methods for EmailService ==========
 
     /**
-     * Check if order can be returned
-     * Delegates to OrderStatus enum method
-     */
-    public boolean isReturnable() {
-        return status != null && status.canBeReturned();
-    }
-
-    /**
-     * Update order status with timestamp
-     */
-    public void updateStatus(OrderStatus newStatus) {
-        this.status = newStatus;
-        LocalDateTime now = LocalDateTime.now();
-
-        switch (newStatus) {
-            case CONFIRMED:
-                this.confirmedAt = now;
-                break;
-            case SHIPPED:
-                this.shippedAt = now;
-                break;
-            case DELIVERED:
-                this.deliveredAt = now;
-                break;
-            case CANCELLED:
-                this.cancelledAt = now;
-                break;
-            case RETURNED:
-                this.returnedAt = now;
-                break;
-            default:
-                // Other statuses don't need specific timestamp tracking
-                break;
-        }
-    }
-
-    /**
-     * Get customer full name
+     * Get customer full name for emails - required by EmailService
+     * Uses shipping name if available, otherwise customer name
      */
     public String getCustomerFullName() {
-        return String.format("%s %s", shippingFirstName, shippingLastName);
+        if (shippingFirstName != null && shippingLastName != null) {
+            return shippingFirstName + " " + shippingLastName;
+        }
+        if (customer != null) {
+            return customer.getCustomerFullName();
+        }
+        return "Valued Customer";
     }
 
     /**
-     * Check if order has been paid/confirmed
-     */
-    public boolean isPaid() {
-        return confirmedAt != null && (
-                status == OrderStatus.CONFIRMED ||
-                        status == OrderStatus.PROCESSING ||
-                        status == OrderStatus.SHIPPED ||
-                        status == OrderStatus.DELIVERED
-        );
-    }
-
-    /**
-     * Check if order is in final state
-     * Delegates to OrderStatus enum method
-     */
-    public boolean isFinalState() {
-        return status != null && status.isFinalState();
-    }
-
-    /**
-     * Get formatted shipping address
+     * Get formatted shipping address for emails - required by EmailService
      */
     public String getFormattedShippingAddress() {
         StringBuilder address = new StringBuilder();
-        address.append(shippingAddressLine1);
-        if (shippingAddressLine2 != null && !shippingAddressLine2.isEmpty()) {
-            address.append("\n").append(shippingAddressLine2);
+
+        if (shippingFirstName != null && shippingLastName != null) {
+            address.append(shippingFirstName).append(" ").append(shippingLastName).append("\n");
         }
-        address.append("\n").append(shippingCity).append(", ")
-                .append(shippingState).append(" ")
-                .append(shippingPostalCode).append("\n")
-                .append(shippingCountry);
+
+        if (shippingAddressLine1 != null) {
+            address.append(shippingAddressLine1).append("\n");
+        }
+
+        if (shippingAddressLine2 != null && !shippingAddressLine2.trim().isEmpty()) {
+            address.append(shippingAddressLine2).append("\n");
+        }
+
+        if (shippingCity != null) {
+            address.append(shippingCity);
+        }
+
+        if (shippingState != null && !shippingState.trim().isEmpty()) {
+            address.append(", ").append(shippingState);
+        }
+
+        if (shippingPostalCode != null) {
+            address.append(" ").append(shippingPostalCode);
+        }
+
+        address.append("\n");
+
+        if (shippingCountry != null) {
+            address.append(shippingCountry);
+        }
+
+        if (shippingPhone != null && !shippingPhone.trim().isEmpty()) {
+            address.append("\nPhone: ").append(shippingPhone);
+        }
+
         return address.toString();
     }
 
@@ -416,14 +279,198 @@ public class Order {
         }
 
         StringBuilder address = new StringBuilder();
-        address.append(billingAddressLine1);
-        if (billingAddressLine2 != null && !billingAddressLine2.isEmpty()) {
-            address.append("\n").append(billingAddressLine2);
+
+        if (billingFirstName != null && billingLastName != null) {
+            address.append(billingFirstName).append(" ").append(billingLastName).append("\n");
         }
-        address.append("\n").append(billingCity).append(", ")
-                .append(billingState).append(" ")
-                .append(billingPostalCode).append("\n")
-                .append(billingCountry);
+
+        if (billingAddressLine1 != null) {
+            address.append(billingAddressLine1).append("\n");
+        }
+
+        if (billingAddressLine2 != null && !billingAddressLine2.trim().isEmpty()) {
+            address.append(billingAddressLine2).append("\n");
+        }
+
+        if (billingCity != null) {
+            address.append(billingCity);
+        }
+
+        if (billingState != null && !billingState.trim().isEmpty()) {
+            address.append(", ").append(billingState);
+        }
+
+        if (billingPostalCode != null) {
+            address.append(" ").append(billingPostalCode);
+        }
+
+        address.append("\n");
+
+        if (billingCountry != null) {
+            address.append(billingCountry);
+        }
+
+        if (billingPhone != null && !billingPhone.trim().isEmpty()) {
+            address.append("\nPhone: ").append(billingPhone);
+        }
+
         return address.toString();
     }
+
+    // ========== Original helper methods ==========
+
+    /**
+     * @deprecated Use getCustomerFullName() instead for consistency
+     */
+    @Deprecated
+    public String getFullShippingName() {
+        return shippingFirstName + " " + shippingLastName;
+    }
+
+    /**
+     * @deprecated Use getFormattedBillingAddress() instead
+     */
+    @Deprecated
+    public String getFullBillingName() {
+        if (Boolean.TRUE.equals(billingSameAsShipping)) {
+            return getFullShippingName();
+        }
+        return billingFirstName + " " + billingLastName;
+    }
+
+    // ========== Business logic methods ==========
+
+    public void addOrderItem(OrderItem orderItem) {
+        orderItems.add(orderItem);
+        orderItem.setOrder(this);
+    }
+
+    public void removeOrderItem(OrderItem orderItem) {
+        orderItems.remove(orderItem);
+        orderItem.setOrder(null);
+    }
+
+    public BigDecimal calculateSubtotal() {
+        return orderItems.stream()
+                .map(OrderItem::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public BigDecimal calculateTotalAmount() {
+        BigDecimal total = subtotal != null ? subtotal : BigDecimal.ZERO;
+        if (taxAmount != null) {
+            total = total.add(taxAmount);
+        }
+        if (shippingAmount != null) {
+            total = total.add(shippingAmount);
+        }
+        if (discountAmount != null) {
+            total = total.subtract(discountAmount);
+        }
+        return total;
+    }
+
+    public void updateTotals() {
+        this.subtotal = calculateSubtotal();
+        this.totalAmount = calculateTotalAmount();
+    }
+
+    // ========== Status check methods ==========
+
+    public boolean isPaid() {
+        return payment != null &&
+                (orderStatus == OrderStatus.PAID ||
+                        orderStatus == OrderStatus.PROCESSING ||
+                        orderStatus == OrderStatus.SHIPPED ||
+                        orderStatus == OrderStatus.DELIVERED);
+    }
+
+    public boolean canBeCancelled() {
+        return orderStatus == OrderStatus.PENDING ||
+                orderStatus == OrderStatus.PAID ||
+                orderStatus == OrderStatus.PROCESSING;
+    }
+
+    public boolean canBeShipped() {
+        return orderStatus == OrderStatus.PAID ||
+                orderStatus == OrderStatus.PROCESSING;
+    }
+
+    public boolean isShipped() {
+        return shippedAt != null ||
+                orderStatus == OrderStatus.SHIPPED ||
+                orderStatus == OrderStatus.DELIVERED;
+    }
+
+    public boolean isDelivered() {
+        return deliveredAt != null ||
+                orderStatus == OrderStatus.DELIVERED;
+    }
+
+    public boolean isCancelled() {
+        return cancelledAt != null ||
+                orderStatus == OrderStatus.CANCELLED;
+    }
+
+    public boolean canBeRefunded() {
+        return isPaid() && !isCancelled();
+    }
+
+    // ========== State transition methods ==========
+
+    public void markAsPaid() {
+        if (orderStatus == OrderStatus.PENDING) {
+            this.orderStatus = OrderStatus.PAID;
+            this.paidAt = LocalDateTime.now();
+        }
+    }
+
+    public void markAsProcessing() {
+        if (isPaid()) {
+            this.orderStatus = OrderStatus.PROCESSING;
+        }
+    }
+
+    public void markAsShipped() {
+        if (canBeShipped()) {
+            this.orderStatus = OrderStatus.SHIPPED;
+            this.shippedAt = LocalDateTime.now();
+        }
+    }
+
+    public void markAsDelivered() {
+        if (isShipped()) {
+            this.orderStatus = OrderStatus.DELIVERED;
+            this.deliveredAt = LocalDateTime.now();
+        }
+    }
+
+    public void cancel(String cancellationReason) {
+        if (canBeCancelled()) {
+            this.orderStatus = OrderStatus.CANCELLED;
+            this.cancelledAt = LocalDateTime.now();
+            this.internalNotes = (this.internalNotes != null ? this.internalNotes + "\n" : "")
+                    + "Cancellation reason: " + cancellationReason;
+        }
+    }
+
+    /* VERSION 2.0 FEATURES (kommenterat bort för v1.0):
+     * - Coupons och rabattkoder
+     * - Gift cards
+     * - Loyalty points
+     * - Multi-currency support med växelkurser
+     * - Partial refunds
+     * - Split payments
+     * - Recurring orders/subscriptions
+     * - Order templates
+     * - Wishlists
+     * - Gift wrapping options
+     * - Special delivery instructions
+     * - Estimated delivery windows
+     * - Order insurance
+     * - Express shipping options
+     * - Tax exemptions
+     * - B2B pricing
+     * - Volume discounts
+     */
 }

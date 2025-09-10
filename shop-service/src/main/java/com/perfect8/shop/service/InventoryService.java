@@ -2,7 +2,6 @@ package com.perfect8.shop.service;
 
 import com.perfect8.shop.entity.Product;
 import com.perfect8.shop.entity.InventoryTransaction;
-import com.perfect8.shop.enums.TransactionType;
 import com.perfect8.shop.repository.ProductRepository;
 import com.perfect8.shop.repository.InventoryTransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Inventory Service - Version 1.0
@@ -96,12 +96,13 @@ public class InventoryService {
             }
 
             // Decrease stock
+            Integer oldQuantity = product.getStockQuantity();
             product.setStockQuantity(product.getStockQuantity() - quantity);
             productRepository.save(product);
 
             // Log transaction
-            logInventoryTransaction(productId, TransactionType.RESERVE, quantity,
-                    "Stock reserved for order");
+            logInventoryTransaction(product, "RESERVED", oldQuantity,
+                    product.getStockQuantity(), -quantity, "Stock reserved for order");
 
             log.info("Reserved {} units of product {}", quantity, productId);
             return true;
@@ -126,12 +127,13 @@ public class InventoryService {
             }
 
             // Increase stock back
+            Integer oldQuantity = product.getStockQuantity();
             product.setStockQuantity(product.getStockQuantity() + quantity);
             productRepository.save(product);
 
             // Log transaction
-            logInventoryTransaction(productId, TransactionType.RELEASE, quantity,
-                    "Reserved stock released");
+            logInventoryTransaction(product, "RELEASED", oldQuantity,
+                    product.getStockQuantity(), quantity, "Reserved stock released");
 
             log.info("Released {} reserved units of product {}", quantity, productId);
             return true;
@@ -157,8 +159,8 @@ public class InventoryService {
 
             // Stock already decreased during reservation
             // Just log the confirmation
-            logInventoryTransaction(productId, TransactionType.SALE, quantity,
-                    "Stock confirmed after payment");
+            logInventoryTransaction(product, "STOCK_OUT", product.getStockQuantity(),
+                    product.getStockQuantity(), 0, "Stock confirmed after payment");
 
             log.info("Confirmed {} units sold for product {}", quantity, productId);
             return true;
@@ -190,12 +192,13 @@ public class InventoryService {
             }
 
             // Increase stock for returned items
+            Integer oldQuantity = product.getStockQuantity();
             product.setStockQuantity(product.getStockQuantity() + quantity);
             productRepository.save(product);
 
             // Log transaction
-            logInventoryTransaction(productId, TransactionType.RETURN, quantity,
-                    "Items returned to stock");
+            logInventoryTransaction(product, "STOCK_IN", oldQuantity,
+                    product.getStockQuantity(), quantity, "Items returned to stock");
 
             log.info("Returned {} units to stock for product {}", quantity, productId);
             return true;
@@ -218,6 +221,7 @@ public class InventoryService {
                 return false;
             }
 
+            Integer oldQuantity = product.getStockQuantity();
             int newStock = product.getStockQuantity() + adjustment;
             if (newStock < 0) {
                 log.warn("Cannot adjust stock below 0 for product {}", productId);
@@ -228,8 +232,9 @@ public class InventoryService {
             productRepository.save(product);
 
             // Log transaction
-            TransactionType type = adjustment > 0 ? TransactionType.ADJUSTMENT_UP : TransactionType.ADJUSTMENT_DOWN;
-            logInventoryTransaction(productId, type, Math.abs(adjustment), reason);
+            String type = adjustment > 0 ? "ADJUSTMENT" : "ADJUSTMENT";
+            logInventoryTransaction(product, type, oldQuantity,
+                    newStock, adjustment, reason);
 
             log.info("Adjusted stock for product {} by {} units. Reason: {}",
                     productId, adjustment, reason);
@@ -244,15 +249,19 @@ public class InventoryService {
     /**
      * Log inventory transaction for audit trail
      */
-    private void logInventoryTransaction(Long productId, TransactionType type,
-                                         Integer quantity, String notes) {
+    private void logInventoryTransaction(Product product, String transactionType,
+                                         Integer quantityBefore, Integer quantityAfter,
+                                         Integer quantityChange, String notes) {
         try {
             InventoryTransaction transaction = InventoryTransaction.builder()
-                    .productId(productId)
-                    .transactionType(type)
-                    .quantity(quantity)
+                    .product(product)  // FIXED: Using product entity instead of productId
+                    .transactionType(transactionType)
+                    .quantityBefore(quantityBefore)
+                    .quantityAfter(quantityAfter)
+                    .quantityChange(quantityChange)
                     .transactionDate(LocalDateTime.now())
-                    .notes(notes)
+                    .reason(notes)
+                    .userId("SYSTEM") // In v2.0, get from security context
                     .build();
 
             inventoryTransactionRepository.save(transaction);
@@ -295,7 +304,13 @@ public class InventoryService {
             if (threshold == null) {
                 threshold = 10;
             }
-            return productRepository.findByStockQuantityLessThanEqual(threshold);
+
+            // Simple implementation for v1.0
+            final Integer finalThreshold = threshold;
+            return productRepository.findAll().stream()
+                    .filter(p -> p.getStockQuantity() <= finalThreshold)
+                    .collect(Collectors.toList());
+
         } catch (Exception e) {
             log.error("Error getting low stock products: {}", e.getMessage());
             return new ArrayList<>();
@@ -329,7 +344,12 @@ public class InventoryService {
         basicMetrics.put("totalProducts", productRepository.count());
         basicMetrics.put("totalValue", BigDecimal.ZERO);
         basicMetrics.put("lowStockItems", getLowStockProducts(10).size());
-        basicMetrics.put("outOfStockItems", productRepository.countByStockQuantity(0));
+
+        // Count out of stock items manually for v1.0
+        long outOfStock = productRepository.findAll().stream()
+                .filter(p -> p.getStockQuantity() <= 0)
+                .count();
+        basicMetrics.put("outOfStockItems", outOfStock);
         basicMetrics.put("version", "1.0-basic");
 
         return basicMetrics;
@@ -359,7 +379,7 @@ public class InventoryService {
 
         for (Product product : lowStock) {
             Map<String, Object> alert = new HashMap<>();
-            alert.put("productId", product.getId());
+            alert.put("productId", product.getProductId());
             alert.put("productName", product.getName());
             alert.put("currentStock", product.getStockQuantity());
             alerts.add(alert);
@@ -387,186 +407,3 @@ public class InventoryService {
         return new ArrayList<>();
     }
 }
-
-    /* VERSION 2.0 - FULL IMPLEMENTATION
-     *
-     * In v2.0, this service will include:
-     * - Advanced inventory tracking with transactions
-     * - Stock reservations and holds
-     * - Multi-location inventory
-     * - Batch and serial number tracking
-     * - Expiry date management
-     * - Automatic reorder points
-     * - Stock transfer between locations
-     * - Inventory valuation (FIFO/LIFO/Average)
-     * - Stock take and cycle counting
-     * - Supplier management
-     * - Purchase order generation
-     * - Stock forecasting
-     * - Inventory analytics and reports
-     * - Integration with warehouse management
-     * - Barcode/QR code support
-     *
-     * Implementation notes:
-     * - Use InventoryTransaction entity for audit trail
-     * - Implement optimistic locking for concurrency
-     * - Add scheduled jobs for reorder checks
-     * - Include stock movement webhooks
-     * - Add inventory snapshot functionality
-     */
-
-
-/*
-package com.perfect8.shop.service;
-
-import com.perfect8.shop.dto.InventoryMetricsResponse;
-import com.perfect8.shop.dto.InventoryReportResponse;
-import com.perfect8.shop.dto.LowStockAlertResponse;
-import com.perfect8.shop.entity.Product;
-import com.perfect8.shop.repository.ProductRepository;
-import com.perfect8.shop.repository.InventoryTransactionRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.ArrayList;
-
-@Slf4j
-@Service
-@RequiredArgsConstructor
-@Transactional
-public class InventoryService {
-
-    private final ProductRepository productRepository;
-    private final InventoryTransactionRepository inventoryTransactionRepository;
-    private final EmailService emailService;
-
-
-     * Get inventory metrics XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-    public InventoryMetricsResponse getInventoryMetrics() {
-        log.info("Getting inventory metrics");
-
-        try {
-            long totalProducts = productRepository.count();
-            long activeProducts = productRepository.countByIsActiveTrue();
-            long lowStockProducts = productRepository.countByStockQuantityLessThanEqualAndIsActiveTrue(10);
-            long outOfStockProducts = productRepository.countByStockQuantityAndIsActiveTrue(0);
-
-            return InventoryMetricsResponse.builder()
-                    .totalProducts(Math.toIntExact(totalProducts))
-                    .activeProducts(Math.toIntExact(activeProducts))
-                    .lowStockProducts(Math.toIntExact(lowStockProducts))
-                    .outOfStockProducts(Math.toIntExact(outOfStockProducts))
-                    .calculatedAt(LocalDateTime.now())
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Error getting inventory metrics: {}", e.getMessage());
-            return InventoryMetricsResponse.builder()
-                    .totalProducts(0)
-                    .activeProducts(0)
-                    .lowStockProducts(0)
-                    .outOfStockProducts(0)
-                    .calculatedAt(LocalDateTime.now())
-                    .build();
-        }
-    }
-
-
-     * Get low stock alerts XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-    public List<LowStockAlertResponse> getLowStockAlerts(Integer threshold, Integer limit) {
-        log.info("Getting low stock alerts with threshold: {} and limit: {}", threshold, limit);
-
-        try {
-            if (threshold == null) threshold = 10;
-            if (limit == null) limit = 50;
-
-            List<Product> lowStockProducts = productRepository.findByStockQuantityLessThanEqual(threshold);
-
-            List<LowStockAlertResponse> alerts = new ArrayList<>();
-            for (Product product : lowStockProducts) {
-                if (alerts.size() >= limit) break;
-
-                LowStockAlertResponse alert = LowStockAlertResponse.builder()
-                        .productId(product.getId())
-                        .productName(product.getName())
-                        .sku(product.getSku())
-                        .currentStock(product.getStockQuantity())
-                        .reorderPoint(product.getReorderPoint())
-                        .reorderQuantity(product.getReorderQuantity())
-                        .alertLevel(determineAlertLevel(product))
-                        .build();
-                alerts.add(alert);
-            }
-
-            return alerts;
-
-        } catch (Exception e) {
-            log.error("Error getting low stock alerts: {}", e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-
-     * Get inventory report XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-    public InventoryReportResponse getInventoryReport(Boolean includeInactive) {
-        log.info("Generating inventory report, includeInactive: {}", includeInactive);
-
-        try {
-            if (includeInactive == null) includeInactive = false;
-
-            List<Product> products = includeInactive ?
-                    productRepository.findAll() :
-                    productRepository.findByIsActiveTrue();
-
-            return InventoryReportResponse.builder()
-                    .totalProducts(products.size())
-                    .includeInactive(includeInactive)
-                    .generatedAt(LocalDateTime.now())
-                    .products(products)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Error generating inventory report: {}", e.getMessage());
-            return InventoryReportResponse.builder()
-                    .totalProducts(0)
-                    .includeInactive(includeInactive)
-                    .generatedAt(LocalDateTime.now())
-                    .products(new ArrayList<>())
-                    .build();
-        }
-    }
-
-
-     Send low stock alert for a product XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-    public void sendLowStockAlert(Product product) {
-        log.info("Sending low stock alert for product: {}", product.getName());
-
-        try {
-            emailService.sendLowStockAlert(product);
-        } catch (Exception e) {
-            log.error("Error sending low stock alert for product {}: {}", product.getId(), e.getMessage());
-        }
-    }
-
-    // Helper methods
-    private String determineAlertLevel(Product product) {
-        if (product.getStockQuantity() == null || product.getStockQuantity() <= 0) {
-            return "CRITICAL";
-        } else if (product.getReorderPoint() != null && product.getStockQuantity() <= product.getReorderPoint()) {
-            return "HIGH";
-        } else if (product.getStockQuantity() <= 5) {
-            return "MEDIUM";
-        } else {
-            return "LOW";
-        }
-    }
-}
-*/

@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.Map;
-import java.util.HashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +29,7 @@ public class CartService {
     private final ShippingService shippingService;
 
     /**
-     * Validate checkout - FIXED version matching CheckoutValidationResponse structure
+     * Validate checkout - Core functionality for v1.0
      */
     public CheckoutValidationResponse validateCheckout(String customerId) {
         if (customerId == null) {
@@ -48,18 +46,18 @@ public class CartService {
         // Build response with correct structure
         CheckoutValidationResponse response = CheckoutValidationResponse.builder()
                 .isValid(true)
-                .issues(new ArrayList<>())  // Using issues instead of errors
+                .issues(new ArrayList<>())
                 .cartId(cart.getId())
                 .customerId(customerIdLong)
                 .itemCount(cart.getItems().size())
                 .subtotal(cart.getTotalAmount())
-                .total(cart.getTotalAmount())  // Will be updated later
+                .total(cart.getTotalAmount())
                 .currency("USD")
                 .build();
 
         // Check if cart is empty
         if (cart.getItems().isEmpty()) {
-            response.addIssue("Cart is empty");  // Using addIssue instead of addError
+            response.addIssue("Cart is empty");
             return response;
         }
 
@@ -85,7 +83,7 @@ public class CartService {
                                 .availableQuantity(0)
                                 .build();
                 inventoryValidation.getOutOfStockItems().add(outOfStock);
-                inventoryValidation.setValid(false);  // Using setValid instead of setIsValid
+                inventoryValidation.setValid(false);
                 response.addIssue("Out of stock: " + product.getName());
 
             } else if (product.getStockQuantity() < item.getQuantity()) {
@@ -99,7 +97,7 @@ public class CartService {
                                 .warning("Only " + product.getStockQuantity() + " available")
                                 .build();
                 inventoryValidation.getLowStockItems().add(lowStock);
-                inventoryValidation.setValid(false);  // Using setValid instead of setIsValid
+                inventoryValidation.setValid(false);
                 response.addIssue("Insufficient stock for " + product.getName() +
                         " (requested: " + item.getQuantity() +
                         ", available: " + product.getStockQuantity() + ")");
@@ -110,14 +108,14 @@ public class CartService {
 
         // Set final amounts
         response.setSubtotal(cart.getTotalAmount());
-        response.setTotal(cart.getTotalAmount());  // Using setTotal instead of setFinalTotal
+        response.setTotal(cart.getTotalAmount());
         response.setValidatedAt(LocalDateTime.now());
 
         return response;
     }
 
     /**
-     * Get cart for customer
+     * Get cart for customer - Core functionality
      */
     public CartResponse getCart(String customerId) {
         if (customerId == null) {
@@ -135,7 +133,7 @@ public class CartService {
     }
 
     /**
-     * Add item to cart
+     * Add item to cart - Core functionality
      */
     public CartResponse addToCart(String customerId, AddToCartRequest request) {
         if (customerId == null) {
@@ -185,7 +183,7 @@ public class CartService {
     }
 
     /**
-     * Update cart item quantity
+     * Update cart item quantity - Core functionality
      */
     public CartResponse updateCartItem(String customerId, UpdateCartItemRequest request) {
         if (customerId == null) {
@@ -222,7 +220,7 @@ public class CartService {
     }
 
     /**
-     * Remove item from cart
+     * Remove item from cart - Core functionality
      */
     public CartResponse removeFromCart(String customerId, Long productId) {
         if (customerId == null) {
@@ -251,7 +249,7 @@ public class CartService {
     }
 
     /**
-     * Clear cart
+     * Clear cart - Core functionality
      */
     public void clearCart(String customerId) {
         if (customerId == null) {
@@ -273,7 +271,7 @@ public class CartService {
     }
 
     /**
-     * Get cart item count
+     * Get cart item count - Core functionality
      */
     public Integer getCartItemCount(String customerId) {
         if (customerId == null) {
@@ -295,7 +293,7 @@ public class CartService {
     }
 
     /**
-     * Prepare checkout - Complete implementation
+     * Prepare checkout - Core functionality for v1.0
      */
     public CheckoutPreparationResponse prepareCheckout(String customerId, CheckoutPreparationRequest request) {
         log.info("Preparing checkout for customer: {}", customerId);
@@ -368,19 +366,30 @@ public class CartService {
         return response;
     }
 
-    // Stub methods for features not yet implemented
+    /* ============================================
+     * VERSION 2.0 FEATURES - Commented out for v1.0
+     * ============================================
+     * These features will be implemented in version 2.0:
+     * - Coupon functionality
+     * - Saved cart functionality
+     */
+
+    /*
+    // Version 2.0: Apply coupon to cart
     public CartResponse applyCoupon(String customerId, ApplyCouponRequest request) {
-        log.warn("applyCoupon not fully implemented - returning current cart");
+        log.warn("applyCoupon - Feature planned for version 2.0");
         return getCart(customerId);
     }
 
+    // Version 2.0: Remove coupon from cart
     public CartResponse removeCoupon(String customerId) {
-        log.warn("removeCoupon not fully implemented - returning current cart");
+        log.warn("removeCoupon - Feature planned for version 2.0");
         return getCart(customerId);
     }
 
+    // Version 2.0: Save cart for later
     public SavedCartResponse saveCart(String customerId, SaveCartRequest request) {
-        log.warn("saveCart not fully implemented");
+        log.warn("saveCart - Feature planned for version 2.0");
         return SavedCartResponse.builder()
                 .cartId(1L)
                 .savedAt(LocalDateTime.now())
@@ -388,12 +397,15 @@ public class CartService {
                 .build();
     }
 
+    // Version 2.0: Get saved carts
     public SavedCartResponse getSavedCarts(String customerId) {
-        log.warn("getSavedCarts not fully implemented");
+        log.warn("getSavedCarts - Feature planned for version 2.0");
         return null;
     }
+    */
 
-    // Helper methods
+    // ========== Helper methods ==========
+
     private Cart createNewCart(Customer customer) {
         Cart cart = new Cart();
         cart.setCustomer(customer);
@@ -421,7 +433,7 @@ public class CartService {
 
         return CartResponse.builder()
                 .cartId(cart.getId())
-                .customerId(cart.getCustomer().getId())
+                .customerId(cart.getCustomer().getCustomerId())
                 .items(items)
                 .totalAmount(cart.getTotalAmount())
                 .itemCount(cart.getItems().size())

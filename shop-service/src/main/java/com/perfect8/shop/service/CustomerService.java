@@ -21,13 +21,20 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.stream.Collectors;
 
+/**
+ * Service class for customer management.
+ * Version 1.0 - Core functionality only
+ *
+ * This service handles all critical customer operations:
+ * - Customer registration and authentication
+ * - Profile management
+ * - Address management (critical for shipping)
+ * - Customer lookup and search
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -39,7 +46,8 @@ public class CustomerService {
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Register new customer - FIXED: Returns CustomerDTO
+     * Register new customer - Core functionality
+     * Returns CustomerDTO
      */
     public CustomerDTO registerCustomer(CustomerRegistrationDTO registrationDTO) {
         log.info("Registering new customer: {}", registrationDTO.getEmail());
@@ -70,7 +78,8 @@ public class CustomerService {
     }
 
     /**
-     * Update customer - FIXED: Accepts CustomerUpdateDTO
+     * Update customer profile - Core functionality
+     * Accepts CustomerUpdateDTO
      */
     public Customer updateCustomer(Long customerId, CustomerUpdateDTO updateDTO) {
         log.info("Updating customer: {}", customerId);
@@ -109,7 +118,97 @@ public class CustomerService {
     }
 
     /**
-     * Get customer addresses - FIXED: Returns List<AddressDTO>
+     * Get customer by ID - Core functionality
+     */
+    @Transactional(readOnly = true)
+    public Customer getCustomerById(Long customerId) {
+        return customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+    }
+
+    /**
+     * Get all customers with pagination - Core functionality
+     * Needed for admin customer management
+     */
+    @Transactional(readOnly = true)
+    public Page<Customer> getAllCustomers(Pageable pageable) {
+        return customerRepository.findAll(pageable);
+    }
+
+    /**
+     * Check if email exists - Core functionality
+     * Used during registration
+     */
+    @Transactional(readOnly = true)
+    public boolean emailExists(String email) {
+        try {
+            return customerRepository.existsByEmail(email);
+        } catch (Exception e) {
+            log.error("Error checking email existence: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Search customers - Core functionality
+     * Essential for customer service
+     */
+    public Page<Customer> searchCustomers(String name, String email, String phone, Pageable pageable) {
+        log.info("Searching customers - name: {}, email: {}, phone: {}", name, email, phone);
+
+        // Simple implementation - would need custom query in repository
+        if (email != null && !email.isEmpty()) {
+            return customerRepository.findByEmailContaining(email, pageable);
+        }
+
+        return customerRepository.findAll(pageable);
+    }
+
+    /**
+     * Get recent customers - Core functionality
+     * Useful for basic admin overview
+     */
+    public List<Customer> getRecentCustomers(int limit) {
+        log.info("Getting {} recent customers", limit);
+
+        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "registrationDate"));
+        return customerRepository.findAll(pageRequest).getContent();
+    }
+
+    /**
+     * Delete customer (soft delete) - Core functionality
+     * Required for GDPR compliance
+     */
+    public void deleteCustomer(Long customerId) {
+        log.info("Deleting customer: {}", customerId);
+
+        Customer customer = getCustomerById(customerId);
+        customer.setIsActive(false);
+        customerRepository.save(customer);
+
+        log.info("Customer deleted (soft delete) successfully");
+    }
+
+    /**
+     * Toggle customer status - Core functionality
+     * For admin customer management
+     */
+    public Customer toggleCustomerStatus(Long customerId) {
+        log.info("Toggling status for customer: {}", customerId);
+
+        Customer customer = getCustomerById(customerId);
+        customer.setIsActive(!customer.getIsActive());
+        Customer updated = customerRepository.save(customer);
+
+        log.info("Customer status toggled to: {}", updated.getIsActive());
+        return updated;
+    }
+
+    // ========== ADDRESS MANAGEMENT - Critical for shipping ==========
+
+    /**
+     * Get customer addresses - Core functionality
+     * Critical for order placement and shipping
      */
     @Transactional(readOnly = true)
     public List<AddressDTO> getCustomerAddresses(Long customerId) {
@@ -127,7 +226,8 @@ public class CustomerService {
     }
 
     /**
-     * Add customer address - FIXED: Returns AddressDTO
+     * Add customer address - Core functionality
+     * Critical for shipping
      */
     public AddressDTO addCustomerAddress(Long customerId, AddressDTO addressDTO) {
         log.info("Adding address for customer: {}", customerId);
@@ -153,7 +253,8 @@ public class CustomerService {
     }
 
     /**
-     * Update customer address - FIXED: Returns AddressDTO
+     * Update customer address - Core functionality
+     * Critical for correct deliveries
      */
     public AddressDTO updateCustomerAddress(Long customerId, Long addressId, AddressDTO addressDTO) {
         log.info("Updating address {} for customer: {}", addressId, customerId);
@@ -184,7 +285,8 @@ public class CustomerService {
     }
 
     /**
-     * Set default address - FIXED: Returns AddressDTO
+     * Set default address - Core functionality
+     * Simplifies checkout process
      */
     public AddressDTO setDefaultAddress(Long customerId, Long addressId) {
         log.info("Setting default address {} for customer: {}", addressId, customerId);
@@ -219,7 +321,7 @@ public class CustomerService {
     }
 
     /**
-     * Delete customer address
+     * Delete customer address - Core functionality
      */
     public void deleteCustomerAddress(Long customerId, Long addressId) {
         log.info("Deleting address {} for customer: {}", addressId, customerId);
@@ -238,90 +340,17 @@ public class CustomerService {
         log.info("Address deleted successfully");
     }
 
-    /**
-     * Get customer by ID
+    /* ============================================
+     * VERSION 2.0 METHODS - Commented out for v1.0
+     * ============================================
+     * These methods will be implemented in version 2.0:
+     * - Advanced analytics and reporting
+     * - Customer segmentation
+     * - Detailed statistics
      */
-    @Transactional(readOnly = true)
-    public Customer getCustomerById(Long customerId) {
-        return customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
-    }
 
-    /**
-     * Get all customers with pagination
-     */
-    @Transactional(readOnly = true)
-    public Page<Customer> getAllCustomers(Pageable pageable) {
-        return customerRepository.findAll(pageable);
-    }
-
-    /**
-     * Check if email exists
-     */
-    @Transactional(readOnly = true)
-    public boolean emailExists(String email) {
-        try {
-            return customerRepository.existsByEmail(email);
-        } catch (Exception e) {
-            log.error("Error checking email existence: {}", e.getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Delete customer (soft delete)
-     */
-    public void deleteCustomer(Long customerId) {
-        log.info("Deleting customer: {}", customerId);
-
-        Customer customer = getCustomerById(customerId);
-        customer.setIsActive(false);
-        customerRepository.save(customer);
-
-        log.info("Customer deleted (soft delete) successfully");
-    }
-
-    /**
-     * Toggle customer status
-     */
-    public Customer toggleCustomerStatus(Long customerId) {
-        log.info("Toggling status for customer: {}", customerId);
-
-        Customer customer = getCustomerById(customerId);
-        customer.setIsActive(!customer.getIsActive());
-        Customer updated = customerRepository.save(customer);
-
-        log.info("Customer status toggled to: {}", updated.getIsActive());
-        return updated;
-    }
-
-    /**
-     * Search customers
-     */
-    public Page<Customer> searchCustomers(String name, String email, String phone, Pageable pageable) {
-        log.info("Searching customers - name: {}, email: {}, phone: {}", name, email, phone);
-
-        // Simple implementation - would need custom query in repository
-        if (email != null && !email.isEmpty()) {
-            return customerRepository.findByEmailContaining(email, pageable);
-        }
-
-        return customerRepository.findAll(pageable);
-    }
-
-    /**
-     * Get recent customers
-     */
-    public List<Customer> getRecentCustomers(int limit) {
-        log.info("Getting {} recent customers", limit);
-
-        PageRequest pageRequest = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "registrationDate"));
-        return customerRepository.findAll(pageRequest).getContent();
-    }
-
-    /**
-     * Get new customers - for admin dashboard
-     */
+    /*
+    // Version 2.0: Get new customers for dashboard analytics
     public List<Object> getNewCustomers(Integer days, Integer limit) {
         log.info("Getting new customers from last {} days", days);
 
@@ -343,9 +372,7 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Get customer report
-     */
+    // Version 2.0: Get customer report with analytics
     public Object getCustomerReport(String period, String segmentation) {
         log.info("Getting customer report - period: {}, segmentation: {}", period, segmentation);
 
@@ -358,9 +385,7 @@ public class CustomerService {
         return report;
     }
 
-    /**
-     * Get customer statistics
-     */
+    // Version 2.0: Get customer statistics
     @Transactional(readOnly = true)
     public Object getCustomerStatistics() {
         Map<String, Object> stats = new HashMap<>();
@@ -369,8 +394,9 @@ public class CustomerService {
         stats.put("verifiedEmails", customerRepository.countByIsEmailVerifiedTrue());
         return stats;
     }
+    */
 
-    // Helper methods
+    // ========== Helper methods ==========
 
     private CustomerDTO convertToDTO(Customer customer) {
         CustomerDTO dto = new CustomerDTO();

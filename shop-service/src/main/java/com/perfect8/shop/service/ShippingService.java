@@ -39,7 +39,7 @@ public class ShippingService {
 
             // Standard shipping
             ShippingOptionDTO standard = ShippingOptionDTO.builder()
-                    .id(1L)
+                    .shippingOptionId(1L)
                     .name("Standard Shipping")
                     .description("5-7 business days")
                     .price(calculateStandardShipping(request))
@@ -50,7 +50,7 @@ public class ShippingService {
 
             // Express shipping
             ShippingOptionDTO express = ShippingOptionDTO.builder()
-                    .id(2L)
+                    .shippingOptionId(2L)
                     .name("Express Shipping")
                     .description("2-3 business days")
                     .price(calculateExpressShipping(request))
@@ -62,7 +62,7 @@ public class ShippingService {
 
             // Overnight shipping
             ShippingOptionDTO overnight = ShippingOptionDTO.builder()
-                    .id(3L)
+                    .shippingOptionId(3L)
                     .name("Overnight Shipping")
                     .description("Next business day")
                     .price(calculateOvernightShipping(request))
@@ -166,7 +166,7 @@ public class ShippingService {
      */
     public Shipment createShipment(Order order, ShippingOptionDTO shippingOption) {
         try {
-            log.info("Creating shipment for order: {}", order.getId());
+            log.info("Creating shipment for order: {}", order.getOrderId());
 
             Shipment shipment = new Shipment();
             shipment.setOrder(order);
@@ -194,7 +194,7 @@ public class ShippingService {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
 
-            return shipmentRepository.findByOrderId(orderId);
+            return shipmentRepository.findByOrderOrderId(orderId);
 
         } catch (Exception e) {
             log.error("Error fetching shipments: {}", e.getMessage(), e);

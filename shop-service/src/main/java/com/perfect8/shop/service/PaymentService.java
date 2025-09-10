@@ -18,12 +18,17 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.UUID;
 
 /**
  * Service for handling payment operations.
- * Version 1.0 - Simplified core payment functionality (PayPal primary)
+ * Version 1.0 - Core payment functionality with PayPal as primary payment method
+ *
+ * This service handles all critical payment operations:
+ * - Payment processing through PayPal
+ * - Payment verification and completion
+ * - Refund processing (critical for customer service)
+ * - Payment retry and cancellation
  */
 @Service
 @RequiredArgsConstructor
@@ -40,7 +45,8 @@ public class PaymentService {
     private String defaultCurrency;
 
     /**
-     * Process payment for an order
+     * Process payment for an order - Core functionality
+     * All payments go through PayPal in v1.0
      */
     public Payment processPayment(Order order, PaymentRequestDTO request) {
         log.info("Processing payment for order: {}", order.getOrderNumber());
@@ -59,7 +65,7 @@ public class PaymentService {
             // Save initial payment record
             payment = paymentRepository.save(payment);
 
-            // Process with PayPal (all payments go through PayPal in v1.0)
+            // Process with PayPal (primary payment method in v1.0)
             PaymentResponseDTO response = payPalService.processPayment(request);
 
             // Update payment based on response
@@ -70,8 +76,7 @@ public class PaymentService {
                 payment.setIsVerified(true);
                 payment.setVerificationDate(LocalDateTime.now());
 
-                // Update order status - Order entity doesn't have paymentStatus field
-                // Just save to trigger any update timestamps
+                // Update order to trigger update timestamps
                 orderRepository.save(order);
 
                 // Send confirmation email
@@ -97,7 +102,7 @@ public class PaymentService {
     }
 
     /**
-     * Create payment record for an order
+     * Create payment record for an order - Core functionality
      */
     public Payment createPayment(Order order, Map<String, Object> paymentDetails) {
         log.info("Creating payment for order: {}", order.getOrderNumber());
@@ -122,7 +127,7 @@ public class PaymentService {
     }
 
     /**
-     * Complete payment
+     * Complete payment - Core functionality
      */
     @Transactional
     public Payment completePayment(Long paymentId, String gatewayTransactionId) {
@@ -138,7 +143,7 @@ public class PaymentService {
         payment.setVerificationDate(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
 
-        // Update order - just save to trigger update timestamp
+        // Update order to trigger update timestamp
         Order order = payment.getOrder();
         if (order != null) {
             orderRepository.save(order);
@@ -148,7 +153,8 @@ public class PaymentService {
     }
 
     /**
-     * Process refund
+     * Process refund - Core functionality
+     * Critical for customer service and legal compliance
      */
     @Transactional
     public Payment processRefund(Long paymentId, BigDecimal refundAmount, String reason) {
@@ -195,7 +201,7 @@ public class PaymentService {
 
             payment.setUpdatedAt(LocalDateTime.now());
 
-            // Update order if fully refunded - just save to trigger update
+            // Update order if fully refunded
             if ("REFUNDED".equals(payment.getStatus())) {
                 Order order = payment.getOrder();
                 if (order != null) {
@@ -212,7 +218,16 @@ public class PaymentService {
     }
 
     /**
-     * Verify payment status
+     * Process refund (simplified signature) - Core functionality
+     */
+    @Transactional
+    public Payment processRefund(Long paymentId, BigDecimal refundAmount) {
+        return processRefund(paymentId, refundAmount, "Customer requested refund");
+    }
+
+    /**
+     * Verify payment status - Core functionality
+     * Important for handling pending payments
      */
     public String verifyPaymentStatus(Long paymentId) {
         log.info("Verifying payment status for ID: {}", paymentId);
@@ -246,7 +261,7 @@ public class PaymentService {
     }
 
     /**
-     * Get payment by order ID
+     * Get payment by order ID - Core functionality
      */
     public Payment getPaymentByOrderId(Long orderId) {
         return paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(orderId)
@@ -254,14 +269,14 @@ public class PaymentService {
     }
 
     /**
-     * Get all payments for an order
+     * Get all payments for an order - Core functionality
      */
     public List<Payment> getPaymentsByOrderId(Long orderId) {
         return paymentRepository.findByOrderId(orderId);
     }
 
     /**
-     * Check if payment is refundable
+     * Check if payment is refundable - Core functionality
      */
     public boolean isRefundable(Long paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
@@ -276,7 +291,7 @@ public class PaymentService {
     }
 
     /**
-     * Calculate refundable amount
+     * Calculate refundable amount - Core functionality
      */
     public BigDecimal getRefundableAmount(Long paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
@@ -293,7 +308,8 @@ public class PaymentService {
     }
 
     /**
-     * Retry failed payment
+     * Retry failed payment - Core functionality
+     * Important for handling payment failures
      */
     @Transactional
     public Payment retryPayment(Long paymentId) {
@@ -329,7 +345,7 @@ public class PaymentService {
     }
 
     /**
-     * Cancel pending payment
+     * Cancel pending payment - Core functionality
      */
     @Transactional
     public Payment cancelPayment(Long paymentId, String reason) {
@@ -357,9 +373,18 @@ public class PaymentService {
                 UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 
-    /**
-     * Get payment summary for reporting
+    /* ============================================
+     * VERSION 2.0 METHODS - Commented out for v1.0
+     * ============================================
+     * These methods will be implemented in version 2.0:
+     * - Payment analytics and reporting
+     * - Multiple payment gateway support
+     * - Advanced fraud detection
+     * - Payment plans and installments
      */
+
+    /*
+    // Version 2.0: Get payment summary for reporting
     public Map<String, Object> getPaymentSummary(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> summary = new HashMap<>();
 
@@ -379,4 +404,5 @@ public class PaymentService {
 
         return summary;
     }
+    */
 }

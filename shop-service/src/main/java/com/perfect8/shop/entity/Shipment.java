@@ -22,7 +22,8 @@ public class Shipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "shipment_id")
+    private Long shipmentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
@@ -41,10 +42,13 @@ public class Shipment {
     private LocalDateTime shipmentDate;
 
     @Column(name = "estimated_delivery_date")
-    private LocalDate estimatedDeliveryDate;  // Changed to LocalDate for ShippingService compatibility
+    private LocalDate estimatedDeliveryDate;
 
     @Column(name = "actual_delivery_date")
-    private LocalDate actualDeliveryDate;  // Changed to LocalDate for ShippingService compatibility
+    private LocalDate actualDeliveryDate;
+
+    @Column(name = "delivered_date")
+    private LocalDateTime deliveredDate;
 
     @Column(name = "shipping_cost", precision = 10, scale = 2)
     private BigDecimal shippingCost;
@@ -65,10 +69,13 @@ public class Shipment {
     private String currentLocation;
 
     @Column(name = "last_location", length = 255)
-    private String lastLocation;  // Added for ShippingService compatibility
+    private String lastLocation;
 
     @Column(name = "delivery_instructions", length = 500)
     private String deliveryInstructions;
+
+    @Column(name = "delivery_notes", length = 500)
+    private String deliveryNotes;
 
     @Column(name = "signature_required", columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean signatureRequired;
@@ -124,19 +131,6 @@ public class Shipment {
         updatedAt = LocalDateTime.now();
     }
 
-    // Additional getter/setter for compatibility
-    public String getLastLocation() {
-        return lastLocation;
-    }
-
-    public void setLastLocation(String lastLocation) {
-        // Store previous location before updating
-        if (this.currentLocation != null && !this.currentLocation.equals(lastLocation)) {
-            this.lastLocation = this.currentLocation;
-        }
-        this.lastLocation = lastLocation;
-    }
-
     // Business methods
     public boolean isDelivered() {
         return "DELIVERED".equals(status);
@@ -188,6 +182,7 @@ public class Shipment {
         // Mark as delivered if status is DELIVERED
         if ("DELIVERED".equals(status) && actualDeliveryDate == null) {
             this.actualDeliveryDate = LocalDate.now();
+            this.deliveredDate = LocalDateTime.now();
         }
     }
 
@@ -222,7 +217,7 @@ public class Shipment {
         if (this == o) return true;
         if (!(o instanceof Shipment)) return false;
         Shipment shipment = (Shipment) o;
-        return id != null && id.equals(shipment.id);
+        return shipmentId != null && shipmentId.equals(shipment.shipmentId);
     }
 
     @Override
@@ -233,7 +228,7 @@ public class Shipment {
     @Override
     public String toString() {
         return "Shipment{" +
-                "id=" + id +
+                "shipmentId=" + shipmentId +
                 ", trackingNumber='" + trackingNumber + '\'' +
                 ", carrier='" + carrier + '\'' +
                 ", status='" + status + '\'' +

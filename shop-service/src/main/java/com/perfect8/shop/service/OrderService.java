@@ -20,6 +20,14 @@ import java.util.stream.Collectors;
 /**
  * Service class for order management.
  * Version 1.0 - Core functionality only
+ *
+ * This service handles all critical order operations:
+ * - Order creation and processing
+ * - Status management and transitions
+ * - Inventory coordination
+ * - Payment processing
+ * - Shipping management
+ * - Customer notifications
  */
 @Service
 @RequiredArgsConstructor
@@ -37,7 +45,8 @@ public class OrderService {
     private final EmailService emailService;
 
     /**
-     * Create a new order
+     * Create a new order - Core functionality
+     * This is the main entry point for order creation
      */
     @Transactional
     public Order createOrder(CreateOrderRequest request) {
@@ -66,6 +75,11 @@ public class OrderService {
         // Parse and set addresses
         setAddressesFromRequest(order, request, customer);
 
+        // Initialize order items list if needed
+        if (order.getOrderItems() == null) {
+            order.setOrderItems(new ArrayList<>());
+        }
+
         // Process order items
         for (CreateOrderRequest.OrderItemRequest itemRequest : request.getOrderItems()) {
             Product product = productRepository.findById(itemRequest.getProductId())
@@ -87,25 +101,33 @@ public class OrderService {
                     .productDescription(product.getDescription())
                     .build();
 
-            orderItem.calculateSubtotal();
-            order.addOrderItem(orderItem);
+            // Calculate subtotal
+            orderItem.setSubtotal(
+                    orderItem.getUnitPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity()))
+            );
+
+            order.getOrderItems().add(orderItem);
         }
 
         // Calculate totals
-        order.calculateTotals();
+        calculateOrderTotals(order);
 
         // Save order
         Order savedOrder = orderRepository.save(order);
 
         // Send confirmation email
-        emailService.sendOrderConfirmation(savedOrder);
+        emailService.sendEmail(
+                savedOrder.getShippingEmail(),
+                "Order Confirmation - " + savedOrder.getOrderNumber(),
+                buildOrderConfirmationMessage(savedOrder)
+        );
 
         log.info("Order created successfully with number: {}", savedOrder.getOrderNumber());
         return savedOrder;
     }
 
     /**
-     * Get order by ID
+     * Get order by ID - Core functionality
      */
     @Transactional(readOnly = true)
     public Order getOrderById(Long orderId) {
@@ -114,7 +136,7 @@ public class OrderService {
     }
 
     /**
-     * Get order by order number
+     * Get order by order number - Core functionality
      */
     @Transactional(readOnly = true)
     public Order getOrderByNumber(String orderNumber) {
@@ -123,7 +145,7 @@ public class OrderService {
     }
 
     /**
-     * Get all orders with pagination
+     * Get all orders with pagination - Core functionality
      */
     @Transactional(readOnly = true)
     public Page<OrderDTO> getAllOrders(Pageable pageable) {
@@ -131,7 +153,7 @@ public class OrderService {
     }
 
     /**
-     * Get orders by customer ID
+     * Get orders by customer ID - Core functionality
      */
     @Transactional(readOnly = true)
     public Page<OrderDTO> getOrdersByCustomerId(Long customerId, Pageable pageable) {
@@ -140,7 +162,8 @@ public class OrderService {
     }
 
     /**
-     * Update order status
+     * Update order status - Core functionality
+     * Critical for order lifecycle management
      */
     @Transactional
     public Order updateOrderStatus(Long orderId, OrderStatus newStatus, String notes) {
@@ -148,31 +171,47 @@ public class OrderService {
         OrderStatus currentStatus = order.getOrderStatus();
 
         // Validate status transition
-        if (!currentStatus.canTransitionTo(newStatus)) {
+        if (!isValidStatusTransition(currentStatus, newStatus)) {
             log.warn("Invalid status transition from {} to {} for order {}",
                     currentStatus, newStatus, orderId);
             return order; // Return unchanged order
         }
 
         // Update status
-        order.updateStatus(newStatus);
+        order.setOrderStatus(newStatus);
+        order.setUpdatedAt(LocalDateTime.now());
+
         if (notes != null) {
             order.setInternalNotes(notes);
         }
 
         // Handle status-specific actions
         switch (newStatus) {
-            case CONFIRMED:
-                handleOrderConfirmed(order);
+            case PAID:
+                handleOrderPaid(order);
                 break;
             case PROCESSING:
-                emailService.sendOrderProcessing(order);
+                emailService.sendEmail(
+                        order.getShippingEmail(),
+                        "Order Processing - " + order.getOrderNumber(),
+                        "Your order is now being processed."
+                );
                 break;
             case SHIPPED:
-                emailService.sendShippingNotification(order);
+                if (order.getShipment() != null) {
+                    emailService.sendEmail(
+                            order.getShippingEmail(),
+                            "Order Shipped - " + order.getOrderNumber(),
+                            buildShippingMessage(order)
+                    );
+                }
                 break;
             case DELIVERED:
-                emailService.sendDeliveryConfirmation(order);
+                emailService.sendEmail(
+                        order.getShippingEmail(),
+                        "Order Delivered - " + order.getOrderNumber(),
+                        "Your order has been delivered successfully."
+                );
                 break;
             case CANCELLED:
                 handleOrderCancelled(order);
@@ -188,19 +227,21 @@ public class OrderService {
     }
 
     /**
-     * Cancel an order
+     * Cancel an order - Core functionality
+     * Critical for customer service
      */
     @Transactional
     public Order cancelOrder(Long orderId, String reason) {
         Order order = getOrderById(orderId);
 
-        if (!order.isCancellable()) {
+        if (!canBeCancelled(order.getOrderStatus())) {
             throw new InvalidOrderStatusException(
                     "Order cannot be cancelled in status: " + order.getOrderStatus());
         }
 
         // Update status
-        order.updateStatus(OrderStatus.CANCELLED);
+        order.setOrderStatus(OrderStatus.CANCELLED);
+        order.setUpdatedAt(LocalDateTime.now());
         order.setInternalNotes("Cancellation reason: " + (reason != null ? reason : "Customer request"));
 
         // Release inventory
@@ -211,32 +252,38 @@ public class OrderService {
         }
 
         // Process refund if payment was made
-        if (order.isPaid() && order.getPayment() != null) {
+        if (isOrderPaid(order)) {
             paymentService.processRefund(
                     order.getPayment().getPaymentId(),
                     order.getTotalAmount());
         }
 
         // Send cancellation email
-        emailService.sendOrderCancellation(order, reason != null ? reason : "Customer request");
+        emailService.sendEmail(
+                order.getShippingEmail(),
+                "Order Cancelled - " + order.getOrderNumber(),
+                "Your order has been cancelled. Reason: " + (reason != null ? reason : "Customer request")
+        );
 
         return orderRepository.save(order);
     }
 
     /**
-     * Process order return
+     * Process order return - Core functionality
+     * Critical for customer service
      */
     @Transactional
     public Order processReturn(Long orderId, String reason) {
         Order order = getOrderById(orderId);
 
-        if (!order.isReturnable()) {
+        if (!canBeReturned(order.getOrderStatus())) {
             throw new InvalidOrderStatusException(
                     "Order cannot be returned in status: " + order.getOrderStatus());
         }
 
         // Update status
-        order.updateStatus(OrderStatus.RETURNED);
+        order.setOrderStatus(OrderStatus.RETURNED);
+        order.setUpdatedAt(LocalDateTime.now());
         order.setInternalNotes("Return reason: " + reason);
 
         // Return items to inventory
@@ -254,13 +301,18 @@ public class OrderService {
         }
 
         // Send return confirmation email
-        emailService.sendReturnConfirmation(order);
+        emailService.sendEmail(
+                order.getShippingEmail(),
+                "Order Return Processed - " + order.getOrderNumber(),
+                "Your return has been processed. Reason: " + reason
+        );
 
         return orderRepository.save(order);
     }
 
     /**
-     * Get orders by status
+     * Get orders by status - Core functionality
+     * Useful for basic order management
      */
     @Transactional(readOnly = true)
     public List<OrderDTO> getOrdersByStatus(OrderStatus status) {
@@ -270,7 +322,8 @@ public class OrderService {
     }
 
     /**
-     * Get recent orders
+     * Get recent orders - Core functionality
+     * Useful for dashboard overview
      */
     @Transactional(readOnly = true)
     public List<OrderDTO> getRecentOrders(int limit) {
@@ -280,7 +333,8 @@ public class OrderService {
     }
 
     /**
-     * Search orders
+     * Search orders - Core functionality
+     * Essential for customer service
      */
     @Transactional(readOnly = true)
     public Page<OrderDTO> searchOrders(String query, Pageable pageable) {
@@ -289,7 +343,8 @@ public class OrderService {
     }
 
     /**
-     * Confirm payment for an order
+     * Confirm payment for an order - Core functionality
+     * Critical for order processing
      */
     @Transactional
     public Order confirmPayment(Long orderId, Map<String, Object> paymentDetails) {
@@ -311,43 +366,69 @@ public class OrderService {
                     item.getQuantity());
         }
 
-        // Update order status
-        order.updateStatus(OrderStatus.CONFIRMED);
+        // Update order status to PAID
+        order.setOrderStatus(OrderStatus.PAID);
+        order.setUpdatedAt(LocalDateTime.now());
 
-        // Send confirmation email
-        emailService.sendPaymentConfirmation(order);
+        // Send payment confirmation
+        emailService.sendEmail(
+                order.getShippingEmail(),
+                "Payment Confirmed - " + order.getOrderNumber(),
+                "Payment of " + order.getTotalAmount() + " " + order.getCurrency() + " has been confirmed."
+        );
 
         return orderRepository.save(order);
     }
 
     /**
-     * Mark order as shipped
+     * Mark order as shipped - Core functionality
+     * Critical for fulfillment
      */
     @Transactional
     public Order markAsShipped(Long orderId, String trackingNumber, String carrier) {
         Order order = getOrderById(orderId);
 
         if (order.getOrderStatus() != OrderStatus.PROCESSING &&
-                order.getOrderStatus() != OrderStatus.CONFIRMED) {
+                order.getOrderStatus() != OrderStatus.PAID) {
             throw new InvalidOrderStatusException(
-                    "Order must be in PROCESSING or CONFIRMED status to ship");
+                    "Order must be in PROCESSING or PAID status to ship");
         }
 
-        // Create shipment
-        Shipment shipment = shippingService.createShipment(order, trackingNumber, carrier);
+        // Create shipment with ShippingOptionDTO
+        ShippingOptionDTO shippingOption = ShippingOptionDTO.builder()
+                .shippingOptionId(999L)  // Placeholder ID for manual shipping
+                .name("Manual Shipping")
+                .carrier(carrier)
+                .price(order.getShippingAmount() != null ? order.getShippingAmount() : BigDecimal.ZERO)
+                .estimatedDays(5) // Default estimate
+                .build();
+
+        Shipment shipment = shippingService.createShipment(order, shippingOption);
+
+        // Update tracking number on the created shipment
+        if (trackingNumber != null && !trackingNumber.isEmpty()) {
+            shipment.setTrackingNumber(trackingNumber);
+        }
+
         order.setShipment(shipment);
 
         // Update status
-        order.updateStatus(OrderStatus.SHIPPED);
+        order.setOrderStatus(OrderStatus.SHIPPED);
+        order.setUpdatedAt(LocalDateTime.now());
 
         // Send shipping notification
-        emailService.sendShippingNotification(order);
+        emailService.sendEmail(
+                order.getShippingEmail(),
+                "Order Shipped - " + order.getOrderNumber(),
+                buildShippingMessage(order)
+        );
 
         return orderRepository.save(order);
     }
 
     /**
-     * Mark order as delivered
+     * Mark order as delivered - Core functionality
+     * Completes the order lifecycle
      */
     @Transactional
     public Order markAsDelivered(Long orderId, String deliveryNotes) {
@@ -358,22 +439,31 @@ public class OrderService {
                     "Order must be SHIPPED to mark as delivered");
         }
 
-        // Update shipment
+        // Update shipment status
         if (order.getShipment() != null) {
-            shippingService.markAsDelivered(order.getShipment(), deliveryNotes);
+            Shipment shipment = order.getShipment();
+            shipment.setActualDeliveryDate(LocalDateTime.now().toLocalDate());
+            shipment.setDeliveryNotes(deliveryNotes);
+            shipment.setStatus("DELIVERED");
         }
 
         // Update status
-        order.updateStatus(OrderStatus.DELIVERED);
+        order.setOrderStatus(OrderStatus.DELIVERED);
+        order.setUpdatedAt(LocalDateTime.now());
 
         // Send delivery confirmation
-        emailService.sendDeliveryConfirmation(order);
+        emailService.sendEmail(
+                order.getShippingEmail(),
+                "Order Delivered - " + order.getOrderNumber(),
+                "Your order has been successfully delivered."
+        );
 
         return orderRepository.save(order);
     }
 
     /**
-     * Get orders needing attention
+     * Get orders needing attention - Core functionality
+     * Important for daily operations
      */
     @Transactional(readOnly = true)
     public List<OrderDTO> getOrdersNeedingAttention() {
@@ -388,7 +478,8 @@ public class OrderService {
     }
 
     /**
-     * Get order count by status
+     * Get order count by status - Core functionality
+     * Basic reporting for operations
      */
     @Transactional(readOnly = true)
     public Map<OrderStatus, Long> getOrderCountByStatus() {
@@ -399,30 +490,34 @@ public class OrderService {
         return counts;
     }
 
+    // ========== Helper methods ==========
+
     /**
      * Convert Order entity to DTO
      */
     public OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();
-        dto.setId(order.getOrderId());
+        dto.setOrderId(order.getOrderId());
         dto.setOrderNumber(order.getOrderNumber());
         dto.setCustomerId(order.getCustomer().getCustomerId());
-        dto.setCustomerName(order.getCustomerFullName());
+        dto.setCustomerName(order.getShippingFirstName() + " " + order.getShippingLastName());
         dto.setCustomerEmail(order.getShippingEmail());
         dto.setStatus(order.getOrderStatus().name());
         dto.setSubtotal(order.getSubtotal());
-        dto.setTax(order.getTaxAmount());
-        dto.setShipping(order.getShippingAmount());
-        dto.setTotal(order.getTotalAmount());
+        dto.setTaxAmount(order.getTaxAmount());
+        dto.setShippingAmount(order.getShippingAmount());
+        dto.setTotalAmount(order.getTotalAmount());
         dto.setCurrency(order.getCurrency());
-        dto.setOrderDate(order.getCreatedAt());
+        dto.setCreatedAt(order.getCreatedAt());
         dto.setUpdatedAt(order.getUpdatedAt());
 
         // Convert order items
-        List<OrderItemDTO> itemDTOs = order.getOrderItems().stream()
-                .map(this::convertItemToDTO)
-                .collect(Collectors.toList());
-        dto.setItems(itemDTOs);
+        if (order.getOrderItems() != null) {
+            List<OrderItemDTO> itemDTOs = order.getOrderItems().stream()
+                    .map(this::convertItemToDTO)
+                    .collect(Collectors.toList());
+            dto.setOrderItems(itemDTOs);
+        }
 
         return dto;
     }
@@ -432,7 +527,7 @@ public class OrderService {
      */
     private OrderItemDTO convertItemToDTO(OrderItem item) {
         OrderItemDTO dto = new OrderItemDTO();
-        dto.setId(item.getOrderItemId());
+        dto.setOrderItemId(item.getOrderItemId());
         dto.setProductId(item.getProduct().getProductId());
         dto.setProductName(item.getProductName());
         dto.setProductSku(item.getProductSku());
@@ -444,10 +539,11 @@ public class OrderService {
 
     /**
      * Helper method to set addresses from request
+     * Version 1.0 - Simplified address handling
      */
     private void setAddressesFromRequest(Order order, CreateOrderRequest request, Customer customer) {
-        // For now, use simple address parsing
-        // In version 2.0, this would handle complex address objects
+        // For v1.0, use simple address parsing
+        // In v2.0, this would handle complex address objects with validation
 
         if (request.getShippingAddress() != null) {
             // Parse address string (simplified for v1.0)
@@ -486,9 +582,111 @@ public class OrderService {
     }
 
     /**
-     * Handle order confirmed status
+     * Calculate order totals
      */
-    private void handleOrderConfirmed(Order order) {
+    private void calculateOrderTotals(Order order) {
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (OrderItem item : order.getOrderItems()) {
+            subtotal = subtotal.add(item.getSubtotal());
+        }
+        order.setSubtotal(subtotal);
+
+        // If total wasn't provided, calculate it
+        if (order.getTotalAmount() == null || order.getTotalAmount().compareTo(BigDecimal.ZERO) == 0) {
+            BigDecimal total = subtotal
+                    .add(order.getTaxAmount() != null ? order.getTaxAmount() : BigDecimal.ZERO)
+                    .add(order.getShippingAmount() != null ? order.getShippingAmount() : BigDecimal.ZERO);
+            order.setTotalAmount(total);
+        }
+    }
+
+    /**
+     * Check if order can be cancelled
+     */
+    private boolean canBeCancelled(OrderStatus status) {
+        return status == OrderStatus.PENDING ||
+                status == OrderStatus.PAID ||
+                status == OrderStatus.PROCESSING;
+    }
+
+    /**
+     * Check if order can be returned
+     */
+    private boolean canBeReturned(OrderStatus status) {
+        return status == OrderStatus.DELIVERED;
+    }
+
+    /**
+     * Check if order is paid
+     */
+    private boolean isOrderPaid(Order order) {
+        return order.getPayment() != null &&
+                order.getOrderStatus() != OrderStatus.PENDING;
+    }
+
+    /**
+     * Check if status transition is valid
+     */
+    private boolean isValidStatusTransition(OrderStatus from, OrderStatus to) {
+        // Simple validation for v1.0
+        switch (from) {
+            case PENDING:
+                return to == OrderStatus.PAID ||
+                        to == OrderStatus.CANCELLED ||
+                        to == OrderStatus.PAYMENT_FAILED;
+            case PAID:
+                return to == OrderStatus.PROCESSING ||
+                        to == OrderStatus.CANCELLED;
+            case PROCESSING:
+                return to == OrderStatus.SHIPPED ||
+                        to == OrderStatus.CANCELLED;
+            case SHIPPED:
+                return to == OrderStatus.DELIVERED;
+            case DELIVERED:
+                return to == OrderStatus.RETURNED;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Build order confirmation message
+     */
+    private String buildOrderConfirmationMessage(Order order) {
+        StringBuilder message = new StringBuilder();
+        message.append("Thank you for your order!\n\n");
+        message.append("Order Number: ").append(order.getOrderNumber()).append("\n");
+        message.append("Total: ").append(order.getTotalAmount()).append(" ").append(order.getCurrency()).append("\n\n");
+        message.append("We will notify you when your order ships.");
+        return message.toString();
+    }
+
+    /**
+     * Build shipping message
+     */
+    private String buildShippingMessage(Order order) {
+        StringBuilder message = new StringBuilder();
+        message.append("Your order has been shipped!\n\n");
+        message.append("Order Number: ").append(order.getOrderNumber()).append("\n");
+
+        if (order.getShipment() != null) {
+            Shipment shipment = order.getShipment();
+            if (shipment.getTrackingNumber() != null) {
+                message.append("Tracking Number: ").append(shipment.getTrackingNumber()).append("\n");
+            }
+            if (shipment.getCarrier() != null) {
+                message.append("Carrier: ").append(shipment.getCarrier()).append("\n");
+            }
+        }
+
+        message.append("\nThank you for your order!");
+        return message.toString();
+    }
+
+    /**
+     * Handle order paid status
+     */
+    private void handleOrderPaid(Order order) {
         // Confirm inventory
         for (OrderItem item : order.getOrderItems()) {
             inventoryService.confirmStock(
@@ -496,8 +694,12 @@ public class OrderService {
                     item.getQuantity());
         }
 
-        // Send confirmation email
-        emailService.sendPaymentConfirmation(order);
+        // Send payment confirmation
+        emailService.sendEmail(
+                order.getShippingEmail(),
+                "Payment Confirmed - " + order.getOrderNumber(),
+                "Payment of " + order.getTotalAmount() + " " + order.getCurrency() + " has been received."
+        );
     }
 
     /**
@@ -512,7 +714,7 @@ public class OrderService {
         }
 
         // Process refund if needed
-        if (order.isPaid() && order.getPayment() != null) {
+        if (isOrderPaid(order)) {
             paymentService.processRefund(
                     order.getPayment().getPaymentId(),
                     order.getTotalAmount());

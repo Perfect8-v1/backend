@@ -8,6 +8,8 @@ import java.util.List;
 /**
  * Data Transfer Object for Order
  * Version 1.0 - Core functionality only
+ *
+ * Uses descriptive field names (orderId instead of id) for clarity
  */
 @Data
 @Builder
@@ -15,7 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderDTO {
 
-    private Long id;
+    private Long orderId;
     private String orderNumber;
     private Long customerId;
     private String customerEmail;
@@ -88,25 +90,4 @@ public class OrderDTO {
     // private String couponCode;
     // private Integer loyaltyPointsEarned;
     // private Integer loyaltyPointsUsed;
-
-    // Deprecated or renamed fields kept for compatibility
-    @Deprecated
-    public BigDecimal getTax() {
-        return taxAmount;
-    }
-
-    @Deprecated
-    public void setTax(BigDecimal tax) {
-        this.taxAmount = tax;
-    }
-
-    @Deprecated
-    public BigDecimal getShipping() {
-        return shippingAmount;
-    }
-
-    @Deprecated
-    public void setShipping(BigDecimal shipping) {
-        this.shippingAmount = shipping;
-    }
 }

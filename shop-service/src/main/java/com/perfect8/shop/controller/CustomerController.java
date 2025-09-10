@@ -22,6 +22,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 
+/**
+ * REST controller for customer management.
+ * Version 1.0 - Core functionality only
+ *
+ * This controller handles all critical customer operations:
+ * - Customer registration and authentication
+ * - Profile management
+ * - Address management (critical for shipping)
+ * - Customer search and administration
+ */
 @RestController
 @RequestMapping("/api/customers")
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -34,13 +44,13 @@ public class CustomerController {
     private JwtTokenProvider jwtTokenProvider;
 
     /**
-     * Register new customer (Public endpoint)
+     * Register new customer - Core functionality
+     * Public endpoint for customer signup
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<CustomerDTO>> registerCustomer(
             @Valid @RequestBody CustomerRegistrationDTO registrationDTO) {
         try {
-            // FIXED: Changed return type to CustomerDTO
             CustomerDTO newCustomer = customerService.registerCustomer(registrationDTO);
 
             ApiResponse<CustomerDTO> response = new ApiResponse<>(
@@ -61,7 +71,7 @@ public class CustomerController {
     }
 
     /**
-     * Get current customer profile
+     * Get current customer profile - Core functionality
      */
     @GetMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -88,7 +98,7 @@ public class CustomerController {
     }
 
     /**
-     * Update current customer profile
+     * Update current customer profile - Core functionality
      */
     @PutMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -117,7 +127,8 @@ public class CustomerController {
     }
 
     /**
-     * Delete current customer account (soft delete)
+     * Delete current customer account - Core functionality
+     * Soft delete for GDPR compliance
      */
     @DeleteMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -144,7 +155,36 @@ public class CustomerController {
     }
 
     /**
-     * Get customer by ID (Admin only)
+     * Check if email exists - Core functionality
+     * Public endpoint for registration validation
+     */
+    @GetMapping("/check-email")
+    public ResponseEntity<ApiResponse<Boolean>> checkEmailExists(@RequestParam String email) {
+        try {
+            boolean exists = customerService.emailExists(email);
+
+            ApiResponse<Boolean> response = new ApiResponse<>(
+                    "Email check completed",
+                    exists,
+                    true
+            );
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            ApiResponse<Boolean> errorResponse = new ApiResponse<>(
+                    "Failed to check email: " + e.getMessage(),
+                    null,
+                    false
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // ========== ADMIN ENDPOINTS - Core functionality for customer management ==========
+
+    /**
+     * Get customer by ID - Core functionality
+     * Admin-only for customer service
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -170,7 +210,8 @@ public class CustomerController {
     }
 
     /**
-     * Get all customers with pagination (Admin only)
+     * Get all customers with pagination - Core functionality
+     * Admin-only for customer management
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -205,7 +246,8 @@ public class CustomerController {
     }
 
     /**
-     * Search customers (Admin only)
+     * Search customers - Core functionality
+     * Admin-only for customer service
      */
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
@@ -243,7 +285,8 @@ public class CustomerController {
     }
 
     /**
-     * Update customer by ID (Admin only)
+     * Update customer by ID - Core functionality
+     * Admin-only for customer management
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -271,7 +314,8 @@ public class CustomerController {
     }
 
     /**
-     * Activate/Deactivate customer (Admin only)
+     * Activate/Deactivate customer - Core functionality
+     * Admin-only for customer management
      */
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
@@ -298,14 +342,44 @@ public class CustomerController {
     }
 
     /**
-     * Get customer addresses
+     * Get recent customers - Core functionality
+     * Admin-only for dashboard overview
+     */
+    @GetMapping("/recent")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<Customer>>> getRecentCustomers(
+            @RequestParam(defaultValue = "10") int limit) {
+        try {
+            List<Customer> recentCustomers = customerService.getRecentCustomers(limit);
+
+            ApiResponse<List<Customer>> response = new ApiResponse<>(
+                    "Recent customers retrieved successfully",
+                    recentCustomers,
+                    true
+            );
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            ApiResponse<List<Customer>> errorResponse = new ApiResponse<>(
+                    "Failed to retrieve recent customers: " + e.getMessage(),
+                    null,
+                    false
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // ========== ADDRESS MANAGEMENT - Critical for shipping ==========
+
+    /**
+     * Get customer addresses - Core functionality
+     * Critical for order placement
      */
     @GetMapping("/addresses")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
     public ResponseEntity<ApiResponse<List<AddressDTO>>> getCustomerAddresses(HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
-            // FIXED: Changed to proper List<AddressDTO> type
             List<AddressDTO> addresses = customerService.getCustomerAddresses(customerId);
 
             ApiResponse<List<AddressDTO>> response = new ApiResponse<>(
@@ -326,7 +400,8 @@ public class CustomerController {
     }
 
     /**
-     * Add new address for customer
+     * Add new address - Core functionality
+     * Critical for shipping
      */
     @PostMapping("/addresses")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -335,7 +410,6 @@ public class CustomerController {
             HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
-            // FIXED: Changed to proper AddressDTO type
             AddressDTO newAddress = customerService.addCustomerAddress(customerId, addressDTO);
 
             ApiResponse<AddressDTO> response = new ApiResponse<>(
@@ -356,7 +430,8 @@ public class CustomerController {
     }
 
     /**
-     * Update customer address
+     * Update customer address - Core functionality
+     * Critical for correct deliveries
      */
     @PutMapping("/addresses/{addressId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -366,7 +441,6 @@ public class CustomerController {
             HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
-            // FIXED: Changed to proper AddressDTO type
             AddressDTO updatedAddress = customerService.updateCustomerAddress(customerId, addressId, addressDTO);
 
             ApiResponse<AddressDTO> response = new ApiResponse<>(
@@ -387,7 +461,7 @@ public class CustomerController {
     }
 
     /**
-     * Delete customer address
+     * Delete customer address - Core functionality
      */
     @DeleteMapping("/addresses/{addressId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -416,7 +490,8 @@ public class CustomerController {
     }
 
     /**
-     * Set default address
+     * Set default address - Core functionality
+     * Simplifies checkout process
      */
     @PutMapping("/addresses/{addressId}/default")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -425,7 +500,6 @@ public class CustomerController {
             HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
-            // FIXED: Changed to proper AddressDTO type
             AddressDTO defaultAddress = customerService.setDefaultAddress(customerId, addressId);
 
             ApiResponse<AddressDTO> response = new ApiResponse<>(
@@ -445,9 +519,17 @@ public class CustomerController {
         }
     }
 
-    /**
-     * Get customer statistics (Admin only)
+    /* ============================================
+     * VERSION 2.0 ENDPOINTS - Commented out for v1.0
+     * ============================================
+     * These endpoints will be implemented in version 2.0:
+     * - Customer statistics and analytics
+     * - Detailed reporting
+     * - Customer segmentation
      */
+
+    /*
+    // Version 2.0: Get customer statistics
     @GetMapping("/statistics")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> getCustomerStatistics() {
@@ -470,58 +552,9 @@ public class CustomerController {
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
         }
     }
+    */
 
-    /**
-     * Get recent customers (Admin only)
-     */
-    @GetMapping("/recent")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Customer>>> getRecentCustomers(
-            @RequestParam(defaultValue = "10") int limit) {
-        try {
-            List<Customer> recentCustomers = customerService.getRecentCustomers(limit);
-
-            ApiResponse<List<Customer>> response = new ApiResponse<>(
-                    "Recent customers retrieved successfully",
-                    recentCustomers,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<List<Customer>> errorResponse = new ApiResponse<>(
-                    "Failed to retrieve recent customers: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    /**
-     * Check if email exists (Public endpoint for registration validation)
-     */
-    @GetMapping("/check-email")
-    public ResponseEntity<ApiResponse<Boolean>> checkEmailExists(@RequestParam String email) {
-        try {
-            boolean exists = customerService.emailExists(email);
-
-            ApiResponse<Boolean> response = new ApiResponse<>(
-                    "Email check completed",
-                    exists,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<Boolean> errorResponse = new ApiResponse<>(
-                    "Failed to check email: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
+    // ========== Helper methods ==========
 
     /**
      * Get customer ID from JWT token

@@ -7,113 +7,79 @@ import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
+/**
+ * Payment Request DTO - Version 1.0
+ * Simplified for core PayPal payment functionality
+ *
+ * Version 1.0 focuses on essential payment fields:
+ * - Order and amount information
+ * - PayPal integration fields
+ * - Basic transaction tracking
+ *
+ * Version 2.0 will add:
+ * - Credit card processing
+ * - Recurring payments/subscriptions
+ * - Advanced fraud detection
+ * - Multiple payment gateways
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class PaymentRequestDTO {
 
-    // Order information
+    // Order information - Essential for v1.0
     @NotNull(message = "Order ID is required")
     private Long orderId;
 
-    // Customer information
-    @NotNull(message = "Customer ID is required")
-    private Long customerId;
-
-    // Payment amount
+    // Payment amount - Essential for v1.0
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
     @Digits(integer = 10, fraction = 2, message = "Invalid amount format")
     private BigDecimal amount;
 
-    // Payment method
-    @NotBlank(message = "Payment method is required")
-    private String paymentMethod; // "PAYPAL", "CREDIT_CARD", "DEBIT_CARD", etc.
-
-    // Transaction information - FIXED: Added transactionId field
-    private String transactionId;  // External payment provider transaction ID
-
-    // Currency
+    // Currency - Essential for v1.0
     @NotBlank(message = "Currency is required")
     @Size(min = 3, max = 3, message = "Currency code must be 3 characters")
-    private String currency; // ISO 4217 currency code (e.g., "USD", "EUR")
+    @Builder.Default
+    private String currency = "USD"; // ISO 4217 currency code
 
-    // PayPal specific fields
+    // Payment method - Essential for v1.0
+    @NotBlank(message = "Payment method is required")
+    @Pattern(regexp = "PAYPAL|CREDIT_CARD|DEBIT_CARD", message = "Invalid payment method")
+    @Builder.Default
+    private String paymentMethod = "PAYPAL"; // Default to PayPal for v1.0
+
+    // Transaction ID - Essential for tracking
+    private String transactionId;  // External payment provider transaction ID
+
+    // PayPal specific fields - Essential for v1.0
     private String paypalOrderId;
     private String paypalPayerId;
     private String paypalPaymentId;
     private String paypalToken;
 
-    // Credit/Debit card fields (for future use)
-    private String cardToken; // Tokenized card data for security
-    private String cardLast4Digits;
-    private String cardType; // "VISA", "MASTERCARD", "AMEX", etc.
-    private String cardHolderName;
+    // Return URLs for PayPal redirect flow - Essential for v1.0
+    private String returnUrl;
+    private String cancelUrl;
 
-    // Billing address
-    private AddressDTO billingAddress;
-
-    // Additional payment information
+    // Basic payment information
     private String description;
     private String invoiceNumber;
     private String referenceNumber;
 
-    // 3D Secure / verification
-    private String verificationCode;
-    private boolean threeDSecureRequired;
-    private String threeDSecureToken;
+    // Customer notes
+    private String customerNotes;
 
-    // Risk assessment
-    private String ipAddress;
-    private String userAgent;
-    private String deviceId;
-
-    // Metadata
-    private String metadata; // JSON string for additional data
-
-    // Recurring payment information (for subscriptions)
-    private boolean isRecurring;
-    private String subscriptionId;
-    private Integer installmentNumber;
-    private Integer totalInstallments;
-
-    // Discount/Coupon
-    private String couponCode;
-    private BigDecimal discountAmount;
-
-    // Tax information
+    // Tax and shipping (needed for accurate payment processing)
     private BigDecimal taxAmount;
     private BigDecimal shippingAmount;
     private BigDecimal subtotalAmount;
 
-    // Status and timestamps
-    private String status; // "PENDING", "PROCESSING", "COMPLETED", "FAILED"
-    private LocalDateTime requestedAt;
-    private LocalDateTime processedAt;
-
-    // Return URL for payment gateway redirects
-    private String returnUrl;
-    private String cancelUrl;
-    private String webhookUrl;
-
-    // Idempotency key to prevent duplicate payments
-    private String idempotencyKey;
-
-    // Notes
-    private String customerNotes;
-    private String internalNotes;
-
-    // Validation helpers
+    // Validation helpers for v1.0
     public boolean isPayPalPayment() {
         return "PAYPAL".equalsIgnoreCase(paymentMethod);
-    }
-
-    public boolean isCreditCardPayment() {
-        return "CREDIT_CARD".equalsIgnoreCase(paymentMethod) ||
-                "DEBIT_CARD".equalsIgnoreCase(paymentMethod);
     }
 
     public boolean hasValidAmount() {
@@ -125,15 +91,8 @@ public class PaymentRequestDTO {
     }
 
     public boolean hasPayPalData() {
-        return paypalOrderId != null || paypalPayerId != null || paypalPaymentId != null;
-    }
-
-    public boolean hasCardData() {
-        return cardToken != null && !cardToken.trim().isEmpty();
-    }
-
-    public boolean hasBillingAddress() {
-        return billingAddress != null;
+        return paypalOrderId != null || paypalPayerId != null ||
+                paypalPaymentId != null || paypalToken != null;
     }
 
     // Calculate total amount including tax and shipping
@@ -148,69 +107,75 @@ public class PaymentRequestDTO {
             total = total.add(shippingAmount);
         }
 
-        if (discountAmount != null) {
-            total = total.subtract(discountAmount);
-        }
-
         return total;
     }
 
-    // Generate idempotency key if not provided
-    public String generateIdempotencyKey() {
-        if (idempotencyKey == null || idempotencyKey.trim().isEmpty()) {
-            idempotencyKey = String.format("%d-%d-%d-%s",
-                    orderId,
-                    customerId,
-                    System.currentTimeMillis(),
-                    paymentMethod);
-        }
-        return idempotencyKey;
-    }
-
-    // Set current timestamp for request
-    public void setRequestTimestamp() {
-        this.requestedAt = LocalDateTime.now();
-    }
-
-    // Mark as processed
-    public void markAsProcessed() {
-        this.processedAt = LocalDateTime.now();
-        if (this.status == null || "PENDING".equals(this.status)) {
-            this.status = "PROCESSING";
-        }
-    }
-
-    // Validate required fields based on payment method
+    // Validate required fields for v1.0
     public boolean isValid() {
         // Basic validation
-        if (!hasValidAmount() || orderId == null || customerId == null) {
+        if (!hasValidAmount() || orderId == null) {
             return false;
         }
 
-        // Payment method specific validation
+        // PayPal requires at least one PayPal identifier or transaction ID
         if (isPayPalPayment()) {
-            // PayPal requires at least one PayPal identifier
             return hasPayPalData() || hasTransactionId();
-        } else if (isCreditCardPayment()) {
-            // Card payment requires card token
-            return hasCardData();
         }
 
-        // Other payment methods just need basic fields
+        // For v1.0, we primarily support PayPal
         return true;
     }
 
-    @Override
-    public String toString() {
-        // Mask sensitive data in toString
-        return "PaymentRequestDTO{" +
-                "orderId=" + orderId +
-                ", customerId=" + customerId +
-                ", amount=" + amount +
-                ", currency='" + currency + '\'' +
-                ", paymentMethod='" + paymentMethod + '\'' +
-                ", transactionId='" + (transactionId != null ? "***" + transactionId.substring(Math.max(0, transactionId.length() - 4)) : null) + '\'' +
-                ", status='" + status + '\'' +
-                '}';
-    }
+    /* ============================================
+     * VERSION 2.0 FIELDS - Reserved for future use
+     * ============================================
+     * These fields will be added in version 2.0:
+     *
+     * // Customer information (v1.0 gets from JWT token)
+     * - Long customerId
+     *
+     * // Credit/Debit card fields
+     * - String cardToken
+     * - String cardLast4Digits
+     * - String cardType (VISA, MASTERCARD, AMEX)
+     * - String cardHolderName
+     *
+     * // Billing address
+     * - AddressDTO billingAddress
+     *
+     * // 3D Secure verification
+     * - String verificationCode
+     * - boolean threeDSecureRequired
+     * - String threeDSecureToken
+     *
+     * // Risk assessment & fraud detection
+     * - String ipAddress
+     * - String userAgent
+     * - String deviceId
+     *
+     * // Advanced features
+     * - String metadata (JSON for additional data)
+     * - boolean isRecurring
+     * - String subscriptionId
+     * - Integer installmentNumber
+     * - Integer totalInstallments
+     *
+     * // Coupons & discounts (v2.0 feature)
+     * - String couponCode
+     * - BigDecimal discountAmount
+     *
+     * // Webhooks & callbacks
+     * - String webhookUrl
+     *
+     * // Idempotency for duplicate prevention
+     * - String idempotencyKey
+     *
+     * // Status tracking
+     * - String status
+     * - LocalDateTime requestedAt
+     * - LocalDateTime processedAt
+     *
+     * // Internal notes
+     * - String internalNotes
+     */
 }

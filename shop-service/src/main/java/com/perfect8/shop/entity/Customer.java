@@ -19,6 +19,7 @@ public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "customer_id")
     private Long customerId;
 
     @Column(name = "first_name", nullable = false, length = 50)
@@ -135,10 +136,43 @@ public class Customer {
         updatedAt = LocalDateTime.now();
     }
 
-    // Helper methods
-    public String getFullName() {
+    // ========== Helper methods ==========
+
+    /**
+     * Get customer's full name
+     * Used in emails, orders, and display purposes
+     */
+    public String getCustomerFullName() {
         return firstName + " " + lastName;
     }
+
+    /**
+     * Alias for getCustomerFullName() for backward compatibility
+     * @deprecated Use getCustomerFullName() instead
+     */
+    @Deprecated
+    public String getFullName() {
+        return getCustomerFullName();
+    }
+
+    /**
+     * Get customer's display name (for UI)
+     */
+    public String getCustomerDisplayName() {
+        if (firstName != null && !firstName.trim().isEmpty()) {
+            return firstName;
+        }
+        return email.split("@")[0];
+    }
+
+    /**
+     * Get formatted customer info for admin display
+     */
+    public String getCustomerInfo() {
+        return String.format("%s %s (%s)", firstName, lastName, email);
+    }
+
+    // ========== Address management ==========
 
     public void addAddress(Address address) {
         addresses.add(address);
@@ -182,13 +216,25 @@ public class Customer {
         }
     }
 
+    // ========== Status checks ==========
+
     public boolean hasVerifiedEmail() {
         return Boolean.TRUE.equals(isEmailVerified);
     }
 
-    public boolean isActive() {
+    public boolean isActiveCustomer() {
         return Boolean.TRUE.equals(isActive) && !Boolean.TRUE.equals(isDeleted);
     }
+
+    public boolean canPlaceOrder() {
+        return isActiveCustomer() && hasVerifiedEmail();
+    }
+
+    public boolean canLogin() {
+        return isActiveCustomer();
+    }
+
+    // ========== Account management ==========
 
     public void markAsDeleted() {
         this.isDeleted = true;
@@ -201,9 +247,21 @@ public class Customer {
         this.dateOfBirth = null;
     }
 
+    public void deactivateAccount() {
+        this.isActive = false;
+    }
+
+    public void reactivateAccount() {
+        if (!Boolean.TRUE.equals(isDeleted)) {
+            this.isActive = true;
+        }
+    }
+
     public void updateLastLogin() {
         this.lastLoginDate = LocalDateTime.now();
     }
+
+    // ========== Order management ==========
 
     public boolean hasOrders() {
         return orders != null && !orders.isEmpty();
@@ -221,7 +279,8 @@ public class Customer {
                 .max((o1, o2) -> o1.getCreatedAt().compareTo(o2.getCreatedAt()));
     }
 
-    // Password reset methods
+    // ========== Password reset methods ==========
+
     public void setPasswordResetToken(String token) {
         this.passwordResetToken = token;
         this.passwordResetTokenExpiry = LocalDateTime.now().plusHours(24);
@@ -233,21 +292,73 @@ public class Customer {
                 passwordResetTokenExpiry.isAfter(LocalDateTime.now());
     }
 
+    public boolean isPasswordResetTokenValid(String token) {
+        return token != null &&
+                token.equals(this.passwordResetToken) &&
+                isPasswordResetTokenValid();
+    }
+
     public void clearPasswordResetToken() {
         this.passwordResetToken = null;
         this.passwordResetTokenExpiry = null;
     }
 
-    // Email verification methods
+    public void changePassword(String newPasswordHash) {
+        this.password = newPasswordHash;
+        clearPasswordResetToken();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // ========== Email verification methods ==========
+
     public void setEmailVerificationToken(String token) {
         this.emailVerificationToken = token;
         this.emailVerificationSentDate = LocalDateTime.now();
+    }
+
+    public boolean isEmailVerificationTokenValid(String token) {
+        if (token == null || emailVerificationToken == null) {
+            return false;
+        }
+
+        // Token valid for 48 hours
+        if (emailVerificationSentDate != null) {
+            LocalDateTime expiryTime = emailVerificationSentDate.plusHours(48);
+            if (LocalDateTime.now().isAfter(expiryTime)) {
+                return false;
+            }
+        }
+
+        return token.equals(emailVerificationToken);
     }
 
     public void verifyEmail() {
         this.isEmailVerified = true;
         this.emailVerificationToken = null;
         this.emailVerificationSentDate = null;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    public void resendEmailVerification(String newToken) {
+        this.emailVerificationToken = newToken;
+        this.emailVerificationSentDate = LocalDateTime.now();
+    }
+
+    // ========== Utility methods ==========
+
+    public boolean needsEmailVerification() {
+        return !hasVerifiedEmail() && isActiveCustomer();
+    }
+
+    public boolean canRequestPasswordReset() {
+        return isActiveCustomer();
+    }
+
+    public String getCustomerSince() {
+        if (registrationDate != null) {
+            return registrationDate.toLocalDate().toString();
+        }
+        return createdAt.toLocalDate().toString();
     }
 
     @Override
@@ -257,6 +368,25 @@ public class Customer {
                 ", email='" + email + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", isActive=" + isActive +
+                ", isEmailVerified=" + isEmailVerified +
                 '}';
     }
+
+    /* VERSION 2.0 FEATURES (kommenterat bort för v1.0):
+     * - Loyalty points och rewards
+     * - Customer segments och tiers
+     * - Wishlist functionality
+     * - Product reviews och ratings
+     * - Customer preferences (marketing opt-in/out)
+     * - Social media login integration
+     * - Two-factor authentication
+     * - Login history och device tracking
+     * - Customer tags för marknadsföring
+     * - Referral program tracking
+     * - Birthday rewards
+     * - Customer lifetime value tracking
+     * - Abandoned cart recovery
+     * - Customer communication preferences
+     */
 }

@@ -20,6 +20,9 @@ public class CartController {
     private final CartService cartService;
     private final ShippingService shippingService;
 
+    /**
+     * Add item to cart - Core functionality
+     */
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<CartResponse>> addToCart(
             @Valid @RequestBody AddToCartRequest request,
@@ -41,6 +44,9 @@ public class CartController {
         }
     }
 
+    /**
+     * Update cart item quantity - Core functionality
+     */
     @PutMapping("/update")
     public ResponseEntity<ApiResponse<CartResponse>> updateCartItem(
             @Valid @RequestBody UpdateCartItemRequest request,
@@ -62,6 +68,9 @@ public class CartController {
         }
     }
 
+    /**
+     * Remove item from cart - Core functionality
+     */
     @DeleteMapping("/remove/{productId}")
     public ResponseEntity<ApiResponse<CartResponse>> removeFromCart(
             @PathVariable Long productId,
@@ -83,6 +92,75 @@ public class CartController {
         }
     }
 
+    /**
+     * Get cart - Core functionality
+     */
+    @GetMapping("/")
+    public ResponseEntity<ApiResponse<CartResponse>> getCart(Principal principal) {
+        try {
+            String customerId = principal != null ? principal.getName() : null;
+            CartResponse response = cartService.getCart(customerId);
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "Cart retrieved successfully",
+                    response,
+                    true
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(
+                    e.getMessage(),
+                    Collections.singletonList(e.getMessage()),
+                    false
+            ));
+        }
+    }
+
+    /**
+     * Clear cart - Core functionality
+     */
+    @DeleteMapping("/clear")
+    public ResponseEntity<ApiResponse<Void>> clearCart(Principal principal) {
+        try {
+            String customerId = principal != null ? principal.getName() : null;
+            cartService.clearCart(customerId);
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "Cart cleared successfully",
+                    (Void) null,
+                    true
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(
+                    e.getMessage(),
+                    Collections.singletonList(e.getMessage()),
+                    false
+            ));
+        }
+    }
+
+    /**
+     * Get cart item count - Core functionality
+     */
+    @GetMapping("/count")
+    public ResponseEntity<ApiResponse<Integer>> getCartItemCount(Principal principal) {
+        try {
+            String customerId = principal != null ? principal.getName() : null;
+            Integer count = cartService.getCartItemCount(customerId);
+            return ResponseEntity.ok(new ApiResponse<>(
+                    "Cart item count retrieved successfully",
+                    count,
+                    true
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse<>(
+                    e.getMessage(),
+                    Collections.singletonList(e.getMessage()),
+                    false
+            ));
+        }
+    }
+
+    /**
+     * Get shipping options - Core functionality for checkout
+     */
     @GetMapping("/shipping-options")
     public ResponseEntity<ApiResponse<ShippingOptionResponse>> getShippingOptions(
             @RequestParam String address,
@@ -104,6 +182,9 @@ public class CartController {
         }
     }
 
+    /**
+     * Calculate tax - Core functionality for checkout
+     */
     @PostMapping("/calculate-tax")
     public ResponseEntity<ApiResponse<TaxCalculationResponse>> calculateTax(
             @Valid @RequestBody TaxCalculationRequest request,
@@ -124,13 +205,17 @@ public class CartController {
         }
     }
 
-    @GetMapping("/")
-    public ResponseEntity<ApiResponse<CartResponse>> getCart(Principal principal) {
+    /**
+     * Validate checkout - Core functionality
+     */
+    @PostMapping("/validate-checkout")
+    public ResponseEntity<ApiResponse<CheckoutValidationResponse>> validateCheckout(
+            Principal principal) {
         try {
             String customerId = principal != null ? principal.getName() : null;
-            CartResponse response = cartService.getCart(customerId);
+            CheckoutValidationResponse response = cartService.validateCheckout(customerId);
             return ResponseEntity.ok(new ApiResponse<>(
-                    "Cart retrieved successfully",
+                    "Checkout validation completed",
                     response,
                     true
             ));
@@ -143,14 +228,19 @@ public class CartController {
         }
     }
 
-    @DeleteMapping("/clear")
-    public ResponseEntity<ApiResponse<Void>> clearCart(Principal principal) {
+    /**
+     * Prepare checkout - Core functionality
+     */
+    @PostMapping("/prepare-checkout")
+    public ResponseEntity<ApiResponse<CheckoutPreparationResponse>> prepareCheckout(
+            @Valid @RequestBody CheckoutPreparationRequest request,
+            Principal principal) {
         try {
             String customerId = principal != null ? principal.getName() : null;
-            cartService.clearCart(customerId);
+            CheckoutPreparationResponse response = cartService.prepareCheckout(customerId, request);
             return ResponseEntity.ok(new ApiResponse<>(
-                    "Cart cleared successfully",
-                    (Void) null,
+                    "Checkout preparation completed",
+                    response,
                     true
             ));
         } catch (Exception e) {
@@ -162,25 +252,16 @@ public class CartController {
         }
     }
 
-    @GetMapping("/count")
-    public ResponseEntity<ApiResponse<Integer>> getCartItemCount(Principal principal) {
-        try {
-            String customerId = principal != null ? principal.getName() : null;
-            Integer count = cartService.getCartItemCount(customerId);
-            return ResponseEntity.ok(new ApiResponse<>(
-                    "Cart item count retrieved successfully",
-                    count,
-                    true
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(
-                    e.getMessage(),
-                    Collections.singletonList(e.getMessage()),
-                    false
-            ));
-        }
-    }
+    /* ============================================
+     * VERSION 2.0 ENDPOINTS - Commented out for v1.0
+     * ============================================
+     * These endpoints will be implemented in version 2.0:
+     * - Coupon functionality
+     * - Saved cart functionality
+     */
 
+    /*
+    // Version 2.0: Apply coupon to cart
     @PostMapping("/apply-coupon")
     public ResponseEntity<ApiResponse<CartResponse>> applyCoupon(
             @Valid @RequestBody ApplyCouponRequest request,
@@ -202,6 +283,7 @@ public class CartController {
         }
     }
 
+    // Version 2.0: Remove coupon from cart
     @DeleteMapping("/remove-coupon")
     public ResponseEntity<ApiResponse<CartResponse>> removeCoupon(Principal principal) {
         try {
@@ -221,6 +303,7 @@ public class CartController {
         }
     }
 
+    // Version 2.0: Save cart for later
     @PostMapping("/save")
     public ResponseEntity<ApiResponse<SavedCartResponse>> saveCart(
             @Valid @RequestBody SaveCartRequest request,
@@ -242,6 +325,7 @@ public class CartController {
         }
     }
 
+    // Version 2.0: Get saved carts
     @GetMapping("/saved")
     public ResponseEntity<ApiResponse<SavedCartResponse>> getSavedCarts(Principal principal) {
         try {
@@ -268,45 +352,5 @@ public class CartController {
             ));
         }
     }
-
-    @PostMapping("/validate-checkout")
-    public ResponseEntity<ApiResponse<CheckoutValidationResponse>> validateCheckout(
-            Principal principal) {
-        try {
-            String customerId = principal != null ? principal.getName() : null;
-            CheckoutValidationResponse response = cartService.validateCheckout(customerId);
-            return ResponseEntity.ok(new ApiResponse<>(
-                    "Checkout validation completed",
-                    response,
-                    true
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(
-                    e.getMessage(),
-                    Collections.singletonList(e.getMessage()),
-                    false
-            ));
-        }
-    }
-
-    @PostMapping("/prepare-checkout")
-    public ResponseEntity<ApiResponse<CheckoutPreparationResponse>> prepareCheckout(
-            @Valid @RequestBody CheckoutPreparationRequest request,
-            Principal principal) {
-        try {
-            String customerId = principal != null ? principal.getName() : null;
-            CheckoutPreparationResponse response = cartService.prepareCheckout(customerId, request);
-            return ResponseEntity.ok(new ApiResponse<>(
-                    "Checkout preparation completed",
-                    response,
-                    true
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse<>(
-                    e.getMessage(),
-                    Collections.singletonList(e.getMessage()),
-                    false
-            ));
-        }
-    }
+    */
 }

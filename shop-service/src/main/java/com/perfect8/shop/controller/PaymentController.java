@@ -1,12 +1,14 @@
 package com.perfect8.shop.controller;
 
+import com.perfect8.shop.entity.Order;
 import com.perfect8.shop.entity.Payment;
 import com.perfect8.shop.dto.ApiResponse;
 import com.perfect8.shop.dto.PaymentRequestDTO;
-import com.perfect8.shop.dto.PaymentResponseDTO;
 import com.perfect8.shop.dto.RefundRequestDTO;
 import com.perfect8.shop.service.PaymentService;
+import com.perfect8.shop.service.OrderService;
 import com.perfect8.shop.exception.UnauthorizedAccessException;
+import com.perfect8.shop.exception.PaymentException;
 import com.perfect8.shop.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,12 +20,19 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Payment Controller - Version 1.0
- * Core payment functionality only - no analytics or metrics
+ * Handles core payment operations for e-commerce
+ *
+ * Essential endpoints for v1.0:
+ * - Process payment for order
+ * - Get payment status
+ * - Process refunds
+ * - Retry failed payments
+ * - Cancel pending payments
  */
 @Slf4j
 @RestController
@@ -33,58 +42,135 @@ import java.util.List;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final OrderService orderService;
     private final JwtTokenProvider jwtTokenProvider;
 
     /**
-     * Process payment for an order
+     * Process payment for an order - Core v1.0 functionality
      */
-    @PostMapping("/process")
+    @PostMapping("/order/{orderId}/process")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
     public ResponseEntity<ApiResponse<Payment>> processPayment(
+            @PathVariable Long orderId,
             @Valid @RequestBody PaymentRequestDTO paymentRequest,
             HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
 
-            // Create payment entity from DTO
-            Payment payment = new Payment();
-            payment.setAmount(paymentRequest.getAmount());
-            payment.setPaymentMethod(Payment.PaymentMethod.valueOf(paymentRequest.getPaymentMethod()));
-            payment.setStatus(Payment.PaymentStatus.PENDING);
-            payment.setTransactionId(paymentRequest.getTransactionId());
+            // Get and validate order
+            Order order = orderService.getOrderById(orderId);
+
+            // Verify customer owns this order
+            if (!order.getCustomer().getCustomerId().equals(customerId) && !hasRole(request, "ADMIN")) {
+                throw new UnauthorizedAccessException("You are not authorized to pay for this order");
+            }
+
+            // Ensure request has order ID
+            paymentRequest.setOrderId(orderId);
 
             // Process the payment
-            Payment processedPayment = paymentService.processPayment(payment);
+            Payment processedPayment = paymentService.processPayment(order, paymentRequest);
 
             return ResponseEntity.ok(ApiResponse.success(
-                    "Payment processed successfully",
+                    "Payment processing initiated",
                     processedPayment
             ));
 
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("Error processing payment: {}", e.getMessage());
+            log.error("Error processing payment for order {}: {}", orderId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Failed to process payment: " + e.getMessage()));
         }
     }
 
     /**
-     * Get payment by ID
+     * Create payment record for order - Core v1.0 functionality
      */
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Payment>> getPaymentById(
-            @PathVariable Long id,
+    @PostMapping("/order/{orderId}/create")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
+    public ResponseEntity<ApiResponse<Payment>> createPayment(
+            @PathVariable Long orderId,
+            @RequestBody Map<String, Object> paymentDetails,
             HttpServletRequest request) {
         try {
-            Payment payment = paymentService.findById(id);
+            Long customerId = getCurrentCustomerId(request);
+
+            // Get and validate order
+            Order order = orderService.getOrderById(orderId);
+
+            // Verify customer owns this order
+            if (!order.getCustomer().getCustomerId().equals(customerId) && !hasRole(request, "ADMIN")) {
+                throw new UnauthorizedAccessException("You are not authorized to create payment for this order");
+            }
+
+            // Create payment
+            Payment payment = paymentService.createPayment(order, paymentDetails);
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "Payment created successfully",
+                    payment
+            ));
+
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error creating payment for order {}: {}", orderId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to create payment: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Complete payment - Core v1.0 functionality
+     */
+    @PostMapping("/{paymentId}/complete")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Payment>> completePayment(
+            @PathVariable Long paymentId,
+            @RequestParam String gatewayTransactionId) {
+        try {
+            Payment completedPayment = paymentService.completePayment(paymentId, gatewayTransactionId);
+
+            return ResponseEntity.ok(ApiResponse.success(
+                    "Payment completed successfully",
+                    completedPayment
+            ));
+
+        } catch (Exception e) {
+            log.error("Error completing payment {}: {}", paymentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to complete payment: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get payment for order - Core v1.0 functionality
+     */
+    @GetMapping("/order/{orderId}")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Payment>> getPaymentByOrderId(
+            @PathVariable Long orderId,
+            HttpServletRequest request) {
+        try {
+            Long customerId = getCurrentCustomerId(request);
+
+            // Get order to verify ownership
+            Order order = orderService.getOrderById(orderId);
 
             // Check authorization
-            if (!hasRole(request, "ADMIN")) {
-                Long customerId = getCurrentCustomerId(request);
-                if (!payment.getCustomer().getId().equals(customerId)) {
-                    throw UnauthorizedAccessException.paymentAccess(id, customerId.toString());
-                }
+            if (!hasRole(request, "ADMIN") && !order.getCustomer().getCustomerId().equals(customerId)) {
+                throw new UnauthorizedAccessException("You are not authorized to view payments for this order");
+            }
+
+            Payment payment = paymentService.getPaymentByOrderId(orderId);
+
+            if (payment == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ApiResponse.error("No payment found for this order"));
             }
 
             return ResponseEntity.ok(ApiResponse.success(
@@ -94,30 +180,43 @@ public class PaymentController {
 
         } catch (UnauthorizedAccessException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ApiResponse.error(e.getUserFriendlyMessage()));
+                    .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("Error retrieving payment {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ApiResponse.error("Payment not found"));
+            log.error("Error retrieving payment for order {}: {}", orderId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("Failed to retrieve payment"));
         }
     }
 
     /**
-     * Get payments for an order
+     * Get all payments for order - Core v1.0 functionality
      */
-    @GetMapping("/order/{orderId}")
+    @GetMapping("/order/{orderId}/all")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER') or hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByOrder(
+    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByOrderId(
             @PathVariable Long orderId,
             HttpServletRequest request) {
         try {
-            List<Payment> payments = paymentService.findByOrderId(orderId);
+            Long customerId = getCurrentCustomerId(request);
+
+            // Get order to verify ownership
+            Order order = orderService.getOrderById(orderId);
+
+            // Check authorization
+            if (!hasRole(request, "ADMIN") && !order.getCustomer().getCustomerId().equals(customerId)) {
+                throw new UnauthorizedAccessException("You are not authorized to view payments for this order");
+            }
+
+            List<Payment> payments = paymentService.getPaymentsByOrderId(orderId);
 
             return ResponseEntity.ok(ApiResponse.success(
                     "Payments retrieved successfully",
                     payments
             ));
 
+        } catch (UnauthorizedAccessException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             log.error("Error retrieving payments for order {}: {}", orderId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -126,195 +225,166 @@ public class PaymentController {
     }
 
     /**
-     * Get recent payments (Admin only)
+     * Process refund - Core v1.0 functionality
+     * Critical for customer service
      */
-    @GetMapping("/recent")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Payment>>> getRecentPayments(
-            @RequestParam(defaultValue = "10") int limit) {
-        try {
-            List<Payment> recentPayments = paymentService.getRecentPayments(limit);
-
-            return ResponseEntity.ok(ApiResponse.success(
-                    "Recent payments retrieved successfully",
-                    recentPayments
-            ));
-
-        } catch (Exception e) {
-            log.error("Error retrieving recent payments: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Failed to retrieve recent payments"));
-        }
-    }
-
-    /**
-     * Process refund
-     */
-    @PostMapping("/{id}/refund")
+    @PostMapping("/{paymentId}/refund")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Payment>> processRefund(
-            @PathVariable Long id,
+            @PathVariable Long paymentId,
             @Valid @RequestBody RefundRequestDTO refundRequest) {
         try {
-            Payment refund = paymentService.processRefund(id, refundRequest.getAmount());
+            Payment refund = paymentService.processRefund(
+                    paymentId,
+                    refundRequest.getAmount(),
+                    refundRequest.getReason() != null ? refundRequest.getReason() : "Customer requested refund"
+            );
 
             return ResponseEntity.ok(ApiResponse.success(
                     "Refund processed successfully",
                     refund
             ));
 
-        } catch (Exception e) {
-            log.error("Error processing refund for payment {}: {}", id, e.getMessage());
+        } catch (PaymentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error processing refund for payment {}: {}", paymentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to process refund: " + e.getMessage()));
         }
     }
 
     /**
-     * Cancel payment
+     * Check if payment is refundable - Core v1.0 functionality
      */
-    @PostMapping("/{id}/cancel")
+    @GetMapping("/{paymentId}/refundable")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Payment>> cancelPayment(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Map<String, Object>>> checkRefundable(
+            @PathVariable Long paymentId) {
         try {
-            Payment cancelledPayment = paymentService.cancelPayment(id);
+            boolean isRefundable = paymentService.isRefundable(paymentId);
+            BigDecimal refundableAmount = paymentService.getRefundableAmount(paymentId);
+
+            Map<String, Object> result = Map.of(
+                    "isRefundable", isRefundable,
+                    "refundableAmount", refundableAmount
+            );
 
             return ResponseEntity.ok(ApiResponse.success(
-                    "Payment cancelled successfully",
-                    cancelledPayment
+                    "Refund status checked",
+                    result
             ));
 
         } catch (Exception e) {
-            log.error("Error cancelling payment {}: {}", id, e.getMessage());
+            log.error("Error checking refundable status for payment {}: {}", paymentId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Failed to cancel payment: " + e.getMessage()));
+                    .body(ApiResponse.error("Failed to check refund status"));
         }
     }
 
     /**
-     * Update payment status (Admin only)
+     * Verify payment status with provider - Core v1.0 functionality
      */
-    @PutMapping("/{id}/status")
+    @PostMapping("/{paymentId}/verify")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Payment>> updatePaymentStatus(
-            @PathVariable Long id,
-            @RequestParam String status) {
+    public ResponseEntity<ApiResponse<String>> verifyPaymentStatus(
+            @PathVariable Long paymentId) {
         try {
-            Payment.PaymentStatus paymentStatus = Payment.PaymentStatus.valueOf(status.toUpperCase());
-            Payment updatedPayment = paymentService.updatePaymentStatus(id, paymentStatus);
-
-            return ResponseEntity.ok(ApiResponse.success(
-                    "Payment status updated successfully",
-                    updatedPayment
-            ));
-
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid payment status: " + status));
-        } catch (Exception e) {
-            log.error("Error updating payment status for {}: {}", id, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Failed to update payment status"));
-        }
-    }
-
-    /**
-     * Verify payment status with provider
-     */
-    @PostMapping("/{id}/verify")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Payment>> verifyPaymentStatus(@PathVariable Long id) {
-        try {
-            Payment payment = paymentService.verifyPaymentStatus(id);
+            String status = paymentService.verifyPaymentStatus(paymentId);
 
             return ResponseEntity.ok(ApiResponse.success(
                     "Payment status verified",
-                    payment
+                    status
             ));
 
+        } catch (PaymentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("Error verifying payment {}: {}", id, e.getMessage());
+            log.error("Error verifying payment {}: {}", paymentId, e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ApiResponse.error("Failed to verify payment status"));
         }
     }
 
     /**
-     * Get payments by status (Admin only)
+     * Retry failed payment - Core v1.0 functionality
      */
-    @GetMapping("/status/{status}")
+    @PostMapping("/{paymentId}/retry")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByStatus(
-            @PathVariable String status) {
+    public ResponseEntity<ApiResponse<Payment>> retryPayment(
+            @PathVariable Long paymentId) {
         try {
-            Payment.PaymentStatus paymentStatus = Payment.PaymentStatus.valueOf(status.toUpperCase());
-            List<Payment> payments = paymentService.getPaymentsByStatus(paymentStatus);
+            Payment retriedPayment = paymentService.retryPayment(paymentId);
 
             return ResponseEntity.ok(ApiResponse.success(
-                    "Payments retrieved successfully",
-                    payments
+                    "Payment retry initiated",
+                    retriedPayment
             ));
 
-        } catch (IllegalArgumentException e) {
+        } catch (PaymentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Invalid payment status: " + status));
+                    .body(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
-            log.error("Error retrieving payments by status {}: {}", status, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Failed to retrieve payments"));
+            log.error("Error retrying payment {}: {}", paymentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to retry payment"));
         }
     }
 
     /**
-     * Get payments by date range (Admin only)
+     * Cancel payment - Core v1.0 functionality
      */
-    @GetMapping("/date-range")
+    @PostMapping("/{paymentId}/cancel")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Payment>>> getPaymentsByDateRange(
-            @RequestParam String startDate,
-            @RequestParam String endDate) {
+    public ResponseEntity<ApiResponse<Payment>> cancelPayment(
+            @PathVariable Long paymentId,
+            @RequestParam(required = false) String reason) {
         try {
-            LocalDateTime start = LocalDateTime.parse(startDate);
-            LocalDateTime end = LocalDateTime.parse(endDate);
-
-            List<Payment> payments = paymentService.getPaymentsByDateRange(start, end);
+            Payment cancelledPayment = paymentService.cancelPayment(
+                    paymentId,
+                    reason != null ? reason : "Payment cancelled by admin"
+            );
 
             return ResponseEntity.ok(ApiResponse.success(
-                    "Payments retrieved successfully",
-                    payments
+                    "Payment cancelled successfully",
+                    cancelledPayment
             ));
 
-        } catch (Exception e) {
-            log.error("Error retrieving payments by date range: {}", e.getMessage());
+        } catch (PaymentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ApiResponse.error("Failed to retrieve payments"));
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            log.error("Error cancelling payment {}: {}", paymentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to cancel payment"));
         }
     }
 
-    /* VERSION 2.0 - ANALYTICS & METRICS FEATURES
-    // Commented out for v1.0 - will be reimplemented in v2.0
-
-    @GetMapping("/metrics")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<PaymentMetricsResponse>> getPaymentMetrics(
-            @RequestParam(defaultValue = "30") Integer days) {
-        // Analytics feature - not needed for core payment functionality
-    }
-
-    @GetMapping("/issues")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<PaymentIssueResponse>>> getPaymentIssues(
-            @RequestParam(defaultValue = "10") Integer limit) {
-        // Dashboard feature - not needed for core payment functionality
-    }
-
-    @GetMapping("/revenue")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<RevenueAnalyticsResponse>> getRevenueAnalytics(
-            @RequestParam(defaultValue = "30") Integer days) {
-        // Analytics feature - not needed for core payment functionality
-    }
-    */
+    /* ============================================
+     * VERSION 2.0 ENDPOINTS - Reserved for future
+     * ============================================
+     * These endpoints will be added in version 2.0:
+     *
+     * @GetMapping("/metrics")
+     * - Payment metrics and analytics
+     *
+     * @GetMapping("/revenue")
+     * - Revenue analytics and reporting
+     *
+     * @GetMapping("/issues")
+     * - Payment issues dashboard
+     *
+     * @GetMapping("/status/{status}")
+     * - Bulk payment queries by status
+     *
+     * @GetMapping("/date-range")
+     * - Payment history by date range
+     *
+     * @GetMapping("/recent")
+     * - Recent payments dashboard
+     */
 
     // Helper methods
 

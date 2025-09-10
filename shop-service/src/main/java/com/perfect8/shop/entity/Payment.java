@@ -2,62 +2,82 @@ package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entity representing a payment transaction.
+ * Version 1.0 - Core payment functionality with PayPal focus
+ */
 @Entity
-@Table(name = "payments")
-@Getter
-@Setter
+@Table(name = "payments", indexes = {
+        @Index(name = "idx_payment_order", columnList = "order_id"),
+        @Index(name = "idx_payment_status", columnList = "status"),
+        @Index(name = "idx_payment_transaction", columnList = "transaction_id", unique = true),
+        @Index(name = "idx_payment_created", columnList = "created_at")
+})
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@EqualsAndHashCode(exclude = {"order"})
+@ToString(exclude = {"order"})
 public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "payment_id")
     private Long paymentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    @Column(length = 3)
+    @Column(name = "currency", nullable = false, length = 3)
     @Builder.Default
     private String currency = "USD";
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false, length = 20)
-    private PaymentMethod paymentMethod;
+    /**
+     * Payment method as String for v1.0 flexibility
+     * Primary method is PAYPAL in v1.0
+     * Future methods: CREDIT_CARD, DEBIT_CARD, BANK_TRANSFER, etc.
+     */
+    @Column(name = "payment_method", nullable = false, length = 50)
+    @Builder.Default
+    private String paymentMethod = "PAYPAL";
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", nullable = false, length = 20)
-    private PaymentStatus paymentStatus;
+    /**
+     * Payment status
+     * Values: PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED, REFUNDED, PARTIALLY_REFUNDED
+     */
+    @Column(name = "status", nullable = false, length = 50)
+    @Builder.Default
+    private String status = "PENDING";
 
-    @Column(name = "transaction_id", unique = true, length = 100)
+    // Transaction identifiers
+    @Column(name = "transaction_id", nullable = false, unique = true, length = 100)
     private String transactionId;
 
     @Column(name = "gateway_payment_id", length = 100)
     private String gatewayPaymentId;
 
-    @Column(name = "gateway_response_code", length = 50)
-    private String gatewayResponseCode;
-
-    @Column(name = "gateway_response_message", columnDefinition = "TEXT")
-    private String gatewayResponseMessage;
-
-    @Column(name = "payer_email", length = 100)
-    private String payerEmail;
-
-    @Column(name = "payer_name", length = 100)
-    private String payerName;
-
+    // Payment details
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
 
+    @Column(name = "payer_email", length = 255)
+    private String payerEmail;
+
+    @Column(name = "payer_name", length = 255)
+    private String payerName;
+
+    // Verification
     @Column(name = "is_verified")
     @Builder.Default
     private Boolean isVerified = false;
@@ -65,27 +85,21 @@ public class Payment {
     @Column(name = "verification_date")
     private LocalDateTime verificationDate;
 
-    @Column(name = "failure_reason", columnDefinition = "TEXT")
-    private String failureReason;
-
-    // Refund fields
+    // Refund information
     @Column(name = "refund_amount", precision = 10, scale = 2)
     private BigDecimal refundAmount;
 
+    @Column(name = "refund_reason", length = 500)
+    private String refundReason;
+
     @Column(name = "refund_date")
     private LocalDateTime refundDate;
-
-    @Column(name = "refund_transaction_id", length = 100)
-    private String refundTransactionId;
-
-    @Column(name = "refund_reason", columnDefinition = "TEXT")
-    private String refundReason;
 
     @Column(name = "is_partial_refund")
     @Builder.Default
     private Boolean isPartialRefund = false;
 
-    // Retry fields for failed payments
+    // Retry information
     @Column(name = "retry_count")
     @Builder.Default
     private Integer retryCount = 0;
@@ -93,47 +107,136 @@ public class Payment {
     @Column(name = "last_retry_date")
     private LocalDateTime lastRetryDate;
 
-    // Additional fields
-    @Column(columnDefinition = "TEXT")
+    // Failure information
+    @Column(name = "failure_reason", length = 500)
+    private String failureReason;
+
+    // Additional notes
+    @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    // Timestamps
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Enums
-    public enum PaymentMethod {
-        PAYPAL,
-        CREDIT_CARD,
-        DEBIT_CARD,
-        BANK_TRANSFER,
-        CASH_ON_DELIVERY
+    // ========================================
+    // Business methods
+    // ========================================
+
+    /**
+     * Check if payment is completed
+     */
+    public boolean isCompleted() {
+        return "COMPLETED".equals(status);
     }
 
-    public enum PaymentStatus {
-        PENDING,
-        PROCESSING,
-        COMPLETED,
-        FAILED,
-        CANCELLED,
-        REFUNDED,
-        PARTIALLY_REFUNDED,
-        EXPIRED,
-        PENDING_VERIFICATION
+    /**
+     * Check if payment failed
+     */
+    public boolean isFailed() {
+        return "FAILED".equals(status);
     }
 
-    // Lifecycle callbacks
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (paymentStatus == null) {
-            paymentStatus = PaymentStatus.PENDING;
+    /**
+     * Check if payment is pending
+     */
+    public boolean isPending() {
+        return "PENDING".equals(status);
+    }
+
+    /**
+     * Check if payment has been refunded (fully or partially)
+     */
+    public boolean isRefunded() {
+        return "REFUNDED".equals(status) || "PARTIALLY_REFUNDED".equals(status);
+    }
+
+    /**
+     * Check if payment can be refunded
+     */
+    public boolean canBeRefunded() {
+        return isCompleted() || "PARTIALLY_REFUNDED".equals(status);
+    }
+
+    /**
+     * Calculate remaining refundable amount
+     */
+    public BigDecimal getRefundableAmount() {
+        if (!canBeRefunded()) {
+            return BigDecimal.ZERO;
         }
+
+        BigDecimal refunded = refundAmount != null ? refundAmount : BigDecimal.ZERO;
+        return amount.subtract(refunded);
+    }
+
+    /**
+     * Increment retry count
+     */
+    public void incrementRetryCount() {
         if (retryCount == null) {
             retryCount = 0;
+        }
+        retryCount++;
+        lastRetryDate = LocalDateTime.now();
+    }
+
+    /**
+     * Check if maximum retries exceeded
+     */
+    public boolean isMaxRetriesExceeded() {
+        return retryCount != null && retryCount >= 3;
+    }
+
+    /**
+     * Get display status
+     */
+    public String getDisplayStatus() {
+        switch (status) {
+            case "PENDING":
+                return "Payment Pending";
+            case "PROCESSING":
+                return "Processing Payment";
+            case "COMPLETED":
+                return "Payment Completed";
+            case "FAILED":
+                return failureReason != null ? "Failed: " + failureReason : "Payment Failed";
+            case "CANCELLED":
+                return "Payment Cancelled";
+            case "REFUNDED":
+                return "Fully Refunded";
+            case "PARTIALLY_REFUNDED":
+                return "Partially Refunded";
+            default:
+                return status;
+        }
+    }
+
+    /**
+     * Check if this is a PayPal payment
+     */
+    public boolean isPayPalPayment() {
+        return "PAYPAL".equalsIgnoreCase(paymentMethod);
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (transactionId == null) {
+            transactionId = generateTransactionId();
+        }
+        if (currency == null) {
+            currency = "USD";
+        }
+        if (paymentMethod == null) {
+            paymentMethod = "PAYPAL";
+        }
+        if (status == null) {
+            status = "PENDING";
         }
         if (isVerified == null) {
             isVerified = false;
@@ -141,45 +244,47 @@ public class Payment {
         if (isPartialRefund == null) {
             isPartialRefund = false;
         }
-        if (currency == null) {
-            currency = "USD";
+        if (retryCount == null) {
+            retryCount = 0;
         }
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    /**
+     * Generate unique transaction ID
+     */
+    private String generateTransactionId() {
+        return "PAY-" + System.currentTimeMillis() + "-" +
+                String.valueOf(System.nanoTime()).substring(7, 13);
     }
 
-    // Helper methods
-    public void incrementRetryCount() {
-        if (this.retryCount == null) {
-            this.retryCount = 0;
-        }
-        this.retryCount++;
-        this.lastRetryDate = LocalDateTime.now();
+    // ========================================
+    // Backward compatibility (if needed)
+    // ========================================
+
+    /**
+     * Get order ID directly
+     */
+    public Long getOrderId() {
+        return order != null ? order.getOrderId() : null;
     }
 
-    public boolean isRefundable() {
-        return paymentStatus == PaymentStatus.COMPLETED &&
-                (refundAmount == null || refundAmount.compareTo(amount) < 0);
+    /**
+     * Get payment amount as string for display
+     */
+    public String getFormattedAmount() {
+        return currency + " " + amount.toString();
     }
 
-    public boolean isFullyRefunded() {
-        return refundAmount != null && refundAmount.compareTo(amount) == 0;
-    }
-
-    public boolean canRetry() {
-        return (paymentStatus == PaymentStatus.FAILED || paymentStatus == PaymentStatus.PENDING)
-                && retryCount < 3;
-    }
-
-    // For compatibility with existing code that uses String status
-    public void setStatus(String status) {
-        this.paymentStatus = PaymentStatus.valueOf(status);
-    }
-
-    public String getStatus() {
-        return this.paymentStatus != null ? this.paymentStatus.name() : null;
-    }
+    /**
+     * Version 2.0 features - commented out
+     *
+     * In v2.0, we'll add:
+     * - Multiple payment method support with proper enum
+     * - Payment gateway response details
+     * - Fraud detection scores
+     * - Payment tokenization
+     * - Subscription/recurring payment support
+     * - Split payments
+     * - Payment method validation rules
+     */
 }

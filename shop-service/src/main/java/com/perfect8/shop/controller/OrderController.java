@@ -20,6 +20,14 @@ import java.util.Map;
 /**
  * REST controller for order management.
  * Version 1.0 - Core functionality only
+ *
+ * This controller handles all critical order operations:
+ * - Order creation and retrieval
+ * - Status management (full order lifecycle)
+ * - Payment confirmation
+ * - Shipping and delivery tracking
+ * - Returns and cancellations
+ * - Basic operational oversight
  */
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -30,7 +38,8 @@ public class OrderController {
     private final OrderService orderService;
 
     /**
-     * Create a new order
+     * Create a new order - Core functionality
+     * Public endpoint for customers to place orders
      */
     @PostMapping
     public ResponseEntity<ApiResponse<OrderDTO>> createOrder(
@@ -49,7 +58,8 @@ public class OrderController {
     }
 
     /**
-     * Get order by ID
+     * Get order by ID - Core functionality
+     * Customers can view their own orders
      */
     @GetMapping("/{orderId}")
     public ResponseEntity<ApiResponse<OrderDTO>> getOrderById(@PathVariable Long orderId) {
@@ -65,7 +75,8 @@ public class OrderController {
     }
 
     /**
-     * Get order by order number
+     * Get order by order number - Core functionality
+     * Alternative lookup method for customer service
      */
     @GetMapping("/number/{orderNumber}")
     public ResponseEntity<ApiResponse<OrderDTO>> getOrderByNumber(@PathVariable String orderNumber) {
@@ -81,7 +92,8 @@ public class OrderController {
     }
 
     /**
-     * Get all orders with pagination
+     * Get all orders with pagination - Core functionality
+     * Admin-only for order management
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -98,7 +110,8 @@ public class OrderController {
     }
 
     /**
-     * Get orders for a specific customer
+     * Get orders for a specific customer - Core functionality
+     * Customers can view their order history
      */
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<ApiResponse<Page<OrderDTO>>> getCustomerOrders(
@@ -115,7 +128,8 @@ public class OrderController {
     }
 
     /**
-     * Update order status
+     * Update order status - Core functionality
+     * Admin-only for order lifecycle management
      */
     @PutMapping("/{orderId}/status")
     @PreAuthorize("hasRole('ADMIN')")
@@ -124,7 +138,7 @@ public class OrderController {
             @Valid @RequestBody OrderStatusUpdateDTO request) {
         log.info("Updating status for order: {} to: {}", orderId, request.getStatus());
 
-        // Parse status from string - using getStatus() instead of getNewStatus()
+        // Parse status from string
         OrderStatus newStatus = OrderStatus.valueOf(request.getStatus().toUpperCase());
         Order order = orderService.updateOrderStatus(orderId, newStatus, request.getNotes());
 
@@ -138,7 +152,8 @@ public class OrderController {
     }
 
     /**
-     * Cancel an order
+     * Cancel an order - Core functionality
+     * Critical for customer service
      */
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<ApiResponse<OrderDTO>> cancelOrder(
@@ -157,7 +172,8 @@ public class OrderController {
     }
 
     /**
-     * Process return for an order
+     * Process return for an order - Core functionality
+     * Critical for customer service
      */
     @PostMapping("/{orderId}/return")
     public ResponseEntity<ApiResponse<OrderDTO>> returnOrder(
@@ -176,7 +192,8 @@ public class OrderController {
     }
 
     /**
-     * Get orders by status (Admin only)
+     * Get orders by status - Core functionality
+     * Admin-only for operational management
      */
     @GetMapping("/status/{status}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -193,7 +210,8 @@ public class OrderController {
     }
 
     /**
-     * Get recent orders (Admin only)
+     * Get recent orders - Core functionality
+     * Admin-only for dashboard overview
      */
     @GetMapping("/recent")
     @PreAuthorize("hasRole('ADMIN')")
@@ -210,7 +228,8 @@ public class OrderController {
     }
 
     /**
-     * Search orders
+     * Search orders - Core functionality
+     * Admin-only for customer service
      */
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
@@ -228,7 +247,8 @@ public class OrderController {
     }
 
     /**
-     * Confirm payment for an order
+     * Confirm payment for an order - Core functionality
+     * Admin-only for payment processing
      */
     @PostMapping("/{orderId}/confirm-payment")
     @PreAuthorize("hasRole('ADMIN')")
@@ -248,7 +268,8 @@ public class OrderController {
     }
 
     /**
-     * Mark order as shipped
+     * Mark order as shipped - Core functionality
+     * Admin-only for fulfillment
      */
     @PostMapping("/{orderId}/ship")
     @PreAuthorize("hasRole('ADMIN')")
@@ -269,7 +290,8 @@ public class OrderController {
     }
 
     /**
-     * Mark order as delivered
+     * Mark order as delivered - Core functionality
+     * Admin-only to complete order lifecycle
      */
     @PostMapping("/{orderId}/deliver")
     @PreAuthorize("hasRole('ADMIN')")
@@ -289,7 +311,8 @@ public class OrderController {
     }
 
     /**
-     * Get orders that need attention (pending, processing)
+     * Get orders that need attention - Core functionality
+     * Admin-only for daily operations
      */
     @GetMapping("/attention-needed")
     @PreAuthorize("hasRole('ADMIN')")
@@ -305,7 +328,8 @@ public class OrderController {
     }
 
     /**
-     * Get order count by status (for dashboard)
+     * Get order count by status - Core functionality
+     * Admin-only for operational dashboard
      */
     @GetMapping("/count-by-status")
     @PreAuthorize("hasRole('ADMIN')")
@@ -319,4 +343,18 @@ public class OrderController {
                 .data(counts)
                 .build());
     }
+
+    /* ============================================
+     * VERSION 2.0 ENDPOINTS - To be added later
+     * ============================================
+     * Future endpoints for version 2.0:
+     * - /api/v1/orders/analytics - Advanced order analytics
+     * - /api/v1/orders/export - Export orders to CSV/Excel
+     * - /api/v1/orders/bulk-update - Bulk status updates
+     * - /api/v1/orders/revenue-report - Revenue analytics
+     * - /api/v1/orders/performance-metrics - Fulfillment metrics
+     * - /api/v1/orders/customer-lifetime-value - CLV calculations
+     * - /api/v1/orders/subscription - Subscription order management
+     * - /api/v1/orders/recurring - Recurring order handling
+     */
 }
