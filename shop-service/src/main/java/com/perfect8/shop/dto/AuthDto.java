@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * Authentication DTOs for login and registration
+ * Authentication DTOs for login and registration - Version 1.0
  */
 public class AuthDto {
 
@@ -61,6 +61,21 @@ public class AuthDto {
         private Boolean acceptsMarketing;
 
         private Boolean agreeToTerms;
+
+        /**
+         * Get phone number - alias method for AuthService compatibility
+         * AuthService expects getPhoneNumber() but field is named 'phone'
+         */
+        public String getPhoneNumber() {
+            return phone;
+        }
+
+        /**
+         * Set phone number - alias method for compatibility
+         */
+        public void setPhoneNumber(String phoneNumber) {
+            this.phone = phoneNumber;
+        }
     }
 
     @Data
@@ -122,4 +137,45 @@ public class AuthDto {
         @NotBlank(message = "Refresh token is required")
         private String refreshToken;
     }
+
+    // Version 2.0 DTOs - commented out for future
+    /*
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TwoFactorAuthRequest {
+        @NotBlank(message = "Authentication code is required")
+        @Size(min = 6, max = 6, message = "Code must be 6 digits")
+        private String code;
+
+        private String backupCode;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SocialLoginRequest {
+        @NotBlank(message = "Provider is required")
+        private String provider; // google, facebook, apple
+
+        @NotBlank(message = "Token is required")
+        private String token;
+
+        private String redirectUri;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateProfileRequest {
+        private String firstName;
+        private String lastName;
+        private String phone;
+        private String preferredLanguage;
+        private String timezone;
+    }
+    */
 }

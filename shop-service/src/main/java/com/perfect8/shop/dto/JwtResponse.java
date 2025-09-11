@@ -8,17 +8,21 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * JWT Response DTO - Version 1.0
+ * Response object for authentication containing JWT token and user details
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class JwtResponse {
 
-    // Primary token field - FIXED: Added 'token' field that AuthService expects
-    private String token;  // This is what AuthService uses at line 63
+    // Primary token field
+    private String token;
 
     // Alternative token field name (kept for compatibility)
-    private String accessToken;  // Some controllers might use this
+    private String accessToken;
 
     // Token metadata
     private String tokenType;
@@ -35,6 +39,10 @@ public class JwtResponse {
     private String email;
     private String role;
     private List<String> authorities;
+
+    // Customer name fields - ADDED for AuthService compatibility
+    private String firstName;
+    private String lastName;
 
     // Customer information (if applicable)
     private Long customerId;
@@ -86,6 +94,30 @@ public class JwtResponse {
     }
 
     /**
+     * Create a success response with customer details
+     */
+    public static JwtResponse successWithCustomer(String token, Long customerId, String firstName,
+                                                  String lastName, String email, String role) {
+        return JwtResponse.builder()
+                .token(token)
+                .accessToken(token)  // Set both for compatibility
+                .tokenType("Bearer")
+                .customerId(customerId)
+                .userId(customerId)  // Set userId same as customerId
+                .firstName(firstName)
+                .lastName(lastName)
+                .customerName(firstName + " " + lastName)
+                .email(email)
+                .customerEmail(email)
+                .username(email)  // Use email as username
+                .role(role)
+                .success(true)
+                .message("Authentication successful")
+                .issuedAt(LocalDateTime.now())
+                .build();
+    }
+
+    /**
      * Create a success response with full details
      */
     public static JwtResponse successFull(String token, Long userId, String username,
@@ -108,6 +140,34 @@ public class JwtResponse {
     }
 
     /**
+     * Create a success response with full customer details
+     */
+    public static JwtResponse successFullCustomer(String token, Long customerId, String firstName,
+                                                  String lastName, String email, String role,
+                                                  Long expiresIn) {
+        LocalDateTime now = LocalDateTime.now();
+        return JwtResponse.builder()
+                .token(token)
+                .accessToken(token)  // Set both for compatibility
+                .tokenType("Bearer")
+                .customerId(customerId)
+                .userId(customerId)
+                .firstName(firstName)
+                .lastName(lastName)
+                .customerName(firstName + " " + lastName)
+                .username(email)
+                .email(email)
+                .customerEmail(email)
+                .role(role)
+                .expiresIn(expiresIn)
+                .expirationDate(now.plusSeconds(expiresIn))
+                .success(true)
+                .message("Authentication successful")
+                .issuedAt(now)
+                .build();
+    }
+
+    /**
      * Create a failure response
      */
     public static JwtResponse failure(String message) {
@@ -119,6 +179,16 @@ public class JwtResponse {
     }
 
     // Helper methods
+
+    /**
+     * Get full name from firstName and lastName
+     */
+    public String getFullName() {
+        if (firstName != null && lastName != null) {
+            return firstName + " " + lastName;
+        }
+        return customerName;
+    }
 
     /**
      * Check if the token is expired
@@ -169,6 +239,24 @@ public class JwtResponse {
     }
 
     /**
+     * Synchronize name fields
+     */
+    public void synchronizeNameFields() {
+        if (firstName != null && lastName != null && customerName == null) {
+            customerName = firstName + " " + lastName;
+        } else if (customerName != null && firstName == null && lastName == null) {
+            // Try to split customerName
+            String[] parts = customerName.split(" ", 2);
+            if (parts.length >= 1) {
+                firstName = parts[0];
+            }
+            if (parts.length >= 2) {
+                lastName = parts[1];
+            }
+        }
+    }
+
+    /**
      * Check if user has a specific role
      */
     public boolean hasRole(String requiredRole) {
@@ -196,4 +284,40 @@ public class JwtResponse {
     public boolean isCustomer() {
         return hasRole("CUSTOMER") || hasRole("USER");
     }
+
+    /**
+     * Set customer information
+     */
+    public void setCustomerInfo(Long customerId, String firstName, String lastName, String email) {
+        this.customerId = customerId;
+        this.userId = customerId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.customerName = firstName + " " + lastName;
+        this.email = email;
+        this.customerEmail = email;
+        this.username = email;
+    }
+
+    // Version 2.0 fields - commented out for future
+    /*
+    // Multi-factor authentication
+    private boolean mfaRequired;
+    private String mfaToken;
+
+    // Device information
+    private String deviceId;
+    private String deviceType;
+    private String ipAddress;
+
+    // Additional claims
+    private Map<String, Object> additionalClaims;
+
+    // Permissions (more granular than roles)
+    private List<String> permissions;
+
+    // Session management
+    private Integer maxSessions;
+    private List<String> activeSessions;
+    */
 }

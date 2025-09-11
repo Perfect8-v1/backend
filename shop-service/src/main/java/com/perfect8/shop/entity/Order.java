@@ -16,7 +16,12 @@ import java.util.List;
  * Version 1.0 - Core functionality with descriptive field names
  */
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_order_number", columnList = "order_number", unique = true),
+        @Index(name = "idx_order_customer", columnList = "customer_id"),
+        @Index(name = "idx_order_status", columnList = "order_status"),
+        @Index(name = "idx_order_created", columnList = "created_at")
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -35,7 +40,8 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false)
-    private OrderStatus orderStatus;
+    @Builder.Default
+    private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
@@ -68,6 +74,7 @@ public class Order {
     private BigDecimal totalAmount;
 
     @Column(name = "currency", length = 3)
+    @Builder.Default
     private String currency = "USD";
 
     // Shipping address fields with descriptive names
@@ -99,10 +106,12 @@ public class Order {
     private String shippingPostalCode;
 
     @Column(name = "shipping_country", length = 100)
+    @Builder.Default
     private String shippingCountry = "USA";
 
     // Billing address fields with descriptive names
     @Column(name = "billing_same_as_shipping")
+    @Builder.Default
     private Boolean billingSameAsShipping = true;
 
     @Column(name = "billing_first_name", length = 100)
@@ -133,6 +142,7 @@ public class Order {
     private String billingPostalCode;
 
     @Column(name = "billing_country", length = 100)
+    @Builder.Default
     private String billingCountry = "USA";
 
     // Notes fields with descriptive names
@@ -168,9 +178,11 @@ public class Order {
 
     // Additional fields for v1.0
     @Column(name = "is_gift")
+    @Builder.Default
     private Boolean isGift = false;
 
     @Column(name = "requires_shipping")
+    @Builder.Default
     private Boolean requiresShipping = true;
 
     @Column(name = "ip_address", length = 45)
@@ -192,6 +204,15 @@ public class Order {
         if (currency == null) {
             currency = "USD";
         }
+        if (billingSameAsShipping == null) {
+            billingSameAsShipping = true;
+        }
+        if (isGift == null) {
+            isGift = false;
+        }
+        if (requiresShipping == null) {
+            requiresShipping = true;
+        }
     }
 
     @PreUpdate
@@ -211,7 +232,15 @@ public class Order {
         }
     }
 
-    // ========== Helper methods for EmailService ==========
+    // ========== Helper methods for compatibility ==========
+
+    /**
+     * Get order date - returns created timestamp
+     * Required by CustomerService
+     */
+    public LocalDateTime getOrderDate() {
+        return createdAt;
+    }
 
     /**
      * Get customer full name for emails - required by EmailService
@@ -225,6 +254,19 @@ public class Order {
             return customer.getCustomerFullName();
         }
         return "Valued Customer";
+    }
+
+    /**
+     * Get customer email - required by various services
+     */
+    public String getCustomerEmail() {
+        if (shippingEmail != null && !shippingEmail.trim().isEmpty()) {
+            return shippingEmail;
+        }
+        if (customer != null && customer.getEmail() != null) {
+            return customer.getEmail();
+        }
+        return null;
     }
 
     /**
@@ -317,40 +359,27 @@ public class Order {
         return address.toString();
     }
 
-    // ========== Original helper methods ==========
-
-    /**
-     * @deprecated Use getCustomerFullName() instead for consistency
-     */
-    @Deprecated
-    public String getFullShippingName() {
-        return shippingFirstName + " " + shippingLastName;
-    }
-
-    /**
-     * @deprecated Use getFormattedBillingAddress() instead
-     */
-    @Deprecated
-    public String getFullBillingName() {
-        if (Boolean.TRUE.equals(billingSameAsShipping)) {
-            return getFullShippingName();
-        }
-        return billingFirstName + " " + billingLastName;
-    }
-
     // ========== Business logic methods ==========
 
     public void addOrderItem(OrderItem orderItem) {
+        if (orderItems == null) {
+            orderItems = new ArrayList<>();
+        }
         orderItems.add(orderItem);
         orderItem.setOrder(this);
     }
 
     public void removeOrderItem(OrderItem orderItem) {
-        orderItems.remove(orderItem);
-        orderItem.setOrder(null);
+        if (orderItems != null) {
+            orderItems.remove(orderItem);
+            orderItem.setOrder(null);
+        }
     }
 
     public BigDecimal calculateSubtotal() {
+        if (orderItems == null || orderItems.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
         return orderItems.stream()
                 .map(OrderItem::getSubtotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -454,23 +483,58 @@ public class Order {
         }
     }
 
-    /* VERSION 2.0 FEATURES (kommenterat bort för v1.0):
-     * - Coupons och rabattkoder
-     * - Gift cards
-     * - Loyalty points
-     * - Multi-currency support med växelkurser
-     * - Partial refunds
-     * - Split payments
-     * - Recurring orders/subscriptions
-     * - Order templates
-     * - Wishlists
-     * - Gift wrapping options
-     * - Special delivery instructions
-     * - Estimated delivery windows
-     * - Order insurance
-     * - Express shipping options
-     * - Tax exemptions
-     * - B2B pricing
-     * - Volume discounts
-     */
+    // Version 2.0 features - commented out for v1.0
+    /*
+    // Coupon and discount codes
+    @Column(name = "coupon_code", length = 50)
+    private String couponCode;
+
+    @Column(name = "coupon_discount", precision = 10, scale = 2)
+    private BigDecimal couponDiscount;
+
+    // Gift cards
+    @Column(name = "gift_card_code", length = 50)
+    private String giftCardCode;
+
+    @Column(name = "gift_card_amount", precision = 10, scale = 2)
+    private BigDecimal giftCardAmount;
+
+    // Loyalty points
+    @Column(name = "loyalty_points_used")
+    private Integer loyaltyPointsUsed;
+
+    @Column(name = "loyalty_points_earned")
+    private Integer loyaltyPointsEarned;
+
+    // Multi-currency support
+    @Column(name = "exchange_rate", precision = 10, scale = 4)
+    private BigDecimal exchangeRate;
+
+    @Column(name = "base_currency_total", precision = 10, scale = 2)
+    private BigDecimal baseCurrencyTotal;
+
+    // Subscription/recurring orders
+    @Column(name = "is_subscription")
+    private Boolean isSubscription;
+
+    @Column(name = "subscription_id")
+    private Long subscriptionId;
+
+    // Delivery preferences
+    @Column(name = "preferred_delivery_date")
+    private LocalDate preferredDeliveryDate;
+
+    @Column(name = "delivery_window", length = 50)
+    private String deliveryWindow;
+
+    // B2B features
+    @Column(name = "purchase_order_number", length = 50)
+    private String purchaseOrderNumber;
+
+    @Column(name = "tax_exempt")
+    private Boolean taxExempt;
+
+    @Column(name = "tax_exempt_id", length = 50)
+    private String taxExemptId;
+    */
 }

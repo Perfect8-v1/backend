@@ -1,6 +1,7 @@
 package com.perfect8.shop.repository;
 
 import com.perfect8.shop.entity.Order;
+import com.perfect8.shop.entity.Customer;
 import com.perfect8.shop.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,8 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository interface for Order entity.
- * Version 1.0 - Core functionality only
+ * Repository for Order entity
+ * Version 1.0 - Core order data access
  */
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -27,14 +28,32 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByOrderNumber(String orderNumber);
 
     /**
-     * Find orders by customer ID
+     * Find orders by customer
      */
-    Page<Order> findByCustomer_CustomerId(Long customerId, Pageable pageable);
+    List<Order> findByCustomer(Customer customer);
 
     /**
-     * Find orders by customer ID ordered by creation date
+     * Find orders by customer with pagination
      */
-    List<Order> findByCustomer_CustomerIdOrderByCreatedAtDesc(Long customerId);
+    Page<Order> findByCustomer(Customer customer, Pageable pageable);
+
+    /**
+     * Find orders by customer ordered by created date desc - REQUIRED METHOD
+     * Used by CustomerService
+     */
+    Page<Order> findByCustomerOrderByCreatedAtDesc(Customer customer, Pageable pageable);
+
+    /**
+     * Find orders by customer ID
+     */
+    @Query("SELECT o FROM Order o WHERE o.customer.customerId = :customerId")
+    List<Order> findByCustomerId(@Param("customerId") Long customerId);
+
+    /**
+     * Find orders by customer ID with pagination
+     */
+    @Query("SELECT o FROM Order o WHERE o.customer.customerId = :customerId")
+    Page<Order> findByCustomerId(@Param("customerId") Long customerId, Pageable pageable);
 
     /**
      * Find orders by status
@@ -47,16 +66,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByOrderStatus(OrderStatus orderStatus, Pageable pageable);
 
     /**
-     * Find orders by multiple statuses
-     */
-    List<Order> findByOrderStatusIn(List<OrderStatus> statuses);
-
-    /**
-     * Find recent orders (limit by count)
-     */
-    List<Order> findTopNByOrderByCreatedAtDesc(int limit);
-
-    /**
      * Find orders created between dates
      */
     List<Order> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
@@ -67,103 +76,178 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     /**
+     * Find pending orders
+     */
+    List<Order> findByOrderStatusIn(List<OrderStatus> statuses);
+
+    /**
+     * Find orders needing attention
+     */
+    @Query("SELECT o FROM Order o WHERE o.orderStatus IN ('PENDING', 'PROCESSING') " +
+            "AND o.createdAt < :cutoffDate")
+    List<Order> findOrdersNeedingAttention(@Param("cutoffDate") LocalDateTime cutoffDate);
+
+    /**
+     * Find paid orders
+     */
+    @Query("SELECT o FROM Order o WHERE o.orderStatus IN ('PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED')")
+    List<Order> findPaidOrders();
+
+    /**
+     * Find orders ready to ship
+     */
+    @Query("SELECT o FROM Order o WHERE o.orderStatus IN ('PAID', 'PROCESSING') " +
+            "AND o.requiresShipping = true")
+    List<Order> findOrdersReadyToShip();
+
+    /**
+     * Find orders by email
+     */
+    @Query("SELECT o FROM Order o WHERE o.customer.email = :email OR o.shippingEmail = :email")
+    List<Order> findByEmail(@Param("email") String email);
+
+    /**
      * Count orders by status
      */
-    long countByOrderStatus(OrderStatus orderStatus);
+    Long countByOrderStatus(OrderStatus orderStatus);
 
     /**
-     * Count orders for a customer
+     * Count orders by customer
      */
-    long countByCustomer_CustomerId(Long customerId);
+    Long countByCustomer(Customer customer);
 
     /**
-     * Check if order exists by order number
+     * Count orders by customer ID
+     */
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.customer.customerId = :customerId")
+    Long countByCustomerId(@Param("customerId") Long customerId);
+
+    /**
+     * Calculate total revenue
+     */
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.orderStatus IN ('PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED')")
+    BigDecimal calculateTotalRevenue();
+
+    /**
+     * Calculate revenue between dates
+     */
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.orderStatus IN ('PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED') " +
+            "AND o.createdAt BETWEEN :startDate AND :endDate")
+    BigDecimal calculateRevenueBetween(@Param("startDate") LocalDateTime startDate,
+                                       @Param("endDate") LocalDateTime endDate);
+
+    /**
+     * Find today's orders
+     */
+    @Query("SELECT o FROM Order o WHERE DATE(o.createdAt) = CURRENT_DATE")
+    List<Order> findTodaysOrders();
+
+    /**
+     * Find recent orders
+     */
+    @Query("SELECT o FROM Order o ORDER BY o.createdAt DESC")
+    List<Order> findRecentOrders(Pageable pageable);
+
+    /**
+     * Find orders by shipping postal code
+     */
+    List<Order> findByShippingPostalCode(String postalCode);
+
+    /**
+     * Find orders by shipping city
+     */
+    List<Order> findByShippingCity(String city);
+
+    /**
+     * Find orders by shipping state
+     */
+    List<Order> findByShippingState(String state);
+
+    /**
+     * Find orders by shipping country
+     */
+    List<Order> findByShippingCountry(String country);
+
+    /**
+     * Find abandoned carts (orders in PENDING status older than specified hours)
+     */
+    @Query("SELECT o FROM Order o WHERE o.orderStatus = 'PENDING' " +
+            "AND o.createdAt < :cutoffTime")
+    List<Order> findAbandonedCarts(@Param("cutoffTime") LocalDateTime cutoffTime);
+
+    /**
+     * Find high value orders
+     */
+    @Query("SELECT o FROM Order o WHERE o.totalAmount >= :minAmount")
+    List<Order> findHighValueOrders(@Param("minAmount") BigDecimal minAmount);
+
+    /**
+     * Find orders with discounts
+     */
+    @Query("SELECT o FROM Order o WHERE o.discountAmount > 0")
+    List<Order> findOrdersWithDiscounts();
+
+    /**
+     * Find gift orders
+     */
+    List<Order> findByIsGiftTrue();
+
+    /**
+     * Update order status
+     */
+    @Query("UPDATE Order o SET o.orderStatus = :status WHERE o.orderId = :orderId")
+    void updateOrderStatus(@Param("orderId") Long orderId, @Param("status") OrderStatus status);
+
+    /**
+     * Get customer's last order
+     */
+    @Query("SELECT o FROM Order o WHERE o.customer = :customer ORDER BY o.createdAt DESC")
+    Optional<Order> findLastOrderByCustomer(@Param("customer") Customer customer, Pageable pageable);
+
+    /**
+     * Check if order number exists
      */
     boolean existsByOrderNumber(String orderNumber);
 
     /**
-     * Search orders by order number, customer email, or customer name
+     * Find orders that need fulfillment
      */
-    @Query("SELECT o FROM Order o WHERE " +
-            "LOWER(o.orderNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(o.shippingEmail) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "LOWER(CONCAT(o.shippingFirstName, ' ', o.shippingLastName)) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    Page<Order> searchOrders(@Param("searchTerm") String searchTerm, Pageable pageable);
+    @Query("SELECT o FROM Order o WHERE o.orderStatus = 'PAID' " +
+            "AND o.requiresShipping = true " +
+            "AND o.shipment IS NULL")
+    List<Order> findOrdersNeedingFulfillment();
 
     /**
-     * Find orders with total amount greater than specified value
-     */
-    List<Order> findByTotalAmountGreaterThan(BigDecimal amount);
-
-    /**
-     * Find orders by customer email
-     */
-    List<Order> findByShippingEmail(String email);
-
-    /**
-     * Find pending orders older than specified hours
-     */
-    @Query("SELECT o FROM Order o WHERE o.orderStatus = 'PENDING' " +
-            "AND o.createdAt < :cutoffTime")
-    List<Order> findPendingOrdersOlderThan(@Param("cutoffTime") LocalDateTime cutoffTime);
-
-    /**
-     * Find orders that need shipping (confirmed but not shipped)
-     */
-    @Query("SELECT o FROM Order o WHERE o.orderStatus IN ('CONFIRMED', 'PROCESSING') " +
-            "ORDER BY o.confirmedAt ASC")
-    List<Order> findOrdersNeedingShipment();
-
-    /**
-     * Find orders shipped but not delivered within days
+     * Find orders shipped but not delivered
      */
     @Query("SELECT o FROM Order o WHERE o.orderStatus = 'SHIPPED' " +
-            "AND o.shippedAt < :cutoffTime")
-    List<Order> findShippedOrdersOlderThan(@Param("cutoffTime") LocalDateTime cutoffTime);
+            "AND o.shippedAt < :cutoffDate")
+    List<Order> findInTransitOrders(@Param("cutoffDate") LocalDateTime cutoffDate);
 
     /**
-     * Get order statistics for a date range
+     * Get order statistics for a customer
      */
     @Query("SELECT COUNT(o), SUM(o.totalAmount), AVG(o.totalAmount) " +
-            "FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-            "AND o.orderStatus NOT IN ('CANCELLED', 'RETURNED')")
-    List<Object[]> getOrderStatistics(@Param("startDate") LocalDateTime startDate,
-                                      @Param("endDate") LocalDateTime endDate);
+            "FROM Order o WHERE o.customer = :customer " +
+            "AND o.orderStatus IN ('PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED')")
+    List<Object[]> getCustomerOrderStatistics(@Param("customer") Customer customer);
 
-    /**
-     * Find orders with specific shipping country
-     */
-    List<Order> findByShippingCountry(String countryCode);
-
-    /**
-     * Find orders with specific shipping state
-     */
-    List<Order> findByShippingStateAndShippingCountry(String state, String countryCode);
-
-    /**
-     * Find delivered orders for return eligibility check (within 30 days)
-     */
-    @Query("SELECT o FROM Order o WHERE o.orderStatus = 'DELIVERED' " +
-            "AND o.deliveredAt > :cutoffDate " +
-            "AND o.customer.customerId = :customerId")
-    List<Order> findReturnableOrders(@Param("customerId") Long customerId,
-                                     @Param("cutoffDate") LocalDateTime cutoffDate);
-
-    // Version 2.0 - Commented out for future implementation
-    // Analytics and metrics queries
+    // Version 2.0 queries - commented out
     /*
-    @Query("SELECT DATE(o.createdAt) as orderDate, COUNT(o) as orderCount, " +
-           "SUM(o.totalAmount) as totalRevenue " +
-           "FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY DATE(o.createdAt)")
-    List<Object[]> getDailyOrderMetrics(@Param("startDate") LocalDateTime startDate,
-                                        @Param("endDate") LocalDateTime endDate);
+    // Subscription orders
+    @Query("SELECT o FROM Order o WHERE o.isSubscription = true")
+    List<Order> findSubscriptionOrders();
 
-    @Query("SELECT o.shippingCountry, COUNT(o) as orderCount, " +
-           "SUM(o.totalAmount) as totalRevenue " +
-           "FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY o.shippingCountry")
-    List<Object[]> getOrdersByCountry(@Param("startDate") LocalDateTime startDate,
-                                      @Param("endDate") LocalDateTime endDate);
+    // Orders with coupons
+    @Query("SELECT o FROM Order o WHERE o.couponCode IS NOT NULL")
+    List<Order> findOrdersWithCoupons();
+
+    // B2B orders
+    @Query("SELECT o FROM Order o WHERE o.purchaseOrderNumber IS NOT NULL")
+    List<Order> findB2BOrders();
+
+    // International orders
+    @Query("SELECT o FROM Order o WHERE o.shippingCountry != 'USA'")
+    List<Order> findInternationalOrders();
     */
 }

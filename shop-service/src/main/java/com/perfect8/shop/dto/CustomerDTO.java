@@ -1,57 +1,67 @@
 package com.perfect8.shop.dto;
 
-import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+/**
+ * Customer DTO for Shop Service
+ * Version 1.0 - Core customer data transfer
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CustomerDTO {
-    private Long id;
+
+    // Primary identifiers
+    private String customerId;  // Business ID like "CUST-ABC123"
+    private Long id;            // Database ID
+
+    // Basic information
     private String firstName;
     private String lastName;
     private String email;
     private String phoneNumber;
-    private LocalDateTime dateOfBirth;
-    private String gender;
+
+    // Account status
     private Boolean isActive;
+    private Boolean isEmailVerified;
+
+    // Dates
     private LocalDateTime registrationDate;
-    private Integer totalOrders;
-    private Double totalSpent;
+    private LocalDateTime lastLoginDate;
+    private LocalDateTime customerSince;
 
-    public CustomerDTO() {}
+    // Order information
+    private Boolean hasOrders;
+    private Integer orderCount;
 
-    // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    // Addresses
+    private List<AddressDTO> addresses;
 
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
-
-    public LocalDateTime getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(LocalDateTime dateOfBirth) { this.dateOfBirth = dateOfBirth; }
-
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
-
-    public Boolean getIsActive() { return isActive; }
-    public void setIsActive(Boolean isActive) { this.isActive = isActive; }
-
-    public LocalDateTime getRegistrationDate() { return registrationDate; }
-    public void setRegistrationDate(LocalDateTime registrationDate) { this.registrationDate = registrationDate; }
-
-    public Integer getTotalOrders() { return totalOrders; }
-    public void setTotalOrders(Integer totalOrders) { this.totalOrders = totalOrders; }
-
-    public Double getTotalSpent() { return totalSpent; }
-    public void setTotalSpent(Double totalSpent) { this.totalSpent = totalSpent; }
-
+    // Helper methods
     public String getFullName() {
-        return (firstName != null ? firstName : "") + " " + (lastName != null ? lastName : "");
+        return (firstName != null ? firstName : "") + " " +
+                (lastName != null ? lastName : "");
     }
+
+    // Version 2.0 fields - commented out for v1.0
+    /*
+    private String gender;
+    private LocalDate dateOfBirth;
+    private BigDecimal totalSpent;
+    private String preferredCurrency;
+    private String preferredLanguage;
+    private String customerTier;
+    private Integer loyaltyPoints;
+    private LocalDateTime lastPurchaseDate;
+    private BigDecimal averageOrderValue;
+    private List<String> tags;
+    private Map<String, Object> preferences;
+    */
 }
