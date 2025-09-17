@@ -2,7 +2,7 @@ package com.perfect8.shop.controller;
 
 import com.perfect8.shop.dto.*;
 import com.perfect8.shop.entity.Order;
-import com.perfect8.shop.enums.OrderStatus;
+import com.perfect8.common.enums.OrderStatus;
 import com.perfect8.shop.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

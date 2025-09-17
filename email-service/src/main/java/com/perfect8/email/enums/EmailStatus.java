@@ -10,6 +10,7 @@ import lombok.Getter;
 public enum EmailStatus {
 
     // Initial states
+    PENDING("Pending", "Email is pending processing", false, false),
     DRAFT("Draft", "Email is being composed", false, false),
     QUEUED("Queued", "Email is queued for sending", false, false),
     SCHEDULED("Scheduled", "Email is scheduled for future delivery", false, false),
@@ -28,6 +29,7 @@ public enum EmailStatus {
     BOUNCED("Bounced", "Email bounced back", false, true),
     REJECTED("Rejected", "Email rejected by recipient server", false, true),
     BLOCKED("Blocked", "Email blocked by spam filter", false, true),
+    SPAM("Spam", "Email marked as spam", false, true),
 
     // User action states
     COMPLAINED("Complained", "Recipient marked as spam", false, true),
@@ -57,7 +59,7 @@ public enum EmailStatus {
     public boolean isFinalState() {
         return this == DELIVERED || this == FAILED || this == BOUNCED ||
                 this == REJECTED || this == BLOCKED || this == COMPLAINED ||
-                this == UNSUBSCRIBED || this == CANCELLED;
+                this == UNSUBSCRIBED || this == CANCELLED || this == SPAM;
     }
 
     public boolean isRetryableState() {
@@ -65,7 +67,8 @@ public enum EmailStatus {
     }
 
     public boolean isPendingState() {
-        return this == QUEUED || this == SCHEDULED || this == SENDING || this == RETRYING;
+        return this == PENDING || this == QUEUED || this == SCHEDULED ||
+                this == SENDING || this == RETRYING;
     }
 
     public boolean isSuccessState() {
@@ -79,24 +82,38 @@ public enum EmailStatus {
     public boolean canTransitionTo(EmailStatus newStatus) {
         // Define valid status transitions
         switch (this) {
+            case PENDING:
+                return newStatus == QUEUED || newStatus == SCHEDULED ||
+                        newStatus == SENDING || newStatus == CANCELLED ||
+                        newStatus == FAILED;
             case DRAFT:
-                return newStatus == QUEUED || newStatus == SCHEDULED || newStatus == CANCELLED;
+                return newStatus == PENDING || newStatus == QUEUED ||
+                        newStatus == SCHEDULED || newStatus == CANCELLED;
             case QUEUED:
-                return newStatus == SENDING || newStatus == CANCELLED || newStatus == FAILED;
+                return newStatus == SENDING || newStatus == CANCELLED ||
+                        newStatus == FAILED;
             case SCHEDULED:
-                return newStatus == QUEUED || newStatus == CANCELLED;
+                return newStatus == PENDING || newStatus == QUEUED ||
+                        newStatus == CANCELLED;
             case SENDING:
-                return newStatus == SENT || newStatus == FAILED || newStatus == RETRYING;
+                return newStatus == SENT || newStatus == FAILED ||
+                        newStatus == RETRYING;
             case RETRYING:
                 return newStatus == SENT || newStatus == FAILED;
             case SENT:
-                return newStatus == DELIVERED || newStatus == BOUNCED || newStatus == REJECTED;
+                return newStatus == DELIVERED || newStatus == BOUNCED ||
+                        newStatus == REJECTED || newStatus == ACCEPTED;
+            case ACCEPTED:
+                return newStatus == DELIVERED || newStatus == BOUNCED;
             case DELIVERED:
-                return newStatus == COMPLAINED || newStatus == UNSUBSCRIBED;
+                return newStatus == COMPLAINED || newStatus == UNSUBSCRIBED ||
+                        newStatus == SPAM;
             case FAILED:
+                return newStatus == RETRYING || newStatus == QUEUED; // Allow retry
             case BOUNCED:
             case REJECTED:
             case BLOCKED:
+            case SPAM:
             case COMPLAINED:
             case UNSUBSCRIBED:
             case CANCELLED:
@@ -112,11 +129,39 @@ public enum EmailStatus {
         }
 
         for (EmailStatus es : EmailStatus.values()) {
-            if (es.name().equalsIgnoreCase(status) || es.displayName.equalsIgnoreCase(status)) {
+            if (es.name().equalsIgnoreCase(status) ||
+                    es.displayName.equalsIgnoreCase(status)) {
                 return es;
             }
         }
 
-        throw new IllegalArgumentException("Unknown email status: " + status);
+        // Try to handle legacy/alternative names
+        String normalizedStatus = status.toUpperCase().replace(" ", "_");
+        try {
+            return EmailStatus.valueOf(normalizedStatus);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Unknown email status: " + status);
+        }
+    }
+
+    /**
+     * Map from EmailLog.Status to EmailStatus
+     * Helper method for compatibility
+     */
+    public static EmailStatus fromEmailLogStatus(String logStatus) {
+        if (logStatus == null) return PENDING;
+
+        switch (logStatus.toUpperCase()) {
+            case "PENDING": return PENDING;
+            case "QUEUED": return QUEUED;
+            case "SENDING": return SENDING;
+            case "SENT": return SENT;
+            case "DELIVERED": return DELIVERED;
+            case "FAILED": return FAILED;
+            case "BOUNCED": return BOUNCED;
+            case "SPAM": return SPAM;
+            case "CANCELLED": return CANCELLED;
+            default: return PENDING;
+        }
     }
 }

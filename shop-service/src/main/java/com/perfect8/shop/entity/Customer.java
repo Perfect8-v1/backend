@@ -1,12 +1,12 @@
 package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -15,11 +15,16 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "customers")
+@Table(name = "customers", indexes = {
+        @Index(name = "idx_customer_email", columnList = "email"),
+        @Index(name = "idx_customer_business_id", columnList = "customer_business_id")
+})
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = {"orders", "addresses", "cart", "roles"})
+@ToString(exclude = {"orders", "addresses", "cart", "roles"})
 public class Customer {
 
     @Id
@@ -27,32 +32,79 @@ public class Customer {
     @Column(name = "customer_id")
     private Long customerId;
 
-    @Column(name = "email", nullable = false, unique = true, length = 100)
-    private String email;
+    @Column(name = "customer_business_id", unique = true, nullable = false, length = 20)
+    private String customerBusinessId;
 
-    @Column(name = "password", nullable = false)
-    private String password;
-
+    @NotBlank(message = "First name is required")
+    @Size(max = 50)
     @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
 
+    @NotBlank(message = "Last name is required")
+    @Size(max = 50)
     @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
+
+    @Email(message = "Email should be valid")
+    @NotBlank(message = "Email is required")
+    @Column(name = "email", unique = true, nullable = false, length = 100)
+    private String email;
 
     @Column(name = "phone_number", length = 20)
     private String phoneNumber;
 
-    @Column(name = "is_active")
+    @Column(name = "password_hash", nullable = false)
+    private String passwordHash;
+
+    // Role as string for now (will convert to enum later)
+    @Column(name = "role", nullable = false, length = 32)
+    private String role = "CUSTOMER";
+
+    // Account status fields
     @Builder.Default
+    @Column(name = "is_active")
     private Boolean isActive = true;
 
-    @Column(name = "email_verified")
     @Builder.Default
-    private Boolean emailVerified = false;
+    @Column(name = "is_email_verified")
+    private Boolean isEmailVerified = false;
 
+    @Column(name = "email_verification_token")
+    private String emailVerificationToken;
+
+    @Column(name = "email_verification_token_expiry")
+    private LocalDateTime emailVerificationTokenExpiry;
+
+    @Column(name = "email_verified_at")
+    private LocalDateTime emailVerifiedAt;
+
+    // Security fields
+    @Builder.Default
+    @Column(name = "login_attempts")
+    private Integer loginAttempts = 0;
+
+    @Builder.Default
+    @Column(name = "is_account_locked")
+    private Boolean isAccountLocked = false;
+
+    @Column(name = "account_locked_at")
+    private LocalDateTime accountLockedAt;
+
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
+    @Column(name = "password_reset_token")
+    private String passwordResetToken;
+
+    @Column(name = "password_reset_token_expiry")
+    private LocalDateTime passwordResetTokenExpiry;
+
+    // Timestamps
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
@@ -60,88 +112,92 @@ public class Customer {
     private LocalDateTime lastLoginAt;
 
     // Relations
-    @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Order> orders = new ArrayList<>();
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Address> addresses = new ArrayList<>();
+
+    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Cart cart;
+
+    // Many-to-many with roles (for future use, but keeping for backward compatibility)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "customer_roles",
             joinColumns = @JoinColumn(name = "customer_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private Set<Role> roles = new HashSet<>();
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<Address> addresses = new ArrayList<>();
-
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
-    @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<Order> orders = new ArrayList<>();
-
-    @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private Cart cart;
-
-    // Version 2.0 - Kommenterat bort för senare
-    // @Column(name = "loyalty_points")
-    // private Integer loyaltyPoints;
-
-    // @Column(name = "customer_segment")
-    // private String customerSegment;
-
-    // @Column(name = "lifetime_value")
-    // private BigDecimal lifetimeValue;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    // Default shipping address
+    @ManyToOne
+    @JoinColumn(name = "default_shipping_address_id")
+    private Address defaultShippingAddress;
 
     // Helper methods
-    public void addRole(Role role) {
-        this.roles.add(role);
-        role.getCustomers().add(this);
+    public String getCustomerFullName() {
+        return firstName + " " + lastName;
     }
 
-    public void removeRole(Role role) {
-        this.roles.remove(role);
-        role.getCustomers().remove(this);
+    // Backward compatibility methods
+    public Boolean getActive() {
+        return isActive;
     }
 
+    public void setActive(Boolean active) {
+        this.isActive = active;
+    }
+
+    public Boolean getAccountLocked() {
+        return isAccountLocked;
+    }
+
+    public void setAccountLocked(Boolean accountLocked) {
+        this.isAccountLocked = accountLocked;
+    }
+
+    public Boolean isActive() {
+        return isActive != null && isActive;
+    }
+
+    public Boolean isEmailVerified() {
+        return isEmailVerified != null && isEmailVerified;
+    }
+
+    public void setIsEmailVerified(Boolean emailVerified) {
+        this.isEmailVerified = emailVerified;
+    }
+
+    // Legacy getId() method for backward compatibility
+    public Long getId() {
+        return customerId;
+    }
+
+    // Helper method to add address
     public void addAddress(Address address) {
         addresses.add(address);
         address.setCustomer(this);
     }
 
+    // Helper method to remove address
     public void removeAddress(Address address) {
         addresses.remove(address);
         address.setCustomer(null);
     }
 
+    // Helper method to add order
     public void addOrder(Order order) {
         orders.add(order);
         order.setCustomer(this);
     }
 
+    // Helper method to remove order
     public void removeOrder(Order order) {
         orders.remove(order);
         order.setCustomer(null);
-    }
-
-    // Utility method för fullständigt namn
-    public String getFullName() {
-        return firstName + " " + lastName;
     }
 }

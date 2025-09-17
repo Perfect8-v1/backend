@@ -1,33 +1,26 @@
 package com.perfect8.shop.entity;
 
-import com.perfect8.shop.enums.OrderStatus;
+import com.perfect8.common.enums.OrderStatus;  // Från common!
+import com.perfect8.shop.util.OrderStatusHelper;  // Lokal helper
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Order entity representing a customer order.
- * Version 1.0 - Core functionality with descriptive field names
+ * Order entity för shop-service
+ * Använder OrderStatus från common-modulen
+ * Version 1.0
  */
 @Entity
-@Table(name = "orders", indexes = {
-        @Index(name = "idx_order_number", columnList = "order_number", unique = true),
-        @Index(name = "idx_order_customer", columnList = "customer_id"),
-        @Index(name = "idx_order_status", columnList = "order_status"),
-        @Index(name = "idx_order_created", columnList = "created_at")
-})
-@Data
-@Builder
+@Table(name = "orders")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"orderItems", "payment", "shipment", "customer"})
-@ToString(exclude = {"orderItems", "payment", "shipment", "customer"})
+@Builder
 public class Order {
 
     @Id
@@ -35,11 +28,15 @@ public class Order {
     @Column(name = "order_id")
     private Long orderId;
 
-    @Column(name = "order_number", unique = true, nullable = false)
+    @Column(name = "order_number", unique = true, nullable = false, length = 50)
     private String orderNumber;
 
+    /**
+     * Order status från common-modulen
+     * Sparas som STRING i databasen
+     */
     @Enumerated(EnumType.STRING)
-    @Column(name = "order_status", nullable = false)
+    @Column(name = "order_status", nullable = false, length = 20)
     @Builder.Default
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
@@ -47,9 +44,69 @@ public class Order {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column(name = "order_date", nullable = false)
+    @Builder.Default
+    private LocalDateTime orderDate = LocalDateTime.now();
+
+    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
+    @Column(name = "subtotal_amount", precision = 10, scale = 2)
+    private BigDecimal subtotalAmount;
+
+    @Column(name = "tax_amount", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal taxAmount = BigDecimal.ZERO;
+
+    @Column(name = "shipping_cost", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal shippingCost = BigDecimal.ZERO;
+
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
+
+    @Column(name = "payment_status", length = 20)
+    private String paymentStatus;
+
+    @Column(name = "shipping_method", length = 50)
+    private String shippingMethod;
+
+    @Column(name = "tracking_number", length = 100)
+    private String trackingNumber;
+
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @Builder.Default
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "shipped_date")
+    private LocalDateTime shippedDate;
+
+    @Column(name = "delivered_date")
+    private LocalDateTime deliveredDate;
+
+    // Relations
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipping_address_id")
+    private Address shippingAddress;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "billing_address_id")
+    private Address billingAddress;
 
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Payment payment;
@@ -57,484 +114,117 @@ public class Order {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Shipment shipment;
 
-    // Financial fields with descriptive names
-    @Column(name = "subtotal", precision = 10, scale = 2, nullable = false)
-    private BigDecimal subtotal;
+    // Lifecycle callbacks
 
-    @Column(name = "tax_amount", precision = 10, scale = 2)
-    private BigDecimal taxAmount;
-
-    @Column(name = "shipping_amount", precision = 10, scale = 2)
-    private BigDecimal shippingAmount;
-
-    @Column(name = "discount_amount", precision = 10, scale = 2)
-    private BigDecimal discountAmount;
-
-    @Column(name = "total_amount", precision = 10, scale = 2, nullable = false)
-    private BigDecimal totalAmount;
-
-    @Column(name = "currency", length = 3)
-    @Builder.Default
-    private String currency = "USD";
-
-    // Shipping address fields with descriptive names
-    @Column(name = "shipping_first_name", length = 100)
-    private String shippingFirstName;
-
-    @Column(name = "shipping_last_name", length = 100)
-    private String shippingLastName;
-
-    @Column(name = "shipping_email", length = 150)
-    private String shippingEmail;
-
-    @Column(name = "shipping_phone", length = 20)
-    private String shippingPhone;
-
-    @Column(name = "shipping_address_line1", length = 255)
-    private String shippingAddressLine1;
-
-    @Column(name = "shipping_address_line2", length = 255)
-    private String shippingAddressLine2;
-
-    @Column(name = "shipping_city", length = 100)
-    private String shippingCity;
-
-    @Column(name = "shipping_state", length = 100)
-    private String shippingState;
-
-    @Column(name = "shipping_postal_code", length = 20)
-    private String shippingPostalCode;
-
-    @Column(name = "shipping_country", length = 100)
-    @Builder.Default
-    private String shippingCountry = "USA";
-
-    // Billing address fields with descriptive names
-    @Column(name = "billing_same_as_shipping")
-    @Builder.Default
-    private Boolean billingSameAsShipping = true;
-
-    @Column(name = "billing_first_name", length = 100)
-    private String billingFirstName;
-
-    @Column(name = "billing_last_name", length = 100)
-    private String billingLastName;
-
-    @Column(name = "billing_email", length = 150)
-    private String billingEmail;
-
-    @Column(name = "billing_phone", length = 20)
-    private String billingPhone;
-
-    @Column(name = "billing_address_line1", length = 255)
-    private String billingAddressLine1;
-
-    @Column(name = "billing_address_line2", length = 255)
-    private String billingAddressLine2;
-
-    @Column(name = "billing_city", length = 100)
-    private String billingCity;
-
-    @Column(name = "billing_state", length = 100)
-    private String billingState;
-
-    @Column(name = "billing_postal_code", length = 20)
-    private String billingPostalCode;
-
-    @Column(name = "billing_country", length = 100)
-    @Builder.Default
-    private String billingCountry = "USA";
-
-    // Notes fields with descriptive names
-    @Column(name = "customer_notes", columnDefinition = "TEXT")
-    private String customerNotes;
-
-    @Column(name = "internal_notes", columnDefinition = "TEXT")
-    private String internalNotes;
-
-    @Column(name = "gift_message", columnDefinition = "TEXT")
-    private String giftMessage;
-
-    // Timestamps with descriptive names
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
-
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
-
-    @Column(name = "shipped_at")
-    private LocalDateTime shippedAt;
-
-    @Column(name = "delivered_at")
-    private LocalDateTime deliveredAt;
-
-    @Column(name = "cancelled_at")
-    private LocalDateTime cancelledAt;
-
-    // Additional fields for v1.0
-    @Column(name = "is_gift")
-    @Builder.Default
-    private Boolean isGift = false;
-
-    @Column(name = "requires_shipping")
-    @Builder.Default
-    private Boolean requiresShipping = true;
-
-    @Column(name = "ip_address", length = 45)
-    private String ipAddress;
-
-    @Column(name = "user_agent", columnDefinition = "TEXT")
-    private String userAgent;
-
-    // Lifecycle hooks
     @PrePersist
     protected void onCreate() {
-        if (orderNumber == null) {
-            // Generate order number: ORD-timestamp
-            orderNumber = "ORD-" + System.currentTimeMillis();
-        }
+        createdAt = LocalDateTime.now();
+        orderDate = LocalDateTime.now();
         if (orderStatus == null) {
             orderStatus = OrderStatus.PENDING;
-        }
-        if (currency == null) {
-            currency = "USD";
-        }
-        if (billingSameAsShipping == null) {
-            billingSameAsShipping = true;
-        }
-        if (isGift == null) {
-            isGift = false;
-        }
-        if (requiresShipping == null) {
-            requiresShipping = true;
         }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        // Update status-specific timestamps
-        if (orderStatus == OrderStatus.PAID && paidAt == null) {
-            paidAt = LocalDateTime.now();
-        }
-        if (orderStatus == OrderStatus.SHIPPED && shippedAt == null) {
-            shippedAt = LocalDateTime.now();
-        }
-        if (orderStatus == OrderStatus.DELIVERED && deliveredAt == null) {
-            deliveredAt = LocalDateTime.now();
-        }
-        if (orderStatus == OrderStatus.CANCELLED && cancelledAt == null) {
-            cancelledAt = LocalDateTime.now();
-        }
+        updatedAt = LocalDateTime.now();
     }
 
-    // ========== Helper methods for compatibility ==========
+    // Business methods - använder OrderStatusHelper
 
     /**
-     * Get order date - returns created timestamp
-     * Required by CustomerService
+     * Update order status with validation
      */
-    public LocalDateTime getOrderDate() {
-        return createdAt;
+    public void updateStatus(OrderStatus newStatus) {
+        // Använd helper för validering
+        OrderStatusHelper.validateTransition(this.orderStatus, newStatus);
+
+        this.orderStatus = newStatus;
+
+        // Update related dates
+        if (newStatus == OrderStatus.SHIPPED) {
+            this.shippedDate = LocalDateTime.now();
+        } else if (newStatus == OrderStatus.DELIVERED) {
+            this.deliveredDate = LocalDateTime.now();
+        }
     }
 
     /**
-     * Get customer full name for emails - required by EmailService
-     * Uses shipping name if available, otherwise customer name
+     * Check if order can be cancelled
      */
-    public String getCustomerFullName() {
-        if (shippingFirstName != null && shippingLastName != null) {
-            return shippingFirstName + " " + shippingLastName;
-        }
-        if (customer != null) {
-            return customer.getCustomerFullName();
-        }
-        return "Valued Customer";
-    }
-
-    /**
-     * Get customer email - required by various services
-     */
-    public String getCustomerEmail() {
-        if (shippingEmail != null && !shippingEmail.trim().isEmpty()) {
-            return shippingEmail;
-        }
-        if (customer != null && customer.getEmail() != null) {
-            return customer.getEmail();
-        }
-        return null;
-    }
-
-    /**
-     * Get formatted shipping address for emails - required by EmailService
-     */
-    public String getFormattedShippingAddress() {
-        StringBuilder address = new StringBuilder();
-
-        if (shippingFirstName != null && shippingLastName != null) {
-            address.append(shippingFirstName).append(" ").append(shippingLastName).append("\n");
-        }
-
-        if (shippingAddressLine1 != null) {
-            address.append(shippingAddressLine1).append("\n");
-        }
-
-        if (shippingAddressLine2 != null && !shippingAddressLine2.trim().isEmpty()) {
-            address.append(shippingAddressLine2).append("\n");
-        }
-
-        if (shippingCity != null) {
-            address.append(shippingCity);
-        }
-
-        if (shippingState != null && !shippingState.trim().isEmpty()) {
-            address.append(", ").append(shippingState);
-        }
-
-        if (shippingPostalCode != null) {
-            address.append(" ").append(shippingPostalCode);
-        }
-
-        address.append("\n");
-
-        if (shippingCountry != null) {
-            address.append(shippingCountry);
-        }
-
-        if (shippingPhone != null && !shippingPhone.trim().isEmpty()) {
-            address.append("\nPhone: ").append(shippingPhone);
-        }
-
-        return address.toString();
-    }
-
-    /**
-     * Get formatted billing address
-     */
-    public String getFormattedBillingAddress() {
-        if (Boolean.TRUE.equals(billingSameAsShipping)) {
-            return getFormattedShippingAddress();
-        }
-
-        StringBuilder address = new StringBuilder();
-
-        if (billingFirstName != null && billingLastName != null) {
-            address.append(billingFirstName).append(" ").append(billingLastName).append("\n");
-        }
-
-        if (billingAddressLine1 != null) {
-            address.append(billingAddressLine1).append("\n");
-        }
-
-        if (billingAddressLine2 != null && !billingAddressLine2.trim().isEmpty()) {
-            address.append(billingAddressLine2).append("\n");
-        }
-
-        if (billingCity != null) {
-            address.append(billingCity);
-        }
-
-        if (billingState != null && !billingState.trim().isEmpty()) {
-            address.append(", ").append(billingState);
-        }
-
-        if (billingPostalCode != null) {
-            address.append(" ").append(billingPostalCode);
-        }
-
-        address.append("\n");
-
-        if (billingCountry != null) {
-            address.append(billingCountry);
-        }
-
-        if (billingPhone != null && !billingPhone.trim().isEmpty()) {
-            address.append("\nPhone: ").append(billingPhone);
-        }
-
-        return address.toString();
-    }
-
-    // ========== Business logic methods ==========
-
-    public void addOrderItem(OrderItem orderItem) {
-        if (orderItems == null) {
-            orderItems = new ArrayList<>();
-        }
-        orderItems.add(orderItem);
-        orderItem.setOrder(this);
-    }
-
-    public void removeOrderItem(OrderItem orderItem) {
-        if (orderItems != null) {
-            orderItems.remove(orderItem);
-            orderItem.setOrder(null);
-        }
-    }
-
-    public BigDecimal calculateSubtotal() {
-        if (orderItems == null || orderItems.isEmpty()) {
-            return BigDecimal.ZERO;
-        }
-        return orderItems.stream()
-                .map(OrderItem::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    public BigDecimal calculateTotalAmount() {
-        BigDecimal total = subtotal != null ? subtotal : BigDecimal.ZERO;
-        if (taxAmount != null) {
-            total = total.add(taxAmount);
-        }
-        if (shippingAmount != null) {
-            total = total.add(shippingAmount);
-        }
-        if (discountAmount != null) {
-            total = total.subtract(discountAmount);
-        }
-        return total;
-    }
-
-    public void updateTotals() {
-        this.subtotal = calculateSubtotal();
-        this.totalAmount = calculateTotalAmount();
-    }
-
-    // ========== Status check methods ==========
-
-    public boolean isPaid() {
-        return payment != null &&
-                (orderStatus == OrderStatus.PAID ||
-                        orderStatus == OrderStatus.PROCESSING ||
-                        orderStatus == OrderStatus.SHIPPED ||
-                        orderStatus == OrderStatus.DELIVERED);
-    }
-
     public boolean canBeCancelled() {
-        return orderStatus == OrderStatus.PENDING ||
-                orderStatus == OrderStatus.PAID ||
-                orderStatus == OrderStatus.PROCESSING;
+        return OrderStatusHelper.canBeCancelled(this.orderStatus);
     }
 
-    public boolean canBeShipped() {
-        return orderStatus == OrderStatus.PAID ||
-                orderStatus == OrderStatus.PROCESSING;
+    /**
+     * Check if order can be returned
+     */
+    public boolean canBeReturned() {
+        return OrderStatusHelper.canBeReturned(this.orderStatus);
     }
 
-    public boolean isShipped() {
-        return shippedAt != null ||
-                orderStatus == OrderStatus.SHIPPED ||
-                orderStatus == OrderStatus.DELIVERED;
+    /**
+     * Check if order is in final state
+     */
+    public boolean isFinalState() {
+        return this.orderStatus.isFinalState();
     }
 
-    public boolean isDelivered() {
-        return deliveredAt != null ||
-                orderStatus == OrderStatus.DELIVERED;
+    /**
+     * Check if order requires payment
+     */
+    public boolean requiresPayment() {
+        return OrderStatusHelper.requiresPayment(this.orderStatus);
     }
 
-    public boolean isCancelled() {
-        return cancelledAt != null ||
-                orderStatus == OrderStatus.CANCELLED;
+    /**
+     * Get order progress percentage
+     */
+    public int getProgressPercentage() {
+        return OrderStatusHelper.getProgressPercentage(this.orderStatus);
     }
 
-    public boolean canBeRefunded() {
-        return isPaid() && !isCancelled();
+    /**
+     * Add order item
+     */
+    public void addOrderItem(OrderItem item) {
+        orderItems.add(item);
+        item.setOrder(this);
+        recalculateTotals();
     }
 
-    // ========== State transition methods ==========
+    /**
+     * Remove order item
+     */
+    public void removeOrderItem(OrderItem item) {
+        orderItems.remove(item);
+        item.setOrder(null);
+        recalculateTotals();
+    }
 
-    public void markAsPaid() {
-        if (orderStatus == OrderStatus.PENDING) {
-            this.orderStatus = OrderStatus.PAID;
-            this.paidAt = LocalDateTime.now();
+    /**
+     * Recalculate order totals
+     */
+    private void recalculateTotals() {
+        if (orderItems != null && !orderItems.isEmpty()) {
+            this.subtotalAmount = orderItems.stream()
+                    .map(OrderItem::getSubtotal)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            this.totalAmount = subtotalAmount
+                    .add(taxAmount)
+                    .add(shippingCost)
+                    .subtract(discountAmount);
         }
     }
 
-    public void markAsProcessing() {
-        if (isPaid()) {
-            this.orderStatus = OrderStatus.PROCESSING;
+    /**
+     * Cancel order
+     */
+    public void cancel() {
+        if (!canBeCancelled()) {
+            throw new IllegalStateException("Order cannot be cancelled in status: " + orderStatus);
         }
+        updateStatus(OrderStatus.CANCELLED);
     }
-
-    public void markAsShipped() {
-        if (canBeShipped()) {
-            this.orderStatus = OrderStatus.SHIPPED;
-            this.shippedAt = LocalDateTime.now();
-        }
-    }
-
-    public void markAsDelivered() {
-        if (isShipped()) {
-            this.orderStatus = OrderStatus.DELIVERED;
-            this.deliveredAt = LocalDateTime.now();
-        }
-    }
-
-    public void cancel(String cancellationReason) {
-        if (canBeCancelled()) {
-            this.orderStatus = OrderStatus.CANCELLED;
-            this.cancelledAt = LocalDateTime.now();
-            this.internalNotes = (this.internalNotes != null ? this.internalNotes + "\n" : "")
-                    + "Cancellation reason: " + cancellationReason;
-        }
-    }
-
-    // Version 2.0 features - commented out for v1.0
-    /*
-    // Coupon and discount codes
-    @Column(name = "coupon_code", length = 50)
-    private String couponCode;
-
-    @Column(name = "coupon_discount", precision = 10, scale = 2)
-    private BigDecimal couponDiscount;
-
-    // Gift cards
-    @Column(name = "gift_card_code", length = 50)
-    private String giftCardCode;
-
-    @Column(name = "gift_card_amount", precision = 10, scale = 2)
-    private BigDecimal giftCardAmount;
-
-    // Loyalty points
-    @Column(name = "loyalty_points_used")
-    private Integer loyaltyPointsUsed;
-
-    @Column(name = "loyalty_points_earned")
-    private Integer loyaltyPointsEarned;
-
-    // Multi-currency support
-    @Column(name = "exchange_rate", precision = 10, scale = 4)
-    private BigDecimal exchangeRate;
-
-    @Column(name = "base_currency_total", precision = 10, scale = 2)
-    private BigDecimal baseCurrencyTotal;
-
-    // Subscription/recurring orders
-    @Column(name = "is_subscription")
-    private Boolean isSubscription;
-
-    @Column(name = "subscription_id")
-    private Long subscriptionId;
-
-    // Delivery preferences
-    @Column(name = "preferred_delivery_date")
-    private LocalDate preferredDeliveryDate;
-
-    @Column(name = "delivery_window", length = 50)
-    private String deliveryWindow;
-
-    // B2B features
-    @Column(name = "purchase_order_number", length = 50)
-    private String purchaseOrderNumber;
-
-    @Column(name = "tax_exempt")
-    private Boolean taxExempt;
-
-    @Column(name = "tax_exempt_id", length = 50)
-    private String taxExemptId;
-    */
 }

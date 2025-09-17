@@ -6,10 +6,12 @@
 CREATE DATABASE IF NOT EXISTS blogdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE blogdb;
 
--- Create roles table
+-- Create roles table med enum_name för Java mapping
 CREATE TABLE IF NOT EXISTS roles (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
+    name VARCHAR(50) UNIQUE NOT NULL,
+    enum_name VARCHAR(50) UNIQUE NOT NULL COMMENT 'Maps to Java Role enum',
+    description VARCHAR(255)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create users table
@@ -79,12 +81,15 @@ CREATE TABLE IF NOT EXISTS post_links (
 -- Insert initial data
 -- =============================================
 
--- Insert default roles
-INSERT INTO roles (name) VALUES
-    ('ADMIN'),
-    ('WRITER'),
-    ('READER')
-ON DUPLICATE KEY UPDATE name = VALUES(name);
+-- Insert default roles med enum mapping
+-- VIKTIGT: enum_name måste matcha exakt med Java Role enum värden
+INSERT INTO roles (name, enum_name, description) VALUES
+    ('ADMIN', 'ROLE_ADMIN', 'Full system access'),
+    ('WRITER', 'ROLE_WRITER', 'Can create and edit posts'),
+    ('READER', 'ROLE_READER', 'Can read published posts')
+ON DUPLICATE KEY UPDATE
+    enum_name = VALUES(enum_name),
+    description = VALUES(description);
 
 -- Insert default admin user (password: admin123)
 -- Note: Password is BCrypt encoded for 'admin123'

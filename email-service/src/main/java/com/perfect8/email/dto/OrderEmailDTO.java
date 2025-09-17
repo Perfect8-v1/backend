@@ -7,115 +7,108 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Order DTO for email service
- * Contains order information needed for sending order-related emails
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderEmailDTO {
 
-    private Long id;
-    private String orderNumber;
-    private String status;
+    // Order details
+    private Long orderId;
+    private String orderNumber;  // ADDED: This was missing
     private LocalDateTime orderDate;
+    private String orderStatus;
 
     // Customer information
-    private String customerEmail;
+    private Long customerId;
     private String customerName;
+    private String customerEmail;
     private String customerPhone;
+
+    // Items
+    @Builder.Default
+    private List<OrderItemDto> items = new ArrayList<>();  // ADDED: This was missing
 
     // Amounts
     private BigDecimal subtotal;
-    private BigDecimal shippingAmount;
     private BigDecimal taxAmount;
+    private BigDecimal shippingCost;
+    private BigDecimal discountAmount;
     private BigDecimal totalAmount;
     private String currency;
 
-    // Shipping information
+    // Addresses
+    private String billingAddress;
+    private String shippingAddress;
+
+    // Shipping details
     private String shippingMethod;
     private String trackingNumber;
-    private String estimatedDeliveryDate;
+    private String carrier;
+    private LocalDateTime estimatedDeliveryDate;
+    private LocalDateTime shippedDate;
 
-    // Shipping address
-    private String shippingName;
-    private String shippingStreet;
-    private String shippingCity;
-    private String shippingState;
-    private String shippingPostalCode;
-    private String shippingCountry;
-
-    // Billing address (if different)
-    private String billingName;
-    private String billingStreet;
-    private String billingCity;
-    private String billingState;
-    private String billingPostalCode;
-    private String billingCountry;
-
-    // Order items
-    private List<OrderItemEmailDTO> items;
-
-    // Payment information
+    // Payment
     private String paymentMethod;
     private String paymentStatus;
+    private String transactionId;
 
     // Additional information
     private String orderNotes;
     private String giftMessage;
+    private boolean isGift;
+    private String couponCode;
+    private String invoiceNumber;
+
+    // Store information
+    private String storeName;
+    private String storeEmail;
+    private String storePhone;
+    private String storeAddress;
+    private String storeWebsite;
+
+    // URLs for customer actions
+    private String orderViewUrl;
+    private String trackingUrl;
+    private String invoiceUrl;
+    private String returnUrl;
+
+    // Metadata
+    private String language;
+    private String templateVersion;
 
     // Helper methods
+    public void addItem(OrderItemDto item) {
+        if (this.items == null) {
+            this.items = new ArrayList<>();
+        }
+        this.items.add(item);
+    }
+
+    public int getTotalItemCount() {
+        if (items == null) return 0;
+        return items.stream()
+                .mapToInt(OrderItemDto::getQuantity)
+                .sum();
+    }
+
+    public boolean hasTracking() {
+        return trackingNumber != null && !trackingNumber.isEmpty();
+    }
+
+    public boolean hasDiscount() {
+        return discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0;
+    }
+
     public String getFormattedOrderNumber() {
-        return orderNumber != null ? orderNumber : "ORD-" + id;
+        return orderNumber != null ? orderNumber : "ORD-" + orderId;
     }
 
     public String getFormattedTotalAmount() {
-        if (totalAmount != null && currency != null) {
-            return currency + " " + totalAmount.toString();
-        }
-        return totalAmount != null ? totalAmount.toString() : "0.00";
-    }
-
-    public String getShippingAddress() {
-        StringBuilder address = new StringBuilder();
-        if (shippingName != null) address.append(shippingName).append("\n");
-        if (shippingStreet != null) address.append(shippingStreet).append("\n");
-        if (shippingCity != null) address.append(shippingCity);
-        if (shippingState != null) address.append(", ").append(shippingState);
-        if (shippingPostalCode != null) address.append(" ").append(shippingPostalCode);
-        if (shippingCountry != null) address.append("\n").append(shippingCountry);
-        return address.toString();
-    }
-
-    public boolean hasTrackingNumber() {
-        return trackingNumber != null && !trackingNumber.trim().isEmpty();
-    }
-
-    public int getItemCount() {
-        return items != null ? items.size() : 0;
-    }
-
-    /**
-     * Nested DTO for order items
-     */
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class OrderItemEmailDTO {
-        private Long productId;
-        private String productName;
-        private String sku;
-        private Integer quantity;
-        private BigDecimal unitPrice;
-        private BigDecimal totalPrice;
-
-        public String getFormattedTotalPrice() {
-            return totalPrice != null ? totalPrice.toString() : "0.00";
-        }
+        if (totalAmount == null) return "0.00";
+        return String.format("%.2f %s", totalAmount, currency != null ? currency : "SEK");
     }
 }

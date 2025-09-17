@@ -34,6 +34,9 @@ cd blogg-service && mvn spring-boot:run
 - Role-based access (WRITER, READER, ADMIN)
 
 ## 🧩 Future Work
-- Add Swagger UI docs
+- Add Swagger UI docs*
 - Add Disqus for comments
 - CI/CD to production Kubernetes or ECS
+
+*We have noticed that Intellij only has support for Thymeleaf and Swagger when user have an Intellij Ultimate plan.
+Because of this we have avoided importing these libraries into out project.

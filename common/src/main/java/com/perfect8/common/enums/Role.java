@@ -1,39 +1,50 @@
-package com.perfect8.shop.enums;
+package com.perfect8.common.enums;
 
 /**
  * User Role Enum - Version 1.0
- * Defines the basic roles in the shop system
+ * Unified roles for all Perfect8 services (shop, blog, admin)
  */
 public enum Role {
 
     /**
-     * Customer role - can browse, buy products, manage their account
-     */
-    CUSTOMER("ROLE_CUSTOMER", "Customer", 1),
-
-    /**
-     * Admin role - full system access
+     * Admin role - full system access across all services
      */
     ADMIN("ROLE_ADMIN", "Administrator", 99),
 
     /**
-     * Staff role - can manage orders and products
+     * Staff role - can manage shop orders and products
      */
     STAFF("ROLE_STAFF", "Staff Member", 50),
 
     /**
-     * Guest role - unauthenticated users (for future use)
+     * Writer role - can create and edit blog posts
+     */
+    WRITER("ROLE_WRITER", "Blog Writer", 40),
+
+    /**
+     * Reader role - can access premium blog content
+     */
+    READER("ROLE_READER", "Premium Reader", 20),
+
+    /**
+     * Customer role - can browse, buy products, comment on blogs
+     */
+    CUSTOMER("ROLE_CUSTOMER", "Customer", 10),
+
+    /**
+     * Guest role - unauthenticated users
      */
     GUEST("ROLE_GUEST", "Guest", 0);
 
     // Version 2.0 roles - commented out for future
     /*
     MANAGER("ROLE_MANAGER", "Manager", 75),
-    WAREHOUSE("ROLE_WAREHOUSE", "Warehouse Staff", 40),
+    MODERATOR("ROLE_MODERATOR", "Content Moderator", 45),
+    WAREHOUSE("ROLE_WAREHOUSE", "Warehouse Staff", 35),
     SUPPORT("ROLE_SUPPORT", "Customer Support", 30),
-    VENDOR("ROLE_VENDOR", "Vendor/Supplier", 20),
-    AFFILIATE("ROLE_AFFILIATE", "Affiliate Partner", 10),
-    VIP_CUSTOMER("ROLE_VIP_CUSTOMER", "VIP Customer", 5);
+    VENDOR("ROLE_VENDOR", "Vendor/Supplier", 25),
+    VIP_CUSTOMER("ROLE_VIP_CUSTOMER", "VIP Customer", 15),
+    AFFILIATE("ROLE_AFFILIATE", "Affiliate Partner", 12);
     */
 
     private final String authority;
@@ -74,15 +85,33 @@ public enum Role {
         return this.level >= requiredLevel;
     }
 
+    // ========== General Permission Checks ==========
+
     /**
-     * Check if this role is admin or higher
+     * Check if this role is admin
      */
     public boolean isAdmin() {
         return this == ADMIN;
     }
 
     /**
-     * Check if this role is staff or higher
+     * Check if this role is guest
+     */
+    public boolean isGuest() {
+        return this == GUEST;
+    }
+
+    /**
+     * Check if this role is authenticated (not guest)
+     */
+    public boolean isAuthenticated() {
+        return this != GUEST;
+    }
+
+    // ========== Shop Service Permissions ==========
+
+    /**
+     * Check if this role is staff or higher (for shop management)
      */
     public boolean isStaffOrHigher() {
         return this == STAFF || this == ADMIN;
@@ -93,13 +122,6 @@ public enum Role {
      */
     public boolean isCustomer() {
         return this == CUSTOMER;
-    }
-
-    /**
-     * Check if this role is guest
-     */
-    public boolean isGuest() {
-        return this == GUEST;
     }
 
     /**
@@ -124,18 +146,66 @@ public enum Role {
     }
 
     /**
-     * Check if this role can access admin panel
-     */
-    public boolean canAccessAdminPanel() {
-        return isStaffOrHigher();
-    }
-
-    /**
      * Check if this role can make purchases
      */
     public boolean canMakePurchases() {
         return this == CUSTOMER || isStaffOrHigher();
     }
+
+    // ========== Blog Service Permissions ==========
+
+    /**
+     * Check if this role can write blog posts
+     */
+    public boolean canWriteBlogPosts() {
+        return this == WRITER || this == ADMIN;
+    }
+
+    /**
+     * Check if this role can moderate comments
+     */
+    public boolean canModerateComments() {
+        return this == WRITER || isStaffOrHigher();
+    }
+
+    /**
+     * Check if this role can read premium content
+     */
+    public boolean canReadPremiumContent() {
+        return this == READER || this == WRITER || isStaffOrHigher();
+    }
+
+    /**
+     * Check if this role can comment on blog posts
+     */
+    public boolean canComment() {
+        return isAuthenticated() && this != GUEST;
+    }
+
+    // ========== Admin Panel Access ==========
+
+    /**
+     * Check if this role can access admin panel
+     */
+    public boolean canAccessAdminPanel() {
+        return this == ADMIN || this == STAFF || this == WRITER;
+    }
+
+    /**
+     * Check if this role can access shop admin
+     */
+    public boolean canAccessShopAdmin() {
+        return isStaffOrHigher();
+    }
+
+    /**
+     * Check if this role can access blog admin
+     */
+    public boolean canAccessBlogAdmin() {
+        return canWriteBlogPosts();
+    }
+
+    // ========== Conversion Methods ==========
 
     /**
      * Get role from authority string
@@ -146,7 +216,7 @@ public enum Role {
         }
 
         // Handle both with and without ROLE_ prefix
-        String normalizedAuth = authority.toUpperCase();
+        String normalizedAuth = authority.toUpperCase().trim();
         if (!normalizedAuth.startsWith("ROLE_")) {
             normalizedAuth = "ROLE_" + normalizedAuth;
         }
@@ -170,7 +240,7 @@ public enum Role {
         }
 
         for (Role role : values()) {
-            if (role.displayName.equalsIgnoreCase(displayName)) {
+            if (role.displayName.equalsIgnoreCase(displayName.trim())) {
                 return role;
             }
         }
@@ -187,16 +257,40 @@ public enum Role {
         }
 
         try {
-            return Role.valueOf(name.toUpperCase());
+            return Role.valueOf(name.toUpperCase().trim());
         } catch (IllegalArgumentException e) {
             // Try without case sensitivity
             for (Role role : values()) {
-                if (role.name().equalsIgnoreCase(name)) {
+                if (role.name().equalsIgnoreCase(name.trim())) {
                     return role;
                 }
             }
             return null;
         }
+    }
+
+    /**
+     * Universal converter - tries all conversion methods
+     */
+    public static Role from(String roleString) {
+        if (roleString == null || roleString.trim().isEmpty()) {
+            return null;
+        }
+
+        // Try by enum name first
+        Role role = fromName(roleString);
+        if (role != null) return role;
+
+        // Try by authority
+        role = fromAuthority(roleString);
+        if (role != null) return role;
+
+        // Try by display name
+        role = fromDisplayName(roleString);
+        if (role != null) return role;
+
+        // Default to CUSTOMER for unknown values
+        return CUSTOMER;
     }
 
     /**
@@ -220,6 +314,13 @@ public enum Role {
      */
     public static Role getDefaultStaffRole() {
         return STAFF;
+    }
+
+    /**
+     * Get default role for new blog writers
+     */
+    public static Role getDefaultWriterRole() {
+        return WRITER;
     }
 
     @Override

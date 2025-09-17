@@ -7,11 +7,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Response DTO for email operations
- * Version 1.0 - Core email response functionality
+ * Version 1.0 - Core email response functionality with object-oriented design
  */
 @Data
 @Builder
@@ -19,139 +20,285 @@ import java.util.Map;
 @AllArgsConstructor
 public class EmailResponseDto {
 
-    private String emailId;
-    private String messageId; // External message ID from email provider
-    private String recipient;
-    private String subject;
-    private EmailStatus status;
-    private String statusMessage;
+    // Primary identifiers as objects
+    private Long emailId;  // Changed from String to Long to match entity
+    private String trackingId;  // For cross-system tracking
+    private String messageType;  // ORDER_CONFIRMATION, SHIPPING_NOTIFICATION, etc.
+
+    // Message identifiers
+    private String smtpMessageId; // External message ID from SMTP provider
+    private String campaignId;
+
+    // Recipient information object
+    private RecipientInfo recipientInfo;
+
+    // Email content summary
+    private EmailContentSummary contentSummary;
+
+    // Status information object
+    private StatusInfo statusInfo;
+
+    // Retry information object
+    private RetryInfo retryInfo;
+
+    // Provider information object
+    private ProviderInfo providerInfo;
+
+    // Reference information object
+    private ReferenceInfo referenceInfo;
+
+    // Queue information object
+    private QueueInfo queueInfo;
+
+    // Timestamps
+    private LocalDateTime createdAt;
     private LocalDateTime sentAt;
     private LocalDateTime scheduledAt;
+    private LocalDateTime updatedAt;
 
-    // Request tracking
-    private String requestId;
-    private String correlationId;
+    // Metadata
+    private Map<String, Object> metadata;
 
-    // Error information
-    private boolean success;
-    private String errorCode;
-    private String errorMessage;
-    private String errorDetails;
+    // Inner classes for better object orientation
 
-    // Retry information
-    private Integer attemptNumber;
-    private Integer maxRetries;
-    private LocalDateTime nextRetryAt;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RecipientInfo {
+        private String primaryEmail;
+        private String recipientName;
+        private String recipientType; // CUSTOMER, ADMIN, STAFF, etc.
+        private String language;
+        private String timezone;
+    }
 
-    // Provider response
-    private String providerName; // SMTP, SendGrid, AWS SES, etc.
-    private String providerResponse;
-    private Map<String, String> providerMetadata;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EmailContentSummary {
+        private String subject;
+        private String templateName;
+        private Integer characterCount;
+        private Integer attachmentCount;
+        private Long totalSizeBytes;
+        private Boolean isHtml;
+        private String contentType; // text/plain, text/html, multipart/mixed
+    }
 
-    // Related entities
-    private String orderId;
-    private String customerId;
-    private String templateUsed;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StatusInfo {
+        private EmailStatus currentStatus;
+        private EmailStatus previousStatus;
+        private String statusMessage;
+        private String statusReason;
+        private LocalDateTime statusChangedAt;
+        private Boolean isSuccess;
+        private Boolean isFinal;
+    }
 
-    // Delivery tracking (basic for v1.0)
-    private boolean queued;
-    private LocalDateTime queuedAt;
-    private Integer queuePosition;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RetryInfo {
+        private Integer retryCount;
+        private Integer maxRetries;
+        private LocalDateTime nextRetryAt;
+        private String retryStrategy; // EXPONENTIAL, LINEAR, FIXED
+        private Long retryDelayMillis;
+    }
 
-    // Version 2.0 features - commented out
-    // private String trackingPixelId;
-    // private List<String> clickTrackingIds;
-    // private DeliveryMetrics deliveryMetrics;
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProviderInfo {
+        private String providerName; // SMTP, SendGrid, AWS SES, etc.
+        private String providerResponse;
+        private String providerMessageId;
+        private Integer providerStatusCode;
+        private Map<String, String> providerHeaders;
+    }
 
-    // Static factory methods for common responses
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ReferenceInfo {
+        private String referenceId;
+        private String referenceType; // ORDER, CUSTOMER, SHIPMENT, etc.
+        private Long orderId;
+        private Long customerId;
+        private String correlationId;
+        private String requestId;
+    }
 
-    public static EmailResponseDto success(String emailId, String recipient, EmailStatus status) {
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QueueInfo {
+        private Boolean isQueued;
+        private LocalDateTime queuedAt;
+        private Integer queuePosition;
+        private String queueName;
+        private Integer queuePriority;
+        private Long estimatedProcessingMillis;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ErrorInfo {
+        private String errorCode;
+        private String errorMessage;
+        private String errorDetails;
+        private String errorCategory; // NETWORK, VALIDATION, AUTHENTICATION, etc.
+        private LocalDateTime errorOccurredAt;
+        private String errorStackTrace; // Only in development mode
+    }
+
+    // Add errorInfo field
+    private ErrorInfo errorInfo;
+
+    // Static factory methods using objects
+
+    public static EmailResponseDto success(Long emailId, String trackingId, String recipientEmail, EmailStatus status) {
         return EmailResponseDto.builder()
                 .emailId(emailId)
-                .recipient(recipient)
-                .status(status)
-                .success(true)
+                .trackingId(trackingId)
+                .recipientInfo(RecipientInfo.builder()
+                        .primaryEmail(recipientEmail)
+                        .build())
+                .statusInfo(StatusInfo.builder()
+                        .currentStatus(status)
+                        .isSuccess(true)
+                        .statusMessage("Email successfully processed")
+                        .statusChangedAt(LocalDateTime.now())
+                        .build())
                 .sentAt(LocalDateTime.now())
-                .statusMessage("Email successfully processed")
                 .build();
     }
 
-    public static EmailResponseDto queued(String emailId, String recipient) {
+    public static EmailResponseDto queued(Long emailId, String trackingId, String recipientEmail, Integer queuePosition) {
         return EmailResponseDto.builder()
                 .emailId(emailId)
-                .recipient(recipient)
-                .status(EmailStatus.QUEUED)
-                .success(true)
-                .queued(true)
-                .queuedAt(LocalDateTime.now())
-                .statusMessage("Email queued for delivery")
+                .trackingId(trackingId)
+                .recipientInfo(RecipientInfo.builder()
+                        .primaryEmail(recipientEmail)
+                        .build())
+                .statusInfo(StatusInfo.builder()
+                        .currentStatus(EmailStatus.QUEUED)
+                        .isSuccess(true)
+                        .statusMessage("Email queued for delivery")
+                        .statusChangedAt(LocalDateTime.now())
+                        .build())
+                .queueInfo(QueueInfo.builder()
+                        .isQueued(true)
+                        .queuedAt(LocalDateTime.now())
+                        .queuePosition(queuePosition)
+                        .build())
                 .build();
     }
 
-    public static EmailResponseDto failed(String recipient, String errorMessage, String errorCode) {
+    public static EmailResponseDto failed(String recipientEmail, ErrorInfo errorInfo) {
         return EmailResponseDto.builder()
-                .recipient(recipient)
-                .status(EmailStatus.FAILED)
-                .success(false)
-                .errorMessage(errorMessage)
-                .errorCode(errorCode)
-                .statusMessage("Failed to send email")
+                .recipientInfo(RecipientInfo.builder()
+                        .primaryEmail(recipientEmail)
+                        .build())
+                .statusInfo(StatusInfo.builder()
+                        .currentStatus(EmailStatus.FAILED)
+                        .isSuccess(false)
+                        .statusMessage("Failed to send email")
+                        .statusChangedAt(LocalDateTime.now())
+                        .build())
+                .errorInfo(errorInfo)
                 .build();
     }
 
-    public static EmailResponseDto retrying(String emailId, String recipient, int attemptNumber, LocalDateTime nextRetry) {
-        return EmailResponseDto.builder()
-                .emailId(emailId)
-                .recipient(recipient)
-                .status(EmailStatus.RETRYING)
-                .success(false)
-                .attemptNumber(attemptNumber)
-                .nextRetryAt(nextRetry)
-                .statusMessage(String.format("Retrying... Attempt %d", attemptNumber))
-                .build();
+    // Helper methods for backward compatibility
+
+    public String getRecipient() {
+        return recipientInfo != null ? recipientInfo.getPrimaryEmail() : null;
     }
 
-    // Helper methods
+    public void setRecipient(String recipient) {
+        if (recipientInfo == null) {
+            recipientInfo = new RecipientInfo();
+        }
+        recipientInfo.setPrimaryEmail(recipient);
+    }
+
+    public String getSubject() {
+        return contentSummary != null ? contentSummary.getSubject() : null;
+    }
+
+    public void setSubject(String subject) {
+        if (contentSummary == null) {
+            contentSummary = new EmailContentSummary();
+        }
+        contentSummary.setSubject(subject);
+    }
+
+    public EmailStatus getStatus() {
+        return statusInfo != null ? statusInfo.getCurrentStatus() : null;
+    }
+
+    public void setStatus(EmailStatus status) {
+        if (statusInfo == null) {
+            statusInfo = new StatusInfo();
+        }
+        statusInfo.setCurrentStatus(status);
+    }
+
+    public Integer getRetryCount() {
+        return retryInfo != null ? retryInfo.getRetryCount() : null;
+    }
+
+    public void setRetryCount(Integer retryCount) {
+        if (retryInfo == null) {
+            retryInfo = new RetryInfo();
+        }
+        retryInfo.setRetryCount(retryCount);
+    }
+
+    public String getErrorMessage() {
+        return errorInfo != null ? errorInfo.getErrorMessage() : null;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        if (errorInfo == null) {
+            errorInfo = new ErrorInfo();
+        }
+        errorInfo.setErrorMessage(errorMessage);
+    }
+
+    // Business logic helper methods
 
     public boolean isSuccessful() {
-        return success && (status == EmailStatus.SENT || status == EmailStatus.DELIVERED || status == EmailStatus.QUEUED);
+        return statusInfo != null && statusInfo.getIsSuccess() != null && statusInfo.getIsSuccess();
     }
 
     public boolean isFailed() {
-        return !success || status == EmailStatus.FAILED || status == EmailStatus.BOUNCED;
+        return statusInfo != null && statusInfo.getCurrentStatus() != null &&
+                (statusInfo.getCurrentStatus() == EmailStatus.FAILED ||
+                        statusInfo.getCurrentStatus() == EmailStatus.BOUNCED);
     }
 
     public boolean isRetryable() {
-        return status == EmailStatus.RETRYING ||
-                (isFailed() && attemptNumber != null && maxRetries != null && attemptNumber < maxRetries);
+        return retryInfo != null && retryInfo.getRetryCount() != null &&
+                retryInfo.getMaxRetries() != null &&
+                retryInfo.getRetryCount() < retryInfo.getMaxRetries();
     }
 
     public boolean isPending() {
-        return status == EmailStatus.QUEUED || status == EmailStatus.SENDING || status == EmailStatus.RETRYING;
-    }
-
-    public String getStatusDescription() {
-        if (status == null) {
-            return "Unknown status";
-        }
-
-        switch (status) {
-            case QUEUED:
-                return queued ? String.format("Queued at position %d", queuePosition != null ? queuePosition : 0) : "In queue";
-            case SENDING:
-                return "Currently sending";
-            case SENT:
-                return "Successfully sent";
-            case DELIVERED:
-                return "Delivered to recipient";
-            case FAILED:
-                return errorMessage != null ? errorMessage : "Failed to send";
-            case BOUNCED:
-                return "Email bounced";
-            case RETRYING:
-                return String.format("Retrying (attempt %d of %d)", attemptNumber, maxRetries);
-            default:
-                return status.toString();
-        }
+        return statusInfo != null && statusInfo.getCurrentStatus() != null &&
+                statusInfo.getCurrentStatus().isPendingState();
     }
 }

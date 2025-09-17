@@ -1,6 +1,7 @@
 package com.perfect8.email.repository;
 
 import com.perfect8.email.entity.EmailLog;
+import com.perfect8.email.enums.EmailStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,64 +12,101 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository for EmailLog entity
- * Version 1.0 - Core email logging functionality
+ * Email Log Repository - Version 1.0
+ * Handles persistence of email logs and tracking
  */
 @Repository
 public interface EmailLogRepository extends JpaRepository<EmailLog, Long> {
 
-    // Find by emailId
-    Optional<EmailLog> findByEmailId(String emailId);
+    /**
+     * Find top 100 most recent email logs ordered by creation date
+     * Used by EmailService for recent email history
+     */
+    List<EmailLog> findTop100ByOrderByCreatedAtDesc();
 
-    // Find by recipient
-    List<EmailLog> findByRecipient(String recipient);
+    /**
+     * Find email log by message ID
+     */
+    Optional<EmailLog> findByMessageId(String messageId);
 
-    // Find by status
-    List<EmailLog> findByStatus(EmailLog.Status status);
+    /**
+     * Find all emails sent to a specific recipient
+     */
+    List<EmailLog> findByRecipientOrderByCreatedAtDesc(String recipientEmail);
 
-    // Find by campaign
-    List<EmailLog> findByCampaignId(String campaignId);
+    /**
+     * Find recent emails sent to a recipient (limit 50)
+     */
+    List<EmailLog> findTop50ByRecipientOrderByCreatedAtDesc(String recipientEmail);
 
-    // Find failed emails for retry
-    @Query("SELECT e FROM EmailLog e WHERE e.status = 'FAILED' AND e.retryCount < :maxRetries")
-    List<EmailLog> findFailedEmailsForRetry(@Param("maxRetries") int maxRetries);
+    /**
+     * Find emails by status
+     */
+    List<EmailLog> findByStatus(EmailStatus status);
 
-    // Find emails sent within a date range
-    @Query("SELECT e FROM EmailLog e WHERE e.sentAt BETWEEN :startDate AND :endDate")
-    List<EmailLog> findEmailsSentBetween(@Param("startDate") LocalDateTime startDate,
-                                         @Param("endDate") LocalDateTime endDate);
+    /**
+     * Find emails by status with limit
+     */
+    List<EmailLog> findTop100ByStatusOrderByCreatedAtDesc(EmailStatus status);
 
-    // Find recent emails by recipient
-    @Query("SELECT e FROM EmailLog e WHERE e.recipient = :recipient ORDER BY e.sentAt DESC")
-    List<EmailLog> findRecentEmailsByRecipient(@Param("recipient") String recipient);
+    /**
+     * Find failed emails that need retry
+     */
+    @Query("SELECT el FROM EmailLog el WHERE el.status = :status AND el.retryCount < :maxRetries")
+    List<EmailLog> findFailedEmailsForRetry(@Param("status") EmailStatus status,
+                                            @Param("maxRetries") int maxRetries);
 
-    // Count emails by status
-    @Query("SELECT COUNT(e) FROM EmailLog e WHERE e.status = :status")
-    long countByStatus(@Param("status") EmailLog.Status status);
+    /**
+     * Find emails sent within a date range
+     */
+    List<EmailLog> findByCreatedAtBetweenOrderByCreatedAtDesc(LocalDateTime startDate,
+                                                              LocalDateTime endDate);
 
-    // Find bounced emails
-    @Query("SELECT e FROM EmailLog e WHERE e.status IN ('BOUNCED', 'SPAM_REPORTED', 'UNSUBSCRIBED')")
-    List<EmailLog> findProblematicEmails();
+    /**
+     * Find emails by subject containing text
+     */
+    List<EmailLog> findBySubjectContainingIgnoreCaseOrderByCreatedAtDesc(String subjectKeyword);
 
-    // Clean up old logs
-    @Query("DELETE FROM EmailLog e WHERE e.createdAt < :cutoffDate")
-    void deleteOldLogs(@Param("cutoffDate") LocalDateTime cutoffDate);
+    /**
+     * Find emails related to a specific order
+     */
+    @Query("SELECT el FROM EmailLog el WHERE el.metadata LIKE CONCAT('%orderId\":', :orderId, ',%') ORDER BY el.createdAt DESC")
+    List<EmailLog> findByOrderId(@Param("orderId") String orderId);
 
-    // Check if email was recently sent to avoid duplicates
-    @Query("SELECT COUNT(e) > 0 FROM EmailLog e WHERE e.recipient = :recipient " +
-            "AND e.subject = :subject AND e.sentAt > :sinceTime")
-    boolean existsByRecipientAndSubjectSince(@Param("recipient") String recipient,
-                                             @Param("subject") String subject,
-                                             @Param("sinceTime") LocalDateTime sinceTime);
+    /**
+     * Count emails sent today
+     */
+    @Query("SELECT COUNT(el) FROM EmailLog el WHERE el.createdAt >= :startOfDay")
+    long countEmailsSentToday(@Param("startOfDay") LocalDateTime startOfDay);
 
-    // Version 2.0 - Analytics queries (commented out)
-    /*
-    @Query("SELECT e.templateName, COUNT(e) as count FROM EmailLog e " +
-           "WHERE e.status = 'OPENED' GROUP BY e.templateName")
-    List<Object[]> getTemplateOpenRates();
+    /**
+     * Count emails by status
+     */
+    long countByStatus(EmailStatus status);
 
-    @Query("SELECT DATE(e.sentAt) as date, COUNT(e) as count FROM EmailLog e " +
-           "WHERE e.sentAt >= :startDate GROUP BY DATE(e.sentAt)")
-    List<Object[]> getDailyEmailVolume(@Param("startDate") LocalDateTime startDate);
-    */
+    /**
+     * Find pending emails for processing
+     */
+    @Query("SELECT el FROM EmailLog el WHERE el.status = 'PENDING' AND el.scheduledAt <= :now ORDER BY el.scheduledAt ASC")
+    List<EmailLog> findPendingEmailsForProcessing(@Param("now") LocalDateTime now);
+
+    /**
+     * Find emails that were sent successfully in the last N hours
+     */
+    @Query("SELECT el FROM EmailLog el WHERE el.status = 'SENT' AND el.sentAt >= :since ORDER BY el.sentAt DESC")
+    List<EmailLog> findRecentlySentEmails(@Param("since") LocalDateTime since);
+
+    /**
+     * Delete old email logs (for cleanup)
+     */
+    void deleteByCreatedAtBefore(LocalDateTime cutoffDate);
+
+    /**
+     * Check if email was recently sent to prevent duplicates
+     */
+    @Query("SELECT COUNT(el) > 0 FROM EmailLog el WHERE el.recipient = :recipient " +
+            "AND el.subject = :subject AND el.createdAt >= :since")
+    boolean existsByRecipientAndSubjectAndCreatedAtAfter(@Param("recipient") String recipient,
+                                                         @Param("subject") String subject,
+                                                         @Param("since") LocalDateTime since);
 }
