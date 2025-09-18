@@ -1,98 +1,46 @@
 package com.perfect8.email.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import java.util.List;
-import java.util.Map;
 
-/**
- * DTO for newsletter email requests
- * Version 1.0 - Core newsletter functionality
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class NewsletterRequestDto {
 
-    @NotEmpty(message = "Recipients list cannot be empty")
-    @Size(max = 5000, message = "Cannot send to more than 5000 recipients in one newsletter batch")
-    private List<String> recipients;
-
     @NotBlank(message = "Subject is required")
-    @Size(max = 200, message = "Subject cannot exceed 200 characters")
     private String subject;
 
     @NotBlank(message = "Content is required")
     private String content;
 
-    private String htmlContent;
+    // V1.0 - Segment behålls för framtida användning, defaultar till "ALL"
+    private String segment;
 
-    private String blogPostUrl;
-
-    private String blogPostTitle;
-
-    private String blogPostExcerpt;
-
-    private String blogPostAuthor;
-
-    private String blogPostImageUrl;
-
-    // Template variables for newsletter
-    private Map<String, Object> templateVariables;
-
-    // Newsletter metadata
-    private String newsletterType; // WEEKLY, MONTHLY, SPECIAL, BLOG_UPDATE
-
-    private String category;
-
+    // V2.0 - Förberedda fält (används inte än)
+    private String templateId;
     private List<String> tags;
+    private Boolean trackOpens;
+    private Boolean trackClicks;
 
-    // Personalization options
-    private boolean personalizeGreeting;
-
-    @lombok.Builder.Default
-    private boolean includeUnsubscribeLink = true;
-
-    @lombok.Builder.Default
-    private boolean includeViewInBrowserLink = true;
-
-    // Segmentation
-    private String segmentId;
-
-    private List<String> excludeRecipients;
-
-    // Version 2.0 features - commented out
-    // private boolean trackOpens;
-    // private boolean trackClicks;
-    // private LocalDateTime scheduledSendTime;
-    // private String abTestVariant;
-
-    // Helper methods
-
-    public boolean hasHtmlContent() {
-        return htmlContent != null && !htmlContent.trim().isEmpty();
+    // Getter med default-värde för v1.0
+    public String getSegment() {
+        // V1.0 - Alltid returnera "ALL" oavsett vad som skickats in
+        // Detta hårdkodar segment till ALL som diskuterat
+        return "ALL";
     }
 
-    public boolean isBlogRelated() {
-        return blogPostUrl != null && !blogPostUrl.trim().isEmpty();
+    public String getSubject() {
+        return subject;
     }
 
-    public boolean hasTemplateVariables() {
-        return templateVariables != null && !templateVariables.isEmpty();
-    }
-
-    public int getRecipientCount() {
-        return recipients != null ? recipients.size() : 0;
-    }
-
-    public boolean shouldPersonalize() {
-        return personalizeGreeting && getRecipientCount() <= 1000; // Limit personalization for performance
+    public String getContent() {
+        return content;
     }
 }

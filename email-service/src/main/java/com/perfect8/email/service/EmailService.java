@@ -28,7 +28,7 @@ public class EmailService {
     private String fromName;
 
     /**
-     * Send email - simple version, Gmail logs everything
+     * Send email - Gmail logs everything
      */
     public boolean sendEmail(String recipientEmail, String subject, String content, boolean isHtml) {
         try {
@@ -51,42 +51,23 @@ public class EmailService {
         }
     }
 
-    /**
-     * Three-parameter version for text emails
-     */
     public boolean sendEmail(String recipientEmail, String subject, String content) {
         return sendEmail(recipientEmail, subject, content, false);
     }
 
-    /**
-     * Send HTML email
-     */
     public boolean sendHtmlEmail(String recipientEmail, String subject, String htmlContent) {
         return sendEmail(recipientEmail, subject, htmlContent, true);
     }
 
+    public boolean sendTextEmail(String recipientEmail, String subject, String textContent) {
+        return sendEmail(recipientEmail, subject, textContent, false);
+    }
+
     /**
-     * Send bulk emails
+     * Check if recently sent - always return false in v1.0
+     * Gmail har sin egen duplicate detection
      */
-    public int sendBulkEmails(List<String> recipients, String subject, String content) {
-        if (recipients == null || recipients.isEmpty()) {
-            return 0;
-        }
-
-        int successCount = 0;
-        for (String recipientEmail : recipients) {
-            if (sendHtmlEmail(recipientEmail, subject, content)) {
-                successCount++;
-            }
-            try {
-                Thread.sleep(100); // Small delay to avoid overwhelming Gmail
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        log.info("Bulk email sent to {}/{} recipients", successCount, recipients.size());
-        return successCount;
+    public boolean wasRecentlySent(String recipientEmail, String subject, int minutesAgo) {
+        return false; // Gmail handles duplicate detection
     }
 }

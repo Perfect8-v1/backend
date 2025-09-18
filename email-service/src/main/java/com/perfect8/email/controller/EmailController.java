@@ -1,24 +1,18 @@
 package com.perfect8.email.controller;
 
-import com.perfect8.email.dto.*;
-import com.perfect8.email.model.EmailMessage;
+import com.perfect8.common.enums.OrderStatus;
+import com.perfect8.email.dto.EmailRequest;
+import com.perfect8.email.dto.OrderEmailDTO;
 import com.perfect8.email.service.EmailService;
 import com.perfect8.email.service.OrderEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import jakarta.validation.Valid;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Email Controller - Version 1.0
- * Core email endpoints only
+ * Enkel controller för email-hantering
  */
 @Slf4j
 @RestController
@@ -30,263 +24,121 @@ public class EmailController {
     private final OrderEmailService orderEmailService;
 
     /**
-     * Send email using object-oriented approach
+     * Skicka enkel email
      */
     @PostMapping("/send")
-    public ResponseEntity<EmailResponseDto> sendEmail(@Valid @RequestBody EmailRequestDto request) {
-        log.info("Received email request to: {}", request.getTo());
+    public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
+        log.info("Received email request to: {}", request.getRecipientEmail());
+
+        boolean sent = emailService.sendEmail(
+                request.getRecipientEmail(),
+                request.getSubject(),
+                request.getContent(),
+                request.isHtml()
+        );
+
+        if (sent) {
+            return ResponseEntity.ok("Email sent successfully");
+        } else {
+            return ResponseEntity.internalServerError().body("Failed to send email");
+        }
+    }
+
+    /**
+     * Skicka order-bekräftelse
+     */
+    @PostMapping("/order/confirmation")
+    public ResponseEntity<String> sendOrderConfirmation(@RequestBody OrderEmailDTO orderDto) {
+        log.info("Sending order confirmation for order: {}", orderDto.getOrderNumber());
 
         try {
-            // Create recipient list
-            List<String> recipients = new ArrayList<>();
-            recipients.add(request.getTo());
-
-            // Convert DTO to EmailMessage object
-            EmailMessage emailMessage = EmailMessage.builder()
-                    .recipients(recipients)
-                    .subject(request.getSubject())
-                    .contentObject(request.getBody())
-                    .messageType("API_DIRECT")
-                    .build();
-
-            // Send using object-oriented method
-            boolean sent = emailService.sendEmail(emailMessage);
-
-            if (sent) {
-                EmailResponseDto response = EmailResponseDto.success(
-                        null, // emailId will be set by service
-                        null, // trackingId will be set by service
-                        request.getTo(),
-                        com.perfect8.email.enums.EmailStatus.SENT
-                );
-                return ResponseEntity.ok(response);
-            } else {
-                EmailResponseDto response = EmailResponseDto.failed(
-                        request.getTo(),
-                        EmailResponseDto.ErrorInfo.builder()
-                                .errorMessage("Failed to send email")
-                                .errorCategory("SEND_FAILURE")
-                                .build()
-                );
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
+            // Sätt status till PAID för bekräftelse om den saknas
+            if (orderDto.getOrderStatus() == null) {
+                orderDto.setOrderStatus(OrderStatus.PAID);
             }
 
+            orderEmailService.sendOrderConfirmation(orderDto);
+            return ResponseEntity.ok("Order confirmation email sent");
         } catch (Exception e) {
-            log.error("Error sending email to {}: {}", request.getTo(), e.getMessage(), e);
-            EmailResponseDto response = EmailResponseDto.failed(
-                    request.getTo(),
-                    EmailResponseDto.ErrorInfo.builder()
-                            .errorMessage(e.getMessage())
-                            .errorCategory("EXCEPTION")
-                            .build()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+            log.error("Failed to send order confirmation", e);
+            return ResponseEntity.internalServerError()
+                    .body("Failed to send order confirmation: " + e.getMessage());
         }
     }
 
     /**
-     * Send simple email (text only)
-     */
-    @PostMapping("/send-simple")
-    public ResponseEntity<EmailResponseDto> sendSimpleEmail(@Valid @RequestBody EmailRequest request) {
-        log.info("Sending simple email to: {}", request.getTo());
-
-        try {
-            // Determine if content is HTML
-            boolean isHtml = request.getContent() != null &&
-                    request.getContent().contains("<") &&
-                    request.getContent().contains(">");
-
-            // Send email
-            boolean sent = emailService.sendEmail(
-                    request.getTo(),
-                    request.getSubject(),
-                    request.getContent(),
-                    isHtml
-            );
-
-            if (sent) {
-                EmailResponseDto response = EmailResponseDto.success(
-                        null,
-                        null,
-                        request.getTo(),
-                        com.perfect8.email.enums.EmailStatus.SENT
-                );
-                return ResponseEntity.ok(response);
-            } else {
-                EmailResponseDto response = EmailResponseDto.failed(
-                        request.getTo(),
-                        EmailResponseDto.ErrorInfo.builder()
-                                .errorMessage("Failed to send simple email")
-                                .errorCategory("SEND_FAILURE")
-                                .build()
-                );
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-            }
-
-        } catch (Exception e) {
-            log.error("Error sending simple email: {}", e.getMessage(), e);
-            EmailResponseDto response = EmailResponseDto.failed(
-                    request.getTo(),
-                    EmailResponseDto.ErrorInfo.builder()
-                            .errorMessage(e.getMessage())
-                            .errorCategory("EXCEPTION")
-                            .build()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    /**
-     * Send HTML email
-     */
-    @PostMapping("/send-html")
-    public ResponseEntity<EmailResponseDto> sendHtmlEmail(@Valid @RequestBody EmailRequest request) {
-        log.info("Sending HTML email to: {}", request.getTo());
-
-        try {
-            boolean sent = emailService.sendHtmlEmail(
-                    request.getTo(),
-                    request.getSubject(),
-                    request.getContent()
-            );
-
-            if (sent) {
-                EmailResponseDto response = EmailResponseDto.success(
-                        null,
-                        null,
-                        request.getTo(),
-                        com.perfect8.email.enums.EmailStatus.SENT
-                );
-                return ResponseEntity.ok(response);
-            } else {
-                EmailResponseDto response = EmailResponseDto.failed(
-                        request.getTo(),
-                        EmailResponseDto.ErrorInfo.builder()
-                                .errorMessage("Failed to send HTML email")
-                                .errorCategory("SEND_FAILURE")
-                                .build()
-                );
-                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(response);
-            }
-
-        } catch (Exception e) {
-            log.error("Error sending HTML email: {}", e.getMessage(), e);
-            EmailResponseDto response = EmailResponseDto.failed(
-                    request.getTo(),
-                    EmailResponseDto.ErrorInfo.builder()
-                            .errorMessage(e.getMessage())
-                            .errorCategory("EXCEPTION")
-                            .build()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    /**
-     * Get recent email logs
-     */
-    @GetMapping("/logs")
-    public ResponseEntity<List<EmailResponseDto>> getRecentEmails() {
-        try {
-            List<EmailResponseDto> logs = emailService.getRecentEmails();
-            return ResponseEntity.ok(logs);
-        } catch (Exception e) {
-            log.error("Error fetching email logs: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
-        }
-    }
-
-    /**
-     * Send order status email
-     * This is ACTIVE in v1.0 - critical for customer satisfaction!
+     * Skicka order status-uppdatering
      */
     @PostMapping("/order/status")
-    public ResponseEntity<Map<String, String>> sendOrderStatusEmail(@Valid @RequestBody OrderEmailDTO orderDto) {
+    public ResponseEntity<String> sendOrderStatusUpdate(@RequestBody OrderEmailDTO orderDto) {
+        log.info("Sending order status update for order: {}", orderDto.getOrderNumber());
+
         try {
+            // Validera att vi har en status
+            if (orderDto.getOrderStatus() == null) {
+                return ResponseEntity.badRequest()
+                        .body("Order status is required");
+            }
+
             orderEmailService.sendOrderStatusEmail(orderDto);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("status", "sent");
-            response.put("orderId", String.valueOf(orderDto.getOrderId()));
-            response.put("orderStatus", orderDto.getOrderStatus().name());
-            response.put("recipient", orderDto.getCustomerEmail());
-
-            return ResponseEntity.ok(response);
-
+            return ResponseEntity.ok("Order status email sent");
         } catch (Exception e) {
-            log.error("Error sending order email: {}", e.getMessage(), e);
-
-            Map<String, String> errorResponse = new HashMap<>();
-            errorResponse.put("status", "failed");
-            errorResponse.put("error", e.getMessage());
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(errorResponse);
+            log.error("Failed to send order status email", e);
+            return ResponseEntity.internalServerError()
+                    .body("Failed to send status email: " + e.getMessage());
         }
     }
 
     /**
-     * Health check endpoint
+     * Skicka order shipped notification
      */
-    @GetMapping("/health")
-    public ResponseEntity<Map<String, String>> healthCheck() {
-        Map<String, String> health = new HashMap<>();
-        health.put("status", "UP");
-        health.put("service", "email-service");
-        health.put("version", "1.0");
-        return ResponseEntity.ok(health);
+    @PostMapping("/order/shipped")
+    public ResponseEntity<String> sendOrderShipped(@RequestBody OrderEmailDTO orderDto) {
+        log.info("Sending shipped notification for order: {}", orderDto.getOrderNumber());
+
+        try {
+            // Sätt status till SHIPPED
+            orderDto.setOrderStatus(OrderStatus.SHIPPED);
+
+            // Validera tracking info
+            if (orderDto.getTrackingNumber() == null || orderDto.getTrackingNumber().isEmpty()) {
+                log.warn("No tracking number provided for shipped order {}", orderDto.getOrderNumber());
+            }
+
+            orderEmailService.sendOrderStatusEmail(orderDto);
+            return ResponseEntity.ok("Shipping notification sent");
+        } catch (Exception e) {
+            log.error("Failed to send shipping notification", e);
+            return ResponseEntity.internalServerError()
+                    .body("Failed to send shipping notification: " + e.getMessage());
+        }
     }
 
     /**
-     * Check if email was recently sent (duplicate prevention)
+     * Skicka order cancelled notification
      */
-    @GetMapping("/check-duplicate")
-    public ResponseEntity<Map<String, Boolean>> checkDuplicate(
-            @RequestParam String recipientEmail,
-            @RequestParam String subject,
-            @RequestParam(defaultValue = "5") int minutesAgo) {
+    @PostMapping("/order/cancelled")
+    public ResponseEntity<String> sendOrderCancelled(@RequestBody OrderEmailDTO orderDto) {
+        log.info("Sending cancellation notification for order: {}", orderDto.getOrderNumber());
 
-        boolean wasSent = emailService.wasRecentlySent(recipientEmail, subject, minutesAgo);
+        try {
+            // Sätt status till CANCELLED
+            orderDto.setOrderStatus(OrderStatus.CANCELLED);
 
-        Map<String, Boolean> response = new HashMap<>();
-        response.put("isDuplicate", wasSent);
-
-        return ResponseEntity.ok(response);
+            orderEmailService.sendOrderStatusEmail(orderDto);
+            return ResponseEntity.ok("Cancellation notification sent");
+        } catch (Exception e) {
+            log.error("Failed to send cancellation notification", e);
+            return ResponseEntity.internalServerError()
+                    .body("Failed to send cancellation notification: " + e.getMessage());
+        }
     }
 
-    // ============== Version 2.0 Features - COMMENTED OUT ==============
-
-    /*
-    @PostMapping("/bulk")
-    public ResponseEntity<Map<String, Object>> sendBulkEmail(@RequestBody BulkEmailRequestDto request) {
-        // Version 2.0 - Analytics and metrics
-        return null;
+    /**
+     * Test endpoint - v1.0
+     */
+    @GetMapping("/test")
+    public ResponseEntity<String> testEmail() {
+        return ResponseEntity.ok("Email service is running");
     }
-
-    @PostMapping("/campaign")
-    public ResponseEntity<Map<String, Object>> sendCampaignEmail(@RequestBody CampaignEmailDto request) {
-        // Version 2.0 - Marketing campaigns
-        return null;
-    }
-
-    @GetMapping("/analytics")
-    public ResponseEntity<Map<String, Object>> getEmailAnalytics() {
-        // Version 2.0 - Analytics dashboard
-        return null;
-    }
-
-    @GetMapping("/metrics")
-    public ResponseEntity<Map<String, Object>> getEmailMetrics() {
-        // Version 2.0 - Performance metrics
-        return null;
-    }
-
-    @PostMapping("/templates")
-    public ResponseEntity<String> createTemplate(@RequestBody EmailTemplateDto template) {
-        // Version 2.0 - Template management
-        return null;
-    }
-    */
 }

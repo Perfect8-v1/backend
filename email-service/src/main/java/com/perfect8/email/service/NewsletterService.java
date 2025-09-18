@@ -1,194 +1,201 @@
 package com.perfect8.email.service;
 
-import com.perfect8.email.dto.BulkEmailRequestDto;
-import com.perfect8.email.dto.NewsletterRequestDto;
+import com.perfect8.email.client.ShopServiceClient;
+import com.perfect8.email.dto.CustomerEmailDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-/**
- * Newsletter Service - Version 1.0
- * Handles newsletter subscriptions and sending
- *
- * SIMPLIFIED for v1.0 - advanced features in v2.0
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class NewsletterService {
 
     private final EmailService emailService;
+    private final ShopServiceClient shopServiceClient;
 
-    /**
-     * Send newsletter to all subscribers
-     */
-    @Transactional
-    public int sendNewsletter(NewsletterRequestDto request) {
+    // V1.0 - Segment ignoreras, skickar alltid till ALLA prenumeranter
+    public void sendNewsletter(String subject, String content, String segment) {
         try {
-            // Get all active subscribers (simplified for v1.0)
-            List<String> subscribers = getActiveSubscribers();
+            log.info("Preparing newsletter with subject: '{}', segment: '{}' (v1.0: ignored)",
+                    subject, segment);
 
-            if (subscribers.isEmpty()) {
-                log.warn("No active subscribers found for newsletter");
-                return 0;
+            // V1.0 - Hårdkodat: Hämta ALLA som prenumererar, ignorera segment
+            // ShopServiceClient vill ha segment som parameter, vi skickar alltid "ALL"
+            List<CustomerEmailDTO> subscribers = shopServiceClient.getNewsletterSubscribers("ALL");
+
+            if (subscribers == null || subscribers.isEmpty()) {
+                log.warn("No newsletter subscribers found");
+                return;
             }
 
-            // Extract fields for EmailService.sendBulkEmails
-            String subject = request.getSubject();
-            String body = request.getHtmlContent() != null ? request.getHtmlContent() : request.getContent();
+            log.info("Sending newsletter to {} subscribers (v1.0: ALL subscribers)",
+                    subscribers.size());
 
-            // Send using EmailService
-            int successCount = emailService.sendBulkEmails(subscribers, subject, body);
+            // V1.0 - Enkel bulk-sändning utan fancy tracking
+            sendBulkNewsletterEmails(subscribers, subject, content);
 
-            log.info("Newsletter sent to {}/{} subscribers", successCount, subscribers.size());
-            return successCount;
+            log.info("Newsletter dispatch completed for {} recipients", subscribers.size());
 
         } catch (Exception e) {
-            log.error("Error sending newsletter: {}", e.getMessage(), e);
-            return 0;
+            log.error("Failed to send newsletter: {}", e.getMessage(), e);
+            // V1.0 - Gmail hanterar retry, vi bara loggar
         }
     }
 
-    /**
-     * Send targeted newsletter
-     */
-    @Transactional
-    public int sendTargetedNewsletter(BulkEmailRequestDto request) {
+    // V1.0 - Bulk-sändning för kampanjer
+    public void sendPromotionalEmail(String subject, String content, String promoCode) {
         try {
-            // Extract recipients and content
-            List<String> recipients = request.getRecipients();
-            String subject = request.getSubject();
-            String body = request.getHtmlBody() != null ? request.getHtmlBody() : request.getBody();
+            log.info("Sending promotional email with code: {}", promoCode);
 
-            if (recipients == null || recipients.isEmpty()) {
-                log.warn("No recipients specified for targeted newsletter");
-                return 0;
+            // Hämta alla aktiva kunder
+            // ShopServiceClient vill ha segment som parameter
+            List<CustomerEmailDTO> customers = shopServiceClient.getActiveCustomers("ALL");
+
+            if (customers == null || customers.isEmpty()) {
+                log.warn("No active customers found for promotion");
+                return;
             }
 
-            // Send using EmailService
-            int successCount = emailService.sendBulkEmails(recipients, subject, body);
+            // Lägg till promo-kod i innehållet
+            String enhancedContent = content +
+                    "<br><br><p><strong>Use promo code: " + promoCode + "</strong></p>";
 
-            log.info("Targeted newsletter sent to {}/{} recipients", successCount, recipients.size());
-            return successCount;
+            log.info("Sending promotion to {} customers", customers.size());
+            sendBulkNewsletterEmails(customers, subject, enhancedContent);
 
         } catch (Exception e) {
-            log.error("Error sending targeted newsletter: {}", e.getMessage(), e);
-            return 0;
+            log.error("Failed to send promotional email: {}", e.getMessage());
         }
     }
 
-    /**
-     * Send campaign email
-     */
-    @Transactional
-    public int sendCampaignEmail(BulkEmailRequestDto request) {
+    // V1.0 - Ny produkt-notifikation
+    public void sendNewProductNotification(Long productId, String productName, String productDescription) {
         try {
-            // Extract fields for EmailService
-            List<String> recipients = request.getRecipients();
-            String subject = request.getSubject();
-            String body = request.getHtmlBody() != null ? request.getHtmlBody() : request.getBody();
+            log.info("Sending new product notification for: {}", productName);
 
-            if (recipients == null || recipients.isEmpty()) {
-                log.warn("No recipients for campaign email");
-                return 0;
+            // Hämta alla prenumeranter
+            // ShopServiceClient vill ha segment som parameter
+            List<CustomerEmailDTO> subscribers = shopServiceClient.getNewsletterSubscribers("ALL");
+
+            if (subscribers == null || subscribers.isEmpty()) {
+                log.warn("No subscribers for new product notification");
+                return;
             }
 
-            // Log campaign info if available
-            if (request.getCampaignId() != null) {
-                log.info("Sending campaign email for campaign: {}", request.getCampaignId());
+            String subject = "New Product Alert: " + productName;
+            String content = buildNewProductEmailContent(productName, productDescription, productId);
+
+            sendBulkNewsletterEmails(subscribers, subject, content);
+
+            log.info("New product notification sent to {} subscribers", subscribers.size());
+
+        } catch (Exception e) {
+            log.error("Failed to send new product notification: {}", e.getMessage());
+        }
+    }
+
+    // Privat hjälpmetod för bulk-sändning
+    private void sendBulkNewsletterEmails(List<CustomerEmailDTO> recipients,
+                                          String subject, String content) {
+        // V1.0 - Enkel implementation: skicka till alla, en i taget
+        // Gmail hanterar rate limiting och spam-kontroll
+
+        int successCount = 0;
+        int failCount = 0;
+
+        for (CustomerEmailDTO customer : recipients) {
+            try {
+                // Personalisera innehållet
+                String personalizedContent = personalizeContent(content, customer);
+
+                // Skicka individuellt email
+                emailService.sendEmail(
+                        customer.getEmail(),
+                        subject,
+                        personalizedContent,
+                        true  // Alltid HTML för nyhetsbrev
+                );
+
+                successCount++;
+
+                // V1.0 - Enkel rate limiting (undvik Gmail spam-filter)
+                if (successCount % 50 == 0) {
+                    log.info("Sent {} newsletter emails, pausing briefly...", successCount);
+                    Thread.sleep(1000); // 1 sekund paus var 50:e email
+                }
+
+            } catch (Exception e) {
+                failCount++;
+                log.warn("Failed to send newsletter to {}: {}",
+                        customer.getEmail(), e.getMessage());
+                // V1.0 - Fortsätt med nästa, Gmail loggar felet
             }
+        }
 
-            // Send using EmailService
-            int successCount = emailService.sendBulkEmails(recipients, subject, body);
+        log.info("Newsletter bulk send completed. Success: {}, Failed: {}",
+                successCount, failCount);
+    }
 
-            log.info("Campaign email sent to {}/{} recipients", successCount, recipients.size());
-            return successCount;
+    private String personalizeContent(String content, CustomerEmailDTO customer) {
+        // V1.0 - Enkel personalisering
+        String personalized = content;
 
-        } catch (Exception e) {
-            log.error("Error sending campaign email: {}", e.getMessage(), e);
-            return 0;
+        if (customer.getFirstName() != null) {
+            personalized = "Hi " + customer.getFirstName() + ",<br><br>" + content;
+        } else {
+            personalized = "Dear Customer,<br><br>" + content;
+        }
+
+        // Lägg till unsubscribe-länk (viktigt för spam-compliance)
+        personalized += "<br><br><hr><small>You received this because you're subscribed to our newsletter. " +
+                "<a href='https://perfect8.com/unsubscribe?email=" + customer.getEmail() +
+                "'>Unsubscribe</a></small>";
+
+        return personalized;
+    }
+
+    private String buildNewProductEmailContent(String productName, String description, Long productId) {
+        return String.format(
+                "<h2>Exciting News!</h2>" +
+                        "<p>We're thrilled to introduce our latest product:</p>" +
+                        "<h3>%s</h3>" +
+                        "<p>%s</p>" +
+                        "<p><a href='https://perfect8.com/product/%d' style='background:#007bff; color:white; " +
+                        "padding:10px 20px; text-decoration:none; border-radius:5px;'>View Product</a></p>",
+                productName, description, productId
+        );
+    }
+
+    // V2.0 - Kommenterat för framtida segmentering
+    /*
+    private List<CustomerEmailDTO> getSegmentedCustomers(String segment) {
+        switch(segment.toUpperCase()) {
+            case "VIP":
+                return shopServiceClient.getVipCustomers();
+            case "NEW":
+                return shopServiceClient.getNewCustomers(30); // Senaste 30 dagarna
+            case "INACTIVE":
+                return shopServiceClient.getInactiveCustomers(180); // 6 månader
+            case "BIRTHDAY":
+                return shopServiceClient.getBirthdayCustomers();
+            default:
+                return shopServiceClient.getNewsletterSubscribers();
         }
     }
 
-    /**
-     * Subscribe to newsletter
-     * V1.0 - Simple implementation
-     */
-    public boolean subscribe(String email) {
-        try {
-            // In v1.0, just log the subscription
-            // In v2.0, save to database
-            log.info("Newsletter subscription request for: {}", email);
-
-            // Send welcome email
-            return emailService.sendEmail(
-                    email,
-                    "Welcome to Perfect8 Newsletter",
-                    "Thank you for subscribing to our newsletter! You'll receive updates about our latest products and offers."
-            );
-
-        } catch (Exception e) {
-            log.error("Error processing subscription: {}", e.getMessage());
-            return false;
-        }
+    public void sendSegmentedCampaign(String segment, String templateId, Map<String, Object> variables) {
+        // Version 2.0 - Avancerad segmentering med templates
     }
 
-    /**
-     * Unsubscribe from newsletter
-     * V1.0 - Simple implementation
-     */
-    public boolean unsubscribe(String email) {
-        try {
-            // In v1.0, just log the unsubscription
-            // In v2.0, update database
-            log.info("Newsletter unsubscription request for: {}", email);
-
-            // Send confirmation email
-            return emailService.sendEmail(
-                    email,
-                    "Unsubscribed from Perfect8 Newsletter",
-                    "You have been successfully unsubscribed from our newsletter. We're sorry to see you go!"
-            );
-
-        } catch (Exception e) {
-            log.error("Error processing unsubscription: {}", e.getMessage());
-            return false;
-        }
+    public NewsletterAnalytics getNewsletterAnalytics(String campaignId) {
+        // Version 2.0 - Tracking av öppningar, klick, etc.
     }
-
-    /**
-     * Get active subscribers
-     * V1.0 - Returns empty list (no database yet)
-     * V2.0 - Will query subscriber database
-     */
-    private List<String> getActiveSubscribers() {
-        // In v1.0, return empty list
-        // In v2.0, query database for active subscribers
-        log.debug("Getting active subscribers - v2.0 feature");
-        return new ArrayList<>();
-    }
-
-    /**
-     * Check if email is subscribed
-     * V1.0 - Always returns false
-     * V2.0 - Will check database
-     */
-    public boolean isSubscribed(String email) {
-        // v2.0 feature
-        return false;
-    }
-
-    /**
-     * Get subscriber count
-     * V1.0 - Returns 0
-     * V2.0 - Will query database
-     */
-    public int getSubscriberCount() {
-        // v2.0 feature
-        return 0;
-    }
+    */
 }
