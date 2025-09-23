@@ -1,10 +1,20 @@
 package com.perfect8.common.enums;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
 /**
  * User Role Enum - Version 1.0
  * Unified roles for all Perfect8 services (shop, blog, admin)
  */
+@Getter
+@RequiredArgsConstructor
 public enum Role {
+
+    /**
+     * Super Admin role - highest level access
+     */
+    SUPER_ADMIN("ROLE_SUPER_ADMIN", "Super Administrator", 100),
 
     /**
      * Admin role - full system access across all services
@@ -27,7 +37,12 @@ public enum Role {
     READER("ROLE_READER", "Premium Reader", 20),
 
     /**
-     * Customer role - can browse, buy products, comment on blogs
+     * User role - standard registered user (customer)
+     */
+    USER("ROLE_USER", "User", 10),
+
+    /**
+     * Customer role - alias for USER, kept for compatibility
      */
     CUSTOMER("ROLE_CUSTOMER", "Customer", 10),
 
@@ -36,47 +51,9 @@ public enum Role {
      */
     GUEST("ROLE_GUEST", "Guest", 0);
 
-    // Version 2.0 roles - commented out for future
-    /*
-    MANAGER("ROLE_MANAGER", "Manager", 75),
-    MODERATOR("ROLE_MODERATOR", "Content Moderator", 45),
-    WAREHOUSE("ROLE_WAREHOUSE", "Warehouse Staff", 35),
-    SUPPORT("ROLE_SUPPORT", "Customer Support", 30),
-    VENDOR("ROLE_VENDOR", "Vendor/Supplier", 25),
-    VIP_CUSTOMER("ROLE_VIP_CUSTOMER", "VIP Customer", 15),
-    AFFILIATE("ROLE_AFFILIATE", "Affiliate Partner", 12);
-    */
-
     private final String authority;
     private final String displayName;
     private final int level;
-
-    Role(String authority, String displayName, int level) {
-        this.authority = authority;
-        this.displayName = displayName;
-        this.level = level;
-    }
-
-    /**
-     * Get the Spring Security authority string
-     */
-    public String getAuthority() {
-        return authority;
-    }
-
-    /**
-     * Get the display name for UI
-     */
-    public String getDisplayName() {
-        return displayName;
-    }
-
-    /**
-     * Get the authority level (higher = more permissions)
-     */
-    public int getLevel() {
-        return level;
-    }
 
     /**
      * Check if this role has at least the given level
@@ -88,10 +65,17 @@ public enum Role {
     // ========== General Permission Checks ==========
 
     /**
-     * Check if this role is admin
+     * Check if this role is admin (ADMIN or SUPER_ADMIN)
      */
     public boolean isAdmin() {
-        return this == ADMIN;
+        return this == ADMIN || this == SUPER_ADMIN;
+    }
+
+    /**
+     * Check if this role is super admin
+     */
+    public boolean isSuperAdmin() {
+        return this == SUPER_ADMIN;
     }
 
     /**
@@ -108,20 +92,20 @@ public enum Role {
         return this != GUEST;
     }
 
+    /**
+     * Check if this role is a regular user (USER or CUSTOMER)
+     */
+    public boolean isUser() {
+        return this == USER || this == CUSTOMER;
+    }
+
     // ========== Shop Service Permissions ==========
 
     /**
      * Check if this role is staff or higher (for shop management)
      */
     public boolean isStaffOrHigher() {
-        return this == STAFF || this == ADMIN;
-    }
-
-    /**
-     * Check if this role is customer
-     */
-    public boolean isCustomer() {
-        return this == CUSTOMER;
+        return this == STAFF || isAdmin();
     }
 
     /**
@@ -149,7 +133,21 @@ public enum Role {
      * Check if this role can make purchases
      */
     public boolean canMakePurchases() {
-        return this == CUSTOMER || isStaffOrHigher();
+        return isUser() || isStaffOrHigher();
+    }
+
+    /**
+     * Check if this role can view own orders
+     */
+    public boolean canViewOwnOrders() {
+        return isAuthenticated();
+    }
+
+    /**
+     * Check if this role can view all orders
+     */
+    public boolean canViewAllOrders() {
+        return isStaffOrHigher();
     }
 
     // ========== Blog Service Permissions ==========
@@ -158,7 +156,7 @@ public enum Role {
      * Check if this role can write blog posts
      */
     public boolean canWriteBlogPosts() {
-        return this == WRITER || this == ADMIN;
+        return this == WRITER || isAdmin();
     }
 
     /**
@@ -179,7 +177,14 @@ public enum Role {
      * Check if this role can comment on blog posts
      */
     public boolean canComment() {
-        return isAuthenticated() && this != GUEST;
+        return isAuthenticated();
+    }
+
+    /**
+     * Check if this role can delete any blog post
+     */
+    public boolean canDeleteAnyBlogPost() {
+        return isAdmin();
     }
 
     // ========== Admin Panel Access ==========
@@ -188,7 +193,7 @@ public enum Role {
      * Check if this role can access admin panel
      */
     public boolean canAccessAdminPanel() {
-        return this == ADMIN || this == STAFF || this == WRITER;
+        return this == ADMIN || this == SUPER_ADMIN || this == STAFF || this == WRITER;
     }
 
     /**
@@ -203,6 +208,13 @@ public enum Role {
      */
     public boolean canAccessBlogAdmin() {
         return canWriteBlogPosts();
+    }
+
+    /**
+     * Check if this role can access system settings
+     */
+    public boolean canAccessSystemSettings() {
+        return isAdmin();
     }
 
     // ========== Conversion Methods ==========
@@ -227,8 +239,8 @@ public enum Role {
             }
         }
 
-        // Default to CUSTOMER if not found
-        return CUSTOMER;
+        // Default to USER if not found
+        return USER;
     }
 
     /**
@@ -289,8 +301,8 @@ public enum Role {
         role = fromDisplayName(roleString);
         if (role != null) return role;
 
-        // Default to CUSTOMER for unknown values
-        return CUSTOMER;
+        // Default to USER for unknown values
+        return USER;
     }
 
     /**
@@ -303,10 +315,17 @@ public enum Role {
     }
 
     /**
-     * Get default role for new customers
+     * Get default role for new users
+     */
+    public static Role getDefaultUserRole() {
+        return USER;
+    }
+
+    /**
+     * Get default role for new customers (alias for getDefaultUserRole)
      */
     public static Role getDefaultCustomerRole() {
-        return CUSTOMER;
+        return USER;
     }
 
     /**
@@ -323,8 +342,35 @@ public enum Role {
         return WRITER;
     }
 
+    /**
+     * Get default role for guests
+     */
+    public static Role getGuestRole() {
+        return GUEST;
+    }
+
     @Override
     public String toString() {
         return this.authority;
+    }
+
+    /**
+     * Check if this role has higher authority than another role
+     */
+    public boolean hasHigherAuthorityThan(Role otherRole) {
+        if (otherRole == null) {
+            return true;
+        }
+        return this.level > otherRole.level;
+    }
+
+    /**
+     * Check if this role has same or higher authority than another role
+     */
+    public boolean hasSameOrHigherAuthorityThan(Role otherRole) {
+        if (otherRole == null) {
+            return true;
+        }
+        return this.level >= otherRole.level;
     }
 }

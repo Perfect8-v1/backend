@@ -1,101 +1,265 @@
-// image-service/src/main/java/com/perfect8/image/service/ImageService.java
-//
+package com.perfect8.image.service;
 
-        package com.perfect8.image.service;
-
-import com.perfect8.image.config.StorageConfig;
 import com.perfect8.image.dto.ImageDto;
-import com.perfect8.image.exception.StorageException;
+import com.perfect8.image.enums.ImageStatus;
+import com.perfect8.image.exception.ImageNotFoundException;
+import com.perfect8.image.exception.ImageProcessingException;
+import com.perfect8.image.mapper.ImageMapper;
 import com.perfect8.image.model.Image;
 import com.perfect8.image.repository.ImageRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Arrays;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
-@Transactional
+@RequiredArgsConstructor
+@Slf4j
 public class ImageService {
 
     private final ImageRepository imageRepository;
-    private final StorageConfig storageConfig;
+    private final ImageProcessingService imageProcessingService;
+    private final ImageMapper imageMapper;
 
-    public ImageService(ImageRepository imageRepository, StorageConfig storageConfig) {
-        this.imageRepository = imageRepository;
-        this.storageConfig = storageConfig;
-    }
+    @Value("${app.upload.dir:uploads/images}")
+    private String uploadDirectory;
 
-    public ImageDto uploadImage(MultipartFile file) {
-        validateFile(file);
+    @Value("${app.base-url:http://localhost:8084}")
+    private String baseUrl;
 
+    // Main upload method
+    @Transactional
+    public ImageDto saveImage(MultipartFile file, String altText, String category) {
         try {
-            Image image = new Image();
-            image.setFilename(file.getOriginalFilename());
-            image.setContentType(file.getContentType());
-            image.setSize(file.getSize());
-            image.setData(file.getBytes());
+            log.info("Starting image save process for file: {}", file.getOriginalFilename());
 
-            Image savedImage = imageRepository.save(image);
-            return convertToDto(savedImage);
+            // Create upload directories if they don't exist
+            ensureDirectoriesExist();
+
+            // Generate unique filename
+            String originalFilename = file.getOriginalFilename();
+            String storedFilename = generateUniqueFilename(originalFilename);
+
+            // Detect image format
+            String mimeType = file.getContentType();
+            String imageFormat = determineImageFormat(originalFilename, mimeType);
+
+            // Read image dimensions
+            BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(file.getBytes()));
+            if (bufferedImage == null) {
+                throw new ImageProcessingException("Invalid image file");
+            }
+
+            // Create and save entity
+            Image image = Image.builder()
+                    .originalFilename(originalFilename)
+                    .storedFilename(storedFilename)
+                    .mimeType(mimeType)
+                    .imageFormat(imageFormat)
+                    .originalSizeBytes(file.getSize())
+                    .altText(altText)
+                    .category(category)
+                    .imageStatus(ImageStatus.PENDING)
+                    .build();
+
+            // Save original file
+            Path originalPath = Paths.get(uploadDirectory, "original", storedFilename);
+            Files.createDirectories(originalPath.getParent());
+            Files.write(originalPath, file.getBytes());
+            image.setOriginalUrl(baseUrl + "/images/original/" + storedFilename);
+
+            // Set dimensions
+            image.setOriginalWidth(bufferedImage.getWidth());
+            image.setOriginalHeight(bufferedImage.getHeight());
+
+            // Save to database
+            image = imageRepository.save(image);
+
+            // Process different sizes asynchronously
+            long startTime = System.currentTimeMillis();
+            imageProcessingService.processImageSizes(image, file.getBytes());
+            image.setImageStatus(ImageStatus.ACTIVE);
+            image.setProcessingTimeMs(System.currentTimeMillis() - startTime);
+
+            log.info("Successfully saved image with ID: {}", image.getImageId());
+            image = imageRepository.save(image);
+
+            return imageMapper.toDto(image);
+
         } catch (IOException e) {
-            throw new StorageException("Failed to store file", e);
+            log.error("Failed to save image: {}", e.getMessage());
+            throw new ImageProcessingException("Failed to save image: " + e.getMessage());
         }
     }
 
-    public Image getImage(String id) {
-        return imageRepository.findById(id)
-                .orElseThrow(() -> new StorageException("Image not found"));
+    // Get single image
+    @Transactional(readOnly = true)
+    public ImageDto getImage(Long imageId) {
+        log.info("Fetching image with ID: {}", imageId);
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageNotFoundException("Image not found with ID: " + imageId));
+
+        return imageMapper.toDto(image);
     }
 
-    public ImageDto getImageDto(String id) {
-        return convertToDto(getImage(id));
+    // Get images by category
+    @Transactional(readOnly = true)
+    public List<ImageDto> getImagesByCategory(String category) {
+        log.info("Fetching images for category: {}", category);
+        List<Image> images = imageRepository.findByCategoryAndImageStatusAndIsDeletedFalse(
+                category, ImageStatus.ACTIVE
+        );
+
+        return images.stream()
+                .map(imageMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public void deleteImage(String id) {
-        imageRepository.deleteById(id);
+    // Get by reference
+    @Transactional(readOnly = true)
+    public List<ImageDto> getImagesByReference(String referenceType, Long referenceId) {
+        log.info("Fetching images for {} with ID: {}", referenceType, referenceId);
+        List<Image> images = imageRepository.findByReferenceTypeAndReferenceId(referenceType, referenceId);
+
+        return images.stream()
+                .map(imageMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    private void validateFile(MultipartFile file) {
-        if (file.isEmpty()) {
-            throw new StorageException("Failed to store empty file");
+    // Update with status parameter
+    @Transactional
+    public ImageDto updateImageMetadata(Long imageId, String altText, String category, String status) {
+        log.info("Updating image {} metadata", imageId);
+
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageNotFoundException("Image not found with ID: " + imageId));
+
+        if (altText != null) {
+            image.setAltText(altText);
+        }
+        if (category != null) {
+            image.setCategory(category);
+        }
+        if (status != null) {
+            try {
+                ImageStatus newStatus = ImageStatus.valueOf(status.toUpperCase());
+                image.setImageStatus(newStatus);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid status value: {}", status);
+            }
         }
 
-        if (file.getSize() > storageConfig.getMaxFileSize()) {
-            throw new StorageException("File size exceeds maximum allowed size");
-        }
+        Image updatedImage = imageRepository.save(image);
+        return imageMapper.toDto(updatedImage);
+    }
 
-        String filename = file.getOriginalFilename();
-        if (filename == null || filename.isEmpty()) {
-            throw new StorageException("Invalid filename");
-        }
+    // Attach to reference
+    @Transactional
+    public void attachImageToReference(Long imageId, String referenceType, Long referenceId) {
+        log.info("Attaching image {} to {} with ID {}", imageId, referenceType, referenceId);
 
-        String extension = getFileExtension(filename);
-        if (!isAllowedExtension(extension)) {
-            throw new StorageException("File type not allowed");
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageNotFoundException("Image not found with ID: " + imageId));
+
+        image.setReferenceType(referenceType);
+        image.setReferenceId(referenceId);
+        imageRepository.save(image);
+    }
+
+    // Detach from reference
+    @Transactional
+    public void detachImageFromReference(Long imageId, String referenceType, Long referenceId) {
+        log.info("Detaching image {} from {} with ID {}", imageId, referenceType, referenceId);
+
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageNotFoundException("Image not found with ID: " + imageId));
+
+        if (referenceType.equals(image.getReferenceType()) &&
+                referenceId.equals(image.getReferenceId())) {
+            image.setReferenceType(null);
+            image.setReferenceId(null);
+            imageRepository.save(image);
         }
     }
 
-    private String getFileExtension(String filename) {
-        int lastDotIndex = filename.lastIndexOf('.');
-        if (lastDotIndex > 0) {
-            return filename.substring(lastDotIndex + 1).toLowerCase();
+    // Delete image
+    @Transactional
+    public void deleteImage(Long imageId) {
+        log.info("Deleting image with ID: {}", imageId);
+
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageNotFoundException("Image not found with ID: " + imageId));
+
+        image.markAsDeleted();
+        imageRepository.save(image);
+
+        // Optionally delete physical files
+        deletePhysicalFiles(image);
+    }
+
+    // Helper methods
+
+    private void ensureDirectoriesExist() throws IOException {
+        Path baseDir = Paths.get(uploadDirectory);
+        Files.createDirectories(baseDir.resolve("original"));
+        Files.createDirectories(baseDir.resolve("thumbnail"));
+        Files.createDirectories(baseDir.resolve("small"));
+        Files.createDirectories(baseDir.resolve("medium"));
+        Files.createDirectories(baseDir.resolve("large"));
+    }
+
+    private String generateUniqueFilename(String originalFilename) {
+        String extension = "";
+        int dotIndex = originalFilename.lastIndexOf('.');
+        if (dotIndex > 0) {
+            extension = originalFilename.substring(dotIndex);
         }
-        return "";
+        return UUID.randomUUID().toString() + extension;
     }
 
-    private boolean isAllowedExtension(String extension) {
-        return Arrays.asList(storageConfig.getAllowedExtensions()).contains(extension);
+    private String determineImageFormat(String filename, String mimeType) {
+        if (filename != null) {
+            String lower = filename.toLowerCase();
+            if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "JPEG";
+            if (lower.endsWith(".png")) return "PNG";
+            if (lower.endsWith(".webp")) return "WEBP";
+            if (lower.endsWith(".bmp")) return "BMP";
+        }
+        if (mimeType != null) {
+            if (mimeType.contains("jpeg")) return "JPEG";
+            if (mimeType.contains("png")) return "PNG";
+            if (mimeType.contains("webp")) return "WEBP";
+            if (mimeType.contains("bmp")) return "BMP";
+        }
+        return "UNKNOWN";
     }
 
-    private ImageDto convertToDto(Image image) {
-        ImageDto dto = new ImageDto();
-        dto.setId(image.getId());
-        dto.setFilename(image.getFilename());
-        dto.setContentType(image.getContentType());
-        dto.setSize(image.getSize());
-        dto.setUrl("/api/images/view/" + image.getId());
-        dto.setCreatedAt(image.getCreatedAt());
-        return dto;
+    private void deletePhysicalFiles(Image image) {
+        try {
+            String filename = image.getStoredFilename();
+            if (filename != null) {
+                Files.deleteIfExists(Paths.get(uploadDirectory, "original", filename));
+                Files.deleteIfExists(Paths.get(uploadDirectory, "thumbnail", filename));
+                Files.deleteIfExists(Paths.get(uploadDirectory, "small", filename));
+                Files.deleteIfExists(Paths.get(uploadDirectory, "medium", filename));
+                Files.deleteIfExists(Paths.get(uploadDirectory, "large", filename));
+            }
+        } catch (IOException e) {
+            log.error("Failed to delete physical files for image {}: {}",
+                    image.getImageId(), e.getMessage());
+        }
     }
 }

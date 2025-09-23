@@ -1,17 +1,18 @@
 package com.perfect8.common.utils;
 
 import com.perfect8.common.enums.OrderStatus;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.*;
 
 /**
  * Helper class for OrderStatus operations
  * Shared between email-service and shop-service
  * Version 1.0 - Core functionality only
+ *
+ * Updated with COMPLETED and REFUNDED status handling
  */
+@Slf4j
 public class OrderStatusHelper {
 
     // Map över tillåtna status-övergångar
@@ -20,35 +21,43 @@ public class OrderStatusHelper {
     static {
         Map<OrderStatus, List<OrderStatus>> transitions = new HashMap<>();
 
-        // Definiera tillåtna övergångar för varje status
+        // Initial states
         transitions.put(OrderStatus.PENDING,
                 Arrays.asList(OrderStatus.PAID, OrderStatus.PAYMENT_FAILED,
                         OrderStatus.CANCELLED, OrderStatus.ON_HOLD));
 
+        transitions.put(OrderStatus.PAYMENT_FAILED,
+                Arrays.asList(OrderStatus.PENDING, OrderStatus.CANCELLED));
+
+        // Payment confirmed
         transitions.put(OrderStatus.PAID,
                 Arrays.asList(OrderStatus.PROCESSING, OrderStatus.CANCELLED,
-                        OrderStatus.ON_HOLD));
+                        OrderStatus.ON_HOLD, OrderStatus.REFUNDED));
 
+        // Processing
         transitions.put(OrderStatus.PROCESSING,
                 Arrays.asList(OrderStatus.SHIPPED, OrderStatus.CANCELLED,
-                        OrderStatus.ON_HOLD));
+                        OrderStatus.ON_HOLD, OrderStatus.REFUNDED));
 
+        // Shipping
         transitions.put(OrderStatus.SHIPPED,
                 Arrays.asList(OrderStatus.DELIVERED, OrderStatus.RETURNED));
 
+        // Delivered - can be marked as completed or returned
         transitions.put(OrderStatus.DELIVERED,
-                Arrays.asList(OrderStatus.RETURNED));
+                Arrays.asList(OrderStatus.COMPLETED, OrderStatus.RETURNED));
 
+        // On Hold
         transitions.put(OrderStatus.ON_HOLD,
                 Arrays.asList(OrderStatus.PROCESSING, OrderStatus.PAID,
                         OrderStatus.CANCELLED));
 
-        transitions.put(OrderStatus.PAYMENT_FAILED,
-                Arrays.asList(OrderStatus.PENDING, OrderStatus.CANCELLED));
-
-        // Final states - inga övergångar tillåtna
+        // Final states - no transitions allowed
+        transitions.put(OrderStatus.COMPLETED, Collections.emptyList());
         transitions.put(OrderStatus.CANCELLED, Collections.emptyList());
-        transitions.put(OrderStatus.RETURNED, Collections.emptyList());
+        transitions.put(OrderStatus.RETURNED,
+                Arrays.asList(OrderStatus.REFUNDED)); // Returned can lead to refund
+        transitions.put(OrderStatus.REFUNDED, Collections.emptyList());
 
         VALID_TRANSITIONS = Collections.unmodifiableMap(transitions);
     }
@@ -99,7 +108,16 @@ public class OrderStatusHelper {
      * Check if order can be returned in current status
      */
     public static boolean canBeReturned(OrderStatus status) {
-        return status == OrderStatus.DELIVERED;
+        return status == OrderStatus.DELIVERED || status == OrderStatus.COMPLETED;
+    }
+
+    /**
+     * Check if order can be refunded
+     */
+    public static boolean canBeRefunded(OrderStatus status) {
+        return status == OrderStatus.PAID ||
+                status == OrderStatus.PROCESSING ||
+                status == OrderStatus.RETURNED;
     }
 
     /**
@@ -126,6 +144,7 @@ public class OrderStatusHelper {
                 OrderStatus.PAID,
                 OrderStatus.PROCESSING,
                 OrderStatus.SHIPPED,
+                OrderStatus.DELIVERED,
                 OrderStatus.ON_HOLD,
                 OrderStatus.PAYMENT_FAILED
         );
@@ -136,9 +155,10 @@ public class OrderStatusHelper {
      */
     public static List<OrderStatus> getFinalStatuses() {
         return Arrays.asList(
-                OrderStatus.DELIVERED,
+                OrderStatus.COMPLETED,
                 OrderStatus.CANCELLED,
-                OrderStatus.RETURNED
+                OrderStatus.RETURNED,
+                OrderStatus.REFUNDED
         );
     }
 
@@ -178,8 +198,10 @@ public class OrderStatusHelper {
             case PROCESSING -> "order-processing";
             case SHIPPED -> "order-shipped";
             case DELIVERED -> "order-delivered";
+            case COMPLETED -> "order-completed";
             case CANCELLED -> "order-cancelled";
             case RETURNED -> "order-returned";
+            case REFUNDED -> "order-refunded";
             case PAYMENT_FAILED -> "payment-failed";
             case ON_HOLD -> null; // No automatic email
         };
@@ -193,16 +215,141 @@ public class OrderStatusHelper {
             return "Unknown";
         }
 
-        return switch (status) {
-            case PENDING -> "Pending Payment";
-            case PAID -> "Payment Confirmed";
-            case PROCESSING -> "Processing";
-            case SHIPPED -> "Shipped";
-            case DELIVERED -> "Delivered";
-            case CANCELLED -> "Cancelled";
-            case RETURNED -> "Returned";
-            case PAYMENT_FAILED -> "Payment Failed";
-            case ON_HOLD -> "On Hold";
-        };
+        return status.getDisplayName(); // Use the enum's own method
+    }
+
+    // ============= METODER FÖR SHOP-SERVICE =============
+
+    /**
+     * Log status transition for audit purposes
+     * Used by shop-service for tracking status changes
+     *
+     * @param orderId the order being transitioned
+     * @param from the current status
+     * @param to the new status
+     */
+    public static void logTransition(Long orderId, OrderStatus from, OrderStatus to) {
+        if (orderId != null) {
+            log.info("Order {} status transition: {} -> {}", orderId, from, to);
+        }
+    }
+
+    /**
+     * Check if order is in an editable state
+     * Orders can only be edited before processing begins
+     *
+     * @param status current order status
+     * @return true if order can be edited
+     */
+    public static boolean isEditableState(OrderStatus status) {
+        if (status == null) {
+            return false;
+        }
+
+        // Only allow edits in early states
+        return status == OrderStatus.PENDING ||
+                status == OrderStatus.PAID ||
+                status == OrderStatus.ON_HOLD;
+    }
+
+    /**
+     * Check if order is in a cancellable state
+     * Similar to canBeCancelled but named differently for compatibility
+     *
+     * @param status current order status
+     * @return true if order can be cancelled
+     */
+    public static boolean isCancellableState(OrderStatus status) {
+        return canBeCancelled(status);
+    }
+
+    /**
+     * Get list of required actions to transition from one status to another
+     * Version 1.0 - Returns simple action descriptions
+     *
+     * @param from current status
+     * @param to target status
+     * @return list of required actions (empty if transition not valid)
+     */
+    public static List<String> getRequiredActions(OrderStatus from, OrderStatus to) {
+        List<String> actions = new ArrayList<>();
+
+        if (from == null || to == null || !canTransition(from, to)) {
+            return actions;
+        }
+
+        // Define required actions for each transition
+        if (from == OrderStatus.PENDING && to == OrderStatus.PAID) {
+            actions.add("Process payment");
+            actions.add("Verify payment details");
+        } else if (from == OrderStatus.PAID && to == OrderStatus.PROCESSING) {
+            actions.add("Confirm inventory availability");
+            actions.add("Begin order fulfillment");
+        } else if (from == OrderStatus.PROCESSING && to == OrderStatus.SHIPPED) {
+            actions.add("Pack items");
+            actions.add("Generate shipping label");
+            actions.add("Update tracking information");
+        } else if (from == OrderStatus.SHIPPED && to == OrderStatus.DELIVERED) {
+            actions.add("Confirm delivery");
+            actions.add("Update tracking status");
+        } else if (from == OrderStatus.DELIVERED && to == OrderStatus.COMPLETED) {
+            actions.add("Confirm customer satisfaction");
+            actions.add("Close order");
+        } else if (to == OrderStatus.CANCELLED) {
+            actions.add("Process cancellation");
+            if (from == OrderStatus.PAID || from == OrderStatus.PROCESSING) {
+                actions.add("Initiate refund");
+            }
+            actions.add("Return items to inventory");
+        } else if (to == OrderStatus.RETURNED) {
+            actions.add("Process return request");
+            actions.add("Receive returned items");
+            actions.add("Inspect returned items");
+        } else if (to == OrderStatus.REFUNDED) {
+            actions.add("Process refund");
+            actions.add("Update payment records");
+            actions.add("Send refund confirmation");
+        }
+
+        return actions;
+    }
+
+    /**
+     * Check if the status represents a completed order
+     * Used for reporting and statistics
+     *
+     * @param status the order status to check
+     * @return true if order is completed
+     */
+    public static boolean isCompleted(OrderStatus status) {
+        return status == OrderStatus.COMPLETED || status == OrderStatus.DELIVERED;
+    }
+
+    /**
+     * Check if the status represents a failed/cancelled order
+     *
+     * @param status the order status to check
+     * @return true if order failed or was cancelled
+     */
+    public static boolean isFailed(OrderStatus status) {
+        return status == OrderStatus.CANCELLED ||
+                status == OrderStatus.PAYMENT_FAILED ||
+                status == OrderStatus.RETURNED ||
+                status == OrderStatus.REFUNDED;
+    }
+
+    /**
+     * Get the priority level for a status (for sorting)
+     * Lower number = higher priority
+     *
+     * @param status the order status
+     * @return priority level (0-99)
+     */
+    public static int getPriority(OrderStatus status) {
+        if (status == null) {
+            return 99;
+        }
+
+        return status.getPriority(); // Use the enum's own method
     }
 }

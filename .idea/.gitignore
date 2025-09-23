@@ -33,3 +33,5 @@ deploy/
 #Övrigt
 *.tmp
 *.swp
+CLAUDE_INSTRUCTIONS.md
+*_INSTRUCTIONS.md

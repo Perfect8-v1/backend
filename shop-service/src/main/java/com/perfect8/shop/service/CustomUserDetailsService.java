@@ -2,6 +2,7 @@ package com.perfect8.shop.service;
 
 import com.perfect8.shop.entity.Customer;
 import com.perfect8.shop.repository.CustomerRepository;
+import com.perfect8.common.enums.Role;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,6 +21,7 @@ import java.util.List;
 /**
  * Custom UserDetailsService implementation for Spring Security
  * Version 1.0 - Core authentication functionality
+ * FIXED: Using CORRECT Lombok-generated method names for boolean fields!
  */
 @Service("customUserDetailsService")
 @RequiredArgsConstructor
@@ -47,8 +49,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                     return new UsernameNotFoundException("User not found with email: " + email);
                 });
 
-        // Check if customer is active
-        if (!isCustomerActive(customer)) {
+        // Check if customer is active - FIXED: Using isActive() not getIsActive()
+        if (!customer.isActive()) {
             log.warn("Customer account is inactive: {}", email);
             throw new UsernameNotFoundException("Account is inactive");
         }
@@ -70,8 +72,8 @@ public class CustomUserDetailsService implements UserDetailsService {
                     return new UsernameNotFoundException("User not found with ID: " + customerId);
                 });
 
-        // Check if customer is active
-        if (!isCustomerActive(customer)) {
+        // Check if customer is active - FIXED: Using isActive()
+        if (!customer.isActive()) {
             log.warn("Customer account is inactive - ID: {}", customerId);
             throw new UsernameNotFoundException("Account is inactive");
         }
@@ -85,54 +87,49 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserDetails createUserDetails(Customer customer) {
         List<GrantedAuthority> authorities = getAuthorities(customer);
 
-        // Build user details
+        // Build user details - FIXED: Using correct method names
         return User.builder()
                 .username(customer.getEmail())
                 .password(customer.getPassword())
                 .authorities(authorities)
                 .accountExpired(false)
-                .accountLocked(!isCustomerActive(customer))
+                .accountLocked(!customer.isActive())
                 .credentialsExpired(false)
-                .disabled(!isCustomerActive(customer))
+                .disabled(!customer.isActive())
                 .build();
     }
 
     /**
-     * Check if customer is active
-     * FIXED: Boolean null-safe comparison
-     */
-    private boolean isCustomerActive(Customer customer) {
-        // Handle both Boolean and boolean properly
-        Boolean active = customer.getActive();
-
-        // If active is null, treat as inactive
-        if (active == null) {
-            return false;
-        }
-
-        // Return the boolean value
-        return active.booleanValue();
-    }
-
-    /**
      * Get authorities for customer
+     * FIXED: Handle String role properly, convert to Role enum
      */
     private List<GrantedAuthority> getAuthorities(Customer customer) {
         List<GrantedAuthority> authorities = new ArrayList<>();
 
-        // Add role-based authority
-        if (customer.getRole() != null) {
-            authorities.add(new SimpleGrantedAuthority(customer.getRole().getAuthority()));
+        // Get role as String and add directly
+        String roleString = customer.getRole();
+        if (roleString != null && !roleString.isEmpty()) {
+            // Add the role directly as authority
+            authorities.add(new SimpleGrantedAuthority(roleString));
 
-            // Add additional authorities based on role
-            if (customer.getRole().isAdmin()) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
-            } else if (customer.getRole().isStaffOrHigher()) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
-                authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
-            } else {
+            // Convert to Role enum for additional authorities
+            try {
+                Role roleEnum = Role.valueOf(roleString.replace("ROLE_", ""));
+
+                // Add additional authorities based on role hierarchy
+                if (roleEnum == Role.ADMIN) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                    authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
+                    authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+                } else if (roleEnum == Role.STAFF) {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_STAFF"));
+                    authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+                } else {
+                    authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+                }
+            } catch (IllegalArgumentException e) {
+                // If conversion fails, default to CUSTOMER
+                log.warn("Invalid role string: {}, defaulting to CUSTOMER", roleString);
                 authorities.add(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
             }
         } else {
@@ -141,7 +138,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         // Add feature-based authorities
-        if (customer.getEmailVerified() != null && customer.getEmailVerified()) {
+        // FIXED: Using isEmailVerified() not getIsEmailVerified()
+        if (customer.isEmailVerified()) {
             authorities.add(new SimpleGrantedAuthority("EMAIL_VERIFIED"));
         }
 
@@ -190,7 +188,8 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         @Override
         public boolean isAccountNonLocked() {
-            return customer.getActive() != null && customer.getActive();
+            // FIXED: Using isActive() for boolean field
+            return customer.isActive();
         }
 
         @Override
@@ -200,10 +199,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         @Override
         public boolean isEnabled() {
-            return customer.getActive() != null && customer.getActive();
+            // FIXED: Using isActive() for boolean field
+            return customer.isActive();
         }
 
-        // Custom getters
+        // Custom getters - using CORRECT method names!
         public Long getCustomerId() {
             return customer.getCustomerId();
         }
@@ -217,7 +217,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         public String getFullName() {
-            return customer.getCustomerFullName();
+            return customer.getFullName();
         }
 
         public String getEmail() {
@@ -229,7 +229,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         }
 
         public boolean isEmailVerified() {
-            return customer.getEmailVerified() != null && customer.getEmailVerified();
+            // FIXED: Using isEmailVerified() for boolean field
+            return customer.isEmailVerified();
         }
 
         public boolean hasRole(String role) {
@@ -269,7 +270,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return customerRepository.findByEmail(email.toLowerCase()).orElse(null);
     }
 
-    // Version 2.0 features - commented out
+    // Version 2.0 features - commented out for later
     /*
     // OAuth2 support
     public UserDetails loadUserByOAuth2(String provider, String providerId) {

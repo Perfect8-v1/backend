@@ -1,9 +1,9 @@
 package com.perfect8.shop.dto;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,6 +11,7 @@ import java.util.List;
 /**
  * Customer DTO for Shop Service
  * Version 1.0 - Core customer data transfer
+ * FIXED: Correct field types and names matching CustomerService
  */
 @Data
 @NoArgsConstructor
@@ -18,50 +19,108 @@ import java.util.List;
 @Builder
 public class CustomerDTO {
 
-    // Primary identifiers
-    private String customerId;  // Business ID like "CUST-ABC123"
-    private Long id;            // Database ID
+    /**
+     * Customer ID - FIXED: Using Long, not String!
+     */
+    private Long customerId;
 
-    // Basic information
+    /**
+     * Basic information
+     */
+    private String email;
     private String firstName;
     private String lastName;
-    private String email;
     private String phoneNumber;
 
-    // Account status
-    private Boolean isActive;
-    private Boolean isEmailVerified;
+    /**
+     * Security role
+     */
+    private String role;
 
-    // Dates
-    private LocalDateTime registrationDate;
+    /**
+     * Account status
+     */
+    private boolean isActive;
+    private boolean isEmailVerified;
+
+    /**
+     * Customer preferences (v1.0)
+     */
+    private Boolean newsletterSubscribed;
+    private Boolean marketingConsent;
+    private String preferredLanguage;
+    private String preferredCurrency;
+
+    /**
+     * Timestamps
+     */
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private LocalDateTime lastLoginDate;
-    private LocalDateTime customerSince;
 
-    // Order information
-    private Boolean hasOrders;
-    private Integer orderCount;
-
-    // Addresses
+    /**
+     * Addresses
+     */
     private List<AddressDTO> addresses;
 
-    // Helper methods
+    /**
+     * Order information (optional, populated when needed)
+     */
+    private Integer orderCount;
+    private Boolean hasOrders;
+
+    /**
+     * Helper methods
+     */
     public String getFullName() {
-        return (firstName != null ? firstName : "") + " " +
-                (lastName != null ? lastName : "");
+        StringBuilder sb = new StringBuilder();
+        if (firstName != null && !firstName.isEmpty()) {
+            sb.append(firstName);
+        }
+        if (lastName != null && !lastName.isEmpty()) {
+            if (sb.length() > 0) sb.append(" ");
+            sb.append(lastName);
+        }
+        return sb.toString();
     }
 
-    // Version 2.0 fields - commented out for v1.0
-    /*
-    private String gender;
-    private LocalDate dateOfBirth;
-    private BigDecimal totalSpent;
-    private String preferredCurrency;
-    private String preferredLanguage;
-    private String customerTier;
-    private Integer loyaltyPoints;
-    private LocalDateTime lastPurchaseDate;
-    private BigDecimal averageOrderValue;
-    private List<String> tags;
-    private Map<String, Object> preferences;
-    */
+    /**
+     * Check if customer is admin
+     */
+    public boolean isAdmin() {
+        return "ROLE_ADMIN".equals(role);
+    }
+
+    /**
+     * Check if customer is staff
+     */
+    public boolean isStaff() {
+        return "ROLE_STAFF".equals(role) || isAdmin();
+    }
+
+    /**
+     * Get display name for UI
+     */
+    public String getDisplayName() {
+        String fullName = getFullName();
+        if (!fullName.isEmpty()) {
+            return fullName;
+        }
+        // Fall back to email if no name
+        return email != null ? email : "Customer #" + customerId;
+    }
+
+    /**
+     * Get customer since date (alias for createdAt for UI)
+     */
+    public LocalDateTime getCustomerSince() {
+        return createdAt;
+    }
+
+    /**
+     * Get registration date (alias for createdAt for UI)
+     */
+    public LocalDateTime getRegistrationDate() {
+        return createdAt;
+    }
 }

@@ -1,5 +1,7 @@
 package com.perfect8.shop.entity;
 
+import com.perfect8.shop.enums.PaymentMethod;
+import com.perfect8.shop.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -11,11 +13,12 @@ import java.time.LocalDateTime;
 /**
  * Entity representing a payment transaction.
  * Version 1.0 - Core payment functionality with PayPal focus
+ * NO BACKWARD COMPATIBILITY - Built right from the start!
  */
 @Entity
 @Table(name = "payments", indexes = {
         @Index(name = "idx_payment_order", columnList = "order_id"),
-        @Index(name = "idx_payment_status", columnList = "status"),
+        @Index(name = "idx_payment_status", columnList = "payment_status"),
         @Index(name = "idx_payment_transaction", columnList = "transaction_id", unique = true),
         @Index(name = "idx_payment_created", columnList = "created_at")
 })
@@ -44,21 +47,21 @@ public class Payment {
     private String currency = "USD";
 
     /**
-     * Payment method as String for v1.0 flexibility
+     * Payment method enum for v1.0
      * Primary method is PAYPAL in v1.0
-     * Future methods: CREDIT_CARD, DEBIT_CARD, BANK_TRANSFER, etc.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 50)
     @Builder.Default
-    private String paymentMethod = "PAYPAL";
+    private PaymentMethod paymentMethod = PaymentMethod.PAYPAL;
 
     /**
-     * Payment status
-     * Values: PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED, REFUNDED, PARTIALLY_REFUNDED
+     * Payment status enum
      */
-    @Column(name = "status", nullable = false, length = 50)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status", nullable = false, length = 50)
     @Builder.Default
-    private String status = "PENDING";
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     // Transaction identifiers
     @Column(name = "transaction_id", nullable = false, unique = true, length = 100)
@@ -125,42 +128,43 @@ public class Payment {
     private LocalDateTime updatedAt;
 
     // ========================================
-    // Business methods
+    // Business methods - PROPER NAMING
     // ========================================
 
     /**
      * Check if payment is completed
      */
     public boolean isCompleted() {
-        return "COMPLETED".equals(status);
+        return PaymentStatus.COMPLETED.equals(paymentStatus);
     }
 
     /**
      * Check if payment failed
      */
     public boolean isFailed() {
-        return "FAILED".equals(status);
+        return PaymentStatus.FAILED.equals(paymentStatus);
     }
 
     /**
      * Check if payment is pending
      */
     public boolean isPending() {
-        return "PENDING".equals(status);
+        return PaymentStatus.PENDING.equals(paymentStatus);
     }
 
     /**
      * Check if payment has been refunded (fully or partially)
      */
     public boolean isRefunded() {
-        return "REFUNDED".equals(status) || "PARTIALLY_REFUNDED".equals(status);
+        return PaymentStatus.REFUNDED.equals(paymentStatus) ||
+                PaymentStatus.PARTIALLY_REFUNDED.equals(paymentStatus);
     }
 
     /**
      * Check if payment can be refunded
      */
     public boolean canBeRefunded() {
-        return isCompleted() || "PARTIALLY_REFUNDED".equals(status);
+        return paymentStatus.isRefundable();
     }
 
     /**
@@ -171,8 +175,8 @@ public class Payment {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal refunded = refundAmount != null ? refundAmount : BigDecimal.ZERO;
-        return amount.subtract(refunded);
+        BigDecimal refundedAmount = refundAmount != null ? refundAmount : BigDecimal.ZERO;
+        return amount.subtract(refundedAmount);
     }
 
     /**
@@ -190,38 +194,28 @@ public class Payment {
      * Check if maximum retries exceeded
      */
     public boolean isMaxRetriesExceeded() {
-        return retryCount != null && retryCount >= 3;
+        Integer maxRetries = 3;
+        return retryCount != null && retryCount >= maxRetries;
     }
 
     /**
      * Get display status
      */
     public String getDisplayStatus() {
-        switch (status) {
-            case "PENDING":
-                return "Payment Pending";
-            case "PROCESSING":
-                return "Processing Payment";
-            case "COMPLETED":
-                return "Payment Completed";
-            case "FAILED":
-                return failureReason != null ? "Failed: " + failureReason : "Payment Failed";
-            case "CANCELLED":
-                return "Payment Cancelled";
-            case "REFUNDED":
-                return "Fully Refunded";
-            case "PARTIALLY_REFUNDED":
-                return "Partially Refunded";
-            default:
-                return status;
+        String statusDisplay = paymentStatus.getDisplayName();
+
+        if (PaymentStatus.FAILED.equals(paymentStatus) && failureReason != null) {
+            return statusDisplay + ": " + failureReason;
         }
+
+        return statusDisplay;
     }
 
     /**
      * Check if this is a PayPal payment
      */
     public boolean isPayPalPayment() {
-        return "PAYPAL".equalsIgnoreCase(paymentMethod);
+        return PaymentMethod.PAYPAL.equals(paymentMethod);
     }
 
     @PrePersist
@@ -233,16 +227,16 @@ public class Payment {
             currency = "USD";
         }
         if (paymentMethod == null) {
-            paymentMethod = "PAYPAL";
+            paymentMethod = PaymentMethod.PAYPAL;
         }
-        if (status == null) {
-            status = "PENDING";
+        if (paymentStatus == null) {
+            paymentStatus = PaymentStatus.PENDING;
         }
         if (isVerified == null) {
-            isVerified = false;
+            isVerified = Boolean.FALSE;
         }
         if (isPartialRefund == null) {
-            isPartialRefund = false;
+            isPartialRefund = Boolean.FALSE;
         }
         if (retryCount == null) {
             retryCount = 0;
@@ -253,13 +247,10 @@ public class Payment {
      * Generate unique transaction ID
      */
     private String generateTransactionId() {
-        return "PAY-" + System.currentTimeMillis() + "-" +
-                String.valueOf(System.nanoTime()).substring(7, 13);
+        Long currentTimeMillis = System.currentTimeMillis();
+        String nanoTimePart = String.valueOf(System.nanoTime()).substring(7, 13);
+        return "PAY-" + currentTimeMillis + "-" + nanoTimePart;
     }
-
-    // ========================================
-    // Backward compatibility (if needed)
-    // ========================================
 
     /**
      * Get order ID directly
@@ -269,7 +260,7 @@ public class Payment {
     }
 
     /**
-     * Get payment amount as string for display
+     * Get payment amount as formatted string for display
      */
     public String getFormattedAmount() {
         return currency + " " + amount.toString();

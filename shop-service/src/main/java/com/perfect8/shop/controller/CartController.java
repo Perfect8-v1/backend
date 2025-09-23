@@ -2,40 +2,51 @@ package com.perfect8.shop.controller;
 
 import com.perfect8.shop.dto.*;
 import com.perfect8.shop.service.CartService;
+import com.perfect8.shop.service.CustomerService;
 import com.perfect8.shop.service.ShippingService;
+import com.perfect8.shop.entity.Customer;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.Collections;
 
+/**
+ * Cart Controller - Version 1.0
+ * FIXED: Using Long customerId instead of String!
+ */
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Slf4j
 public class CartController {
 
     private final CartService cartService;
     private final ShippingService shippingService;
+    private final CustomerService customerService;  // ADDED: To convert email to customerId
 
     /**
      * Add item to cart - Core functionality
+     * FIXED: Converting email to customerId
      */
     @PostMapping("/add")
     public ResponseEntity<ApiResponse<CartResponse>> addToCart(
             @Valid @RequestBody AddToCartRequest request,
             Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CartResponse response = cartService.addToCart(customerId, request);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CartResponse response = cartService.addToCart(customerIdLong, request);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Item added to cart successfully",
                     response,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error adding to cart: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -46,20 +57,22 @@ public class CartController {
 
     /**
      * Update cart item quantity - Core functionality
+     * FIXED: Converting email to customerId
      */
     @PutMapping("/update")
     public ResponseEntity<ApiResponse<CartResponse>> updateCartItem(
             @Valid @RequestBody UpdateCartItemRequest request,
             Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CartResponse response = cartService.updateCartItem(customerId, request);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CartResponse response = cartService.updateCartItem(customerIdLong, request);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Cart item updated successfully",
                     response,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error updating cart item: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -70,20 +83,22 @@ public class CartController {
 
     /**
      * Remove item from cart - Core functionality
+     * FIXED: Converting email to customerId
      */
     @DeleteMapping("/remove/{productId}")
     public ResponseEntity<ApiResponse<CartResponse>> removeFromCart(
             @PathVariable Long productId,
             Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CartResponse response = cartService.removeFromCart(customerId, productId);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CartResponse response = cartService.removeFromCart(customerIdLong, productId);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Item removed from cart successfully",
                     response,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error removing from cart: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -94,18 +109,20 @@ public class CartController {
 
     /**
      * Get cart - Core functionality
+     * FIXED: Converting email to customerId
      */
     @GetMapping("/")
     public ResponseEntity<ApiResponse<CartResponse>> getCart(Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CartResponse response = cartService.getCart(customerId);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CartResponse response = cartService.getCart(customerIdLong);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Cart retrieved successfully",
                     response,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error retrieving cart: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -116,18 +133,20 @@ public class CartController {
 
     /**
      * Clear cart - Core functionality
+     * FIXED: Converting email to customerId
      */
     @DeleteMapping("/clear")
     public ResponseEntity<ApiResponse<Void>> clearCart(Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            cartService.clearCart(customerId);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            cartService.clearCart(customerIdLong);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Cart cleared successfully",
-                    (Void) null,
+                    null,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error clearing cart: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -138,18 +157,20 @@ public class CartController {
 
     /**
      * Get cart item count - Core functionality
+     * FIXED: Converting email to customerId
      */
     @GetMapping("/count")
     public ResponseEntity<ApiResponse<Integer>> getCartItemCount(Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            Integer count = cartService.getCartItemCount(customerId);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            Integer count = cartService.getCartItemCount(customerIdLong);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Cart item count retrieved successfully",
                     count,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error getting cart count: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -174,6 +195,7 @@ public class CartController {
                     true
             ));
         } catch (Exception e) {
+            log.error("Error getting shipping options: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -197,6 +219,7 @@ public class CartController {
                     true
             ));
         } catch (Exception e) {
+            log.error("Error calculating tax: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -207,19 +230,21 @@ public class CartController {
 
     /**
      * Validate checkout - Core functionality
+     * FIXED: Converting email to customerId
      */
     @PostMapping("/validate-checkout")
     public ResponseEntity<ApiResponse<CheckoutValidationResponse>> validateCheckout(
             Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CheckoutValidationResponse response = cartService.validateCheckout(customerId);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CheckoutValidationResponse response = cartService.validateCheckout(customerIdLong);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Checkout validation completed",
                     response,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error validating checkout: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
@@ -230,26 +255,53 @@ public class CartController {
 
     /**
      * Prepare checkout - Core functionality
+     * FIXED: Converting email to customerId
      */
     @PostMapping("/prepare-checkout")
     public ResponseEntity<ApiResponse<CheckoutPreparationResponse>> prepareCheckout(
             @Valid @RequestBody CheckoutPreparationRequest request,
             Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CheckoutPreparationResponse response = cartService.prepareCheckout(customerId, request);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CheckoutPreparationResponse response = cartService.prepareCheckout(customerIdLong, request);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Checkout preparation completed",
                     response,
                     true
             ));
         } catch (Exception e) {
+            log.error("Error preparing checkout: {}", e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>(
                     e.getMessage(),
                     Collections.singletonList(e.getMessage()),
                     false
             ));
         }
+    }
+
+    /**
+     * Helper method to get customerId from Principal
+     * FIXED: Converting email to customerId properly
+     */
+    private Long getCustomerIdFromPrincipal(Principal principal) {
+        if (principal == null) {
+            return null;
+        }
+
+        // Principal.getName() returns the email
+        String customerEmail = principal.getName();
+        if (customerEmail == null || customerEmail.isEmpty()) {
+            return null;
+        }
+
+        // Get customer by email and return the customerId
+        Customer customer = customerService.getCustomerByEmail(customerEmail);
+        if (customer == null) {
+            log.warn("No customer found for email: {}", customerEmail);
+            return null;
+        }
+
+        return customer.getCustomerId();
     }
 
     /* ============================================
@@ -267,8 +319,8 @@ public class CartController {
             @Valid @RequestBody ApplyCouponRequest request,
             Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CartResponse response = cartService.applyCoupon(customerId, request);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CartResponse response = cartService.applyCoupon(customerIdLong, request);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Coupon applied successfully",
                     response,
@@ -287,8 +339,8 @@ public class CartController {
     @DeleteMapping("/remove-coupon")
     public ResponseEntity<ApiResponse<CartResponse>> removeCoupon(Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            CartResponse response = cartService.removeCoupon(customerId);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            CartResponse response = cartService.removeCoupon(customerIdLong);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Coupon removed successfully",
                     response,
@@ -309,8 +361,8 @@ public class CartController {
             @Valid @RequestBody SaveCartRequest request,
             Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            SavedCartResponse response = cartService.saveCart(customerId, request);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            SavedCartResponse response = cartService.saveCart(customerIdLong, request);
             return ResponseEntity.ok(new ApiResponse<>(
                     "Cart saved successfully",
                     response,
@@ -329,8 +381,8 @@ public class CartController {
     @GetMapping("/saved")
     public ResponseEntity<ApiResponse<SavedCartResponse>> getSavedCarts(Principal principal) {
         try {
-            String customerId = principal != null ? principal.getName() : null;
-            SavedCartResponse response = cartService.getSavedCarts(customerId);
+            Long customerIdLong = getCustomerIdFromPrincipal(principal);
+            SavedCartResponse response = cartService.getSavedCarts(customerIdLong);
             if (response != null) {
                 return ResponseEntity.ok(new ApiResponse<>(
                         "Saved carts retrieved successfully",
@@ -340,7 +392,7 @@ public class CartController {
             } else {
                 return ResponseEntity.ok(new ApiResponse<>(
                         "No saved carts found",
-                        (SavedCartResponse) null,
+                        null,
                         true
                 ));
             }

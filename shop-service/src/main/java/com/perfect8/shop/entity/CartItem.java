@@ -1,18 +1,23 @@
 package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Cart Item Entity - Represents individual items in shopping cart
+ * Version 1.0 - Core shopping cart functionality
+ */
 @Entity
-@Table(name = "cart_items")
+@Table(name = "cart_items", indexes = {
+        @Index(name = "idx_cart_item_cart", columnList = "cart_id"),
+        @Index(name = "idx_cart_item_product", columnList = "product_id"),
+        @Index(name = "idx_cart_item_cart_product", columnList = "cart_id, product_id", unique = true)
+})
 @Data
 @Builder
 @NoArgsConstructor
@@ -23,13 +28,14 @@ public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "cart_item_id")
+    private Long cartItemId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
@@ -40,172 +46,323 @@ public class CartItem {
     @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(name = "discount_amount", precision = 10, scale = 2)
-    @Builder.Default
-    private BigDecimal discountAmount = BigDecimal.ZERO;
+    @Column(name = "discount_price", precision = 10, scale = 2)
+    private BigDecimal discountPrice;
 
-    @Column(name = "notes", length = 500)
-    private String notes;
+    @Column(name = "subtotal", precision = 10, scale = 2)
+    private BigDecimal subtotal;
 
+    // Product snapshot at time of adding to cart
+    @Column(name = "product_name", nullable = false)
+    private String productName;
+
+    @Column(name = "product_sku", nullable = false)
+    private String productSku;
+
+    @Column(name = "product_image_url")
+    private String productImageUrl;
+
+    // Options and customization (for future)
+    @Column(name = "selected_options", columnDefinition = "TEXT")
+    private String selectedOptions;
+
+    @Column(name = "custom_message", length = 500)
+    private String customMessage;
+
+    // Status flags
     @Column(name = "is_saved_for_later")
     @Builder.Default
     private Boolean isSavedForLater = false;
 
-    @Column(name = "added_at")
+    @Column(name = "is_gift")
+    @Builder.Default
+    private Boolean isGift = false;
+
+    @Column(name = "gift_message", length = 500)
+    private String giftMessage;
+
+    // Stock validation
+    @Column(name = "stock_checked_at")
+    private LocalDateTime stockCheckedAt;
+
+    @Column(name = "stock_available")
+    private Boolean stockAvailable;
+
+    @Column(name = "requested_quantity")
+    private Integer requestedQuantity;
+
+    // Notes
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
+    // Timestamps
+    @CreationTimestamp
+    @Column(name = "added_at", nullable = false, updatable = false)
     private LocalDateTime addedAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void onCreate() {
-        addedAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (quantity == null || quantity < 1) {
-            quantity = 1;
-        }
-        if (discountAmount == null) {
-            discountAmount = BigDecimal.ZERO;
-        }
-        if (isSavedForLater == null) {
-            isSavedForLater = false;
-        }
-        // Set unit price from product if not set
-        if (unitPrice == null && product != null) {
-            unitPrice = product.getEffectivePrice();
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-
+    // ========================================
     // Business methods
-    public BigDecimal getSubtotal() {
-        if (unitPrice == null || quantity == null) {
-            return BigDecimal.ZERO;
-        }
-        BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+    // ========================================
 
-        if (discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0) {
-            subtotal = subtotal.subtract(discountAmount);
-            if (subtotal.compareTo(BigDecimal.ZERO) < 0) {
-                subtotal = BigDecimal.ZERO;
-            }
+    /**
+     * Calculate subtotal based on quantity and price
+     */
+    public void calculateSubtotal() {
+        BigDecimal effectivePrice = getEffectivePrice();
+        if (effectivePrice != null && quantity != null) {
+            this.subtotal = effectivePrice.multiply(BigDecimal.valueOf(quantity));
+        } else {
+            this.subtotal = BigDecimal.ZERO;
         }
-
-        return subtotal;
     }
 
+    /**
+     * Get effective price (discount price if available, otherwise unit price)
+     */
+    public BigDecimal getEffectivePrice() {
+        if (discountPrice != null && discountPrice.compareTo(BigDecimal.ZERO) > 0
+                && discountPrice.compareTo(unitPrice) < 0) {
+            return discountPrice;
+        }
+        return unitPrice;
+    }
+
+    /**
+     * Get total price for this item
+     */
     public BigDecimal getTotalPrice() {
-        return getSubtotal();
-    }
-
-    public boolean isAvailable() {
-        return product != null &&
-                product.isActive() &&
-                product.getStockQuantity() >= quantity;
-    }
-
-    public boolean isInStock() {
-        return product != null && product.isInStock();
-    }
-
-    public int getAvailableQuantity() {
-        if (product == null) {
-            return 0;
+        if (subtotal == null) {
+            calculateSubtotal();
         }
-        return product.getStockQuantity();
+        return subtotal != null ? subtotal : BigDecimal.ZERO;
     }
 
+    /**
+     * Get savings amount if item is on sale
+     */
+    public BigDecimal getSavingsAmount() {
+        if (discountPrice != null && discountPrice.compareTo(BigDecimal.ZERO) > 0
+                && discountPrice.compareTo(unitPrice) < 0) {
+            return unitPrice.subtract(discountPrice).multiply(BigDecimal.valueOf(quantity));
+        }
+        return BigDecimal.ZERO;
+    }
+
+    /**
+     * Check if item is on sale
+     */
+    public boolean isOnSale() {
+        return discountPrice != null
+                && discountPrice.compareTo(BigDecimal.ZERO) > 0
+                && discountPrice.compareTo(unitPrice) < 0;
+    }
+
+    /**
+     * Update quantity
+     */
+    public void updateQuantity(Integer newQuantity) {
+        if (newQuantity == null || newQuantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
+        }
+        this.quantity = newQuantity;
+        calculateSubtotal();
+    }
+
+    /**
+     * Increment quantity
+     */
     public void incrementQuantity() {
         incrementQuantity(1);
     }
 
+    /**
+     * Increment quantity by specified amount
+     */
     public void incrementQuantity(int amount) {
-        if (quantity == null) {
-            quantity = amount;
-        } else {
-            quantity += amount;
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Increment amount must be positive");
         }
-        updatedAt = LocalDateTime.now();
+        this.quantity = (quantity != null ? quantity : 0) + amount;
+        calculateSubtotal();
     }
 
+    /**
+     * Decrement quantity
+     */
     public void decrementQuantity() {
         decrementQuantity(1);
     }
 
+    /**
+     * Decrement quantity by specified amount
+     */
     public void decrementQuantity(int amount) {
-        if (quantity == null) {
-            quantity = 0;
-        } else {
-            quantity -= amount;
-            if (quantity < 0) {
-                quantity = 0;
-            }
+        if (amount <= 0) {
+            throw new IllegalArgumentException("Decrement amount must be positive");
         }
-        updatedAt = LocalDateTime.now();
+        if (quantity == null || quantity <= amount) {
+            throw new IllegalStateException("Cannot decrement below 1");
+        }
+        this.quantity -= amount;
+        calculateSubtotal();
     }
 
-    public void updateQuantity(int newQuantity) {
-        if (newQuantity < 0) {
-            newQuantity = 0;
-        }
-        this.quantity = newQuantity;
-        updatedAt = LocalDateTime.now();
-    }
-
-    public void updatePriceFromProduct() {
+    /**
+     * Update price from product
+     */
+    public void updatePricesFromProduct() {
         if (product != null) {
-            this.unitPrice = product.getEffectivePrice();
-            updatedAt = LocalDateTime.now();
+            this.unitPrice = product.getPrice();
+            this.discountPrice = product.getDiscountPrice();
+            this.productName = product.getName();
+            this.productSku = product.getSku();
+            this.productImageUrl = product.getImageUrl();
+            calculateSubtotal();
         }
     }
 
-    public boolean hasDiscount() {
-        return discountAmount != null && discountAmount.compareTo(BigDecimal.ZERO) > 0;
-    }
-
-    public BigDecimal getEffectiveUnitPrice() {
-        if (unitPrice == null) {
-            return BigDecimal.ZERO;
-        }
-
-        if (hasDiscount() && quantity != null && quantity > 0) {
-            BigDecimal discountPerUnit = discountAmount.divide(BigDecimal.valueOf(quantity), 2, BigDecimal.ROUND_HALF_UP);
-            BigDecimal effectivePrice = unitPrice.subtract(discountPerUnit);
-            return effectivePrice.compareTo(BigDecimal.ZERO) > 0 ? effectivePrice : BigDecimal.ZERO;
-        }
-
-        return unitPrice;
-    }
-
-    public boolean exceedsStockLimit() {
-        return product != null && quantity > product.getStockQuantity();
-    }
-
-    public void saveForLater() {
-        this.isSavedForLater = true;
-        updatedAt = LocalDateTime.now();
-    }
-
-    public void moveToCart() {
-        this.isSavedForLater = false;
-        updatedAt = LocalDateTime.now();
-    }
-
-    public boolean isPriceChanged() {
-        if (product == null || unitPrice == null) {
+    /**
+     * Check if stock is sufficient
+     */
+    public boolean hasStockAvailable() {
+        if (product == null) {
             return false;
         }
-        return !unitPrice.equals(product.getEffectivePrice());
+        return product.hasEnoughStock(quantity);
     }
 
-    public BigDecimal getPriceDifference() {
-        if (product == null || unitPrice == null) {
-            return BigDecimal.ZERO;
+    /**
+     * Validate stock
+     */
+    public void validateStock() {
+        this.stockCheckedAt = LocalDateTime.now();
+        if (product != null) {
+            this.stockAvailable = product.hasEnoughStock(quantity);
+            if (!stockAvailable) {
+                this.requestedQuantity = quantity;
+                // Adjust quantity to available stock
+                if (product.getStockQuantity() > 0) {
+                    this.quantity = product.getStockQuantity();
+                    calculateSubtotal();
+                }
+            }
+        } else {
+            this.stockAvailable = false;
         }
-        return product.getEffectivePrice().subtract(unitPrice);
+    }
+
+    /**
+     * Check if stock validation is needed (older than 30 minutes)
+     */
+    public boolean needsStockValidation() {
+        return stockCheckedAt == null ||
+                stockCheckedAt.isBefore(LocalDateTime.now().minusMinutes(30));
+    }
+
+    /**
+     * Toggle save for later
+     */
+    public void toggleSaveForLater() {
+        this.isSavedForLater = !Boolean.TRUE.equals(isSavedForLater);
+    }
+
+    /**
+     * Mark as gift
+     */
+    public void markAsGift(String message) {
+        this.isGift = true;
+        this.giftMessage = message;
+    }
+
+    /**
+     * Remove gift marking
+     */
+    public void removeGiftMarking() {
+        this.isGift = false;
+        this.giftMessage = null;
+    }
+
+    /**
+     * Get display status
+     */
+    public String getDisplayStatus() {
+        if (Boolean.TRUE.equals(isSavedForLater)) {
+            return "Saved for Later";
+        }
+        if (Boolean.FALSE.equals(stockAvailable)) {
+            return "Out of Stock";
+        }
+        if (product != null && product.isLowStock()) {
+            return "Low Stock";
+        }
+        return "In Cart";
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (quantity == null || quantity <= 0) {
+            quantity = 1;
+        }
+        if (isSavedForLater == null) {
+            isSavedForLater = false;
+        }
+        if (isGift == null) {
+            isGift = false;
+        }
+
+        // Set product details if not already set
+        if (product != null) {
+            if (productName == null) {
+                productName = product.getName();
+            }
+            if (productSku == null) {
+                productSku = product.getSku();
+            }
+            if (productImageUrl == null) {
+                productImageUrl = product.getImageUrl();
+            }
+            if (unitPrice == null) {
+                unitPrice = product.getPrice();
+            }
+            if (product.getDiscountPrice() != null) {
+                discountPrice = product.getDiscountPrice();
+            }
+        }
+
+        calculateSubtotal();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        calculateSubtotal();
+    }
+
+    /**
+     * Check if can checkout
+     */
+    public boolean canCheckout() {
+        return !Boolean.TRUE.equals(isSavedForLater) &&
+                Boolean.TRUE.equals(stockAvailable) &&
+                quantity != null && quantity > 0;
+    }
+
+    /**
+     * Get formatted price display
+     */
+    public String getFormattedPrice() {
+        BigDecimal price = getEffectivePrice();
+        return price != null ? "SEK " + price.toString() : "SEK 0.00";
+    }
+
+    /**
+     * Get formatted total display
+     */
+    public String getFormattedTotal() {
+        BigDecimal total = getTotalPrice();
+        return "SEK " + total.toString();
     }
 }

@@ -188,13 +188,15 @@ public class ShippingService {
 
     /**
      * Get shipments for an order
+     * FIXED: Using correct repository method name!
      */
     public List<Shipment> getShipmentsByOrder(Long orderId) {
         try {
             Order order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new OrderNotFoundException("Order not found with ID: " + orderId));
 
-            return shipmentRepository.findByOrderOrderId(orderId);
+            // FIXED: Using findAllByOrderId instead of findByOrderOrderId
+            return shipmentRepository.findAllByOrderId(orderId);
 
         } catch (Exception e) {
             log.error("Error fetching shipments: {}", e.getMessage(), e);

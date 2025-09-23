@@ -1,54 +1,172 @@
-// image-service/src/main/java/com/perfect8/image/model/Image.java
 package com.perfect8.image.model;
 
+import com.perfect8.image.enums.ImageStatus;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "images")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Image {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "image_id")
+    private Long imageId;
 
-    @Column(name = "filename", nullable = false)
-    private String filename;
+    @Column(name = "original_filename")
+    private String originalFilename;
 
-    @Column(name = "content_type", nullable = false)
-    private String contentType;
+    @Column(name = "stored_filename", unique = true)
+    private String storedFilename;
 
-    @Column(name = "size", nullable = false)
-    private Long size;
+    @Column(name = "mime_type")
+    private String mimeType;
 
-    @Lob
-    @Column(name = "data", nullable = false)
-    private byte[] data;
+    @Column(name = "image_format")
+    private String imageFormat;
 
-    @Column(name = "created_at")
+    @Column(name = "original_size_bytes")
+    private Long originalSizeBytes;
+
+    @Column(name = "original_width")
+    private Integer originalWidth;
+
+    @Column(name = "original_height")
+    private Integer originalHeight;
+
+    @Column(name = "original_url")
+    private String originalUrl;
+
+    @Column(name = "thumbnail_url")
+    private String thumbnailUrl;
+
+    @Column(name = "small_url")
+    private String smallUrl;
+
+    @Column(name = "medium_url")
+    private String mediumUrl;
+
+    @Column(name = "large_url")
+    private String largeUrl;
+
+    @Column(name = "image_status")
+    @Enumerated(EnumType.STRING)
+    private ImageStatus imageStatus = ImageStatus.PENDING;
+
+    @Column(name = "processing_time_ms")
+    private Long processingTimeMs;
+
+    @Column(name = "error_message")
+    private String errorMessage;
+
+    @Column(name = "alt_text")
+    private String altText;
+
+    @Column(name = "title")
+    private String title;
+
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "reference_type")
+    private String referenceType;
+
+    @Column(name = "reference_id")
+    private Long referenceId;
+
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
     }
 
-    // Getters and setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
-    public String getFilename() { return filename; }
-    public void setFilename(String filename) { this.filename = filename; }
+    // Business logic methods
 
-    public String getContentType() { return contentType; }
-    public void setContentType(String contentType) { this.contentType = contentType; }
+    public String getBestAvailableUrl() {
+        if (largeUrl != null) return largeUrl;
+        if (mediumUrl != null) return mediumUrl;
+        if (smallUrl != null) return smallUrl;
+        if (thumbnailUrl != null) return thumbnailUrl;
+        if (originalUrl != null) return originalUrl;
+        return null;
+    }
 
-    public Long getSize() { return size; }
-    public void setSize(Long size) { this.size = size; }
+    public boolean isAvailable() {
+        return imageStatus == ImageStatus.ACTIVE && !isDeleted;
+    }
 
-    public byte[] getData() { return data; }
-    public void setData(byte[] data) { this.data = data; }
+    public boolean areAllSizesGenerated() {
+        return thumbnailUrl != null &&
+                smallUrl != null &&
+                mediumUrl != null &&
+                largeUrl != null;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void markAsDeleted() {
+        this.isDeleted = true;
+        this.imageStatus = ImageStatus.DELETED;
+    }
+
+    public void setAllUrls(String baseUrl, String filename) {
+        String basePath = baseUrl + "/";
+        this.originalUrl = basePath + "original/" + filename;
+        this.thumbnailUrl = basePath + "thumbnail/" + filename;
+        this.smallUrl = basePath + "small/" + filename;
+        this.mediumUrl = basePath + "medium/" + filename;
+        this.largeUrl = basePath + "large/" + filename;
+    }
+
+    // Validation helpers
+
+    public boolean hasValidDimensions() {
+        return originalWidth != null &&
+                originalWidth > 0 &&
+                originalHeight != null &&
+                originalHeight > 0;
+    }
+
+    public boolean isProcessingComplete() {
+        return imageStatus == ImageStatus.ACTIVE ||
+                imageStatus == ImageStatus.FAILED;
+    }
+
+    public boolean isProcessing() {
+        return imageStatus == ImageStatus.PROCESSING;
+    }
+
+    public void startProcessing() {
+        this.imageStatus = ImageStatus.PROCESSING;
+        this.errorMessage = null;
+    }
+
+    public void completeProcessing(long processingTime) {
+        this.imageStatus = ImageStatus.ACTIVE;
+        this.processingTimeMs = processingTime;
+        this.errorMessage = null;
+    }
+
+    public void failProcessing(String error) {
+        this.imageStatus = ImageStatus.FAILED;
+        this.errorMessage = error;
+    }
 }

@@ -1,6 +1,6 @@
 package com.perfect8.shop.dto;
 
-import com.perfect8.shop.enums.OrderStatus;
+import com.perfect8.common.enums.OrderStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;

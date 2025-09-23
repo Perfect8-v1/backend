@@ -1,11 +1,11 @@
 package com.perfect8.shop.service;
 
 import com.perfect8.shop.entity.Customer;
-import com.perfect8.shop.entity.Role;
 import com.perfect8.shop.repository.CustomerRepository;
 import com.perfect8.shop.security.JwtTokenProvider;
 import com.perfect8.shop.dto.AuthDto;
-import com.perfect8.shop.dto.JwtResponse;
+import com.perfect8.shop.exception.CustomerNotFoundException;
+import com.perfect8.shop.exception.UnauthorizedAccessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,9 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
-import java.util.Set;
+import java.util.UUID;
 
+/**
+ * Authentication Service - Version 1.0
+ * Handles authentication and authorization
+ * NO BACKWARD COMPATIBILITY - Built right from the start!
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -26,315 +30,285 @@ public class AuthService {
     private final CustomerRepository customerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final EmailService emailService;
 
     /**
-     * Registrera ny kund
+     * Register new customer
      */
-    public JwtResponse register(AuthDto.RegisterRequest request) {
-        log.info("Registrerar ny kund med email: {}", request.getEmail());
+    @Transactional
+    public Customer registerCustomer(AuthDto.RegisterRequest registerRequest) {
+        log.info("Registering new customer with email: {}", registerRequest.getEmail());
 
-        // Validera att email inte redan finns
-        if (customerRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email redan registrerad: " + request.getEmail());
+        // Check if email already exists
+        if (customerRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new BadCredentialsException("Email already registered");
         }
 
-        // Skapa ny kund med Role enum
-        Customer customer = Customer.builder()
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .phoneNumber(request.getPhoneNumber())
-                .role(Role.CUSTOMER) // Använder Role enum
-                .emailVerified(false)
-                .accountLocked(false)
-                .loginAttempts(0)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
+        // Create new customer - using CORRECT field names
+        // VERSION 1.0 - Newsletter och marketing consent är inte kritiska
+        Customer newCustomer = Customer.builder()
+                .email(registerRequest.getEmail())
+                .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .firstName(registerRequest.getFirstName())
+                .lastName(registerRequest.getLastName())
+                .phoneNumber(registerRequest.getPhoneNumber())
+                .role("ROLE_USER")
+                .isActive(true)
+                .isEmailVerified(false)
+                .newsletterSubscribed(false)  // Default för v1.0
+                .marketingConsent(false)      // Default för v1.0
                 .build();
 
-        customer = customerRepository.save(customer);
-        log.info("Kund skapad med id: {}", customer.getCustomerId());
+        Customer savedCustomer = customerRepository.save(newCustomer);
 
-        // Generera JWT token - JwtTokenProvider hanterar Role enum
-        String token = jwtTokenProvider.generateToken(
+        // Send welcome email - CORRECT signature (2 parameters)
+        String fullName = savedCustomer.getFirstName() + " " + savedCustomer.getLastName();
+        emailService.sendWelcomeEmail(
+                savedCustomer.getEmail(),
+                fullName
+        );
+
+        log.info("Customer registered successfully with ID: {}", savedCustomer.getCustomerId());
+        return savedCustomer;
+    }
+
+    /**
+     * Authenticate customer
+     */
+    @Transactional
+    public AuthDto.JwtResponse authenticate(AuthDto.LoginRequest loginRequest) {
+        log.info("Authenticating customer: {}", loginRequest.getEmail());
+
+        Customer customer = customerRepository.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+
+        // Verify password
+        if (!passwordEncoder.matches(loginRequest.getPassword(), customer.getPassword())) {
+            customer.incrementFailedLoginAttempts();
+            customerRepository.save(customer);
+            log.warn("Failed login attempt for email: {}", loginRequest.getEmail());
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
+        // Check if account is active
+        if (!customer.isActive()) {
+            throw new UnauthorizedAccessException("Account is disabled");
+        }
+
+        // Check if account is locked
+        if (customer.isAccountLocked()) {
+            throw new UnauthorizedAccessException("Account is locked");
+        }
+
+        // Update last login and reset failed attempts
+        customer.updateLastLoginTime();
+        customer.resetFailedLoginAttempts();
+        customerRepository.save(customer);
+
+        // Generate JWT token with correct signature (3 parameters)
+        Long customerIdLong = customer.getCustomerId();
+        String jwtToken = jwtTokenProvider.generateToken(
+                customerIdLong,
                 customer.getEmail(),
-                customer.getCustomerId(),
                 customer.getRole()
         );
 
-        return JwtResponse.builder()
-                .token(token)
+        log.info("Customer {} authenticated successfully", customer.getEmail());
+
+        return AuthDto.JwtResponse.builder()
+                .token(jwtToken)
+                .tokenType("Bearer")
+                .expiresIn(3600L) // 1 hour
+                .customerId(customerIdLong)
                 .email(customer.getEmail())
-                .customerId(customer.getCustomerId())
-                .role(customer.getRole().name()) // Konverterar till String för response
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
-                .expiresIn(jwtTokenProvider.getJwtExpiration())
+                .role(customer.getRole())
                 .build();
     }
 
     /**
-     * Logga in kund
+     * Refresh token
      */
-    public JwtResponse login(AuthDto.LoginRequest request) {
-        log.info("Inloggningsförsök för email: {}", request.getEmail());
+    @Transactional(readOnly = true)
+    public AuthDto.JwtResponse refreshToken(String customerEmail) {
+        Customer customer = customerRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        Customer customer = customerRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Felaktiga inloggningsuppgifter"));
-
-        // Kontrollera om kontot är låst
-        if (customer.getAccountLocked() != null && customer.getAccountLocked()) {
-            log.warn("Inloggningsförsök på låst konto: {}", request.getEmail());
-            throw new BadCredentialsException("Kontot är låst. Kontakta support.");
-        }
-
-        // Verifiera lösenord
-        if (!passwordEncoder.matches(request.getPassword(), customer.getPassword())) {
-            handleFailedLogin(customer);
-            throw new BadCredentialsException("Felaktiga inloggningsuppgifter");
-        }
-
-        // Återställ misslyckade inloggningsförsök
-        handleSuccessfulLogin(customer);
-
-        // Generera JWT token med Role enum
-        String token = jwtTokenProvider.generateToken(
+        Long customerIdLong = customer.getCustomerId();
+        String newJwtToken = jwtTokenProvider.generateToken(
+                customerIdLong,
                 customer.getEmail(),
-                customer.getCustomerId(),
                 customer.getRole()
         );
 
-        return JwtResponse.builder()
-                .token(token)
+        return AuthDto.JwtResponse.builder()
+                .token(newJwtToken)
+                .tokenType("Bearer")
+                .expiresIn(3600L)
+                .customerId(customerIdLong)
                 .email(customer.getEmail())
-                .customerId(customer.getCustomerId())
-                .role(customer.getRole().name()) // Konverterar till String för response
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
-                .expiresIn(jwtTokenProvider.getJwtExpiration())
+                .role(customer.getRole())
                 .build();
     }
 
     /**
-     * Validera JWT token
+     * Change password
      */
-    public boolean validateToken(String token) {
-        try {
-            return jwtTokenProvider.validateToken(token);
-        } catch (Exception e) {
-            log.error("Token validering misslyckades: {}", e.getMessage());
-            return false;
-        }
-    }
+    @Transactional
+    public void changePassword(Long customerIdLong, String oldPasswordString, String newPasswordString) {
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-    /**
-     * Hämta email från token
-     */
-    public String getEmailFromToken(String token) {
-        return jwtTokenProvider.getEmailFromToken(token);
-    }
-
-    /**
-     * Hämta customerId från token
-     */
-    public Long getCustomerIdFromToken(String token) {
-        return jwtTokenProvider.getCustomerIdFromToken(token);
-    }
-
-    /**
-     * Hämta role från token som enum
-     */
-    public Role getRoleFromToken(String token) {
-        return jwtTokenProvider.getRoleFromToken(token);
-    }
-
-    /**
-     * Kontrollera om användare har admin-roll
-     */
-    public boolean isAdmin(Long customerId) {
-        return customerRepository.findById(customerId)
-                .map(customer -> customer.getRole() == Role.ADMIN)
-                .orElse(false);
-    }
-
-    /**
-     * Kontrollera om användare har en specifik roll
-     */
-    public boolean hasRole(Long customerId, Role role) {
-        return customerRepository.findById(customerId)
-                .map(customer -> customer.getRole() == role)
-                .orElse(false);
-    }
-
-    /**
-     * Byt lösenord
-     */
-    public void changePassword(Long customerId, String oldPassword, String newPassword) {
-        log.info("Lösenordsbyte för customerId: {}", customerId);
-
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Kund finns inte"));
-
-        // Verifiera gammalt lösenord
-        if (!passwordEncoder.matches(oldPassword, customer.getPassword())) {
-            throw new BadCredentialsException("Felaktigt nuvarande lösenord");
+        // Verify old password
+        if (!passwordEncoder.matches(oldPasswordString, customer.getPassword())) {
+            throw new BadCredentialsException("Current password is incorrect");
         }
 
-        // Uppdatera lösenord
-        customer.setPassword(passwordEncoder.encode(newPassword));
-        customer.setPasswordChangedAt(LocalDateTime.now());
-        customer.setUpdatedAt(LocalDateTime.now());
-
+        // Update password
+        customer.setPassword(passwordEncoder.encode(newPasswordString));
         customerRepository.save(customer);
-        log.info("Lösenord uppdaterat för customerId: {}", customerId);
+
+        log.info("Password changed for customer ID: {}", customerIdLong);
     }
 
     /**
-     * Återställ lösenord (för glömt lösenord)
+     * Reset password request
      */
-    public void resetPassword(String email, String newPassword) {
-        log.info("Lösenordsåterställning för email: {}", email);
+    @Transactional
+    public void requestPasswordReset(String customerEmail) {
+        Customer customer = customerRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        Customer customer = customerRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Email finns inte"));
-
-        customer.setPassword(passwordEncoder.encode(newPassword));
-        customer.setPasswordChangedAt(LocalDateTime.now());
-        customer.setUpdatedAt(LocalDateTime.now());
-
+        // Generate reset token
+        String resetTokenString = generateResetToken();
+        customer.setPasswordResetToken(resetTokenString);
+        customer.setPasswordResetExpiresAt(LocalDateTime.now().plusHours(1));
         customerRepository.save(customer);
-        log.info("Lösenord återställt för email: {}", email);
+
+        // Send reset email - FIXED: Using correct EmailService method signature
+        emailService.sendPasswordResetEmail(
+                customer.getEmail(),
+                resetTokenString  // FIXED: Send the token, not the fullName
+        );
+
+        log.info("Password reset requested for email: {}", customerEmail);
     }
 
     /**
-     * Verifiera email
+     * Reset password with token
      */
-    public void verifyEmail(Long customerId) {
-        log.info("Email verifiering för customerId: {}", customerId);
+    @Transactional
+    public void resetPassword(String resetTokenString, String newPasswordString) {
+        Customer customer = customerRepository.findByPasswordResetToken(resetTokenString)
+                .orElseThrow(() -> new BadCredentialsException("Invalid reset token"));
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Kund finns inte"));
+        // Check token expiry
+        if (customer.getPasswordResetExpiresAt() != null &&
+                customer.getPasswordResetExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new BadCredentialsException("Reset token has expired");
+        }
 
+        // Update password
+        customer.setPassword(passwordEncoder.encode(newPasswordString));
+        customer.setPasswordResetToken(null);
+        customer.setPasswordResetExpiresAt(null);
+        customerRepository.save(customer);
+
+        log.info("Password reset successfully for customer: {}", customer.getEmail());
+    }
+
+    /**
+     * Verify email
+     */
+    @Transactional
+    public void verifyEmail(String verificationTokenString) {
+        Customer customer = customerRepository.findByEmailVerificationToken(verificationTokenString)
+                .orElseThrow(() -> new BadCredentialsException("Invalid verification token"));
+
+        // Check token expiry (24 hours from when it was sent)
+        if (customer.getEmailVerificationSentAt() != null &&
+                customer.getEmailVerificationSentAt().isBefore(LocalDateTime.now().minusHours(24))) {
+            throw new BadCredentialsException("Verification token has expired");
+        }
+
+        // Mark email as verified
         customer.setEmailVerified(true);
-        customer.setEmailVerifiedAt(LocalDateTime.now());
-        customer.setUpdatedAt(LocalDateTime.now());
-
+        customer.setEmailVerificationToken(null);
+        customer.setEmailVerificationSentAt(null);
         customerRepository.save(customer);
-        log.info("Email verifierad för customerId: {}", customerId);
+
+        log.info("Email verified for customer: {}", customer.getEmail());
     }
 
     /**
-     * Hantera misslyckad inloggning
+     * Resend verification email
      */
-    private void handleFailedLogin(Customer customer) {
-        int attempts = customer.getLoginAttempts() != null ? customer.getLoginAttempts() + 1 : 1;
-        customer.setLoginAttempts(attempts);
+    @Transactional
+    public void resendVerificationEmail(String customerEmail) {
+        Customer customer = customerRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        // Lås konto efter 5 misslyckade försök
-        if (attempts >= 5) {
-            customer.setAccountLocked(true);
-            customer.setAccountLockedAt(LocalDateTime.now());
-            log.warn("Konto låst efter {} misslyckade inloggningsförsök: {}",
-                    attempts, customer.getEmail());
+        if (customer.isEmailVerified()) {
+            throw new BadCredentialsException("Email already verified");
         }
 
-        customer.setUpdatedAt(LocalDateTime.now());
+        // Generate new verification token
+        String verificationTokenString = generateVerificationToken();
+        customer.setEmailVerificationToken(verificationTokenString);
+        customer.setEmailVerificationSentAt(LocalDateTime.now());
         customerRepository.save(customer);
+
+        // Send verification email - FIXED: Using correct method
+        emailService.sendEmailVerification(
+                customer.getEmail(),
+                verificationTokenString
+        );
+
+        log.info("Verification email resent to: {}", customerEmail);
     }
 
     /**
-     * Hantera lyckad inloggning
+     * Validate JWT token
      */
-    private void handleSuccessfulLogin(Customer customer) {
-        customer.setLoginAttempts(0);
-        customer.setLastLoginAt(LocalDateTime.now());
-        customer.setUpdatedAt(LocalDateTime.now());
-        customerRepository.save(customer);
+    public boolean validateToken(String jwtTokenString) {
+        return jwtTokenProvider.validateToken(jwtTokenString);
     }
 
     /**
-     * Lås upp konto (admin funktion)
+     * Get customer ID from token
      */
-    public void unlockAccount(Long customerId) {
-        log.info("Låser upp konto för customerId: {}", customerId);
-
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Kund finns inte"));
-
-        customer.setAccountLocked(false);
-        customer.setAccountLockedAt(null);
-        customer.setLoginAttempts(0);
-        customer.setUpdatedAt(LocalDateTime.now());
-
-        customerRepository.save(customer);
-        log.info("Konto upplåst för customerId: {}", customerId);
+    public Long getCustomerIdFromToken(String jwtTokenString) {
+        return jwtTokenProvider.getCustomerIdFromToken(jwtTokenString);
     }
 
     /**
-     * Uppdatera användarens roll (endast admin kan göra detta)
+     * Check if customer has role
      */
-    public void updateUserRole(Long customerId, Role newRole, Long adminId) {
-        log.info("Uppdaterar roll för customerId: {} till {}", customerId, newRole);
+    public boolean hasRole(Long customerIdLong, String requiredRoleString) {
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        // Verifiera att den som gör ändringen är admin
-        if (!isAdmin(adminId)) {
-            throw new SecurityException("Endast admin kan ändra roller");
-        }
-
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new IllegalArgumentException("Kund finns inte"));
-
-        Role oldRole = customer.getRole();
-        customer.setRole(newRole);
-        customer.setUpdatedAt(LocalDateTime.now());
-
-        customerRepository.save(customer);
-        log.info("Roll uppdaterad från {} till {} för customerId: {}",
-                oldRole, newRole, customerId);
+        // Simple string comparison for v1.0
+        return customer.getRole().equals(requiredRoleString) ||
+                customer.getRole().equals("ROLE_ADMIN"); // Admin has all permissions
     }
 
-    // ===== VERSION 2.0 FUNKTIONER - KOMMENTERADE =====
-
-    /*
-    // Two-factor authentication
-    public void enableTwoFactor(Long customerId) {
-        // Version 2.0
+    /**
+     * Generate reset token
+     */
+    private String generateResetToken() {
+        UUID randomUuid = UUID.randomUUID();
+        return randomUuid.toString();
     }
 
-    // OAuth integration
-    public JwtResponse loginWithGoogle(String googleToken) {
-        // Version 2.0
+    /**
+     * Generate verification token
+     */
+    private String generateVerificationToken() {
+        UUID randomUuid = UUID.randomUUID();
+        return randomUuid.toString();
     }
-
-    // Session management
-    public void logoutAllDevices(Long customerId) {
-        // Version 2.0
-    }
-
-    // Login analytics
-    public LoginMetrics getLoginMetrics(LocalDateTime from, LocalDateTime to) {
-        // Version 2.0
-    }
-
-    // Security audit log
-    public List<SecurityEvent> getSecurityEvents(Long customerId) {
-        // Version 2.0
-    }
-
-    // IP-based security
-    public void addTrustedIp(Long customerId, String ipAddress) {
-        // Version 2.0
-    }
-
-    // Device fingerprinting
-    public void registerDevice(Long customerId, DeviceInfo device) {
-        // Version 2.0
-    }
-
-    // Biometric authentication
-    public void enableBiometric(Long customerId, BiometricData data) {
-        // Version 2.0
-    }
-    */
 }

@@ -1,7 +1,6 @@
 package com.perfect8.shop.repository;
 
 import com.perfect8.shop.entity.Shipment;
-import com.perfect8.shop.entity.Order;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,113 +8,212 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository interface for Shipment entity
- * Version 1.0 - Core shipment data access
+ * Shipment Repository - Version 1.0
+ * Hanterar databasoperationer för leveranser
  */
 @Repository
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
 
-    // Find by tracking number
+    // ========== Order-relaterade queries ==========
+
+    /**
+     * Hitta leverans för en order
+     */
+    Optional<Shipment> findByOrderId(Long orderId);
+
+    /**
+     * Hitta alla leveranser för en order (om flera finns)
+     */
+    List<Shipment> findAllByOrderId(Long orderId);
+
+    // ========== Tracking queries ==========
+
+    /**
+     * Hitta leverans via tracking number
+     */
     Optional<Shipment> findByTrackingNumber(String trackingNumber);
 
-    // Find shipments by order ID
-    List<Shipment> findByOrderOrderId(Long orderId);
+    /**
+     * Kontrollera om tracking number existerar
+     */
+    boolean existsByTrackingNumber(String trackingNumber);
 
-    // Alternative method name for compatibility
-    List<Shipment> findByOrder_OrderId(Long orderId);
+    // ========== Status queries ==========
 
-    // Find shipments by order
-    List<Shipment> findByOrder(Order order);
+    /**
+     * Hitta leveranser efter status
+     */
+    List<Shipment> findByShipmentStatus(String shipmentStatus);
 
-    // Find shipments by status
-    List<Shipment> findByStatus(String status);
+    /**
+     * Hitta leveranser efter status med paginering
+     */
+    Page<Shipment> findByShipmentStatus(String shipmentStatus, Pageable pageable);
 
-    // Find shipments by carrier
+    /**
+     * Räkna leveranser per status
+     */
+    long countByShipmentStatus(String shipmentStatus);
+
+    // ========== Carrier queries ==========
+
+    /**
+     * Hitta leveranser efter transportör
+     */
     List<Shipment> findByCarrier(String carrier);
 
-    // Find shipments by date range
-    List<Shipment> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
+    /**
+     * Hitta leveranser efter transportör och status
+     */
+    List<Shipment> findByCarrierAndShipmentStatus(String carrier, String shipmentStatus);
 
-    // Find shipments with expected delivery date
-    List<Shipment> findByEstimatedDeliveryDate(LocalDate deliveryDate);
+    /**
+     * Räkna leveranser per transportör
+     */
+    @Query("SELECT s.carrier, COUNT(s) FROM Shipment s GROUP BY s.carrier")
+    List<Object[]> countByCarrier();
 
-    // Find shipments delivered on specific date
-    List<Shipment> findByActualDeliveryDate(LocalDate deliveryDate);
+    // ========== Date queries ==========
 
-    // Find pending shipments
-    @Query("SELECT s FROM Shipment s WHERE s.status = 'PENDING' OR s.status = 'PREPARING'")
-    List<Shipment> findPendingShipments();
+    /**
+     * Hitta leveranser skickade efter datum
+     */
+    List<Shipment> findByShippedDateAfter(LocalDateTime date);
 
-    // Find in-transit shipments
-    @Query("SELECT s FROM Shipment s WHERE s.status = 'IN_TRANSIT'")
-    List<Shipment> findInTransitShipments();
+    /**
+     * Hitta leveranser skickade mellan datum
+     */
+    List<Shipment> findByShippedDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    // Find delivered shipments
-    @Query("SELECT s FROM Shipment s WHERE s.status = 'DELIVERED'")
-    List<Shipment> findDeliveredShipments();
+    /**
+     * Hitta leveranser levererade mellan datum
+     */
+    List<Shipment> findByDeliveredDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 
-    // Find shipments by customer (through order)
-    @Query("SELECT s FROM Shipment s WHERE s.order.customer.customerId = :customerId")
+    /**
+     * Hitta förväntade leveranser
+     */
+    @Query("SELECT s FROM Shipment s WHERE s.estimatedDeliveryDate >= :startDate " +
+            "AND s.estimatedDeliveryDate <= :endDate AND s.shipmentStatus != 'DELIVERED'")
+    List<Shipment> findExpectedDeliveries(@Param("startDate") LocalDateTime startDate,
+                                          @Param("endDate") LocalDateTime endDate);
+
+    // ========== Customer queries ==========
+
+    /**
+     * Hitta leveranser för en kund
+     */
+    @Query("SELECT s FROM Shipment s JOIN s.order o WHERE o.customer.customerId = :customerId")
     List<Shipment> findByCustomerId(@Param("customerId") Long customerId);
 
-    // Find shipments by customer email (through order)
-    @Query("SELECT s FROM Shipment s WHERE s.order.shippingEmail = :email")
-    List<Shipment> findByCustomerEmail(@Param("email") String email);
+    /**
+     * Hitta leveranser för en kund med paginering
+     */
+    @Query("SELECT s FROM Shipment s JOIN s.order o WHERE o.customer.customerId = :customerId")
+    Page<Shipment> findByCustomerId(@Param("customerId") Long customerId, Pageable pageable);
 
-    // Count shipments by status
-    Long countByStatus(String status);
+    // ========== Problem/Issue queries ==========
 
-    // Find overdue shipments
-    @Query("SELECT s FROM Shipment s WHERE s.estimatedDeliveryDate < :currentDate " +
-            "AND s.status != 'DELIVERED' AND s.status != 'CANCELLED'")
-    List<Shipment> findOverdueShipments(@Param("currentDate") LocalDate currentDate);
+    /**
+     * Hitta försenade leveranser
+     */
+    @Query("SELECT s FROM Shipment s WHERE s.estimatedDeliveryDate < :now " +
+            "AND s.shipmentStatus NOT IN ('DELIVERED', 'CANCELLED')")
+    List<Shipment> findDelayedShipments(@Param("now") LocalDateTime now);
 
-    // Find shipments needing tracking update
-    @Query("SELECT s FROM Shipment s WHERE s.status = 'IN_TRANSIT' " +
-            "AND s.updatedAt < :lastUpdateTime")
-    List<Shipment> findShipmentsNeedingTrackingUpdate(@Param("lastUpdateTime") LocalDateTime lastUpdateTime);
+    /**
+     * Hitta leveranser som behöver uppdatering
+     */
+    @Query("SELECT s FROM Shipment s WHERE s.lastUpdated < :cutoffDate " +
+            "AND s.shipmentStatus IN ('IN_TRANSIT', 'OUT_FOR_DELIVERY')")
+    List<Shipment> findShipmentsNeedingUpdate(@Param("cutoffDate") LocalDateTime cutoffDate);
 
-    // Search shipments
-    @Query("SELECT s FROM Shipment s WHERE " +
-            "s.trackingNumber LIKE %:query% OR " +
-            "s.carrier LIKE %:query% OR " +
-            "s.order.orderNumber LIKE %:query%")
-    Page<Shipment> searchShipments(@Param("query") String query, Pageable pageable);
+    // ========== Analytics queries ==========
 
-    // Find shipments with pagination
-    Page<Shipment> findByStatus(String status, Pageable pageable);
-
-    // Find recent shipments
+    /**
+     * Hitta senaste leveranser
+     */
     List<Shipment> findTop10ByOrderByCreatedAtDesc();
 
-    // Check if tracking number exists
-    Boolean existsByTrackingNumber(String trackingNumber);
+    /**
+     * Genomsnittlig leveranstid per transportör
+     */
+    @Query("SELECT s.carrier, AVG(FUNCTION('DATEDIFF', s.deliveredDate, s.shippedDate)) " +
+            "FROM Shipment s WHERE s.deliveredDate IS NOT NULL " +
+            "GROUP BY s.carrier")
+    List<Object[]> findAverageDeliveryTimeByCarrier();
 
-    // Delete shipments by order
-    void deleteByOrder(Order order);
+    /**
+     * Leveranser per dag
+     */
+    @Query("SELECT DATE(s.shippedDate), COUNT(s) FROM Shipment s " +
+            "WHERE s.shippedDate BETWEEN :startDate AND :endDate " +
+            "GROUP BY DATE(s.shippedDate) ORDER BY DATE(s.shippedDate)")
+    List<Object[]> countShipmentsByDay(@Param("startDate") LocalDateTime startDate,
+                                       @Param("endDate") LocalDateTime endDate);
 
-    // Version 2.0 - Commented out for future implementation
-    /*
-    // Analytics queries for v2.0
-    @Query("SELECT COUNT(s), s.carrier FROM Shipment s " +
-           "WHERE s.createdAt BETWEEN :startDate AND :endDate " +
-           "GROUP BY s.carrier")
-    List<Object[]> getShipmentStatsByCarrier(@Param("startDate") LocalDateTime startDate,
-                                             @Param("endDate") LocalDateTime endDate);
+    // ========== Address queries ==========
 
-    @Query("SELECT AVG(DATEDIFF(s.actualDeliveryDate, s.createdAt)) FROM Shipment s " +
-           "WHERE s.status = 'DELIVERED' AND s.createdAt BETWEEN :startDate AND :endDate")
-    Double getAverageDeliveryTime(@Param("startDate") LocalDateTime startDate,
-                                  @Param("endDate") LocalDateTime endDate);
+    /**
+     * Hitta leveranser till postnummer
+     */
+    List<Shipment> findByShippingPostalCode(String postalCode);
 
-    // Performance metrics for v2.0
-    @Query("SELECT COUNT(s) FROM Shipment s WHERE s.actualDeliveryDate > s.estimatedDeliveryDate")
-    Long countLateDeliveries();
-    */
+    /**
+     * Hitta leveranser till stad
+     */
+    List<Shipment> findByShippingCity(String city);
+
+    /**
+     * Hitta leveranser till land
+     */
+    List<Shipment> findByShippingCountry(String country);
+
+    // ========== Complex queries ==========
+
+    /**
+     * Sök leveranser
+     */
+    @Query("SELECT s FROM Shipment s WHERE " +
+            "LOWER(s.trackingNumber) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(s.carrier) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(s.recipientName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(s.shippingCity) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    Page<Shipment> searchShipments(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    /**
+     * Hitta leveranser med filter
+     */
+    @Query("SELECT s FROM Shipment s WHERE " +
+            "(:status IS NULL OR s.shipmentStatus = :status) AND " +
+            "(:carrier IS NULL OR s.carrier = :carrier) AND " +
+            "(:startDate IS NULL OR s.shippedDate >= :startDate) AND " +
+            "(:endDate IS NULL OR s.shippedDate <= :endDate)")
+    Page<Shipment> findWithFilters(@Param("status") String status,
+                                   @Param("carrier") String carrier,
+                                   @Param("startDate") LocalDateTime startDate,
+                                   @Param("endDate") LocalDateTime endDate,
+                                   Pageable pageable);
+
+    // ========== Statistics ==========
+
+    /**
+     * Räkna aktiva leveranser
+     */
+    @Query("SELECT COUNT(s) FROM Shipment s WHERE s.shipmentStatus " +
+            "IN ('PENDING', 'PROCESSING', 'SHIPPED', 'IN_TRANSIT', 'OUT_FOR_DELIVERY')")
+    long countActiveShipments();
+
+    /**
+     * Räkna levererade denna månad
+     */
+    @Query("SELECT COUNT(s) FROM Shipment s WHERE " +
+            "YEAR(s.deliveredDate) = YEAR(CURRENT_DATE) AND " +
+            "MONTH(s.deliveredDate) = MONTH(CURRENT_DATE)")
+    long countDeliveredThisMonth();
 }

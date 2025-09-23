@@ -93,7 +93,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
      * Get order items for orders in a specific status
      */
     @Query("SELECT oi FROM OrderItem oi WHERE oi.order.status = :status")
-    List<OrderItem> findByOrderStatus(@Param("status") com.perfect8.shop.enums.OrderStatus status);
+    List<OrderItem> findByOrderStatus(@Param("status") com.perfect8.common.enums.OrderStatus status);
 
     /**
      * Calculate total value of order items

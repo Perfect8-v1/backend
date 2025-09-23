@@ -1,7 +1,7 @@
 package com.perfect8.shop.repository;
 
 import com.perfect8.shop.entity.InventoryTransaction;
-import com.perfect8.shop.enums.TransactionType;
+import com.perfect8.common.enums.TransactionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

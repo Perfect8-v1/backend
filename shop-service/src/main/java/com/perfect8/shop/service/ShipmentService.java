@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * Service for Shipment management - Version 1.0
@@ -33,11 +34,11 @@ public class ShipmentService {
      * Find shipment by ID
      */
     @Transactional(readOnly = true)
-    public Shipment findById(Long id) {
-        log.info("Finding shipment by ID: {}", id);
+    public Shipment findById(Long shipmentId) {
+        log.info("Finding shipment by ID: {}", shipmentId);
 
-        return shipmentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Shipment not found with ID: " + id));
+        return shipmentRepository.findById(shipmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Shipment not found with ID: " + shipmentId));
     }
 
     /**
@@ -58,7 +59,7 @@ public class ShipmentService {
         log.info("Finding shipments by status: {}", status);
 
         try {
-            return shipmentRepository.findByStatus(status);
+            return shipmentRepository.findByShipmentStatus(status);
         } catch (Exception e) {
             log.warn("Could not find shipments by status, returning empty list: {}", e.getMessage());
             return new ArrayList<>();
@@ -66,14 +67,29 @@ public class ShipmentService {
     }
 
     /**
-     * Find shipments by order ID
+     * Find shipment by order ID
      */
     @Transactional(readOnly = true)
-    public List<Shipment> findByOrderId(Long orderId) {
-        log.info("Finding shipments by order ID: {}", orderId);
+    public Optional<Shipment> findByOrderId(Long orderId) {
+        log.info("Finding shipment by order ID: {}", orderId);
 
         try {
             return shipmentRepository.findByOrderId(orderId);
+        } catch (Exception e) {
+            log.warn("Could not find shipment by order ID: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Find all shipments by order ID
+     */
+    @Transactional(readOnly = true)
+    public List<Shipment> findAllByOrderId(Long orderId) {
+        log.info("Finding all shipments by order ID: {}", orderId);
+
+        try {
+            return shipmentRepository.findAllByOrderId(orderId);
         } catch (Exception e) {
             log.warn("Could not find shipments by order ID, returning empty list: {}", e.getMessage());
             return new ArrayList<>();
@@ -102,10 +118,10 @@ public class ShipmentService {
                     .orElseThrow(() -> new ResourceNotFoundException("Order not found with ID: " + orderId));
 
             Shipment shipment = new Shipment(order, trackingNumber, carrier);
-            shipment.setStatus("PENDING");
-            shipment.setShipmentDate(LocalDateTime.now());
+            shipment.setShipmentStatus("PENDING");
+            shipment.setShippedDate(LocalDateTime.now());
             shipment.setCreatedAt(LocalDateTime.now());
-            shipment.setUpdatedAt(LocalDateTime.now());
+            shipment.setLastUpdated(LocalDateTime.now());
 
             return shipmentRepository.save(shipment);
 
@@ -118,17 +134,17 @@ public class ShipmentService {
     /**
      * Update shipment status
      */
-    public Shipment updateStatus(Long id, String status) {
-        log.info("Updating shipment {} status to {}", id, status);
+    public Shipment updateStatus(Long shipmentId, String status) {
+        log.info("Updating shipment {} status to {}", shipmentId, status);
 
         try {
-            Shipment shipment = findById(id);
-            shipment.setStatus(status);
-            shipment.setUpdatedAt(LocalDateTime.now());
+            Shipment shipment = findById(shipmentId);
+            shipment.setShipmentStatus(status);
+            shipment.setLastUpdated(LocalDateTime.now());
 
-            // If delivered, set actual delivery date
+            // If delivered, set delivery date
             if ("DELIVERED".equals(status)) {
-                shipment.setActualDeliveryDate(java.time.LocalDate.now());
+                shipment.setDeliveredDate(LocalDateTime.now());
             }
 
             return shipmentRepository.save(shipment);
@@ -142,32 +158,31 @@ public class ShipmentService {
     /**
      * Update shipment tracking information
      */
-    public Shipment updateTracking(Long id, String location, String status, String notes) {
-        log.info("Updating tracking for shipment {}", id);
+    public Shipment updateTracking(Long shipmentId, String location, String status, String notes) {
+        log.info("Updating tracking for shipment {}", shipmentId);
 
         try {
-            Shipment shipment = findById(id);
+            Shipment shipment = findById(shipmentId);
 
             // Update location
             if (location != null) {
-                shipment.setLastLocation(shipment.getCurrentLocation());
                 shipment.setCurrentLocation(location);
             }
 
             // Update status if provided
             if (status != null) {
-                shipment.setStatus(status);
+                shipment.setShipmentStatus(status);
             }
 
             // Add notes if provided
             if (notes != null) {
-                String existingNotes = shipment.getNotes();
-                shipment.setNotes(existingNotes != null
+                String existingNotes = shipment.getTrackingNotes();
+                shipment.setTrackingNotes(existingNotes != null
                         ? existingNotes + "\n" + LocalDateTime.now() + ": " + notes
                         : LocalDateTime.now() + ": " + notes);
             }
 
-            shipment.setUpdatedAt(LocalDateTime.now());
+            shipment.setLastUpdated(LocalDateTime.now());
 
             return shipmentRepository.save(shipment);
 
@@ -180,22 +195,23 @@ public class ShipmentService {
     /**
      * Cancel shipment
      */
-    public Shipment cancelShipment(Long id, String reason) {
-        log.info("Cancelling shipment {}: {}", id, reason);
+    public Shipment cancelShipment(Long shipmentId, String reason) {
+        log.info("Cancelling shipment {}: {}", shipmentId, reason);
 
         try {
-            Shipment shipment = findById(id);
+            Shipment shipment = findById(shipmentId);
 
             // Check if shipment can be cancelled
-            if ("DELIVERED".equals(shipment.getStatus())) {
+            if ("DELIVERED".equals(shipment.getShipmentStatus())) {
                 throw new IllegalStateException("Cannot cancel delivered shipment");
             }
 
-            shipment.setStatus("CANCELLED");
-            shipment.setNotes(shipment.getNotes() != null
-                    ? shipment.getNotes() + "\nCancelled: " + reason
+            shipment.setShipmentStatus("CANCELLED");
+            String notes = shipment.getTrackingNotes();
+            shipment.setTrackingNotes(notes != null
+                    ? notes + "\nCancelled: " + reason
                     : "Cancelled: " + reason);
-            shipment.setUpdatedAt(LocalDateTime.now());
+            shipment.setLastUpdated(LocalDateTime.now());
 
             return shipmentRepository.save(shipment);
 
@@ -213,14 +229,11 @@ public class ShipmentService {
         log.info("Getting {} recent shipments", limit);
 
         try {
-            return shipmentRepository.findAll().stream()
-                    .sorted((s1, s2) -> {
-                        LocalDateTime date1 = s1.getCreatedAt() != null ? s1.getCreatedAt() : LocalDateTime.MIN;
-                        LocalDateTime date2 = s2.getCreatedAt() != null ? s2.getCreatedAt() : LocalDateTime.MIN;
-                        return date2.compareTo(date1); // Descending order
-                    })
-                    .limit(limit)
-                    .collect(java.util.stream.Collectors.toList());
+            List<Shipment> recent = shipmentRepository.findTop10ByOrderByCreatedAtDesc();
+            if (limit < 10 && !recent.isEmpty()) {
+                return recent.subList(0, Math.min(limit, recent.size()));
+            }
+            return recent;
         } catch (Exception e) {
             log.error("Error getting recent shipments: {}", e.getMessage());
             return new ArrayList<>();
@@ -235,7 +248,7 @@ public class ShipmentService {
         log.info("Counting shipments with status: {}", status);
 
         try {
-            return shipmentRepository.countByStatus(status);
+            return shipmentRepository.countByShipmentStatus(status);
         } catch (Exception e) {
             log.warn("Could not count shipments by status: {}", e.getMessage());
             return 0;
@@ -265,10 +278,7 @@ public class ShipmentService {
         log.info("Finding shipments for customer: {}", customerId);
 
         try {
-            // This would need a custom query in repository to join through Order -> Customer
-            // For now, returning empty page
-            log.warn("findByCustomerId not fully implemented - needs repository method");
-            return Page.empty();
+            return shipmentRepository.findByCustomerId(customerId, pageable);
         } catch (Exception e) {
             log.error("Error finding shipments for customer: {}", e.getMessage());
             return Page.empty();
@@ -278,19 +288,19 @@ public class ShipmentService {
     /**
      * Mark shipment as shipped
      */
-    public Shipment markAsShipped(Long id) {
-        log.info("Marking shipment {} as shipped", id);
+    public Shipment markAsShipped(Long shipmentId) {
+        log.info("Marking shipment {} as shipped", shipmentId);
 
         try {
-            Shipment shipment = findById(id);
+            Shipment shipment = findById(shipmentId);
 
-            if (!"PENDING".equals(shipment.getStatus())) {
+            if (!"PENDING".equals(shipment.getShipmentStatus())) {
                 throw new IllegalStateException("Only pending shipments can be marked as shipped");
             }
 
-            shipment.setStatus("SHIPPED");
-            shipment.setShipmentDate(LocalDateTime.now());
-            shipment.setUpdatedAt(LocalDateTime.now());
+            shipment.setShipmentStatus("SHIPPED");
+            shipment.setShippedDate(LocalDateTime.now());
+            shipment.setLastUpdated(LocalDateTime.now());
 
             return shipmentRepository.save(shipment);
 
@@ -303,18 +313,17 @@ public class ShipmentService {
     /**
      * Mark shipment as in transit
      */
-    public Shipment markAsInTransit(Long id, String currentLocation) {
-        log.info("Marking shipment {} as in transit at {}", id, currentLocation);
+    public Shipment markAsInTransit(Long shipmentId, String currentLocation) {
+        log.info("Marking shipment {} as in transit at {}", shipmentId, currentLocation);
 
         try {
-            Shipment shipment = findById(id);
+            Shipment shipment = findById(shipmentId);
 
-            shipment.setStatus("IN_TRANSIT");
+            shipment.setShipmentStatus("IN_TRANSIT");
             if (currentLocation != null) {
-                shipment.setLastLocation(shipment.getCurrentLocation());
                 shipment.setCurrentLocation(currentLocation);
             }
-            shipment.setUpdatedAt(LocalDateTime.now());
+            shipment.setLastUpdated(LocalDateTime.now());
 
             return shipmentRepository.save(shipment);
 
@@ -327,22 +336,23 @@ public class ShipmentService {
     /**
      * Mark shipment as delivered
      */
-    public Shipment markAsDelivered(Long id, String deliveryNotes) {
-        log.info("Marking shipment {} as delivered", id);
+    public Shipment markAsDelivered(Long shipmentId, String deliveryNotes) {
+        log.info("Marking shipment {} as delivered", shipmentId);
 
         try {
-            Shipment shipment = findById(id);
+            Shipment shipment = findById(shipmentId);
 
-            shipment.setStatus("DELIVERED");
-            shipment.setActualDeliveryDate(java.time.LocalDate.now());
+            shipment.setShipmentStatus("DELIVERED");
+            shipment.setDeliveredDate(LocalDateTime.now());
 
             if (deliveryNotes != null) {
-                shipment.setNotes(shipment.getNotes() != null
-                        ? shipment.getNotes() + "\nDelivered: " + deliveryNotes
+                String notes = shipment.getTrackingNotes();
+                shipment.setTrackingNotes(notes != null
+                        ? notes + "\nDelivered: " + deliveryNotes
                         : "Delivered: " + deliveryNotes);
             }
 
-            shipment.setUpdatedAt(LocalDateTime.now());
+            shipment.setLastUpdated(LocalDateTime.now());
 
             return shipmentRepository.save(shipment);
 
@@ -351,39 +361,4 @@ public class ShipmentService {
             throw new RuntimeException("Failed to mark as delivered: " + e.getMessage());
         }
     }
-
-    /* VERSION 2.0 - ADVANCED FEATURES
-    // Commented out for v1.0 - will be reimplemented in v2.0
-
-    public Page<Shipment> searchShipments(String trackingNumber, String recipientName,
-                                         String carrier, String status,
-                                         LocalDate fromDate, LocalDate toDate,
-                                         Pageable pageable) {
-        // Complex search implementation for v2.0
-    }
-
-    public List<Shipment> getPendingShipments(int limit) {
-        // Implementation for v2.0
-    }
-
-    public List<Shipment> getOverdueShipments() {
-        // Implementation for v2.0
-    }
-
-    public String generateShippingLabel(Long id) {
-        // Integration with shipping providers for v2.0
-    }
-
-    public boolean verifyWebhookSignature(String carrier, String data, String signature) {
-        // Webhook security for v2.0
-    }
-
-    public void processTrackingWebhook(String carrier, String trackingData) {
-        // Webhook processing for v2.0
-    }
-
-    public Object getShipmentStatistics() {
-        // Analytics for v2.0
-    }
-    */
 }

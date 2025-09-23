@@ -1,6 +1,5 @@
 package com.perfect8.shop.controller;
 
-import com.perfect8.shop.entity.Customer;
 import com.perfect8.shop.service.CustomerService;
 import com.perfect8.shop.dto.CustomerDTO;
 import com.perfect8.shop.dto.CustomerRegistrationDTO;
@@ -25,12 +24,7 @@ import java.util.List;
 /**
  * REST controller for customer management.
  * Version 1.0 - Core functionality only
- *
- * This controller handles all critical customer operations:
- * - Customer registration and authentication
- * - Profile management
- * - Address management (critical for shipping)
- * - Customer search and administration
+ * FIXED: Returns DTOs not Entities!
  */
 @RestController
 @RequestMapping("/api/customers")
@@ -72,15 +66,16 @@ public class CustomerController {
 
     /**
      * Get current customer profile - Core functionality
+     * FIXED: Returns CustomerDTO not Customer entity
      */
     @GetMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
-    public ResponseEntity<ApiResponse<Customer>> getProfile(HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<CustomerDTO>> getProfile(HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
-            Customer customer = customerService.getCustomerById(customerId);
+            CustomerDTO customer = customerService.getCustomerById(customerId);
 
-            ApiResponse<Customer> response = new ApiResponse<>(
+            ApiResponse<CustomerDTO> response = new ApiResponse<>(
                     "Customer profile retrieved successfully",
                     customer,
                     true
@@ -88,7 +83,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<Customer> errorResponse = new ApiResponse<>(
+            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
                     "Failed to retrieve customer profile: " + e.getMessage(),
                     null,
                     false
@@ -99,17 +94,18 @@ public class CustomerController {
 
     /**
      * Update current customer profile - Core functionality
+     * FIXED: Returns CustomerDTO not Customer entity
      */
     @PutMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
-    public ResponseEntity<ApiResponse<Customer>> updateProfile(
+    public ResponseEntity<ApiResponse<CustomerDTO>> updateProfile(
             @Valid @RequestBody CustomerUpdateDTO updateDTO,
             HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
-            Customer updatedCustomer = customerService.updateCustomer(customerId, updateDTO);
+            CustomerDTO updatedCustomer = customerService.updateCustomer(customerId, updateDTO);
 
-            ApiResponse<Customer> response = new ApiResponse<>(
+            ApiResponse<CustomerDTO> response = new ApiResponse<>(
                     "Customer profile updated successfully",
                     updatedCustomer,
                     true
@@ -117,7 +113,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<Customer> errorResponse = new ApiResponse<>(
+            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
                     "Failed to update customer profile: " + e.getMessage(),
                     null,
                     false
@@ -184,15 +180,15 @@ public class CustomerController {
 
     /**
      * Get customer by ID - Core functionality
-     * Admin-only for customer service
+     * FIXED: Returns CustomerDTO not Customer entity
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Customer>> getCustomerById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CustomerDTO>> getCustomerById(@PathVariable Long id) {
         try {
-            Customer customer = customerService.getCustomerById(id);
+            CustomerDTO customer = customerService.getCustomerById(id);
 
-            ApiResponse<Customer> response = new ApiResponse<>(
+            ApiResponse<CustomerDTO> response = new ApiResponse<>(
                     "Customer retrieved successfully",
                     customer,
                     true
@@ -200,7 +196,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<Customer> errorResponse = new ApiResponse<>(
+            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
                     "Failed to retrieve customer: " + e.getMessage(),
                     null,
                     false
@@ -211,14 +207,14 @@ public class CustomerController {
 
     /**
      * Get all customers with pagination - Core functionality
-     * Admin-only for customer management
+     * FIXED: Returns Page<CustomerDTO> not Page<Customer>
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Page<Customer>>> getAllCustomers(
+    public ResponseEntity<ApiResponse<Page<CustomerDTO>>> getAllCustomers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "registrationDate") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             Sort sort = sortDir.equalsIgnoreCase("desc")
@@ -226,9 +222,9 @@ public class CustomerController {
                     : Sort.by(sortBy).ascending();
 
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Customer> customers = customerService.getAllCustomers(pageable);
+            Page<CustomerDTO> customers = customerService.getAllCustomers(pageable);
 
-            ApiResponse<Page<Customer>> response = new ApiResponse<>(
+            ApiResponse<Page<CustomerDTO>> response = new ApiResponse<>(
                     "Customers retrieved successfully",
                     customers,
                     true
@@ -236,7 +232,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<Page<Customer>> errorResponse = new ApiResponse<>(
+            ApiResponse<Page<CustomerDTO>> errorResponse = new ApiResponse<>(
                     "Failed to retrieve customers: " + e.getMessage(),
                     null,
                     false
@@ -247,17 +243,17 @@ public class CustomerController {
 
     /**
      * Search customers - Core functionality
-     * Admin-only for customer service
+     * FIXED: Returns Page<CustomerDTO> not Page<Customer>
      */
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Page<Customer>>> searchCustomers(
-            @RequestParam(required = false) String name,
+    public ResponseEntity<ApiResponse<Page<CustomerDTO>>> searchCustomers(
             @RequestParam(required = false) String email,
+            @RequestParam(required = false) String name,
             @RequestParam(required = false) String phone,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "registrationDate") String sortBy,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             Sort sort = sortDir.equalsIgnoreCase("desc")
@@ -265,9 +261,9 @@ public class CustomerController {
                     : Sort.by(sortBy).ascending();
 
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Customer> customers = customerService.searchCustomers(name, email, phone, pageable);
+            Page<CustomerDTO> customers = customerService.searchCustomers(email, name, phone, pageable);
 
-            ApiResponse<Page<Customer>> response = new ApiResponse<>(
+            ApiResponse<Page<CustomerDTO>> response = new ApiResponse<>(
                     "Customer search completed successfully",
                     customers,
                     true
@@ -275,7 +271,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<Page<Customer>> errorResponse = new ApiResponse<>(
+            ApiResponse<Page<CustomerDTO>> errorResponse = new ApiResponse<>(
                     "Failed to search customers: " + e.getMessage(),
                     null,
                     false
@@ -286,17 +282,17 @@ public class CustomerController {
 
     /**
      * Update customer by ID - Core functionality
-     * Admin-only for customer management
+     * FIXED: Returns CustomerDTO not Customer entity
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Customer>> updateCustomer(
+    public ResponseEntity<ApiResponse<CustomerDTO>> updateCustomer(
             @PathVariable Long id,
             @Valid @RequestBody CustomerUpdateDTO updateDTO) {
         try {
-            Customer updatedCustomer = customerService.updateCustomer(id, updateDTO);
+            CustomerDTO updatedCustomer = customerService.updateCustomer(id, updateDTO);
 
-            ApiResponse<Customer> response = new ApiResponse<>(
+            ApiResponse<CustomerDTO> response = new ApiResponse<>(
                     "Customer updated successfully",
                     updatedCustomer,
                     true
@@ -304,7 +300,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<Customer> errorResponse = new ApiResponse<>(
+            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
                     "Failed to update customer: " + e.getMessage(),
                     null,
                     false
@@ -315,16 +311,16 @@ public class CustomerController {
 
     /**
      * Activate/Deactivate customer - Core functionality
-     * Admin-only for customer management
+     * FIXED: Returns CustomerDTO not Customer entity
      */
     @PutMapping("/{id}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Customer>> toggleCustomerStatus(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CustomerDTO>> toggleCustomerStatus(@PathVariable Long id) {
         try {
-            Customer customer = customerService.toggleCustomerStatus(id);
+            CustomerDTO customer = customerService.toggleCustomerStatus(id);
             String status = customer.isActive() ? "activated" : "deactivated";
 
-            ApiResponse<Customer> response = new ApiResponse<>(
+            ApiResponse<CustomerDTO> response = new ApiResponse<>(
                     "Customer " + status + " successfully",
                     customer,
                     true
@@ -332,7 +328,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<Customer> errorResponse = new ApiResponse<>(
+            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
                     "Failed to toggle customer status: " + e.getMessage(),
                     null,
                     false
@@ -343,16 +339,16 @@ public class CustomerController {
 
     /**
      * Get recent customers - Core functionality
-     * Admin-only for dashboard overview
+     * FIXED: Returns List<CustomerDTO> not List<Customer>
      */
     @GetMapping("/recent")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<Customer>>> getRecentCustomers(
+    public ResponseEntity<ApiResponse<List<CustomerDTO>>> getRecentCustomers(
             @RequestParam(defaultValue = "10") int limit) {
         try {
-            List<Customer> recentCustomers = customerService.getRecentCustomers(limit);
+            List<CustomerDTO> recentCustomers = customerService.getRecentCustomers(limit);
 
-            ApiResponse<List<Customer>> response = new ApiResponse<>(
+            ApiResponse<List<CustomerDTO>> response = new ApiResponse<>(
                     "Recent customers retrieved successfully",
                     recentCustomers,
                     true
@@ -360,7 +356,7 @@ public class CustomerController {
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
-            ApiResponse<List<Customer>> errorResponse = new ApiResponse<>(
+            ApiResponse<List<CustomerDTO>> errorResponse = new ApiResponse<>(
                     "Failed to retrieve recent customers: " + e.getMessage(),
                     null,
                     false
@@ -519,41 +515,6 @@ public class CustomerController {
         }
     }
 
-    /* ============================================
-     * VERSION 2.0 ENDPOINTS - Commented out for v1.0
-     * ============================================
-     * These endpoints will be implemented in version 2.0:
-     * - Customer statistics and analytics
-     * - Detailed reporting
-     * - Customer segmentation
-     */
-
-    /*
-    // Version 2.0: Get customer statistics
-    @GetMapping("/statistics")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Object>> getCustomerStatistics() {
-        try {
-            Object statistics = customerService.getCustomerStatistics();
-
-            ApiResponse<Object> response = new ApiResponse<>(
-                    "Customer statistics retrieved successfully",
-                    statistics,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<Object> errorResponse = new ApiResponse<>(
-                    "Failed to retrieve customer statistics: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-    */
-
     // ========== Helper methods ==========
 
     /**
@@ -562,7 +523,7 @@ public class CustomerController {
     private Long getCurrentCustomerId(HttpServletRequest request) {
         String token = jwtTokenProvider.resolveToken(request);
         if (token != null && jwtTokenProvider.validateToken(token)) {
-            return jwtTokenProvider.getUserIdFromToken(token);
+            return jwtTokenProvider.getCustomerIdFromToken(token);
         }
         throw new RuntimeException("Unable to determine customer ID from token");
     }

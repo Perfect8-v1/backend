@@ -4,6 +4,9 @@ import com.perfect8.shop.dto.PaymentRequestDTO;
 import com.perfect8.shop.dto.PaymentResponseDTO;
 import com.perfect8.shop.entity.Order;
 import com.perfect8.shop.entity.Payment;
+import com.perfect8.shop.entity.Customer;
+import com.perfect8.shop.enums.PaymentMethod;
+import com.perfect8.shop.enums.PaymentStatus;
 import com.perfect8.shop.exception.PaymentException;
 import com.perfect8.shop.exception.OrderNotFoundException;
 import com.perfect8.shop.repository.PaymentRepository;
@@ -48,17 +51,17 @@ public class PaymentService {
      * Process payment for an order - Core functionality
      * All payments go through PayPal in v1.0
      */
-    public Payment processPayment(Order order, PaymentRequestDTO request) {
+    public Payment processPayment(Order order, PaymentRequestDTO paymentRequest) {
         log.info("Processing payment for order: {}", order.getOrderNumber());
 
         try {
             // Create payment record
             Payment payment = new Payment();
             payment.setOrder(order);
-            payment.setAmount(request.getAmount());
-            payment.setCurrency(request.getCurrency() != null ? request.getCurrency() : defaultCurrency);
-            payment.setPaymentMethod(request.getPaymentMethod());
-            payment.setStatus("PENDING");
+            payment.setAmount(paymentRequest.getAmount());
+            payment.setCurrency(paymentRequest.getCurrency() != null ? paymentRequest.getCurrency() : defaultCurrency);
+            payment.setPaymentMethod(PaymentMethod.fromString(paymentRequest.getPaymentMethod()));
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setTransactionId(generateTransactionId());
             payment.setCreatedAt(LocalDateTime.now());
 
@@ -66,62 +69,73 @@ public class PaymentService {
             payment = paymentRepository.save(payment);
 
             // Process with PayPal (primary payment method in v1.0)
-            PaymentResponseDTO response = payPalService.processPayment(request);
+            PaymentResponseDTO paypalResponse = payPalService.processPayment(paymentRequest);
 
             // Update payment based on response
-            if (response.isSuccessful()) {
-                payment.setStatus("COMPLETED");
-                payment.setGatewayPaymentId(response.getTransactionId());
+            if (paypalResponse.isSuccessful()) {
+                payment.setPaymentStatus(PaymentStatus.COMPLETED);
+                payment.setGatewayPaymentId(paypalResponse.getTransactionId());
                 payment.setPaymentDate(LocalDateTime.now());
-                payment.setIsVerified(true);
+                payment.setIsVerified(Boolean.TRUE);
                 payment.setVerificationDate(LocalDateTime.now());
 
                 // Update order to trigger update timestamps
                 orderRepository.save(order);
 
-                // Send confirmation email
+                // Send confirmation email - FIXED: Now using correct signature
                 try {
-                    emailService.sendPaymentConfirmation(order, payment.getAmount());
-                } catch (Exception e) {
-                    log.error("Failed to send payment confirmation email: {}", e.getMessage());
+                    Customer customer = order.getCustomer();
+                    String customerEmail = customer.getEmail();
+                    String orderNumber = order.getOrderNumber();
+                    String amountString = payment.getAmount().toString();
+                    String currencyCode = payment.getCurrency();
+
+                    emailService.sendPaymentConfirmation(customerEmail, orderNumber, amountString, currencyCode);
+                } catch (Exception emailException) {
+                    log.error("Failed to send payment confirmation email: {}", emailException.getMessage());
                 }
 
             } else {
-                payment.setStatus("FAILED");
-                payment.setFailureReason(response.getErrorMessage());
+                payment.setPaymentStatus(PaymentStatus.FAILED);
+                payment.setFailureReason(paypalResponse.getErrorMessage());
                 payment.incrementRetryCount();
             }
 
             payment.setUpdatedAt(LocalDateTime.now());
             return paymentRepository.save(payment);
 
-        } catch (Exception e) {
-            log.error("Payment processing failed for order {}: {}", order.getOrderId(), e.getMessage());
-            throw new PaymentException("Payment processing failed: " + e.getMessage());
+        } catch (Exception paymentException) {
+            log.error("Payment processing failed for order {}: {}", order.getOrderId(), paymentException.getMessage());
+            throw new PaymentException("Payment processing failed: " + paymentException.getMessage());
         }
     }
 
     /**
      * Create payment record for an order - Core functionality
      */
-    public Payment createPayment(Order order, Map<String, Object> paymentDetails) {
+    public Payment createPayment(Order order, Map<String, Object> paymentDetailsMap) {
         log.info("Creating payment for order: {}", order.getOrderNumber());
 
-        String paymentMethod = (String) paymentDetails.getOrDefault("paymentMethod", "PAYPAL");
-        BigDecimal amount = order.getTotalAmount();
+        PaymentMethod paymentMethodEnum = PaymentMethod.fromString(
+                (String) paymentDetailsMap.getOrDefault("paymentMethod", "PAYPAL")
+        );
+        BigDecimal paymentAmount = order.getTotalAmount();
 
         Payment payment = new Payment();
         payment.setOrder(order);
-        payment.setAmount(amount);
+        payment.setAmount(paymentAmount);
         payment.setCurrency(order.getCurrency() != null ? order.getCurrency() : defaultCurrency);
-        payment.setPaymentMethod(paymentMethod);
-        payment.setStatus("PENDING");
+        payment.setPaymentMethod(paymentMethodEnum);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setTransactionId(generateTransactionId());
         payment.setCreatedAt(LocalDateTime.now());
 
         // Extract payer information if available
-        payment.setPayerEmail((String) paymentDetails.get("payerEmail"));
-        payment.setPayerName((String) paymentDetails.get("payerName"));
+        String payerEmailAddress = (String) paymentDetailsMap.get("payerEmail");
+        String payerFullName = (String) paymentDetailsMap.get("payerName");
+
+        payment.setPayerEmail(payerEmailAddress);
+        payment.setPayerName(payerFullName);
 
         return paymentRepository.save(payment);
     }
@@ -130,23 +144,23 @@ public class PaymentService {
      * Complete payment - Core functionality
      */
     @Transactional
-    public Payment completePayment(Long paymentId, String gatewayTransactionId) {
-        log.info("Completing payment: {}", paymentId);
+    public Payment completePayment(Long paymentIdLong, String gatewayTransactionIdString) {
+        log.info("Completing payment: {}", paymentIdLong);
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(paymentIdLong)
+                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentIdLong));
 
-        payment.setStatus("COMPLETED");
-        payment.setGatewayPaymentId(gatewayTransactionId);
+        payment.setPaymentStatus(PaymentStatus.COMPLETED);
+        payment.setGatewayPaymentId(gatewayTransactionIdString);
         payment.setPaymentDate(LocalDateTime.now());
-        payment.setIsVerified(true);
+        payment.setIsVerified(Boolean.TRUE);
         payment.setVerificationDate(LocalDateTime.now());
         payment.setUpdatedAt(LocalDateTime.now());
 
         // Update order to trigger update timestamp
-        Order order = payment.getOrder();
-        if (order != null) {
-            orderRepository.save(order);
+        Order relatedOrder = payment.getOrder();
+        if (relatedOrder != null) {
+            orderRepository.save(relatedOrder);
         }
 
         return paymentRepository.save(payment);
@@ -157,59 +171,59 @@ public class PaymentService {
      * Critical for customer service and legal compliance
      */
     @Transactional
-    public Payment processRefund(Long paymentId, BigDecimal refundAmount, String reason) {
-        log.info("Processing refund for payment: {}, amount: {}", paymentId, refundAmount);
+    public Payment processRefund(Long paymentIdLong, BigDecimal refundAmountDecimal, String refundReasonString) {
+        log.info("Processing refund for payment: {}, amount: {}", paymentIdLong, refundAmountDecimal);
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(paymentIdLong)
+                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentIdLong));
 
         // Validate refund
-        if (!"COMPLETED".equals(payment.getStatus())) {
+        if (!PaymentStatus.COMPLETED.equals(payment.getPaymentStatus())) {
             throw new PaymentException("Can only refund completed payments");
         }
 
-        if (refundAmount.compareTo(payment.getAmount()) > 0) {
+        if (refundAmountDecimal.compareTo(payment.getAmount()) > 0) {
             throw new PaymentException("Refund amount cannot exceed payment amount");
         }
 
-        BigDecimal currentRefunded = payment.getRefundAmount() != null ?
+        BigDecimal currentRefundedAmount = payment.getRefundAmount() != null ?
                 payment.getRefundAmount() : BigDecimal.ZERO;
-        BigDecimal newTotalRefunded = currentRefunded.add(refundAmount);
+        BigDecimal newTotalRefundedAmount = currentRefundedAmount.add(refundAmountDecimal);
 
-        if (newTotalRefunded.compareTo(payment.getAmount()) > 0) {
+        if (newTotalRefundedAmount.compareTo(payment.getAmount()) > 0) {
             throw new PaymentException("Total refunds would exceed payment amount");
         }
 
         // Process refund with PayPal
-        boolean refundSuccess = payPalService.processRefund(
+        Boolean refundSuccessStatus = payPalService.processRefund(
                 payment.getGatewayPaymentId(),
-                refundAmount,
-                reason);
+                refundAmountDecimal,
+                refundReasonString);
 
-        if (refundSuccess) {
-            payment.setRefundAmount(newTotalRefunded);
-            payment.setRefundReason(reason);
+        if (Boolean.TRUE.equals(refundSuccessStatus)) {
+            payment.setRefundAmount(newTotalRefundedAmount);
+            payment.setRefundReason(refundReasonString);
             payment.setRefundDate(LocalDateTime.now());
 
-            if (newTotalRefunded.compareTo(payment.getAmount()) >= 0) {
-                payment.setStatus("REFUNDED");
-                payment.setIsPartialRefund(false);
+            if (newTotalRefundedAmount.compareTo(payment.getAmount()) >= 0) {
+                payment.setPaymentStatus(PaymentStatus.REFUNDED);
+                payment.setIsPartialRefund(Boolean.FALSE);
             } else {
-                payment.setStatus("PARTIALLY_REFUNDED");
-                payment.setIsPartialRefund(true);
+                payment.setPaymentStatus(PaymentStatus.PARTIALLY_REFUNDED);
+                payment.setIsPartialRefund(Boolean.TRUE);
             }
 
             payment.setUpdatedAt(LocalDateTime.now());
 
             // Update order if fully refunded
-            if ("REFUNDED".equals(payment.getStatus())) {
-                Order order = payment.getOrder();
-                if (order != null) {
-                    orderRepository.save(order);
+            if (PaymentStatus.REFUNDED.equals(payment.getPaymentStatus())) {
+                Order relatedOrder = payment.getOrder();
+                if (relatedOrder != null) {
+                    orderRepository.save(relatedOrder);
                 }
             }
 
-            log.info("Refund processed successfully for payment: {}", paymentId);
+            log.info("Refund processed successfully for payment: {}", paymentIdLong);
         } else {
             throw new PaymentException("Refund processing failed");
         }
@@ -221,90 +235,91 @@ public class PaymentService {
      * Process refund (simplified signature) - Core functionality
      */
     @Transactional
-    public Payment processRefund(Long paymentId, BigDecimal refundAmount) {
-        return processRefund(paymentId, refundAmount, "Customer requested refund");
+    public Payment processRefund(Long paymentIdLong, BigDecimal refundAmountDecimal) {
+        return processRefund(paymentIdLong, refundAmountDecimal, "Customer requested refund");
     }
 
     /**
      * Verify payment status - Core functionality
      * Important for handling pending payments
      */
-    public String verifyPaymentStatus(Long paymentId) {
-        log.info("Verifying payment status for ID: {}", paymentId);
+    public String verifyPaymentStatus(Long paymentIdLong) {
+        log.info("Verifying payment status for ID: {}", paymentIdLong);
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(paymentIdLong)
+                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentIdLong));
 
         // If payment is old and pending, verify with PayPal
-        if ("PENDING".equals(payment.getStatus()) &&
+        if (PaymentStatus.PENDING.equals(payment.getPaymentStatus()) &&
                 payment.getCreatedAt().isBefore(LocalDateTime.now().minusMinutes(5))) {
 
-            String currentStatus = payPalService.verifyPaymentStatus(payment.getTransactionId());
+            String currentStatusString = payPalService.verifyPaymentStatus(payment.getTransactionId());
+            PaymentStatus currentPaymentStatus = PaymentStatus.fromString(currentStatusString);
 
-            if (!payment.getStatus().equals(currentStatus)) {
-                payment.setStatus(currentStatus);
+            if (!payment.getPaymentStatus().equals(currentPaymentStatus)) {
+                payment.setPaymentStatus(currentPaymentStatus);
                 payment.setUpdatedAt(LocalDateTime.now());
 
-                if ("COMPLETED".equals(currentStatus)) {
+                if (PaymentStatus.COMPLETED.equals(currentPaymentStatus)) {
                     payment.setPaymentDate(LocalDateTime.now());
-                    payment.setIsVerified(true);
+                    payment.setIsVerified(Boolean.TRUE);
                     payment.setVerificationDate(LocalDateTime.now());
                 }
 
                 paymentRepository.save(payment);
             }
 
-            return currentStatus;
+            return currentPaymentStatus.name();
         }
 
-        return payment.getStatus();
+        return payment.getPaymentStatus().name();
     }
 
     /**
      * Get payment by order ID - Core functionality
      */
-    public Payment getPaymentByOrderId(Long orderId) {
-        return paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(orderId)
+    public Payment getPaymentByOrderId(Long orderIdLong) {
+        return paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(orderIdLong)
                 .orElse(null);
     }
 
     /**
      * Get all payments for an order - Core functionality
      */
-    public List<Payment> getPaymentsByOrderId(Long orderId) {
-        return paymentRepository.findByOrderId(orderId);
+    public List<Payment> getPaymentsByOrderId(Long orderIdLong) {
+        return paymentRepository.findByOrderId(orderIdLong);
     }
 
     /**
      * Check if payment is refundable - Core functionality
      */
-    public boolean isRefundable(Long paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
+    public Boolean isRefundable(Long paymentIdLong) {
+        Payment payment = paymentRepository.findById(paymentIdLong)
                 .orElse(null);
 
         if (payment == null) {
-            return false;
+            return Boolean.FALSE;
         }
 
-        return "COMPLETED".equals(payment.getStatus()) ||
-                "PARTIALLY_REFUNDED".equals(payment.getStatus());
+        return PaymentStatus.COMPLETED.equals(payment.getPaymentStatus()) ||
+                PaymentStatus.PARTIALLY_REFUNDED.equals(payment.getPaymentStatus());
     }
 
     /**
      * Calculate refundable amount - Core functionality
      */
-    public BigDecimal getRefundableAmount(Long paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
+    public BigDecimal getRefundableAmount(Long paymentIdLong) {
+        Payment payment = paymentRepository.findById(paymentIdLong)
                 .orElse(null);
 
-        if (payment == null || !isRefundable(paymentId)) {
+        if (payment == null || !isRefundable(paymentIdLong)) {
             return BigDecimal.ZERO;
         }
 
-        BigDecimal refunded = payment.getRefundAmount() != null ?
+        BigDecimal refundedAmount = payment.getRefundAmount() != null ?
                 payment.getRefundAmount() : BigDecimal.ZERO;
 
-        return payment.getAmount().subtract(refunded);
+        return payment.getAmount().subtract(refundedAmount);
     }
 
     /**
@@ -312,54 +327,57 @@ public class PaymentService {
      * Important for handling payment failures
      */
     @Transactional
-    public Payment retryPayment(Long paymentId) {
-        log.info("Retrying payment: {}", paymentId);
+    public Payment retryPayment(Long paymentIdLong) {
+        log.info("Retrying payment: {}", paymentIdLong);
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(paymentIdLong)
+                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentIdLong));
 
-        if (!"FAILED".equals(payment.getStatus())) {
+        if (!PaymentStatus.FAILED.equals(payment.getPaymentStatus())) {
             throw new PaymentException("Can only retry failed payments");
         }
 
-        if (payment.getRetryCount() >= 3) {
+        Integer currentRetryCount = payment.getRetryCount();
+        Integer maxRetryAttempts = 3;
+
+        if (currentRetryCount >= maxRetryAttempts) {
             throw new PaymentException("Maximum retry attempts exceeded");
         }
 
         payment.incrementRetryCount();
-        payment.setStatus("PENDING");
+        payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setUpdatedAt(LocalDateTime.now());
         payment.setLastRetryDate(LocalDateTime.now());
 
         paymentRepository.save(payment);
 
         // Create new payment request
-        PaymentRequestDTO request = new PaymentRequestDTO();
-        request.setAmount(payment.getAmount());
-        request.setCurrency(payment.getCurrency());
-        request.setPaymentMethod(payment.getPaymentMethod());
-        request.setOrderId(payment.getOrder().getOrderId());
+        PaymentRequestDTO retryRequest = new PaymentRequestDTO();
+        retryRequest.setAmount(payment.getAmount());
+        retryRequest.setCurrency(payment.getCurrency());
+        retryRequest.setPaymentMethod(payment.getPaymentMethod().name());
+        retryRequest.setOrderId(payment.getOrder().getOrderId());
 
         // Process payment again
-        return processPayment(payment.getOrder(), request);
+        return processPayment(payment.getOrder(), retryRequest);
     }
 
     /**
      * Cancel pending payment - Core functionality
      */
     @Transactional
-    public Payment cancelPayment(Long paymentId, String reason) {
-        log.info("Cancelling payment: {}", paymentId);
+    public Payment cancelPayment(Long paymentIdLong, String cancellationReasonString) {
+        log.info("Cancelling payment: {}", paymentIdLong);
 
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentId));
+        Payment payment = paymentRepository.findById(paymentIdLong)
+                .orElseThrow(() -> new PaymentException("Payment not found: " + paymentIdLong));
 
-        if ("COMPLETED".equals(payment.getStatus())) {
+        if (PaymentStatus.COMPLETED.equals(payment.getPaymentStatus())) {
             throw new PaymentException("Cannot cancel completed payment");
         }
 
-        payment.setStatus("CANCELLED");
-        payment.setNotes(reason);
+        payment.setPaymentStatus(PaymentStatus.CANCELLED);
+        payment.setNotes(cancellationReasonString);
         payment.setUpdatedAt(LocalDateTime.now());
 
         return paymentRepository.save(payment);
@@ -369,8 +387,9 @@ public class PaymentService {
      * Generate unique transaction ID
      */
     private String generateTransactionId() {
-        return "TXN-" + System.currentTimeMillis() + "-" +
-                UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        Long currentTimeMillis = System.currentTimeMillis();
+        String randomUuidPart = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "TXN-" + currentTimeMillis + "-" + randomUuidPart;
     }
 
     /* ============================================
@@ -385,24 +404,24 @@ public class PaymentService {
 
     /*
     // Version 2.0: Get payment summary for reporting
-    public Map<String, Object> getPaymentSummary(LocalDateTime startDate, LocalDateTime endDate) {
-        Map<String, Object> summary = new HashMap<>();
+    public Map<String, Object> getPaymentSummary(LocalDateTime startDateTime, LocalDateTime endDateTime) {
+        Map<String, Object> summaryMap = new HashMap<>();
 
-        BigDecimal totalCompleted = paymentRepository.calculateTotalAmountByStatusAndDateRange(
-                "COMPLETED", startDate, endDate);
-        BigDecimal totalRefunded = paymentRepository.calculateTotalRefundAmountByDateRange(
-                startDate, endDate);
-        Long completedCount = paymentRepository.countByStatusAndCreatedAtBetween(
-                "COMPLETED", startDate, endDate);
+        BigDecimal totalCompletedAmount = paymentRepository.calculateTotalAmountByStatusAndDateRange(
+                PaymentStatus.COMPLETED, startDateTime, endDateTime);
+        BigDecimal totalRefundedAmount = paymentRepository.calculateTotalRefundAmountByDateRange(
+                startDateTime, endDateTime);
+        Long completedTransactionCount = paymentRepository.countByStatusAndCreatedAtBetween(
+                PaymentStatus.COMPLETED, startDateTime, endDateTime);
 
-        summary.put("totalRevenue", totalCompleted != null ? totalCompleted : BigDecimal.ZERO);
-        summary.put("totalRefunded", totalRefunded != null ? totalRefunded : BigDecimal.ZERO);
-        summary.put("netRevenue", totalCompleted != null && totalRefunded != null ?
-                totalCompleted.subtract(totalRefunded) : BigDecimal.ZERO);
-        summary.put("transactionCount", completedCount);
-        summary.put("period", Map.of("start", startDate, "end", endDate));
+        summaryMap.put("totalRevenue", totalCompletedAmount != null ? totalCompletedAmount : BigDecimal.ZERO);
+        summaryMap.put("totalRefunded", totalRefundedAmount != null ? totalRefundedAmount : BigDecimal.ZERO);
+        summaryMap.put("netRevenue", totalCompletedAmount != null && totalRefundedAmount != null ?
+                totalCompletedAmount.subtract(totalRefundedAmount) : BigDecimal.ZERO);
+        summaryMap.put("transactionCount", completedTransactionCount);
+        summaryMap.put("period", Map.of("start", startDateTime, "end", endDateTime));
 
-        return summary;
+        return summaryMap;
     }
     */
 }

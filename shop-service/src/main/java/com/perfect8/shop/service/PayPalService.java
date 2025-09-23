@@ -4,6 +4,8 @@ import com.perfect8.shop.dto.PaymentRequestDTO;
 import com.perfect8.shop.dto.PaymentResponseDTO;
 import com.perfect8.shop.entity.Order;
 import com.perfect8.shop.entity.Payment;
+import com.perfect8.shop.enums.PaymentMethod;
+import com.perfect8.shop.enums.PaymentStatus;
 import com.perfect8.shop.exception.PaymentException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,8 @@ import java.util.UUID;
  *
  * This is a simplified implementation for v1.0.
  * In production, this would integrate with PayPal SDK.
+ *
+ * NO BACKWARD COMPATIBILITY - Using proper enums!
  *
  * Version 2.0 will include:
  * - Full PayPal SDK integration
@@ -94,6 +98,7 @@ public class PayPalService {
 
     /**
      * Create payment for an order
+     * FIXAT: Använder PaymentMethod och PaymentStatus enums!
      */
     public Payment createPayment(Order order, BigDecimal amount) {
         log.info("Creating PayPal payment for order: {}", order.getOrderNumber());
@@ -102,8 +107,8 @@ public class PayPalService {
             Payment payment = new Payment();
             payment.setOrder(order);
             payment.setAmount(amount);
-            payment.setPaymentMethod("PAYPAL");
-            payment.setStatus("PENDING");
+            payment.setPaymentMethod(PaymentMethod.PAYPAL);  // ANVÄNDER ENUM!
+            payment.setPaymentStatus(PaymentStatus.PENDING);  // RÄTT METODNAMN OCH ENUM!
             payment.setTransactionId(generateTransactionId());
             payment.setCreatedAt(LocalDateTime.now());
 

@@ -49,8 +49,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String authoritiesString = jwtTokenProvider.getAuthoritiesFromToken(jwtToken);
                 List<SimpleGrantedAuthority> authorities = parseAuthorities(authoritiesString);
 
-                // Get customer ID if present
-                String customerId = jwtTokenProvider.getCustomerIdFromToken(jwtToken);
+                // Get customer ID if present - FIXED: Changed from String to Long
+                Long customerIdLong = jwtTokenProvider.getCustomerIdFromToken(jwtToken);
 
                 // Create authentication token
                 UsernamePasswordAuthenticationToken authentication =
@@ -59,9 +59,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Add additional details
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                // Store customer ID in authentication details if present
-                if (customerId != null) {
-                    request.setAttribute("customerId", customerId);
+                // Store customer ID in authentication details if present - FIXED: Now stores Long
+                if (customerIdLong != null) {
+                    request.setAttribute("customerId", customerIdLong);
                 }
 
                 // Set authentication in Security Context

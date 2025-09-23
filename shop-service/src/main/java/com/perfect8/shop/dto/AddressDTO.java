@@ -11,8 +11,7 @@ import java.io.Serializable;
 /**
  * Data Transfer Object for Address
  * Version 1.0 - Critical for accurate deliveries!
- *
- * Enhanced validation to prevent delivery failures
+ * FIXED to match CustomerService expectations
  */
 @Data
 @Builder
@@ -23,9 +22,9 @@ public class AddressDTO implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Address ID - null for new addresses
+     * Address ID - Using readable name!
      */
-    private Long id;
+    private Long addressId;  // FIXED: Was 'id', now 'addressId' for clarity
 
     /**
      * Address type: BILLING, SHIPPING, or BOTH
@@ -75,7 +74,6 @@ public class AddressDTO implements Serializable {
 
     /**
      * State/Province/Region
-     * Required for US addresses
      */
     @Size(min = 2, max = 100, message = "State/Province must be between 2 and 100 characters")
     private String state;
@@ -89,7 +87,6 @@ public class AddressDTO implements Serializable {
 
     /**
      * Postal/ZIP code - Required
-     * Enhanced validation for common formats
      */
     @NotBlank(message = "Postal code is required")
     @Pattern(regexp = "^[A-Z0-9\\s\\-]{3,10}$",
@@ -105,7 +102,6 @@ public class AddressDTO implements Serializable {
 
     /**
      * ISO country code (e.g., US, CA, GB)
-     * Critical for international shipping!
      */
     @NotBlank(message = "Country code is required for shipping calculations")
     @Pattern(regexp = "^[A-Z]{2}$",
@@ -129,20 +125,26 @@ public class AddressDTO implements Serializable {
 
     /**
      * Delivery instructions (gate code, building access, etc.)
-     * Important for successful delivery!
      */
     @Size(max = 500, message = "Delivery instructions cannot exceed 500 characters")
     private String deliveryInstructions;
 
     /**
-     * Whether this is the default address
+     * Whether this is the default shipping address
+     * FIXED: Separate flags for shipping and billing defaults
      */
     @Builder.Default
-    private boolean defaultAddress = false;
+    private boolean isDefaultShipping = false;
+
+    /**
+     * Whether this is the default billing address
+     * FIXED: Separate from shipping default
+     */
+    @Builder.Default
+    private boolean isDefaultBilling = false;
 
     /**
      * Whether address has been verified
-     * Critical for reducing failed deliveries!
      */
     @Builder.Default
     private boolean verified = false;
@@ -274,6 +276,13 @@ public class AddressDTO implements Serializable {
     }
 
     /**
+     * Check if this is a default address (either shipping or billing)
+     */
+    public boolean isDefaultAddress() {
+        return isDefaultShipping || isDefaultBilling;
+    }
+
+    /**
      * Check if address is international (non-US)
      */
     public boolean isInternational() {
@@ -316,8 +325,13 @@ public class AddressDTO implements Serializable {
             sb.append(recipientName);
         }
 
-        if (defaultAddress) {
+        // Show which type of default it is
+        if (isDefaultShipping && isDefaultBilling) {
             sb.append(" (Default)");
+        } else if (isDefaultShipping) {
+            sb.append(" (Default Shipping)");
+        } else if (isDefaultBilling) {
+            sb.append(" (Default Billing)");
         }
 
         if (streetAddress != null) {
@@ -357,25 +371,4 @@ public class AddressDTO implements Serializable {
         return (state != null && !state.trim().isEmpty()) ||
                 (stateCode != null && !stateCode.trim().isEmpty());
     }
-
-    // Version 2.0 fields - commented out for future implementation
-    /*
-    // Address validation & standardization - Version 2.0
-    private String standardizedAddress;
-    private String validationStatus;
-    private String validationErrors;
-    private Double deliveryConfidence;
-
-    // Delivery preferences - Version 2.0
-    private String preferredDeliveryTime;
-    private List<String> deliveryBlackoutDates;
-    private boolean weekendDelivery;
-    private String accessCode;
-
-    // Address metadata - Version 2.0
-    private String timezone;
-    private String county;
-    private String neighborhood;
-    private String buildingType; // house, apartment, business
-    */
 }

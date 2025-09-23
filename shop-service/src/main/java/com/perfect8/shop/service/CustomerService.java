@@ -1,13 +1,10 @@
 package com.perfect8.shop.service;
 
-import com.perfect8.shop.dto.AddressDTO;
-import com.perfect8.shop.dto.CustomerDTO;
-import com.perfect8.shop.dto.CustomerRegistrationDTO;
-import com.perfect8.shop.dto.CustomerUpdateDTO;
-import com.perfect8.shop.dto.OrderDTO;
+import com.perfect8.shop.dto.*;
 import com.perfect8.shop.entity.Address;
 import com.perfect8.shop.entity.Customer;
 import com.perfect8.shop.entity.Order;
+import com.perfect8.common.enums.OrderStatus;
 import com.perfect8.shop.exception.CustomerNotFoundException;
 import com.perfect8.shop.exception.EmailAlreadyExistsException;
 import com.perfect8.shop.exception.ResourceNotFoundException;
@@ -23,52 +20,37 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
  * Customer Service for Shop Service
  * Version 1.0 - Core customer management functionality
- * Handles customer CRUD operations, address management, and order history
+ * NO BACKWARD COMPATIBILITY - Built right from the start!
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final AddressRepository addressRepository;
     private final OrderRepository orderRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     /**
      * Get customer by ID
      */
     @Transactional(readOnly = true)
-    public CustomerDTO getCustomerById(Long customerId) {
-        log.debug("Fetching customer with ID: {}", customerId);
+    public CustomerDTO getCustomerById(Long customerIdLong) {
+        log.debug("Fetching customer with ID: {}", customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
-
-        if (!customer.isActive()) {
-            throw new CustomerNotFoundException("Customer account is inactive");
-        }
-
-        return convertToDTO(customer);
-    }
-
-    /**
-     * Get customer by email
-     */
-    @Transactional(readOnly = true)
-    public CustomerDTO getCustomerByEmail(String email) {
-        log.debug("Fetching customer with email: {}", email);
-
-        Customer customer = customerRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with email: " + email));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
         if (!customer.isActive()) {
             throw new CustomerNotFoundException("Customer account is inactive");
@@ -78,21 +60,36 @@ public class CustomerService {
     }
 
     /**
-     * Get all active customers (Admin only)
+     * Get customer entity by email (for internal use)
+     * Returns the entity, not DTO
      */
     @Transactional(readOnly = true)
-    public Page<CustomerDTO> getAllActiveCustomers(Pageable pageable) {
-        log.debug("Fetching all active customers, page: {}", pageable.getPageNumber());
+    public Customer getCustomerByEmail(String customerEmail) {
+        log.debug("Fetching customer with email: {}", customerEmail);
 
-        Page<Customer> customers = customerRepository.findByIsActiveTrue(pageable);
-        return customers.map(this::convertToDTO);
+        Customer customer = customerRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with email: " + customerEmail));
+
+        if (!customer.isActive()) {
+            throw new CustomerNotFoundException("Customer account is inactive");
+        }
+
+        return customer;
     }
 
     /**
-     * Create new customer
+     * Get customer DTO by email (for external use)
+     */
+    @Transactional(readOnly = true)
+    public CustomerDTO getCustomerDTOByEmail(String customerEmail) {
+        return convertToDTO(getCustomerByEmail(customerEmail));
+    }
+
+    /**
+     * Register new customer - Used by CustomerController
      */
     @Transactional
-    public CustomerDTO createCustomer(CustomerRegistrationDTO registrationDTO) {
+    public CustomerDTO registerCustomer(CustomerRegistrationDTO registrationDTO) {
         log.debug("Creating new customer with email: {}", registrationDTO.getEmail());
 
         // Check if email already exists
@@ -100,24 +97,32 @@ public class CustomerService {
             throw new EmailAlreadyExistsException("Email already registered: " + registrationDTO.getEmail());
         }
 
-        // Generate unique customer ID
-        String customerBusinessId = "CUST-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-
-        // Create new customer
-        Customer customer = new Customer();
-        customer.setCustomerId(customerBusinessId); // This is the String business ID
-        customer.setFirstName(registrationDTO.getFirstName());
-        customer.setLastName(registrationDTO.getLastName());
-        customer.setEmail(registrationDTO.getEmail());
-        customer.setPassword(passwordEncoder.encode(registrationDTO.getPassword()));
-        customer.setPhoneNumber(registrationDTO.getPhoneNumber());
-        customer.setRole("ROLE_CUSTOMER");
-        customer.setIsActive(true);
-        customer.setIsEmailVerified(false);
-        customer.setCreatedAt(LocalDateTime.now());
+        // Create new customer with proper fields
+        Customer customer = Customer.builder()
+                .firstName(registrationDTO.getFirstName())
+                .lastName(registrationDTO.getLastName())
+                .email(registrationDTO.getEmail())
+                .password(passwordEncoder.encode(registrationDTO.getPassword()))
+                .phoneNumber(registrationDTO.getPhoneNumber())
+                .role("ROLE_USER")
+                .isActive(true)
+                .isEmailVerified(false)
+                .newsletterSubscribed(registrationDTO.getNewsletterSubscribed())
+                .marketingConsent(registrationDTO.getMarketingConsent())
+                .preferredLanguage(registrationDTO.getPreferredLanguage())
+                .preferredCurrency(registrationDTO.getPreferredCurrency())
+                .build();
 
         Customer savedCustomer = customerRepository.save(customer);
-        log.info("Customer created successfully with ID: {}", savedCustomer.getId());
+        log.info("Customer created successfully with ID: {}", savedCustomer.getCustomerId());
+
+        // Send welcome email
+        try {
+            String fullName = savedCustomer.getFirstName() + " " + savedCustomer.getLastName();
+            emailService.sendWelcomeEmail(savedCustomer.getEmail(), fullName);
+        } catch (Exception emailException) {
+            log.error("Failed to send welcome email to: {}", savedCustomer.getEmail(), emailException);
+        }
 
         return convertToDTO(savedCustomer);
     }
@@ -126,11 +131,11 @@ public class CustomerService {
      * Update customer details
      */
     @Transactional
-    public CustomerDTO updateCustomer(Long customerId, CustomerUpdateDTO updateDTO) {
-        log.debug("Updating customer with ID: {}", customerId);
+    public CustomerDTO updateCustomer(Long customerIdLong, CustomerUpdateDTO updateDTO) {
+        log.debug("Updating customer with ID: {}", customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
         if (!customer.isActive()) {
             throw new UnauthorizedAccessException("Cannot update inactive customer");
@@ -146,10 +151,30 @@ public class CustomerService {
         if (updateDTO.getPhoneNumber() != null) {
             customer.setPhoneNumber(updateDTO.getPhoneNumber());
         }
+        if (updateDTO.getNewsletterSubscribed() != null) {
+            customer.setNewsletterSubscribed(updateDTO.getNewsletterSubscribed());
+        }
+        if (updateDTO.getMarketingConsent() != null) {
+            customer.setMarketingConsent(updateDTO.getMarketingConsent());
+        }
+        if (updateDTO.getPreferredLanguage() != null) {
+            customer.setPreferredLanguage(updateDTO.getPreferredLanguage());
+        }
+        if (updateDTO.getPreferredCurrency() != null) {
+            customer.setPreferredCurrency(updateDTO.getPreferredCurrency());
+        }
 
-        customer.setUpdatedAt(LocalDateTime.now());
+        // Handle password change if requested
+        if (updateDTO.isPasswordChangeRequested()) {
+            // Verify current password
+            if (!passwordEncoder.matches(updateDTO.getCurrentPassword(), customer.getPassword())) {
+                throw new UnauthorizedAccessException("Current password is incorrect");
+            }
+            customer.setPassword(passwordEncoder.encode(updateDTO.getNewPassword()));
+        }
+
         Customer updatedCustomer = customerRepository.save(customer);
-        log.info("Customer updated successfully with ID: {}", customerId);
+        log.info("Customer updated successfully with ID: {}", customerIdLong);
 
         return convertToDTO(updatedCustomer);
     }
@@ -158,68 +183,145 @@ public class CustomerService {
      * Deactivate customer account
      */
     @Transactional
-    public void deactivateCustomer(Long customerId) {
-        log.debug("Deactivating customer with ID: {}", customerId);
+    public void deactivateCustomer(Long customerIdLong) {
+        log.debug("Deactivating customer with ID: {}", customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
-        customer.setIsActive(false);
-        customer.setUpdatedAt(LocalDateTime.now());
+        customer.setActive(false);
         customerRepository.save(customer);
 
-        log.info("Customer deactivated successfully with ID: {}", customerId);
+        log.info("Customer deactivated successfully with ID: {}", customerIdLong);
     }
 
     /**
-     * Delete customer (permanent delete - use with caution)
+     * Delete customer (soft delete in v1.0)
      */
     @Transactional
-    public void deleteCustomer(Long customerId) {
-        log.debug("Deleting customer with ID: {}", customerId);
+    public void deleteCustomer(Long customerIdLong) {
+        log.debug("Soft deleting customer with ID: {}", customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
-        // In version 1.0, we'll just deactivate instead of soft delete
-        customer.setIsActive(false);
-        customer.setUpdatedAt(LocalDateTime.now());
+        customer.setActive(false);
         customerRepository.save(customer);
 
-        log.info("Customer deactivated (soft delete) with ID: {}", customerId);
+        log.info("Customer deactivated (soft delete) with ID: {}", customerIdLong);
+    }
+
+    /**
+     * Check if email exists
+     */
+    @Transactional(readOnly = true)
+    public boolean emailExists(String emailAddress) {
+        return customerRepository.existsByEmail(emailAddress);
+    }
+
+    /**
+     * Get all customers (paginated) - Admin only
+     */
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
+        log.debug("Fetching all customers, page: {}", pageable.getPageNumber());
+
+        Page<Customer> customers = customerRepository.findByIsActiveTrue(pageable);
+        return customers.map(this::convertToDTO);
+    }
+
+    /**
+     * Search customers - Admin only
+     * Simplified for v1.0 - advanced search in v2.0
+     */
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> searchCustomers(String searchEmail, String searchName,
+                                             String searchPhone, Pageable pageable) {
+        log.debug("Searching customers with criteria - email: {}, name: {}, phone: {}",
+                searchEmail, searchName, searchPhone);
+
+        // Simple implementation for v1.0 - just return all active customers
+        // TODO v2.0: Add proper search with Specifications or QueryDSL
+        Page<Customer> customers = customerRepository.findByIsActiveTrue(pageable);
+
+        return customers.map(this::convertToDTO);
+    }
+
+    /**
+     * Toggle customer status - Admin only
+     */
+    @Transactional
+    public CustomerDTO toggleCustomerStatus(Long customerIdLong) {
+        log.debug("Toggling status for customer: {}", customerIdLong);
+
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
+
+        customer.setActive(!customer.isActive()); // Toggle status
+        Customer updatedCustomer = customerRepository.save(customer);
+
+        log.info("Customer status toggled for ID: {}", customerIdLong);
+        return convertToDTO(updatedCustomer);
+    }
+
+    /**
+     * Get recent customers - Admin only
+     * Simplified for v1.0
+     */
+    @Transactional(readOnly = true)
+    public List<CustomerDTO> getRecentCustomers(int limit) {
+        log.debug("Fetching {} recent customers", limit);
+
+        // Simple implementation for v1.0 - get all active customers and limit
+        List<Customer> allCustomers = customerRepository.findAll();
+
+        return allCustomers.stream()
+                .filter(Customer::isActive)
+                .sorted((c1, c2) -> {
+                    if (c2.getCreatedAt() == null || c1.getCreatedAt() == null) {
+                        return 0;
+                    }
+                    return c2.getCreatedAt().compareTo(c1.getCreatedAt());
+                })
+                .limit(limit)
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     /**
      * Add address to customer
      */
     @Transactional
-    public AddressDTO addCustomerAddress(Long customerId, AddressDTO addressDTO) {
-        log.debug("Adding address for customer ID: {}", customerId);
+    public AddressDTO addCustomerAddress(Long customerIdLong, AddressDTO addressDTO) {
+        log.debug("Adding address for customer ID: {}", customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
         if (!customer.isActive()) {
             throw new UnauthorizedAccessException("Cannot add address to inactive customer");
         }
 
-        Address address = convertToAddressEntity(addressDTO);
-        address.setCustomer(customer);
+        // FIXED: Use correct field names from Address entity
+        boolean isFirstAddress = customer.getAddresses().isEmpty();
 
-        // Set as default if it's the first address
-        boolean isFirstAddress = customer.getAddresses() == null || customer.getAddresses().isEmpty();
-        if (isFirstAddress) {
-            address.setDefaultShipping(true);
-            address.setDefaultBilling(true);
-        }
+        Address address = Address.builder()
+                .customer(customer)
+                .addressLine1(addressDTO.getStreetAddress())
+                .addressLine2(addressDTO.getAddressLine2())
+                .city(addressDTO.getCity())
+                .state(addressDTO.getState())
+                .postalCode(addressDTO.getPostalCode())
+                .country(addressDTO.getCountry())
+                .addressType(addressDTO.getAddressType())
+                .defaultShipping(isFirstAddress) // FIXED: Was isDefault
+                .defaultBilling(isFirstAddress)  // FIXED: Was isDefault
+                .build();
 
+        customer.addAddress(address);
         Address savedAddress = addressRepository.save(address);
 
-        // Add address to customer's collection
-        customer.getAddresses().add(savedAddress);
-        customerRepository.save(customer);
-
-        log.info("Address added successfully for customer ID: {}", customerId);
+        log.info("Address added successfully for customer ID: {}", customerIdLong);
         return convertToAddressDTO(savedAddress);
     }
 
@@ -227,34 +329,30 @@ public class CustomerService {
      * Update customer address
      */
     @Transactional
-    public AddressDTO updateCustomerAddress(Long customerId, Long addressId, AddressDTO addressDTO) {
-        log.debug("Updating address {} for customer {}", addressId, customerId);
+    public AddressDTO updateCustomerAddress(Long customerIdLong, Long addressIdLong, AddressDTO addressDTO) {
+        log.debug("Updating address {} for customer {}", addressIdLong, customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
-        Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found with ID: " + addressId));
+        Address address = addressRepository.findById(addressIdLong)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found with ID: " + addressIdLong));
 
         // Verify address belongs to customer
-        if (!address.getCustomer().getId().equals(customerId)) {
+        if (!address.getCustomer().getCustomerId().equals(customerIdLong)) {
             throw new UnauthorizedAccessException("Address does not belong to this customer");
         }
 
-        // Update address fields - check both addressLine1 and street for compatibility
-        if (addressDTO.getStreetAddress() != null) {
-            address.setAddressLine1(addressDTO.getStreetAddress());
-            address.setStreet(addressDTO.getStreetAddress());
-        }
+        // Update address fields
+        address.setAddressLine1(addressDTO.getStreetAddress());
         address.setAddressLine2(addressDTO.getAddressLine2());
         address.setCity(addressDTO.getCity());
         address.setState(addressDTO.getState());
         address.setPostalCode(addressDTO.getPostalCode());
         address.setCountry(addressDTO.getCountry());
-        address.setAddressType(addressDTO.getAddressType());
 
         Address updatedAddress = addressRepository.save(address);
-        log.info("Address updated successfully for customer ID: {}", customerId);
+        log.info("Address updated successfully for customer ID: {}", customerIdLong);
 
         return convertToAddressDTO(updatedAddress);
     }
@@ -263,39 +361,71 @@ public class CustomerService {
      * Delete customer address
      */
     @Transactional
-    public void deleteCustomerAddress(Long customerId, Long addressId) {
-        log.debug("Deleting address {} for customer {}", addressId, customerId);
+    public void deleteCustomerAddress(Long customerIdLong, Long addressIdLong) {
+        log.debug("Deleting address {} for customer {}", addressIdLong, customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
-        Address address = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found with ID: " + addressId));
+        Address address = addressRepository.findById(addressIdLong)
+                .orElseThrow(() -> new ResourceNotFoundException("Address not found with ID: " + addressIdLong));
 
         // Verify address belongs to customer
-        if (!address.getCustomer().getId().equals(customerId)) {
+        if (!address.getCustomer().getCustomerId().equals(customerIdLong)) {
             throw new UnauthorizedAccessException("Address does not belong to this customer");
         }
 
-        // Remove from customer's collection
-        customer.getAddresses().remove(address);
+        customer.removeAddress(address);
         customerRepository.save(customer);
-
-        // Delete the address
         addressRepository.delete(address);
 
-        log.info("Address deleted successfully for customer ID: {}", customerId);
+        log.info("Address deleted successfully for customer ID: {}", customerIdLong);
+    }
+
+    /**
+     * Set default address for customer
+     */
+    @Transactional
+    public AddressDTO setDefaultAddress(Long customerIdLong, Long addressIdLong) {
+        log.debug("Setting default address {} for customer {}", addressIdLong, customerIdLong);
+
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
+
+        Address targetAddress = null;
+
+        // Clear current defaults and set new one
+        for (Address addr : customer.getAddresses()) {
+            if (addr.getAddressId().equals(addressIdLong)) {
+                // FIXED: Use correct method names
+                addr.setDefaultShipping(true);
+                addr.setDefaultBilling(true);
+                targetAddress = addr;
+            } else {
+                addr.setDefaultShipping(false);
+                addr.setDefaultBilling(false);
+            }
+        }
+
+        if (targetAddress == null) {
+            throw new ResourceNotFoundException("Address not found with ID: " + addressIdLong);
+        }
+
+        customerRepository.save(customer);
+        log.info("Default address set for customer ID: {}", customerIdLong);
+
+        return convertToAddressDTO(targetAddress);
     }
 
     /**
      * Get customer addresses
      */
     @Transactional(readOnly = true)
-    public List<AddressDTO> getCustomerAddresses(Long customerId) {
-        log.debug("Fetching addresses for customer ID: {}", customerId);
+    public List<AddressDTO> getCustomerAddresses(Long customerIdLong) {
+        log.debug("Fetching addresses for customer ID: {}", customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
         return customer.getAddresses().stream()
                 .map(this::convertToAddressDTO)
@@ -303,78 +433,14 @@ public class CustomerService {
     }
 
     /**
-     * Set default shipping address
-     */
-    @Transactional
-    public void setDefaultShippingAddress(Long customerId, Long addressId) {
-        log.debug("Setting default shipping address {} for customer {}", addressId, customerId);
-
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
-
-        Address newDefaultAddress = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found with ID: " + addressId));
-
-        // Verify address belongs to customer
-        if (!newDefaultAddress.getCustomer().getId().equals(customerId)) {
-            throw new UnauthorizedAccessException("Address does not belong to this customer");
-        }
-
-        // Clear current default shipping address
-        for (Address addr : customer.getAddresses()) {
-            if (addr.isDefaultShipping()) {
-                addr.setDefaultShipping(false);
-            }
-        }
-
-        // Set new default
-        newDefaultAddress.setDefaultShipping(true);
-        addressRepository.save(newDefaultAddress);
-
-        log.info("Default shipping address set for customer ID: {}", customerId);
-    }
-
-    /**
-     * Set default billing address
-     */
-    @Transactional
-    public void setDefaultBillingAddress(Long customerId, Long addressId) {
-        log.debug("Setting default billing address {} for customer {}", addressId, customerId);
-
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
-
-        Address newDefaultAddress = addressRepository.findById(addressId)
-                .orElseThrow(() -> new ResourceNotFoundException("Address not found with ID: " + addressId));
-
-        // Verify address belongs to customer
-        if (!newDefaultAddress.getCustomer().getId().equals(customerId)) {
-            throw new UnauthorizedAccessException("Address does not belong to this customer");
-        }
-
-        // Clear current default billing address
-        for (Address addr : customer.getAddresses()) {
-            if (addr.isDefaultBilling()) {
-                addr.setDefaultBilling(false);
-            }
-        }
-
-        // Set new default
-        newDefaultAddress.setDefaultBilling(true);
-        addressRepository.save(newDefaultAddress);
-
-        log.info("Default billing address set for customer ID: {}", customerId);
-    }
-
-    /**
      * Get customer order history
      */
     @Transactional(readOnly = true)
-    public Page<OrderDTO> getCustomerOrders(Long customerId, Pageable pageable) {
-        log.debug("Fetching orders for customer ID: {}", customerId);
+    public Page<OrderDTO> getCustomerOrders(Long customerIdLong, Pageable pageable) {
+        log.debug("Fetching orders for customer ID: {}", customerIdLong);
 
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        Customer customer = customerRepository.findById(customerIdLong)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerIdLong));
 
         Page<Order> orders = orderRepository.findByCustomerOrderByCreatedAtDesc(customer, pageable);
         return orders.map(this::convertToOrderDTO);
@@ -384,136 +450,144 @@ public class CustomerService {
      * Verify customer email
      */
     @Transactional
-    public void verifyCustomerEmail(String email, String verificationToken) {
-        log.debug("Verifying email for: {}", email);
+    public void verifyCustomerEmail(String customerEmail, String verificationToken) {
+        log.debug("Verifying email for: {}", customerEmail);
 
-        Customer customer = customerRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with email: " + email));
+        Customer customer = customerRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with email: " + customerEmail));
 
-        // Check if token matches and is not expired
+        // Check if token matches
         if (customer.getEmailVerificationToken() == null ||
                 !customer.getEmailVerificationToken().equals(verificationToken)) {
             throw new UnauthorizedAccessException("Invalid verification token");
         }
 
-        if (customer.getEmailVerificationTokenExpiry() != null &&
-                customer.getEmailVerificationTokenExpiry().isBefore(LocalDateTime.now())) {
+        // Check if token is expired (24 hours)
+        if (customer.getEmailVerificationSentAt() != null &&
+                customer.getEmailVerificationSentAt().isBefore(LocalDateTime.now().minusHours(24))) {
             throw new UnauthorizedAccessException("Verification token has expired");
         }
 
-        customer.setIsEmailVerified(true);
+        customer.setEmailVerified(true);
         customer.setEmailVerificationToken(null);
-        customer.setEmailVerificationTokenExpiry(null);
-        customer.setUpdatedAt(LocalDateTime.now());
+        customer.setEmailVerificationSentAt(null);
         customerRepository.save(customer);
 
-        log.info("Email verified successfully for customer: {}", email);
+        log.info("Email verified successfully for customer: {}", customerEmail);
     }
 
     /**
-     * Convert Customer entity to DTO
+     * Resend verification email
      */
-    public CustomerDTO convertToDTO(Customer customer) {
-        CustomerDTO dto = new CustomerDTO();
-        dto.setCustomerId(customer.getCustomerBusinessId()); // Get the String business ID
-        dto.setFirstName(customer.getFirstName());
-        dto.setLastName(customer.getLastName());
-        dto.setEmail(customer.getEmail());
-        dto.setPhoneNumber(customer.getPhoneNumber());
-        dto.setIsEmailVerified(customer.isEmailVerified());
-        dto.setIsActive(customer.isActive());
-        dto.setRegistrationDate(customer.getCreatedAt());
-        dto.setLastLoginDate(customer.getLastLoginAt());
-        dto.setCustomerSince(customer.getCreatedAt());
+    @Transactional
+    public void resendVerificationEmail(String customerEmail) {
+        log.debug("Resending verification email to: {}", customerEmail);
 
-        // Calculate order count if orders are loaded
-        if (customer.getOrders() != null) {
-            dto.setHasOrders(!customer.getOrders().isEmpty());
-            dto.setOrderCount(customer.getOrders().size());
-        } else {
-            dto.setHasOrders(false);
-            dto.setOrderCount(0);
+        Customer customer = customerRepository.findByEmail(customerEmail)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with email: " + customerEmail));
+
+        if (customer.isEmailVerified()) {
+            throw new UnauthorizedAccessException("Email already verified");
         }
 
-        // Add addresses if loaded
-        if (customer.getAddresses() != null) {
-            dto.setAddresses(customer.getAddresses().stream()
-                    .map(this::convertToAddressDTO)
-                    .collect(Collectors.toList()));
-        }
+        // Generate new token
+        customer.generateEmailVerificationToken();
+        customerRepository.save(customer);
 
-        return dto;
+        // Send verification email - FIXED: Correct method name and parameters
+        try {
+            String verificationToken = customer.getEmailVerificationToken();
+            emailService.sendEmailVerification(customer.getEmail(), verificationToken);
+        } catch (Exception emailException) {
+            log.error("Failed to send verification email to: {}", customer.getEmail(), emailException);
+            throw new RuntimeException("Failed to send verification email", emailException);
+        }
     }
 
     /**
-     * Convert Address entity to DTO
+     * Convert Customer entity to DTO with null safety
+     */
+    private CustomerDTO convertToDTO(Customer customer) {
+        if (customer == null) {
+            throw new IllegalArgumentException("Cannot convert null Customer to DTO");
+        }
+
+        return CustomerDTO.builder()
+                .customerId(customer.getCustomerId())
+                .email(customer.getEmail())
+                .firstName(customer.getFirstName())
+                .lastName(customer.getLastName())
+                .phoneNumber(customer.getPhoneNumber())
+                .role(customer.getRole())
+                .isActive(customer.isActive())
+                .isEmailVerified(customer.isEmailVerified())
+                .newsletterSubscribed(customer.getNewsletterSubscribed())
+                .marketingConsent(customer.getMarketingConsent())
+                .preferredLanguage(customer.getPreferredLanguage())
+                .preferredCurrency(customer.getPreferredCurrency())
+                .createdAt(customer.getCreatedAt())
+                .updatedAt(customer.getUpdatedAt())
+                .lastLoginDate(customer.getLastLoginAt())
+                .build();
+    }
+
+    /**
+     * Convert Address entity to DTO with null safety
      */
     private AddressDTO convertToAddressDTO(Address address) {
+        if (address == null) {
+            throw new IllegalArgumentException("Cannot convert null Address to DTO");
+        }
+
         return AddressDTO.builder()
                 .addressId(address.getAddressId())
-                .streetAddress(address.getStreet() != null ? address.getStreet() : address.getAddressLine1())
+                .streetAddress(address.getAddressLine1())
                 .addressLine2(address.getAddressLine2())
                 .city(address.getCity())
                 .state(address.getState())
                 .postalCode(address.getPostalCode())
                 .country(address.getCountry())
-                .addressType(address.getAddressType())
+                .addressType(address.getAddressType() != null ? address.getAddressType() : "BOTH")
                 .isDefaultShipping(address.isDefaultShipping())
                 .isDefaultBilling(address.isDefaultBilling())
                 .build();
     }
 
     /**
-     * Convert AddressDTO to entity
-     */
-    private Address convertToAddressEntity(AddressDTO dto) {
-        return Address.builder()
-                .addressLine1(dto.getStreetAddress())
-                .street(dto.getStreetAddress()) // Set both for compatibility
-                .addressLine2(dto.getAddressLine2())
-                .city(dto.getCity())
-                .state(dto.getState())
-                .postalCode(dto.getPostalCode())
-                .country(dto.getCountry())
-                .addressType(dto.getAddressType())
-                .build();
-    }
-
-    /**
-     * Convert Order to OrderDTO (basic info only)
+     * Convert Order to OrderDTO with null safety
      */
     private OrderDTO convertToOrderDTO(Order order) {
+        if (order == null) {
+            throw new IllegalArgumentException("Cannot convert null Order to DTO");
+        }
+
+        // Validate required fields
+        if (order.getOrderId() == null) {
+            throw new IllegalStateException("Order missing orderId");
+        }
+
+        if (order.getCustomer() == null) {
+            throw new IllegalStateException("Order " + order.getOrderId() + " missing customer");
+        }
+
+        if (order.getOrderStatus() == null) {
+            throw new IllegalStateException("Order " + order.getOrderId() + " missing status");
+        }
+
+        // Set safe defaults for nullable fields
+        String orderNumber = order.getOrderNumber() != null ? order.getOrderNumber() : "ORD-" + order.getOrderId();
+        BigDecimal totalAmount = order.getTotalAmount() != null ? order.getTotalAmount() : BigDecimal.ZERO;
+        LocalDateTime createdAt = order.getCreatedAt() != null ? order.getCreatedAt() : LocalDateTime.now();
+        LocalDateTime updatedAt = order.getUpdatedAt() != null ? order.getUpdatedAt() : createdAt;
+
         return OrderDTO.builder()
                 .orderId(order.getOrderId())
-                .orderNumber(order.getOrderNumber())
-                .orderDate(order.getOrderDate())
-                .orderStatus(order.getOrderStatus())
-                .totalAmount(order.getTotalAmount())
-                .shippingAmount(order.getShippingAmount())
-                .taxAmount(order.getTaxAmount())
+                .orderNumber(orderNumber)
+                .customerId(order.getCustomer().getCustomerId())
+                .status(order.getOrderStatus().toString())
+                .totalAmount(totalAmount)
+                .createdAt(createdAt)
+                .updatedAt(updatedAt)
                 .build();
     }
-
-    // Version 2.0 - Commented out for future implementation
-    /*
-    public CustomerMetrics getCustomerMetrics(Long customerId) {
-        // Customer metrics and analytics
-        // To be implemented in version 2.0
-    }
-
-    public CustomerSegment analyzeCustomerSegment(Long customerId) {
-        // Customer segmentation analysis
-        // To be implemented in version 2.0
-    }
-
-    public CustomerLifetimeValue calculateLifetimeValue(Long customerId) {
-        // Calculate customer lifetime value
-        // To be implemented in version 2.0
-    }
-
-    public CustomerPreferences getCustomerPreferences(Long customerId) {
-        // Marketing preferences and opt-ins
-        // To be implemented in version 2.0
-    }
-    */
 }

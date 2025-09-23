@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Shipment Entity - Version 1.0
+ * Core shipment tracking and management
+ */
 @Entity
 @Table(name = "shipments")
 @Data
@@ -35,11 +39,20 @@ public class Shipment {
     @Column(nullable = false, length = 50)
     private String carrier; // UPS, FedEx, DHL, USPS, etc.
 
-    @Column(nullable = false, length = 20)
-    private String status; // PENDING, SHIPPED, IN_TRANSIT, DELIVERED, CANCELLED
+    @Column(name = "shipment_status", nullable = false, length = 20)
+    private String shipmentStatus; // PENDING, SHIPPED, IN_TRANSIT, DELIVERED, CANCELLED
 
-    @Column(name = "shipment_date")
-    private LocalDateTime shipmentDate;
+    // Alias for backward compatibility
+    public String getStatus() {
+        return shipmentStatus;
+    }
+
+    public void setStatus(String status) {
+        this.shipmentStatus = status;
+    }
+
+    @Column(name = "shipped_date")
+    private LocalDateTime shippedDate;
 
     @Column(name = "estimated_delivery_date")
     private LocalDate estimatedDeliveryDate;
@@ -59,18 +72,42 @@ public class Shipment {
     @Column(length = 500)
     private String dimensions; // e.g., "30x20x15 cm"
 
+    // Recipient information
+    @Column(name = "recipient_name", length = 100)
+    private String recipientName;
+
     @Column(name = "shipping_address", columnDefinition = "TEXT")
     private String shippingAddress;
+
+    @Column(name = "shipping_street", length = 255)
+    private String shippingStreet;
+
+    @Column(name = "shipping_city", length = 100)
+    private String shippingCity;
+
+    @Column(name = "shipping_state", length = 50)
+    private String shippingState;
+
+    @Column(name = "shipping_postal_code", length = 20)
+    private String shippingPostalCode;
+
+    @Column(name = "shipping_country", length = 50)
+    private String shippingCountry;
 
     @Column(name = "shipping_method", length = 50)
     private String shippingMethod; // STANDARD, EXPRESS, OVERNIGHT, etc.
 
+    // Tracking information
     @Column(name = "current_location", length = 255)
     private String currentLocation;
 
     @Column(name = "last_location", length = 255)
     private String lastLocation;
 
+    @Column(name = "tracking_notes", columnDefinition = "TEXT")
+    private String trackingNotes;
+
+    // Delivery information
     @Column(name = "delivery_instructions", length = 500)
     private String deliveryInstructions;
 
@@ -86,14 +123,23 @@ public class Shipment {
     @Column(name = "label_url", length = 500)
     private String labelUrl;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String notes;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "last_updated")
+    private LocalDateTime lastUpdated;
+
+    // Alias for backward compatibility
+    public LocalDateTime getUpdatedAt() {
+        return lastUpdated;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.lastUpdated = updatedAt;
+    }
 
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
@@ -104,9 +150,9 @@ public class Shipment {
         this.order = order;
         this.trackingNumber = trackingNumber;
         this.carrier = carrier;
-        this.status = "PENDING";
+        this.shipmentStatus = "PENDING";
         this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.lastUpdated = LocalDateTime.now();
         this.trackingHistory = new ArrayList<>();
     }
 
@@ -115,11 +161,11 @@ public class Shipment {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
-        if (updatedAt == null) {
-            updatedAt = LocalDateTime.now();
+        if (lastUpdated == null) {
+            lastUpdated = LocalDateTime.now();
         }
-        if (status == null) {
-            status = "PENDING";
+        if (shipmentStatus == null) {
+            shipmentStatus = "PENDING";
         }
         if (trackingHistory == null) {
             trackingHistory = new ArrayList<>();
@@ -128,20 +174,20 @@ public class Shipment {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        lastUpdated = LocalDateTime.now();
     }
 
     // Business methods
     public boolean isDelivered() {
-        return "DELIVERED".equals(status);
+        return "DELIVERED".equals(shipmentStatus);
     }
 
     public boolean isInTransit() {
-        return "IN_TRANSIT".equals(status) || "SHIPPED".equals(status);
+        return "IN_TRANSIT".equals(shipmentStatus) || "SHIPPED".equals(shipmentStatus);
     }
 
     public boolean isCancelled() {
-        return "CANCELLED".equals(status);
+        return "CANCELLED".equals(shipmentStatus);
     }
 
     public boolean isOverdue() {
@@ -152,14 +198,14 @@ public class Shipment {
     }
 
     public int getDaysInTransit() {
-        if (shipmentDate == null) {
+        if (shippedDate == null) {
             return 0;
         }
 
         LocalDateTime endDate = actualDeliveryDate != null
                 ? actualDeliveryDate.atStartOfDay()
                 : LocalDateTime.now();
-        return (int) java.time.temporal.ChronoUnit.DAYS.between(shipmentDate, endDate);
+        return (int) java.time.temporal.ChronoUnit.DAYS.between(shippedDate, endDate);
     }
 
     public void addTrackingUpdate(String status, String location, String description) {
@@ -173,7 +219,7 @@ public class Shipment {
         this.trackingHistory.add(tracking);
 
         // Update shipment status and location
-        this.status = status;
+        this.shipmentStatus = status;
         if (this.currentLocation != null) {
             this.lastLocation = this.currentLocation;
         }
@@ -213,25 +259,12 @@ public class Shipment {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Shipment)) return false;
-        Shipment shipment = (Shipment) o;
-        return shipmentId != null && shipmentId.equals(shipment.shipmentId);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
     public String toString() {
         return "Shipment{" +
                 "shipmentId=" + shipmentId +
                 ", trackingNumber='" + trackingNumber + '\'' +
                 ", carrier='" + carrier + '\'' +
-                ", status='" + status + '\'' +
+                ", status='" + shipmentStatus + '\'' +
                 ", currentLocation='" + currentLocation + '\'' +
                 ", estimatedDelivery=" + estimatedDeliveryDate +
                 '}';

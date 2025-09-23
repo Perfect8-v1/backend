@@ -1,125 +1,160 @@
 package com.perfect8.shop.entity;
 
-import com.perfect8.common.enums.OrderStatus;  // Från common!
-import com.perfect8.shop.util.OrderStatusHelper;  // Lokal helper
+import com.perfect8.common.enums.OrderStatus;
+import com.perfect8.common.utils.OrderStatusHelper;
+import com.perfect8.shop.enums.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Order entity för shop-service
- * Använder OrderStatus från common-modulen
- * Version 1.0
+ * Order Entity - Represents a customer order
+ * Version 1.0 - Core e-commerce functionality
+ * NO BACKWARD COMPATIBILITY - Using proper method names!
  */
 @Entity
 @Table(name = "orders")
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@ToString(exclude = {"customer", "orderItems", "payments", "shipment"})
+@EqualsAndHashCode(exclude = {"customer", "orderItems", "payments", "shipment"})
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_id")
     private Long orderId;
 
-    @Column(name = "order_number", unique = true, nullable = false, length = 50)
+    @Column(unique = true, nullable = false, length = 50)
     private String orderNumber;
-
-    /**
-     * Order status från common-modulen
-     * Sparas som STRING i databasen
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "order_status", nullable = false, length = 20)
-    @Builder.Default
-    private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @Column(name = "order_date", nullable = false)
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private LocalDateTime orderDate = LocalDateTime.now();
+    private OrderStatus orderStatus = OrderStatus.PENDING;
 
-    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal totalAmount;
+    @Column(nullable = false)
+    private LocalDateTime orderDate;
 
-    @Column(name = "subtotal_amount", precision = 10, scale = 2)
-    private BigDecimal subtotalAmount;
+    // Pricing fields
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal subtotal;
 
-    @Column(name = "tax_amount", precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal taxAmount = BigDecimal.ZERO;
 
-    @Column(name = "shipping_cost", precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
     @Builder.Default
-    private BigDecimal shippingCost = BigDecimal.ZERO;
+    private BigDecimal shippingAmount = BigDecimal.ZERO;
 
-    @Column(name = "discount_amount", precision = 10, scale = 2)
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
+    @Column(length = 3)
     @Builder.Default
-    private BigDecimal discountAmount = BigDecimal.ZERO;
+    private String currency = "SEK";
 
-    @Column(name = "payment_method", length = 50)
-    private String paymentMethod;
+    // Shipping address fields
+    @Column(nullable = false)
+    private String shippingFirstName;
 
-    @Column(name = "payment_status", length = 20)
-    private String paymentStatus;
+    @Column(nullable = false)
+    private String shippingLastName;
 
-    @Column(name = "shipping_method", length = 50)
-    private String shippingMethod;
+    @Column(nullable = false)
+    private String shippingEmail;
 
-    @Column(name = "tracking_number", length = 100)
-    private String trackingNumber;
+    @Column(length = 20)
+    private String shippingPhone;
 
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
+    @Column(nullable = false)
+    private String shippingAddressLine1;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    private String shippingAddressLine2;
+
+    @Column(nullable = false)
+    private String shippingCity;
+
+    private String shippingState;
+
+    @Column(nullable = false)
+    private String shippingPostalCode;
+
+    @Column(nullable = false, length = 2)
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private String shippingCountry = "SE";
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    // Billing address fields
+    @Builder.Default
+    private Boolean billingSameAsShipping = true;
 
-    @Column(name = "shipped_date")
-    private LocalDateTime shippedDate;
+    private String billingAddressLine1;
+    private String billingAddressLine2;
+    private String billingCity;
+    private String billingState;
+    private String billingPostalCode;
+    private String billingCountry;
 
-    @Column(name = "delivered_date")
-    private LocalDateTime deliveredDate;
+    // ========== RELATIONER ==========
 
-    // Relations
-
+    /**
+     * Order items - alla produkter i ordern
+     */
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shipping_address_id")
-    private Address shippingAddress;
+    /**
+     * Payments - en order kan ha flera betalningar
+     */
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Payment> payments = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "billing_address_id")
-    private Address billingAddress;
-
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private Payment payment;
-
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    /**
+     * Shipment relation - leveransinformation
+     */
+    @ManyToOne
+    @JoinColumn(name = "shipment_id")
     private Shipment shipment;
 
-    // Lifecycle callbacks
+    // Tracking fields
+    @Column(columnDefinition = "TEXT")
+    private String customerNotes;
+
+    @Column(columnDefinition = "TEXT")
+    private String internalNotes;
+
+    // Timestamps
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
-        orderDate = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (orderDate == null) {
+            orderDate = LocalDateTime.now();
+        }
         if (orderStatus == null) {
             orderStatus = OrderStatus.PENDING;
         }
@@ -130,101 +165,174 @@ public class Order {
         updatedAt = LocalDateTime.now();
     }
 
-    // Business methods - använder OrderStatusHelper
+    // ========== PAYMENT HELPER METHODS ==========
 
     /**
-     * Update order status with validation
+     * Hämta huvudbetalningen (den senaste COMPLETED payment)
+     * FIXAT: Använder getPaymentStatus() istället för getStatus()
      */
-    public void updateStatus(OrderStatus newStatus) {
-        // Använd helper för validering
-        OrderStatusHelper.validateTransition(this.orderStatus, newStatus);
+    public Payment getPayment() {
+        if (payments == null || payments.isEmpty()) {
+            return null;
+        }
+
+        // Försök hitta en completed payment - ANVÄNDER ENUM!
+        return payments.stream()
+                .filter(p -> PaymentStatus.COMPLETED.equals(p.getPaymentStatus()))
+                .findFirst()
+                .orElse(payments.get(payments.size() - 1)); // Annars ta senaste
+    }
+
+    /**
+     * Sätt betalning (lägg till i listan)
+     */
+    public void setPayment(Payment payment) {
+        if (payment != null) {
+            payment.setOrder(this);
+            if (this.payments == null) {
+                this.payments = new ArrayList<>();
+            }
+            this.payments.add(payment);
+        }
+    }
+
+    /**
+     * Lägg till betalning
+     */
+    public void addPayment(Payment payment) {
+        if (payment != null) {
+            payment.setOrder(this);
+            if (this.payments == null) {
+                this.payments = new ArrayList<>();
+            }
+            this.payments.add(payment);
+        }
+    }
+
+    /**
+     * Kontrollera om ordern har en giltig betalning
+     * FIXAT: Använder getPaymentStatus() istället för getStatus()
+     */
+    public boolean hasCompletedPayment() {
+        return payments != null && payments.stream()
+                .anyMatch(p -> PaymentStatus.COMPLETED.equals(p.getPaymentStatus()));
+    }
+
+    /**
+     * Hämta total betald summa
+     * FIXAT: Använder getPaymentStatus() istället för getStatus()
+     */
+    public BigDecimal getTotalPaidAmount() {
+        if (payments == null || payments.isEmpty()) {
+            return BigDecimal.ZERO;
+        }
+
+        return payments.stream()
+                .filter(p -> PaymentStatus.COMPLETED.equals(p.getPaymentStatus()))
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    /**
+     * Hämta pris (alias för totalAmount för bakåtkompabilitet)
+     * TODO: Ta bort detta i framtiden - använd getTotalAmount() direkt
+     */
+    public BigDecimal getPrice() {
+        return totalAmount;
+    }
+
+    // ========== Business logic methods using OrderStatusHelper ==========
+
+    public boolean canTransitionTo(OrderStatus newStatus) {
+        return OrderStatusHelper.canTransition(this.orderStatus, newStatus);
+    }
+
+    public void transitionTo(OrderStatus newStatus) {
+        if (!canTransitionTo(newStatus)) {
+            throw new IllegalStateException(
+                    String.format("Cannot transition from %s to %s",
+                            this.orderStatus, newStatus)
+            );
+        }
 
         this.orderStatus = newStatus;
 
-        // Update related dates
-        if (newStatus == OrderStatus.SHIPPED) {
-            this.shippedDate = LocalDateTime.now();
-        } else if (newStatus == OrderStatus.DELIVERED) {
-            this.deliveredDate = LocalDateTime.now();
-        }
+        // Log transition
+        OrderStatusHelper.logTransition(this.orderId, this.orderStatus, newStatus);
     }
 
-    /**
-     * Check if order can be cancelled
-     */
-    public boolean canBeCancelled() {
-        return OrderStatusHelper.canBeCancelled(this.orderStatus);
+    public boolean isEditable() {
+        return OrderStatusHelper.isEditableState(this.orderStatus);
     }
 
-    /**
-     * Check if order can be returned
-     */
-    public boolean canBeReturned() {
-        return OrderStatusHelper.canBeReturned(this.orderStatus);
+    public boolean isCancellable() {
+        return OrderStatusHelper.isCancellableState(this.orderStatus);
     }
 
-    /**
-     * Check if order is in final state
-     */
     public boolean isFinalState() {
-        return this.orderStatus.isFinalState();
+        return orderStatus == OrderStatus.COMPLETED ||
+                orderStatus == OrderStatus.CANCELLED ||
+                orderStatus == OrderStatus.REFUNDED;
     }
 
     /**
-     * Check if order requires payment
+     * Hämta nästa möjliga statusar som en komma-separerad sträng
      */
-    public boolean requiresPayment() {
-        return OrderStatusHelper.requiresPayment(this.orderStatus);
+    public String getNextPossibleStatuses() {
+        List<OrderStatus> nextStatuses = OrderStatusHelper.getNextPossibleStatuses(this.orderStatus);
+        if (nextStatuses == null || nextStatuses.isEmpty()) {
+            return "No transitions available";
+        }
+        return nextStatuses.stream()
+                .map(OrderStatus::name)
+                .collect(Collectors.joining(", "));
     }
 
     /**
-     * Get order progress percentage
+     * Hämta krävda åtgärder för statusövergång som en sträng
      */
-    public int getProgressPercentage() {
-        return OrderStatusHelper.getProgressPercentage(this.orderStatus);
+    public String getRequiredActionsForTransition(OrderStatus targetStatus) {
+        List<String> actions = OrderStatusHelper.getRequiredActions(this.orderStatus, targetStatus);
+        if (actions == null || actions.isEmpty()) {
+            return "No actions required";
+        }
+        return String.join("; ", actions);
     }
 
-    /**
-     * Add order item
-     */
+    // ========== Helper methods ==========
+
     public void addOrderItem(OrderItem item) {
         orderItems.add(item);
         item.setOrder(this);
-        recalculateTotals();
     }
 
-    /**
-     * Remove order item
-     */
     public void removeOrderItem(OrderItem item) {
         orderItems.remove(item);
         item.setOrder(null);
-        recalculateTotals();
     }
 
-    /**
-     * Recalculate order totals
-     */
-    private void recalculateTotals() {
-        if (orderItems != null && !orderItems.isEmpty()) {
-            this.subtotalAmount = orderItems.stream()
-                    .map(OrderItem::getSubtotal)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+    public void calculateTotals() {
+        // Recalculate subtotal from items
+        BigDecimal calculatedSubtotal = orderItems.stream()
+                .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            this.totalAmount = subtotalAmount
-                    .add(taxAmount)
-                    .add(shippingCost)
-                    .subtract(discountAmount);
-        }
+        this.subtotal = calculatedSubtotal;
+
+        // Calculate total
+        this.totalAmount = subtotal
+                .add(taxAmount)
+                .add(shippingAmount);
     }
 
-    /**
-     * Cancel order
-     */
-    public void cancel() {
-        if (!canBeCancelled()) {
-            throw new IllegalStateException("Order cannot be cancelled in status: " + orderStatus);
+    public String getCustomerFullName() {
+        if (customer != null) {
+            return customer.getFirstName() + " " + customer.getLastName();
         }
-        updateStatus(OrderStatus.CANCELLED);
+        return shippingFirstName + " " + shippingLastName;
+    }
+
+    public String getShippingFullName() {
+        return shippingFirstName + " " + shippingLastName;
     }
 }

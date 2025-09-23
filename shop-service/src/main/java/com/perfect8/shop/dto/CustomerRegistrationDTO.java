@@ -1,23 +1,33 @@
 package com.perfect8.shop.dto;
 
 import jakarta.validation.constraints.*;
-import java.time.LocalDate;
+import lombok.*;
 
+/**
+ * DTO for customer registration
+ * Version 1.0 - Core registration functionality
+ * Field names MUST match Customer entity exactly!
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CustomerRegistrationDTO {
 
+    // Required fields - matches Customer entity
     @NotBlank(message = "First name is required")
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
+    @Size(min = 2, max = 100, message = "First name must be between 2 and 100 characters")
     @Pattern(regexp = "^[a-zA-ZÀ-ÿ\\s'-]+$", message = "First name contains invalid characters")
     private String firstName;
 
     @NotBlank(message = "Last name is required")
-    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
+    @Size(min = 2, max = 100, message = "Last name must be between 2 and 100 characters")
     @Pattern(regexp = "^[a-zA-ZÀ-ÿ\\s'-]+$", message = "Last name contains invalid characters")
     private String lastName;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Please provide a valid email address")
-    @Size(max = 100, message = "Email address too long")
+    @Size(max = 255, message = "Email address too long")
     private String email;
 
     @NotBlank(message = "Password is required")
@@ -29,180 +39,90 @@ public class CustomerRegistrationDTO {
     @NotBlank(message = "Password confirmation is required")
     private String confirmPassword;
 
+    // Optional fields - matches Customer entity
     @Pattern(regexp = "^[+]?[0-9\\s\\-()]+$", message = "Invalid phone number format")
     @Size(max = 20, message = "Phone number too long")
     private String phoneNumber;
 
-    @Past(message = "Date of birth must be in the past")
-    private LocalDate dateOfBirth;
+    // Marketing preferences - EXACT names from Customer entity
+    @Builder.Default
+    private Boolean newsletterSubscribed = false;  // Was: subscribeToNewsletter
 
-    // Optional marketing preferences
-    private Boolean subscribeToNewsletter = false;
-    private Boolean acceptMarketingEmails = false;
-    private Boolean acceptSmsMarketing = false;
+    @Builder.Default
+    private Boolean marketingConsent = false;       // Was: acceptMarketingEmails
+    // REMOVED: acceptSmsMarketing - not in entity (v2.0 feature)
 
-    // Terms and conditions
+    // Registration-only fields (not stored in entity but needed for legal compliance)
+    @NotNull(message = "You must accept the terms and conditions")
     @AssertTrue(message = "You must accept the terms and conditions")
     private Boolean acceptTermsAndConditions;
 
+    @NotNull(message = "You must accept the privacy policy")
     @AssertTrue(message = "You must accept the privacy policy")
     private Boolean acceptPrivacyPolicy;
 
-    // Optional referral information
-    @Size(max = 100, message = "Referral code too long")
-    private String referralCode;
+    // Preferences - matches Customer entity (optional at registration)
+    @Size(max = 5, message = "Language code too long")
+    @Builder.Default
+    private String preferredLanguage = "en";
 
-    @Size(max = 100, message = "How did you hear about us response too long")
-    private String howDidYouHearAboutUs;
+    @Size(max = 3, message = "Currency code too long")
+    @Builder.Default
+    private String preferredCurrency = "USD";
 
-    // Default constructor
-    public CustomerRegistrationDTO() {}
-
-    // Getters and Setters
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getConfirmPassword() {
-        return confirmPassword;
-    }
-
-    public void setConfirmPassword(String confirmPassword) {
-        this.confirmPassword = confirmPassword;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public Boolean getSubscribeToNewsletter() {
-        return subscribeToNewsletter;
-    }
-
-    public void setSubscribeToNewsletter(Boolean subscribeToNewsletter) {
-        this.subscribeToNewsletter = subscribeToNewsletter;
-    }
-
-    public Boolean getAcceptMarketingEmails() {
-        return acceptMarketingEmails;
-    }
-
-    public void setAcceptMarketingEmails(Boolean acceptMarketingEmails) {
-        this.acceptMarketingEmails = acceptMarketingEmails;
-    }
-
-    public Boolean getAcceptSmsMarketing() {
-        return acceptSmsMarketing;
-    }
-
-    public void setAcceptSmsMarketing(Boolean acceptSmsMarketing) {
-        this.acceptSmsMarketing = acceptSmsMarketing;
-    }
-
-    public Boolean getAcceptTermsAndConditions() {
-        return acceptTermsAndConditions;
-    }
-
-    public void setAcceptTermsAndConditions(Boolean acceptTermsAndConditions) {
-        this.acceptTermsAndConditions = acceptTermsAndConditions;
-    }
-
-    public Boolean getAcceptPrivacyPolicy() {
-        return acceptPrivacyPolicy;
-    }
-
-    public void setAcceptPrivacyPolicy(Boolean acceptPrivacyPolicy) {
-        this.acceptPrivacyPolicy = acceptPrivacyPolicy;
-    }
-
-    public String getReferralCode() {
-        return referralCode;
-    }
-
-    public void setReferralCode(String referralCode) {
-        this.referralCode = referralCode;
-    }
-
-    public String getHowDidYouHearAboutUs() {
-        return howDidYouHearAboutUs;
-    }
-
-    public void setHowDidYouHearAboutUs(String howDidYouHearAboutUs) {
-        this.howDidYouHearAboutUs = howDidYouHearAboutUs;
-    }
-
+    // ========================================
     // Validation methods
+    // ========================================
+
+    /**
+     * Validate that passwords match
+     */
     @AssertTrue(message = "Passwords do not match")
     public boolean isPasswordMatching() {
         return password != null && password.equals(confirmPassword);
     }
 
+    /**
+     * Validate minimum age (if needed for legal compliance)
+     * For v1.0, we don't collect dateOfBirth, so this returns true
+     */
+    public boolean isAgeValid() {
+        return true; // v1.0: Age verification not implemented
+    }
+
+    // ========================================
     // Utility methods
+    // ========================================
+
+    /**
+     * Get full name
+     */
     public String getFullName() {
         return firstName + " " + lastName;
     }
 
-    public int getAge() {
-        if (dateOfBirth == null) {
-            return 0;
-        }
-        return LocalDate.now().getYear() - dateOfBirth.getYear();
-    }
-
-    public boolean isMinor() {
-        return getAge() < 18;
-    }
-
+    /**
+     * Check if any marketing consent was given
+     */
     public boolean hasMarketingConsent() {
-        return Boolean.TRUE.equals(acceptMarketingEmails) ||
-                Boolean.TRUE.equals(acceptSmsMarketing) ||
-                Boolean.TRUE.equals(subscribeToNewsletter);
+        return Boolean.TRUE.equals(marketingConsent) ||
+                Boolean.TRUE.equals(newsletterSubscribed);
     }
 
-    // Security method to clear sensitive data
+    /**
+     * Clear sensitive data after registration
+     */
     public void clearSensitiveData() {
         this.password = null;
         this.confirmPassword = null;
+    }
+
+    /**
+     * Validate all required consents
+     */
+    public boolean hasRequiredConsents() {
+        return Boolean.TRUE.equals(acceptTermsAndConditions) &&
+                Boolean.TRUE.equals(acceptPrivacyPolicy);
     }
 
     @Override
@@ -212,9 +132,27 @@ public class CustomerRegistrationDTO {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
-                ", dateOfBirth=" + dateOfBirth +
-                ", subscribeToNewsletter=" + subscribeToNewsletter +
+                ", newsletterSubscribed=" + newsletterSubscribed +
+                ", marketingConsent=" + marketingConsent +
+                ", preferredLanguage='" + preferredLanguage + '\'' +
+                ", preferredCurrency='" + preferredCurrency + '\'' +
                 ", acceptTermsAndConditions=" + acceptTermsAndConditions +
+                ", acceptPrivacyPolicy=" + acceptPrivacyPolicy +
                 '}';
     }
+
+    // ========================================
+    // Version 2.0 features - commented out
+    // ========================================
+
+    /**
+     * In v2.0, we'll add:
+     * - dateOfBirth (for age verification)
+     * - acceptSmsMarketing
+     * - referralCode
+     * - howDidYouHearAboutUs
+     * - socialMediaConnections
+     * - preferredContactMethod
+     * - marketingSegments
+     */
 }
