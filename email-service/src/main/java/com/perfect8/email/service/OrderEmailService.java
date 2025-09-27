@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Order Email Service - Version 1.0
- * Enkel service för ordermeddelanden via Gmail
+ * Simple service for order notifications via Gmail
  */
 @Slf4j
 @Service
@@ -24,7 +24,7 @@ public class OrderEmailService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     /**
-     * Skicka orderbekräftelse
+     * Send order confirmation
      */
     public void sendOrderConfirmation(OrderEmailDTO orderDto) {
         log.info("Sending order confirmation for order {}", orderDto.getOrderNumber());
@@ -35,13 +35,12 @@ public class OrderEmailService {
         emailService.sendEmail(
                 orderDto.getCustomerEmail(),
                 subject,
-                body,
-                true  // HTML email
+                body
         );
     }
 
     /**
-     * Skicka statusuppdatering
+     * Send status update
      */
     public void sendOrderStatusEmail(OrderEmailDTO orderDto) {
         OrderStatus orderStatus = orderDto.getOrderStatus();
@@ -58,8 +57,7 @@ public class OrderEmailService {
         emailService.sendEmail(
                 orderDto.getCustomerEmail(),
                 subject,
-                body,
-                true
+                body
         );
 
         log.info("Order status email sent for order {} (status: {})",
@@ -67,7 +65,7 @@ public class OrderEmailService {
     }
 
     /**
-     * Bygger email-innehåll
+     * Build email content
      */
     private String buildOrderEmailBody(OrderEmailDTO orderDto) {
         StringBuilder html = new StringBuilder();
@@ -76,7 +74,7 @@ public class OrderEmailService {
         html.append("<h2>Order ").append(orderDto.getOrderNumber()).append("</h2>");
         html.append("<p>Dear ").append(orderDto.getCustomerName()).append(",</p>");
 
-        // Status message - nu direkt med enum!
+        // Status message
         OrderStatus orderStatus = orderDto.getOrderStatus();
         if (orderStatus != null) {
             html.append("<p>").append(getStatusMessage(orderStatus)).append("</p>");
@@ -105,13 +103,13 @@ public class OrderEmailService {
         html.append("<tr><td colspan='2'><strong>Shipping:</strong></td>");
         html.append("<td>$").append(formatBigDecimal(orderDto.getShippingCost())).append("</td></tr>");
 
-        // Tax om det finns
+        // Tax if exists
         if (orderDto.getTaxAmount() != null && orderDto.getTaxAmount().compareTo(BigDecimal.ZERO) > 0) {
             html.append("<tr><td colspan='2'><strong>Tax:</strong></td>");
             html.append("<td>$").append(formatBigDecimal(orderDto.getTaxAmount())).append("</td></tr>");
         }
 
-        // Discount om det finns
+        // Discount if exists
         if (orderDto.hasDiscount()) {
             html.append("<tr><td colspan='2'><strong>Discount:</strong></td>");
             html.append("<td>-$").append(formatBigDecimal(orderDto.getDiscountAmount())).append("</td></tr>");
@@ -166,7 +164,7 @@ public class OrderEmailService {
     }
 
     /**
-     * Formatera BigDecimal för visning
+     * Format BigDecimal for display
      */
     private String formatBigDecimal(BigDecimal amount) {
         if (amount == null) {
@@ -176,7 +174,7 @@ public class OrderEmailService {
     }
 
     /**
-     * Formatera datetime till datum
+     * Format datetime to date
      */
     private String formatDateTime(LocalDateTime dateTime) {
         if (dateTime == null) {
@@ -186,36 +184,42 @@ public class OrderEmailService {
     }
 
     /**
-     * Hämta ämnesrad baserat på status
+     * Get subject based on status - FIXED: Added missing COMPLETED and REFUNDED
      */
     private String getSubjectForStatus(OrderStatus status, String orderNumber) {
         return switch (status) {
             case PENDING -> "Order Pending - #" + orderNumber;
-            case PAID -> "Order Confirmed - #" + orderNumber;
+            case PAID -> "Payment Confirmed - #" + orderNumber;
             case PROCESSING -> "Order Processing - #" + orderNumber;
             case SHIPPED -> "Order Shipped - #" + orderNumber;
             case DELIVERED -> "Order Delivered - #" + orderNumber;
+            case COMPLETED -> "Order Completed - #" + orderNumber;
             case CANCELLED -> "Order Cancelled - #" + orderNumber;
             case RETURNED -> "Order Returned - #" + orderNumber;
+            case REFUNDED -> "Order Refunded - #" + orderNumber;
             case PAYMENT_FAILED -> "Payment Failed - #" + orderNumber;
             case ON_HOLD -> "Order On Hold - #" + orderNumber;
+            default -> "Order Update - #" + orderNumber;  // Default case required
         };
     }
 
     /**
-     * Hämta statusmeddelande
+     * Get status message - FIXED: Added missing COMPLETED and REFUNDED
      */
     private String getStatusMessage(OrderStatus status) {
         return switch (status) {
             case PENDING -> "Your order is pending payment.";
-            case PAID -> "Thank you! Your order has been confirmed and is being processed.";
+            case PAID -> "Thank you! Your payment has been received.";
             case PROCESSING -> "Your order is being prepared for shipment.";
             case SHIPPED -> "Great news! Your order has been shipped.";
             case DELIVERED -> "Your order has been delivered.";
+            case COMPLETED -> "Your order has been completed successfully.";
             case CANCELLED -> "Your order has been cancelled.";
             case RETURNED -> "Your return has been processed.";
+            case REFUNDED -> "Your refund has been processed.";
             case PAYMENT_FAILED -> "Payment failed for your order. Please contact us.";
             case ON_HOLD -> "Your order is currently on hold. We'll update you soon.";
+            default -> "Your order status has been updated.";  // Default case required
         };
     }
 }
