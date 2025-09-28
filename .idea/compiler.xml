@@ -9,10 +9,11 @@
         <outputRelativeToContentRoot value="true" />
         <module name="shop-service" />
         <module name="blog-service" />
+        <module name="common" />
         <module name="admin-service" />
         <module name="email-service" />
       </profile>
-      <profile name="Annotation profile for image-service" enabled="true">
+      <profile name="Annotation profile for Perfect8 Parent" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
@@ -20,15 +21,6 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
         </processorPath>
         <module name="image-service" />
-      </profile>
-      <profile name="Annotation profile for Perfect8 Backend" enabled="true">
-        <sourceOutputDir name="target/generated-sources/annotations" />
-        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
-        <outputRelativeToContentRoot value="true" />
-        <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/${lombok.version}/lombok-${lombok.version}.jar" />
-        </processorPath>
-        <module name="common" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -38,10 +30,10 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="P8" options="" />
-      <module name="admin-service" options="" />
-      <module name="blog-service" options="" />
-      <module name="common" options="" />
-      <module name="email-service" options="" />
+      <module name="admin-service" options="-parameters" />
+      <module name="blog-service" options="-parameters" />
+      <module name="common" options="-parameters" />
+      <module name="email-service" options="-parameters" />
       <module name="image-service" options="-parameters" />
       <module name="perfect8.com" options="" />
       <module name="shop-service" options="-parameters" />

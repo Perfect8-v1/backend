@@ -8,7 +8,7 @@
     <!-- Parent POM -->
     <parent>
         <groupId>com.perfect8</groupId>
-        <artifactId>backend</artifactId>
+        <artifactId>perfect8-parent</artifactId>
         <version>1.0.0</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
