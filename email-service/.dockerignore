@@ -1,62 +1,36 @@
-# Maven build-filer (behövs inte i Docker-imagen)
-target/classes/
-target/generated-sources/
-target/maven-status/
-target/maven-archiver/
-target/test-classes/
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
 
-# IDE-filer som inte behövs i Docker
+# IDE
 .idea/
 *.iml
 .vscode/
-.settings/
 .classpath
 .project
+.settings/
 
-# Git-filer
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Git
 .git/
 .gitignore
-.gitattributes
 
-# Dokumentation och README
-README.md
-*.md
-
-# Källkod (vi kopierar bara den färdiga JAR-filen)
-src/
-
-# Maven-filer (behövs inte efter build)
-pom.xml
-mvnw
-mvnw.cmd
-.mvn/
-
-# Miljöfiler som kan innehålla känslig information
+# Environment
 .env
-.env.local
-.env.*.local
+*.env
 
-# Loggfiler
-*.log
-logs/
-
-# Temporära filer
-*.tmp
-*.swp
-*.bak
-*~
-
-# Test-databaser
-*.db
-*.sqlite
-
-# macOS system-filer
-.DS_Store
-
-# Windows system-filer
-Thumbs.db
-desktop.ini
-
-# Docker-filer (undvik rekursiv kopiering)
-Dockerfile
-docker-compose*.yml
+# Documentation
+*.md
+*.docx
+*.pdf
+*.txt

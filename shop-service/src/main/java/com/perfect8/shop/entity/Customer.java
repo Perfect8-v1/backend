@@ -1,99 +1,85 @@
 package com.perfect8.shop.entity;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entity representing a customer in the system.
- * Version 1.0 - Core customer functionality
- * NO BACKWARD COMPATIBILITY - Built right from the start!
- */
 @Entity
-@Table(name = "customers", indexes = {
-        @Index(name = "idx_customer_email", columnList = "email", unique = true),
-        @Index(name = "idx_customer_created", columnList = "created_at"),
-        @Index(name = "idx_customer_active", columnList = "is_active")
-})
+@Table(name = "customers")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = {"addresses", "orders", "cart"})
-@ToString(exclude = {"addresses", "orders", "cart", "password"})
+@ToString(exclude = {"addresses", "orders", "cart"})
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "customer_id")
     private Long customerId;
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    @Column(name = "email", nullable = false, unique = true, length = 255)
-    private String email;
-
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    @Column(name = "password", nullable = false)
-    private String password;
-
-    @NotBlank(message = "First name is required")
-    @Size(max = 100, message = "First name cannot exceed 100 characters")
-    @Column(name = "first_name", nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 100, message = "Last name cannot exceed 100 characters")
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(nullable = false, length = 100)
     private String lastName;
 
-    @Column(name = "phone_number", length = 20)
-    private String phoneNumber;
+    @Column(nullable = false, unique = true, length = 255)
+    private String email;
 
-    @Column(name = "role", nullable = false, length = 50)
+    @Column(nullable = false)
+    private String passwordHash;
+
+    @Column(length = 20)
+    private String phone;
+
+    @Column(nullable = false)
     @Builder.Default
-    private String role = "ROLE_USER";
+    private Boolean active = true;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(nullable = false)
     @Builder.Default
-    private boolean isActive = true;
+    private Boolean emailVerified = false;
 
-    @Column(name = "is_email_verified", nullable = false)
+    private LocalDateTime emailVerifiedAt;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdDate;
+
+    private LocalDateTime updatedDate;
+
+    private LocalDateTime lastLoginDate;
+
+    private String resetPasswordToken;
+
+    private LocalDateTime resetPasswordTokenExpiry;
+
+    // Version 1.0 - Enkla tillägg för att få det att kompilera
+    @Column(length = 50)
     @Builder.Default
-    private boolean isEmailVerified = false;
+    private String role = "CUSTOMER";
 
-    @Column(name = "email_verification_token")
+    @Builder.Default
+    private Boolean newsletterSubscribed = false;
+
+    @Builder.Default
+    private Boolean marketingConsent = false;
+
+    private String preferredLanguage;
+
+    private String preferredCurrency;
+
     private String emailVerificationToken;
 
-    @Column(name = "email_verification_sent_at")
     private LocalDateTime emailVerificationSentAt;
 
-    @Column(name = "password_reset_token")
-    private String passwordResetToken;
-
-    @Column(name = "password_reset_expires_at")
-    private LocalDateTime passwordResetExpiresAt;
-
-    @Column(name = "last_login_at")
-    private LocalDateTime lastLoginAt;
-
-    @Column(name = "failed_login_attempts")
     @Builder.Default
     private Integer failedLoginAttempts = 0;
 
-    @Column(name = "account_locked_until")
     private LocalDateTime accountLockedUntil;
 
-    // Relationships
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Address> addresses = new ArrayList<>();
@@ -105,269 +91,113 @@ public class Customer {
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Cart cart;
 
-    @Column(name = "default_billing_address_id")
-    private Long defaultBillingAddressId;
+    @PrePersist
+    protected void onCreate() {
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
+    }
 
-    @Column(name = "default_shipping_address_id")
-    private Long defaultShippingAddressId;
+    @PreUpdate
+    protected void onUpdate() {
+        updatedDate = LocalDateTime.now();
+    }
 
-    // Customer preferences (v1.0)
-    @Column(name = "newsletter_subscribed")
-    @Builder.Default
-    private Boolean newsletterSubscribed = false;
-
-    @Column(name = "marketing_consent")
-    @Builder.Default
-    private Boolean marketingConsent = false;
-
-    @Column(name = "preferred_language", length = 5)
-    @Builder.Default
-    private String preferredLanguage = "en";
-
-    @Column(name = "preferred_currency", length = 3)
-    @Builder.Default
-    private String preferredCurrency = "USD";
-
-    // Notes
-    @Column(name = "internal_notes", columnDefinition = "TEXT")
-    private String internalNotes;
-
-    // Timestamps
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    // ========================================
-    // Business methods - PROPER NAMING
-    // ========================================
-
-    /**
-     * Get full name of customer
-     */
+    // Helper metoder för Version 1.0
     public String getFullName() {
         return firstName + " " + lastName;
     }
 
-    /**
-     * Check if account is locked
-     */
+    public boolean isActive() {
+        return Boolean.TRUE.equals(active);
+    }
+
+    public boolean isEmailVerified() {
+        return Boolean.TRUE.equals(emailVerified);
+    }
+
     public boolean isAccountLocked() {
-        return accountLockedUntil != null &&
-                accountLockedUntil.isAfter(LocalDateTime.now());
+        return accountLockedUntil != null && accountLockedUntil.isAfter(LocalDateTime.now());
     }
 
-    /**
-     * Lock account for specified minutes
-     */
-    public void lockAccount(int minutes) {
-        this.accountLockedUntil = LocalDateTime.now().plusMinutes(minutes);
-    }
-
-    /**
-     * Unlock account
-     */
-    public void unlockAccount() {
-        this.accountLockedUntil = null;
-        this.failedLoginAttempts = 0;
-    }
-
-    /**
-     * Increment failed login attempts
-     */
     public void incrementFailedLoginAttempts() {
-        if (failedLoginAttempts == null) {
-            failedLoginAttempts = 0;
+        this.failedLoginAttempts = (this.failedLoginAttempts == null ? 0 : this.failedLoginAttempts) + 1;
+        if (this.failedLoginAttempts >= 5) {
+            this.accountLockedUntil = LocalDateTime.now().plusMinutes(30);
         }
-        failedLoginAttempts++;
     }
 
-    /**
-     * Reset failed login attempts
-     */
     public void resetFailedLoginAttempts() {
         this.failedLoginAttempts = 0;
+        this.accountLockedUntil = null;
     }
 
-    /**
-     * Update last login time
-     */
     public void updateLastLoginTime() {
-        this.lastLoginAt = LocalDateTime.now();
+        this.lastLoginDate = LocalDateTime.now();
     }
 
-    /**
-     * Check if password reset token is valid
-     */
-    public boolean isPasswordResetTokenValid() {
-        return passwordResetToken != null &&
-                passwordResetExpiresAt != null &&
-                passwordResetExpiresAt.isAfter(LocalDateTime.now());
+    // Alias metoder för kompatibilitet
+    public String getPassword() {
+        return passwordHash;
     }
 
-    /**
-     * Clear password reset token
-     */
-    public void clearPasswordResetToken() {
-        this.passwordResetToken = null;
-        this.passwordResetExpiresAt = null;
+    public void setPassword(String password) {
+        this.passwordHash = password;
     }
 
-    /**
-     * Generate email verification token
-     */
+    public String getPhoneNumber() {
+        return phone;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phone = phoneNumber;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdDate;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedDate;
+    }
+
+    public LocalDateTime getLastLoginAt() {
+        return lastLoginDate;
+    }
+
+    public void setPasswordResetToken(String token) {
+        this.resetPasswordToken = token;
+    }
+
+    public void setPasswordResetExpiresAt(LocalDateTime expiresAt) {
+        this.resetPasswordTokenExpiry = expiresAt;
+    }
+
+    public LocalDateTime getPasswordResetExpiresAt() {
+        return resetPasswordTokenExpiry;
+    }
+
     public void generateEmailVerificationToken() {
-        this.emailVerificationToken = generateToken();
+        this.emailVerificationToken = java.util.UUID.randomUUID().toString();
         this.emailVerificationSentAt = LocalDateTime.now();
     }
 
-    /**
-     * Verify email
-     */
-    public void verifyEmail() {
-        this.isEmailVerified = true;
-        this.emailVerificationToken = null;
-        this.emailVerificationSentAt = null;
-    }
-
-    /**
-     * Generate password reset token
-     */
-    public void generatePasswordResetToken() {
-        this.passwordResetToken = generateToken();
-        this.passwordResetExpiresAt = LocalDateTime.now().plusHours(1);
-    }
-
-    /**
-     * Add address
-     */
     public void addAddress(Address address) {
-        if (addresses == null) {
-            addresses = new ArrayList<>();
-        }
         addresses.add(address);
         address.setCustomer(this);
     }
 
-    /**
-     * Remove address
-     */
     public void removeAddress(Address address) {
-        if (addresses != null) {
-            addresses.remove(address);
-            address.setCustomer(null);
-
-            // Clear default if removed
-            if (address.getAddressId() != null) {
-                if (address.getAddressId().equals(defaultBillingAddressId)) {
-                    defaultBillingAddressId = null;
-                }
-                if (address.getAddressId().equals(defaultShippingAddressId)) {
-                    defaultShippingAddressId = null;
-                }
-            }
-        }
+        addresses.remove(address);
+        address.setCustomer(null);
     }
 
-    /**
-     * Get default billing address
-     */
-    public Address getDefaultBillingAddress() {
-        if (defaultBillingAddressId == null || addresses == null) {
-            return null;
-        }
-        return addresses.stream()
-                .filter(a -> defaultBillingAddressId.equals(a.getAddressId()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    /**
-     * Get default shipping address
-     */
     public Address getDefaultShippingAddress() {
-        if (defaultShippingAddressId == null || addresses == null) {
-            return null;
-        }
         return addresses.stream()
-                .filter(a -> defaultShippingAddressId.equals(a.getAddressId()))
+                .filter(a -> "SHIPPING".equals(a.getAddressType()) && a.getIsDefault())
                 .findFirst()
-                .orElse(null);
+                .orElse(addresses.stream()
+                        .filter(a -> "SHIPPING".equals(a.getAddressType()))
+                        .findFirst()
+                        .orElse(null));
     }
-
-    /**
-     * Check if customer has admin role
-     */
-    public boolean isAdmin() {
-        return "ROLE_ADMIN".equals(role);
-    }
-
-    /**
-     * Check if customer has staff role
-     */
-    public boolean isStaff() {
-        return "ROLE_STAFF".equals(role) || isAdmin();
-    }
-
-    /**
-     * Get total order count
-     */
-    public int getTotalOrderCount() {
-        return orders != null ? orders.size() : 0;
-    }
-
-    /**
-     * Check if customer can place order
-     */
-    public boolean canPlaceOrder() {
-        return isActive && isEmailVerified && !isAccountLocked();
-    }
-
-    @PrePersist
-    public void prePersist() {
-        if (role == null) {
-            role = "ROLE_USER";
-        }
-        if (preferredLanguage == null) {
-            preferredLanguage = "en";
-        }
-        if (preferredCurrency == null) {
-            preferredCurrency = "USD";
-        }
-        if (failedLoginAttempts == null) {
-            failedLoginAttempts = 0;
-        }
-        if (newsletterSubscribed == null) {
-            newsletterSubscribed = Boolean.FALSE;
-        }
-        if (marketingConsent == null) {
-            marketingConsent = Boolean.FALSE;
-        }
-    }
-
-    /**
-     * Generate unique token
-     */
-    private String generateToken() {
-        Long timestamp = System.currentTimeMillis();
-        String nanoTime = String.valueOf(System.nanoTime());
-        return timestamp + "-" + nanoTime.substring(nanoTime.length() - 6);
-    }
-
-    /**
-     * Version 2.0 features - commented out
-     *
-     * In v2.0, we'll add:
-     * - Customer segments
-     * - Loyalty points
-     * - Wishlist
-     * - Product reviews
-     * - Customer tags
-     * - Purchase history analytics
-     * - Preferred payment methods
-     * - Social login connections
-     */
 }
