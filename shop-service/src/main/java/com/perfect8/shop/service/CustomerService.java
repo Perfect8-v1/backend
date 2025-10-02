@@ -29,6 +29,11 @@ import java.util.stream.Collectors;
  * Customer Service for Shop Service
  * Version 1.0 - Core customer management functionality
  * NO BACKWARD COMPATIBILITY - Built right from the start!
+ * 
+ * FIXED: Uses correct field names:
+ * - Customer: phone (not phoneNumber), passwordHash
+ * - Address: street, apartment, isDefault (Boolean)
+ * - CustomerRepository: findByIsActiveTrue(pageable)
  */
 @Service
 @RequiredArgsConstructor
@@ -87,6 +92,7 @@ public class CustomerService {
 
     /**
      * Register new customer - Used by CustomerController
+     * FIXED: Uses correct field names (phone, passwordHash)
      */
     @Transactional
     public CustomerDTO registerCustomer(CustomerRegistrationDTO registrationDTO) {
@@ -97,16 +103,16 @@ public class CustomerService {
             throw new EmailAlreadyExistsException("Email already registered: " + registrationDTO.getEmail());
         }
 
-        // Create new customer with proper fields
+        // FIXED: Use correct field names
         Customer customer = Customer.builder()
                 .firstName(registrationDTO.getFirstName())
                 .lastName(registrationDTO.getLastName())
                 .email(registrationDTO.getEmail())
-                .password(passwordEncoder.encode(registrationDTO.getPassword()))
-                .phoneNumber(registrationDTO.getPhoneNumber())
+                .passwordHash(passwordEncoder.encode(registrationDTO.getPassword()))
+                .phone(registrationDTO.getPhoneNumber())
                 .role("ROLE_USER")
-                .isActive(true)
-                .isEmailVerified(false)
+                .active(true)
+                .emailVerified(false)
                 .newsletterSubscribed(registrationDTO.getNewsletterSubscribed())
                 .marketingConsent(registrationDTO.getMarketingConsent())
                 .preferredLanguage(registrationDTO.getPreferredLanguage())
@@ -129,6 +135,7 @@ public class CustomerService {
 
     /**
      * Update customer details
+     * FIXED: Uses setters that work with actual fields
      */
     @Transactional
     public CustomerDTO updateCustomer(Long customerIdLong, CustomerUpdateDTO updateDTO) {
@@ -149,7 +156,7 @@ public class CustomerService {
             customer.setLastName(updateDTO.getLastName());
         }
         if (updateDTO.getPhoneNumber() != null) {
-            customer.setPhoneNumber(updateDTO.getPhoneNumber());
+            customer.setPhone(updateDTO.getPhoneNumber());
         }
         if (updateDTO.getNewsletterSubscribed() != null) {
             customer.setNewsletterSubscribed(updateDTO.getNewsletterSubscribed());
@@ -167,10 +174,10 @@ public class CustomerService {
         // Handle password change if requested
         if (updateDTO.isPasswordChangeRequested()) {
             // Verify current password
-            if (!passwordEncoder.matches(updateDTO.getCurrentPassword(), customer.getPassword())) {
+            if (!passwordEncoder.matches(updateDTO.getCurrentPassword(), customer.getPasswordHash())) {
                 throw new UnauthorizedAccessException("Current password is incorrect");
             }
-            customer.setPassword(passwordEncoder.encode(updateDTO.getNewPassword()));
+            customer.setPasswordHash(passwordEncoder.encode(updateDTO.getNewPassword()));
         }
 
         Customer updatedCustomer = customerRepository.save(customer);
@@ -221,6 +228,7 @@ public class CustomerService {
 
     /**
      * Get all customers (paginated) - Admin only
+     * FIXED: Uses correct repository method name
      */
     @Transactional(readOnly = true)
     public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
@@ -233,6 +241,7 @@ public class CustomerService {
     /**
      * Search customers - Admin only
      * Simplified for v1.0 - advanced search in v2.0
+     * FIXED: Uses correct repository method name
      */
     @Transactional(readOnly = true)
     public Page<CustomerDTO> searchCustomers(String searchEmail, String searchName,
@@ -290,6 +299,7 @@ public class CustomerService {
 
     /**
      * Add address to customer
+     * FIXED: Uses correct Address field names (street, apartment, isDefault)
      */
     @Transactional
     public AddressDTO addCustomerAddress(Long customerIdLong, AddressDTO addressDTO) {
@@ -302,20 +312,22 @@ public class CustomerService {
             throw new UnauthorizedAccessException("Cannot add address to inactive customer");
         }
 
-        // FIXED: Use correct field names from Address entity
+        // If first address, make it default for BOTH billing and shipping
         boolean isFirstAddress = customer.getAddresses().isEmpty();
+        String addressType = isFirstAddress ? "BOTH" : 
+                            (addressDTO.getAddressType() != null ? addressDTO.getAddressType() : "BOTH");
 
+        // FIXED: Use correct field names from Address entity
         Address address = Address.builder()
                 .customer(customer)
-                .addressLine1(addressDTO.getStreetAddress())
-                .addressLine2(addressDTO.getAddressLine2())
+                .street(addressDTO.getStreetAddress())
+                .apartment(addressDTO.getAddressLine2())
                 .city(addressDTO.getCity())
                 .state(addressDTO.getState())
                 .postalCode(addressDTO.getPostalCode())
                 .country(addressDTO.getCountry())
-                .addressType(addressDTO.getAddressType())
-                .defaultShipping(isFirstAddress) // FIXED: Was isDefault
-                .defaultBilling(isFirstAddress)  // FIXED: Was isDefault
+                .addressType(addressType)
+                .isDefault(isFirstAddress)
                 .build();
 
         customer.addAddress(address);
@@ -327,6 +339,7 @@ public class CustomerService {
 
     /**
      * Update customer address
+     * FIXED: Uses correct Address field names and setters
      */
     @Transactional
     public AddressDTO updateCustomerAddress(Long customerIdLong, Long addressIdLong, AddressDTO addressDTO) {
@@ -343,9 +356,9 @@ public class CustomerService {
             throw new UnauthorizedAccessException("Address does not belong to this customer");
         }
 
-        // Update address fields
-        address.setAddressLine1(addressDTO.getStreetAddress());
-        address.setAddressLine2(addressDTO.getAddressLine2());
+        // FIXED: Use correct setter names
+        address.setStreet(addressDTO.getStreetAddress());
+        address.setApartment(addressDTO.getAddressLine2());
         address.setCity(addressDTO.getCity());
         address.setState(addressDTO.getState());
         address.setPostalCode(addressDTO.getPostalCode());
@@ -384,6 +397,7 @@ public class CustomerService {
 
     /**
      * Set default address for customer
+     * FIXED: Uses correct method name setIsDefault()
      */
     @Transactional
     public AddressDTO setDefaultAddress(Long customerIdLong, Long addressIdLong) {
@@ -397,13 +411,11 @@ public class CustomerService {
         // Clear current defaults and set new one
         for (Address addr : customer.getAddresses()) {
             if (addr.getAddressId().equals(addressIdLong)) {
-                // FIXED: Use correct method names
-                addr.setDefaultShipping(true);
-                addr.setDefaultBilling(true);
+                // FIXED: Use correct method name
+                addr.setIsDefault(true);
                 targetAddress = addr;
             } else {
-                addr.setDefaultShipping(false);
-                addr.setDefaultBilling(false);
+                addr.setIsDefault(false);
             }
         }
 
@@ -494,7 +506,7 @@ public class CustomerService {
         customer.generateEmailVerificationToken();
         customerRepository.save(customer);
 
-        // Send verification email - FIXED: Correct method name and parameters
+        // Send verification email
         try {
             String verificationToken = customer.getEmailVerificationToken();
             emailService.sendEmailVerification(customer.getEmail(), verificationToken);
@@ -506,6 +518,7 @@ public class CustomerService {
 
     /**
      * Convert Customer entity to DTO with null safety
+     * Uses alias getters that work correctly
      */
     private CustomerDTO convertToDTO(Customer customer) {
         if (customer == null) {
@@ -517,7 +530,7 @@ public class CustomerService {
                 .email(customer.getEmail())
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
-                .phoneNumber(customer.getPhoneNumber())
+                .phoneNumber(customer.getPhone())
                 .role(customer.getRole())
                 .isActive(customer.isActive())
                 .isEmailVerified(customer.isEmailVerified())
@@ -533,28 +546,35 @@ public class CustomerService {
 
     /**
      * Convert Address entity to DTO with null safety
+     * FIXED: Uses correct getter names (getStreet, getApartment, getIsDefault)
      */
     private AddressDTO convertToAddressDTO(Address address) {
         if (address == null) {
             throw new IllegalArgumentException("Cannot convert null Address to DTO");
         }
 
+        // FIXED: Use correct getter names
+        String addressType = address.getAddressType() != null ? address.getAddressType() : "BOTH";
+        boolean isDefault = address.getIsDefault() != null && address.getIsDefault();
+
         return AddressDTO.builder()
                 .addressId(address.getAddressId())
-                .streetAddress(address.getAddressLine1())
-                .addressLine2(address.getAddressLine2())
+                .streetAddress(address.getStreet())
+                .addressLine2(address.getApartment())
                 .city(address.getCity())
                 .state(address.getState())
                 .postalCode(address.getPostalCode())
                 .country(address.getCountry())
-                .addressType(address.getAddressType() != null ? address.getAddressType() : "BOTH")
-                .isDefaultShipping(address.isDefaultShipping())
-                .isDefaultBilling(address.isDefaultBilling())
+                .addressType(addressType)
+                .isDefaultShipping(isDefault && ("SHIPPING".equals(addressType) || "BOTH".equals(addressType)))
+                .isDefaultBilling(isDefault && ("BILLING".equals(addressType) || "BOTH".equals(addressType)))
                 .build();
     }
 
     /**
      * Convert Order to OrderDTO with null safety
+     * NOTE: Simplified for v1.0 - only core fields
+     * Will be expanded when Order.java is fixed
      */
     private OrderDTO convertToOrderDTO(Order order) {
         if (order == null) {

@@ -120,6 +120,10 @@ public class ShipmentController {
         return ResponseEntity.ok(convertToDTO(updated));
     }
 
+    /**
+     * Convert Shipment entity to DTO
+     * FIXED: Use correct field names from Shipment entity (Magnum Opus principle)
+     */
     private ShipmentDTO convertToDTO(Shipment shipment) {
         return ShipmentDTO.builder()
                 .shipmentId(shipment.getShipmentId())
@@ -128,15 +132,19 @@ public class ShipmentController {
                 .carrier(shipment.getCarrier())
                 .shippingMethod(shipment.getShippingMethod())
                 .status(shipment.getShipmentStatus())
-                .shippedDate(shipment.getShippedDate())
+                // FIXED: Entity has shippedDate, DTO has shippedAt
+                .shippedAt(shipment.getShippedDate())
                 .estimatedDeliveryDate(shipment.getEstimatedDeliveryDate())
-                .actualDeliveryDate(shipment.getDeliveredDate())
+                // FIXED: Entity has deliveredDate, DTO has deliveredAt
+                .deliveredAt(shipment.getDeliveredDate())
                 .recipientName(shipment.getRecipientName())
-                .addressLine1(shipment.getAddressLine1())
-                .addressLine2(shipment.getAddressLine2())
-                .city(shipment.getCity())
-                .postalCode(shipment.getPostalCode())
-                .country(shipment.getCountry())
+                // FIXED: Use shippingStreet, shippingCity, etc from entity
+                .shippingAddress(shipment.getShippingAddress())
+                .shippingStreet(shipment.getShippingStreet())
+                .shippingCity(shipment.getShippingCity())
+                .shippingState(shipment.getShippingState())
+                .shippingPostalCode(shipment.getShippingPostalCode())
+                .shippingCountry(shipment.getShippingCountry())
                 .build();
     }
 }

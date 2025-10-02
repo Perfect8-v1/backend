@@ -1,9 +1,9 @@
 package com.perfect8.shop.controller;
 
 import com.perfect8.shop.dto.*;
+import com.perfect8.shop.service.ShippingService;
 import com.perfect8.shop.service.CartService;
 import com.perfect8.shop.service.CustomerService;
-import com.perfect8.shop.service.ShippingService;
 import com.perfect8.shop.entity.Customer;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

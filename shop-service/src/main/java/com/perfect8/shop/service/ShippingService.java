@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class ShippingService {
 
         options.add(ShippingOptionDTO.builder()
                 .shippingOptionId(1L)
-                .shippingMethod("STANDARD")  // Rätt namn!
+                .shippingMethod("STANDARD")
                 .carrier("PostNord")
                 .description("Standard leverans 3-5 arbetsdagar")
                 .basePrice(standardPrice)
@@ -46,7 +47,7 @@ public class ShippingService {
         // Express leverans (Version 1.0 - håll det enkelt)
         options.add(ShippingOptionDTO.builder()
                 .shippingOptionId(2L)
-                .shippingMethod("EXPRESS")  // Rätt namn!
+                .shippingMethod("EXPRESS")
                 .carrier("DHL")
                 .description("Express leverans 1-2 arbetsdagar")
                 .basePrice(new BigDecimal("149.00"))
@@ -63,12 +64,43 @@ public class ShippingService {
         List<ShippingOptionDTO> options = calculateShippingOptions(request);
 
         return ShippingOptionResponse.builder()
-                .availableOptions(options)  // Rätt namn enligt din DTO!
+                .availableOptions(options)
                 .defaultOption("STANDARD")
                 .freeShippingThreshold(FREE_SHIPPING_THRESHOLD)
                 .currentOrderValue(request.getOrderAmount())
                 .freeShippingEligible(request.getOrderAmount().compareTo(FREE_SHIPPING_THRESHOLD) >= 0)
                 .build();
+    }
+
+    /**
+     * Get available shipping options
+     * ADDED: Method called by CartController
+     */
+    public ShippingOptionResponse getShippingOptions(
+            String customerId, 
+            ShippingCalculationRequest request) {
+        log.info("Getting shipping options for customer: {}", customerId);
+        return calculateShipping(request);
+    }
+
+    /**
+     * Calculate tax - Version 1.0 simplified
+     * ADDED: Method called by CartController
+     * TODO: Version 2.0 - Integrate with proper tax service
+     */
+    public TaxCalculationResponse calculateTax(TaxCalculationRequest request) {
+        log.info("Calculating tax for order amount: {}", request.getOrderAmount());
+        
+        // V1.0: Simple percentage-based tax
+        BigDecimal taxRate = new BigDecimal("0.25"); // 25% moms för Sverige
+        BigDecimal taxAmount = request.getOrderAmount().multiply(taxRate);
+        
+        return TaxCalculationResponse.builder()
+            .taxAmount(taxAmount)
+            .taxRate(taxRate)
+            .taxableAmount(request.getOrderAmount())
+            .country(request.getCountry() != null ? request.getCountry() : "SE")
+            .build();
     }
 
     @Transactional
@@ -86,25 +118,32 @@ public class ShippingService {
             throw new IllegalStateException("No shipping address found for order");
         }
 
+        // FIXED: Use correct field names from Shipment entity (Magnum Opus principle)
         Shipment shipment = Shipment.builder()
                 .order(order)
                 .trackingNumber(generateTrackingNumber())
                 .carrier("EXPRESS".equals(shippingMethod) ? "DHL" : "PostNord")
                 .shippingMethod(shippingMethod)
                 .recipientName(order.getCustomer().getFirstName() + " " + order.getCustomer().getLastName())
-                .recipientPhone(order.getCustomer().getPhone())
-                .recipientEmail(order.getCustomer().getEmail())
-                .addressLine1(shippingAddress.getStreet())
-                .addressLine2(shippingAddress.getApartment())
-                .city(shippingAddress.getCity())
-                .state(shippingAddress.getState())
-                .postalCode(shippingAddress.getPostalCode())
-                .country(shippingAddress.getCountry())
-                .status("PENDING")
+                // REMOVED: .recipientPhone() - field doesn't exist in Shipment entity v1.0
+                // REMOVED: .recipientEmail() - field doesn't exist in Shipment entity v1.0
+                // FIXED: Use shippingStreet, shippingCity, etc (not addressLine1)
+                .shippingAddress(shippingAddress.getStreet() + ", " + 
+                                shippingAddress.getCity() + ", " + 
+                                shippingAddress.getPostalCode())
+                .shippingStreet(shippingAddress.getStreet())
+                .shippingCity(shippingAddress.getCity())
+                .shippingState(shippingAddress.getState())
+                .shippingPostalCode(shippingAddress.getPostalCode())
+                .shippingCountry(shippingAddress.getCountry())
+                // FIXED: Use shipmentStatus (not status)
+                .shipmentStatus("PENDING")
+                // FIXED: Use shippedDate, actualDeliveryDate (not deliveryDate)
                 .shippedDate(null)
-                .deliveryDate(null)
-                .createdDate(LocalDateTime.now())
-                .updatedDate(LocalDateTime.now())
+                .actualDeliveryDate(null)
+                // FIXED: Use createdAt, lastUpdated (not createdDate, updatedDate)
+                .createdAt(LocalDateTime.now())
+                .lastUpdated(LocalDateTime.now())
                 .build();
 
         return shipmentRepository.save(shipment);
@@ -115,14 +154,19 @@ public class ShippingService {
         Shipment shipment = shipmentRepository.findById(shipmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Shipment not found"));
 
+        // FIXED: Use setShipmentStatus (or setStatus alias method)
         shipment.setStatus(status);
+        
         if ("SHIPPED".equals(status)) {
             shipment.setShippedDate(LocalDateTime.now());
         } else if ("DELIVERED".equals(status)) {
-            shipment.setDeliveryDate(LocalDateTime.now());
+            // FIXED: Use setDeliveredDate and setActualDeliveryDate
+            shipment.setDeliveredDate(LocalDateTime.now());
+            shipment.setActualDeliveryDate(LocalDate.now());
         }
 
-        shipment.setUpdatedDate(LocalDateTime.now());
+        // FIXED: Use setLastUpdated (not setUpdatedDate)
+        shipment.setLastUpdated(LocalDateTime.now());
         shipmentRepository.save(shipment);
 
         log.info("Updated shipment {} status to {} with notes: {}", shipmentId, status, notes);

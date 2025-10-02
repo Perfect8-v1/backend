@@ -44,24 +44,23 @@ public class AuthService {
             throw new BadCredentialsException("Email already registered");
         }
 
-        // Create new customer - using CORRECT field names
-        // VERSION 1.0 - Newsletter och marketing consent är inte kritiska
+        // Create new customer - FIXED: Use passwordHash not password
         Customer newCustomer = Customer.builder()
                 .email(registerRequest.getEmail())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
+                .passwordHash(passwordEncoder.encode(registerRequest.getPassword()))  // FIXED
                 .firstName(registerRequest.getFirstName())
                 .lastName(registerRequest.getLastName())
-                .phoneNumber(registerRequest.getPhoneNumber())
+                .phone(registerRequest.getPhoneNumber())  // FIXED: Use phone not phoneNumber
                 .role("ROLE_USER")
-                .isActive(true)
-                .isEmailVerified(false)
-                .newsletterSubscribed(false)  // Default för v1.0
-                .marketingConsent(false)      // Default för v1.0
+                .active(true)
+                .emailVerified(false)
+                .newsletterSubscribed(false)
+                .marketingConsent(false)
                 .build();
 
         Customer savedCustomer = customerRepository.save(newCustomer);
 
-        // Send welcome email - CORRECT signature (2 parameters)
+        // Send welcome email
         String fullName = savedCustomer.getFirstName() + " " + savedCustomer.getLastName();
         emailService.sendWelcomeEmail(
                 savedCustomer.getEmail(),
@@ -83,7 +82,7 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
 
         // Verify password
-        if (!passwordEncoder.matches(loginRequest.getPassword(), customer.getPassword())) {
+        if (!passwordEncoder.matches(loginRequest.getPassword(), customer.getPasswordHash())) {
             customer.incrementFailedLoginAttempts();
             customerRepository.save(customer);
             log.warn("Failed login attempt for email: {}", loginRequest.getEmail());
@@ -105,7 +104,7 @@ public class AuthService {
         customer.resetFailedLoginAttempts();
         customerRepository.save(customer);
 
-        // Generate JWT token with correct signature (3 parameters)
+        // Generate JWT token
         Long customerIdLong = customer.getCustomerId();
         String jwtToken = jwtTokenProvider.generateToken(
                 customerIdLong,
@@ -118,7 +117,7 @@ public class AuthService {
         return AuthDto.JwtResponse.builder()
                 .token(jwtToken)
                 .tokenType("Bearer")
-                .expiresIn(3600L) // 1 hour
+                .expiresIn(3600L)
                 .customerId(customerIdLong)
                 .email(customer.getEmail())
                 .firstName(customer.getFirstName())
@@ -163,12 +162,12 @@ public class AuthService {
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
         // Verify old password
-        if (!passwordEncoder.matches(oldPasswordString, customer.getPassword())) {
+        if (!passwordEncoder.matches(oldPasswordString, customer.getPasswordHash())) {
             throw new BadCredentialsException("Current password is incorrect");
         }
 
         // Update password
-        customer.setPassword(passwordEncoder.encode(newPasswordString));
+        customer.setPasswordHash(passwordEncoder.encode(newPasswordString));
         customerRepository.save(customer);
 
         log.info("Password changed for customer ID: {}", customerIdLong);
@@ -184,14 +183,14 @@ public class AuthService {
 
         // Generate reset token
         String resetTokenString = generateResetToken();
-        customer.setPasswordResetToken(resetTokenString);
-        customer.setPasswordResetExpiresAt(LocalDateTime.now().plusHours(1));
+        customer.setResetPasswordToken(resetTokenString);
+        customer.setResetPasswordTokenExpiry(LocalDateTime.now().plusHours(1));
         customerRepository.save(customer);
 
-        // Send reset email - FIXED: Using correct EmailService method signature
+        // Send reset email
         emailService.sendPasswordResetEmail(
                 customer.getEmail(),
-                resetTokenString  // FIXED: Send the token, not the fullName
+                resetTokenString
         );
 
         log.info("Password reset requested for email: {}", customerEmail);
@@ -206,15 +205,15 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid reset token"));
 
         // Check token expiry
-        if (customer.getPasswordResetExpiresAt() != null &&
-                customer.getPasswordResetExpiresAt().isBefore(LocalDateTime.now())) {
+        if (customer.getResetPasswordTokenExpiry() != null &&
+                customer.getResetPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
             throw new BadCredentialsException("Reset token has expired");
         }
 
         // Update password
-        customer.setPassword(passwordEncoder.encode(newPasswordString));
-        customer.setPasswordResetToken(null);
-        customer.setPasswordResetExpiresAt(null);
+        customer.setPasswordHash(passwordEncoder.encode(newPasswordString));
+        customer.setResetPasswordToken(null);
+        customer.setResetPasswordTokenExpiry(null);
         customerRepository.save(customer);
 
         log.info("Password reset successfully for customer: {}", customer.getEmail());
@@ -228,7 +227,7 @@ public class AuthService {
         Customer customer = customerRepository.findByEmailVerificationToken(verificationTokenString)
                 .orElseThrow(() -> new BadCredentialsException("Invalid verification token"));
 
-        // Check token expiry (24 hours from when it was sent)
+        // Check token expiry (24 hours)
         if (customer.getEmailVerificationSentAt() != null &&
                 customer.getEmailVerificationSentAt().isBefore(LocalDateTime.now().minusHours(24))) {
             throw new BadCredentialsException("Verification token has expired");
@@ -238,6 +237,7 @@ public class AuthService {
         customer.setEmailVerified(true);
         customer.setEmailVerificationToken(null);
         customer.setEmailVerificationSentAt(null);
+        customer.setEmailVerifiedAt(LocalDateTime.now());
         customerRepository.save(customer);
 
         log.info("Email verified for customer: {}", customer.getEmail());
@@ -261,7 +261,7 @@ public class AuthService {
         customer.setEmailVerificationSentAt(LocalDateTime.now());
         customerRepository.save(customer);
 
-        // Send verification email - FIXED: Using correct method
+        // Send verification email
         emailService.sendEmailVerification(
                 customer.getEmail(),
                 verificationTokenString
@@ -291,24 +291,21 @@ public class AuthService {
         Customer customer = customerRepository.findById(customerIdLong)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        // Simple string comparison for v1.0
         return customer.getRole().equals(requiredRoleString) ||
-                customer.getRole().equals("ROLE_ADMIN"); // Admin has all permissions
+                customer.getRole().equals("ROLE_ADMIN");
     }
 
     /**
      * Generate reset token
      */
     private String generateResetToken() {
-        UUID randomUuid = UUID.randomUUID();
-        return randomUuid.toString();
+        return UUID.randomUUID().toString();
     }
 
     /**
      * Generate verification token
      */
     private String generateVerificationToken() {
-        UUID randomUuid = UUID.randomUUID();
-        return randomUuid.toString();
+        return UUID.randomUUID().toString();
     }
 }

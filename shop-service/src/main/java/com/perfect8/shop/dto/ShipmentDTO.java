@@ -17,6 +17,7 @@ import java.time.temporal.ChronoUnit;
  * Version 1.0 - Critical tracking and delivery information
  *
  * Accurate shipment tracking prevents customer anxiety and support calls!
+ * FIXED: Field names match Shipment.java entity exactly (Magnum Opus principle)
  */
 @Data
 @Builder
@@ -28,8 +29,9 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Shipment ID - null for new shipments
+     * FIXED: Changed from 'id' to 'shipmentId' to match entity
      */
-    private Long id;
+    private Long shipmentId;
 
     /**
      * Associated order ID - Required
@@ -141,9 +143,23 @@ public class ShipmentDTO implements Serializable {
     private String shippingAddress;
 
     /**
-     * Structured shipping address ID (references AddressDTO)
+     * ADDED: Structured address fields matching Shipment.java entity
+     * Following Magnum Opus principle: SAME field names as entity
      */
-    private Long shippingAddressId;
+    @Size(max = 255, message = "Shipping street cannot exceed 255 characters")
+    private String shippingStreet;
+
+    @Size(max = 100, message = "Shipping city cannot exceed 100 characters")
+    private String shippingCity;
+
+    @Size(max = 50, message = "Shipping state cannot exceed 50 characters")
+    private String shippingState;
+
+    @Size(max = 20, message = "Shipping postal code cannot exceed 20 characters")
+    private String shippingPostalCode;
+
+    @Size(max = 50, message = "Shipping country cannot exceed 50 characters")
+    private String shippingCountry;
 
     /**
      * Current location/status from carrier

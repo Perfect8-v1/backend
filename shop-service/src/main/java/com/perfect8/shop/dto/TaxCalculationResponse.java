@@ -5,60 +5,54 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.List;
-import java.util.Map;
 
+/**
+ * Tax Calculation Response DTO - Version 1.0
+ * Contains calculated tax information
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaxCalculationResponse {
+public class TaxCalculationResponse implements Serializable {
 
-    private BigDecimal subtotal;
-    private BigDecimal totalTaxAmount;
-    private BigDecimal totalAmount;
-    private String currency;
+    private static final long serialVersionUID = 1L;
 
+    /**
+     * Calculated tax amount
+     */
+    private BigDecimal taxAmount;
+
+    /**
+     * Tax rate applied (e.g., 0.25 for 25%)
+     */
     private BigDecimal taxRate;
-    private String taxJurisdiction;
-    private String calculationMethod;
 
-    private List<TaxBreakdownItem> taxBreakdown;
-    private List<LineItemTax> lineItemTaxes;
+    /**
+     * Amount tax was calculated on
+     */
+    private BigDecimal taxableAmount;
 
-    private Boolean isTaxExempt;
-    private String exemptionReason;
+    /**
+     * Country code
+     */
+    private String country;
 
-    private String calculationId;
-    private String provider;
-    private Map<String, Object> providerResponse;
+    /**
+     * Optional state/region
+     */
+    private String state;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TaxBreakdownItem {
-        private String taxType;
-        private String description;
-        private BigDecimal rate;
-        private BigDecimal amount;
-        private String jurisdiction;
-        private String authority;
-    }
+    /**
+     * Tax description (e.g., "Swedish VAT 25%")
+     */
+    private String taxDescription;
 
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class LineItemTax {
-        private Long productId;
-        private String productSku;
-        private BigDecimal lineSubtotal;
-        private BigDecimal lineTaxAmount;
-        private BigDecimal effectiveTaxRate;
-        private List<TaxBreakdownItem> lineTaxBreakdown;
-        private Boolean isTaxable;
-        private String taxCategory;
-    }
+    /**
+     * Whether tax is included in product prices
+     */
+    @Builder.Default
+    private boolean taxIncluded = true;
 }

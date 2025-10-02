@@ -421,20 +421,19 @@ public class OrderService {
                     "Order must be in PROCESSING or PAID status to ship");
         }
 
-        // Create shipment with ShippingOptionDTO
-        ShippingOptionDTO shippingOption = ShippingOptionDTO.builder()
-                .shippingOptionId(999L)  // Placeholder ID for manual shipping
-                .name("Manual Shipping")
-                .carrier(carrier)
-                .price(order.getShippingAmount() != null ? order.getShippingAmount() : BigDecimal.ZERO)
-                .estimatedDays(5) // Default estimate
-                .build();
+        // V1.0: Simplified - no ShippingOptionDTO needed for large speakers
+        String shippingMethod = order.getShippingAmount() != null && 
+                                order.getShippingAmount().compareTo(new BigDecimal("100")) > 0 
+                                ? "EXPRESS" : "STANDARD";
+        
+        Shipment shipment = shippingService.createShipment(order, shippingMethod);
 
-        Shipment shipment = shippingService.createShipment(order, shippingOption);
-
-        // Update tracking number on the created shipment
+        // Update tracking info
         if (trackingNumber != null && !trackingNumber.isEmpty()) {
             shipment.setTrackingNumber(trackingNumber);
+        }
+        if (carrier != null && !carrier.isEmpty()) {
+            shipment.setCarrier(carrier);
         }
 
         order.setShipment(shipment);
