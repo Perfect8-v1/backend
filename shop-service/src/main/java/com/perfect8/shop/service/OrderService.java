@@ -469,7 +469,8 @@ public class OrderService {
         if (order.getShipment() != null) {
             Shipment shipment = order.getShipment();
             shipment.setActualDeliveryDate(LocalDateTime.now().toLocalDate());
-            shipment.setDeliveryNotes(deliveryNotes);
+// VERSION 2.0: deliveryNotes feature commented out
+// shipment.setDeliveryNotes(orderRequest.getDeliveryNotes());
             shipment.setStatus("DELIVERED");
         }
 
