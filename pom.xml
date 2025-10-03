@@ -28,7 +28,7 @@
         <spring-boot.version>3.3.7</spring-boot.version>
 
         <!-- Spring Cloud version -->
-        <spring-cloud.version>2023.0.0</spring-cloud.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
 
         <!-- JWT version -->
         <jwt.version>0.11.5</jwt.version>
