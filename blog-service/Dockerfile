@@ -8,7 +8,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 WORKDIR /app
 
-COPY blog-service-1.0.0.jar app.jar
+COPY blog-service/target/blog-service-1.0.0.jar app.jar
 
 USER spring:spring
 

@@ -8,7 +8,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 WORKDIR /app
 
-COPY target/image-service.jar app.jar
+COPY image-service/target/image-service.jar app.jar
 
 USER spring:spring
 

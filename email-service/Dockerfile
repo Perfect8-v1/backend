@@ -8,7 +8,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 WORKDIR /app
 
-COPY target/email-service-1.0.0.jar app.jar
+COPY email-service/target/email-service-1.0.0.jar app.jar
 
 USER spring:spring
 

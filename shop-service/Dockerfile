@@ -8,7 +8,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 WORKDIR /app
 
-COPY target/shop-service-1.0.0.jar app.jar
+COPY shop-service/target/shop-service-1.0.0.jar app.jar
 
 USER spring:spring
 

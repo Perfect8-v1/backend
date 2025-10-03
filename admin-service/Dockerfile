@@ -8,7 +8,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 
 WORKDIR /app
 
-COPY admin-service-1.0.0.jar app.jar
+COPY admin-service/target/admin-service-1.0.0.jar app.jar
 
 USER spring:spring
 
