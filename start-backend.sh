@@ -1,105 +1,141 @@
 #!/bin/bash
-# Perfect8 Backend Startup Script för Frontend-utvecklare
+# Perfect8 Backend Startup Script
+# Optimerat för Podman på Alpine Linux
 
 set -e
+
+# Hantera --clean flagga
+CLEAN_START=false
+if [ "$1" == "--clean" ]; then
+    CLEAN_START=true
+    echo "⚠️  CLEAN START MODE"
+    echo "   Detta raderar ALL data (databas + bilder)!"
+    echo ""
+    read -p "   Är du säker? (yes/no): " CONFIRM
+    if [ "$CONFIRM" != "yes" ]; then
+        echo "❌ Avbruten"
+        exit 0
+    fi
+fi
 
 echo "🚀 Perfect8 Backend Startup"
 echo "=========================="
 
-# Kontrollera att Docker/Podman är installerat
-if command -v docker &> /dev/null; then
-    DOCKER_CMD="docker"
-elif command -v podman &> /dev/null; then
-    DOCKER_CMD="podman"
-else
-    echo "❌ Varken Docker eller Podman hittades!"
-    echo "   Installera Docker Desktop eller Podman först."
+# Exportera Docker format för healthchecks
+export BUILDAH_FORMAT=docker
+echo "✅ BUILDAH_FORMAT=docker (för healthchecks)"
+
+# Kontrollera att Podman är installerat
+if ! command -v podman &> /dev/null; then
+    echo "❌ Podman hittades inte!"
+    echo "   Installera Podman först: apk add podman"
     exit 1
 fi
 
-echo "✅ Använder: $DOCKER_CMD"
+echo "✅ Använder: Podman"
 
-# Steg 1: Bygga JAR-filer
+# Kontrollera att podman-compose finns
+if ! command -v podman-compose &> /dev/null; then
+    echo "❌ podman-compose hittades inte!"
+    echo "   Installera: pip install podman-compose"
+    exit 1
+fi
+
+# Steg 1: Verifiera att vi är i rätt mapp
+if [ ! -f "docker-compose.yml" ]; then
+    echo "❌ docker-compose.yml hittades inte!"
+    echo "   Kör detta skript från ~/perfect8 mappen"
+    exit 1
+fi
+
+if [ ! -f ".env" ]; then
+    echo "⚠️  .env fil saknas! Skapar från .env.example..."
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        echo "   ⚠️  VIKTIGT: Redigera .env med riktiga lösenord!"
+        echo "   nano .env"
+        exit 1
+    else
+        echo "❌ Ingen .env.example hittades!"
+        exit 1
+    fi
+fi
+
+echo "✅ Konfigurationsfiler OK"
+
+# Steg 2: Städa gamla containers (om de finns)
 echo ""
-echo "📦 Steg 1: Bygger Java-applikationer..."
-echo "----------------------------------------"
-mvn clean package -DskipTests -q
-if [ $? -eq 0 ]; then
-    echo "✅ Maven build lyckades!"
-else
-    echo "❌ Maven build misslyckades!"
-    exit 1
+echo "🧹 Steg 1: Städar gamla containers..."
+echo "--------------------------------------"
+podman-compose down 2>/dev/null || true
+podman pod rm -f pod_perfect8 2>/dev/null || true
+
+# Om --clean, ta bort volymer
+if [ "$CLEAN_START" = true ]; then
+    echo ""
+    echo "🗑️  Tar bort alla volymer (databas + bilder)..."
+    podman volume rm perfect8_db_data 2>/dev/null || true
+    podman volume rm perfect8_image_storage 2>/dev/null || true
+    echo "✅ Volymer borttagna - börjar från scratch"
 fi
 
-# Steg 2: Bygga Docker images
+echo "✅ Städning klar"
+
+# Steg 3: Bygga alla Docker images
 echo ""
 echo "🐳 Steg 2: Bygger Docker images..."
 echo "-----------------------------------"
+echo "   (Detta kan ta 5-10 minuter första gången)"
 
-SERVICES=("admin-service" "blog-service" "email-service" "image-service" "shop-service")
+podman-compose build --no-cache
 
-for SERVICE in "${SERVICES[@]}"; do
-    echo "   Bygger $SERVICE..."
-    cd $SERVICE
-    $DOCKER_CMD build -t localhost/perfect8-$SERVICE:latest . -q
-    cd ..
-done
+if [ $? -eq 0 ]; then
+    echo "✅ Alla Docker images byggda!"
+else
+    echo "❌ Build misslyckades!"
+    exit 1
+fi
 
-echo "✅ Alla Docker images byggda!"
-
-# Steg 3: Starta alla services
+# Steg 4: Starta alla services
 echo ""
 echo "🎯 Steg 3: Startar alla services..."
 echo "------------------------------------"
 
-if [ "$DOCKER_CMD" == "docker" ]; then
-    docker-compose up -d
-else
-    podman-compose up -d
-fi
+podman-compose up -d
 
 # Vänta på att services ska starta
 echo ""
 echo "⏳ Väntar på att services ska bli redo..."
-sleep 10
+sleep 15
 
-# Steg 4: Verifiera att allt körs
+# Steg 5: Visa status
 echo ""
 echo "🔍 Steg 4: Verifierar services..."
 echo "----------------------------------"
 
-PORTS=(8081 8082 8083 8084 8085 8080)
-NAMES=("Admin" "Blog" "Email" "Image" "Shop" "Gateway")
-
-for i in "${!PORTS[@]}"; do
-    if curl -f -s http://localhost:${PORTS[$i]}/actuator/health > /dev/null 2>&1 || \
-       curl -f -s http://localhost:${PORTS[$i]}/health > /dev/null 2>&1; then
-        echo "✅ ${NAMES[$i]} Service: http://localhost:${PORTS[$i]} - ONLINE"
-    else
-        echo "⚠️  ${NAMES[$i]} Service: http://localhost:${PORTS[$i]} - STARTAR..."
-    fi
-done
+podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 echo ""
 echo "=================================="
 echo "🎉 Perfect8 Backend är igång!"
 echo "=================================="
 echo ""
-echo "📋 API Gateway: http://localhost:8080"
-echo "📚 API Docs: http://localhost:8080/api/docs"
+echo "🔗 Service-URLer:"
+echo "   Admin:    http://localhost:8083"
+echo "   Blog:     http://localhost:8080"
+echo "   Email:    http://localhost:8084"
+echo "   Image:    http://localhost:8081"
+echo "   Shop:     http://localhost:8082"
+echo "   Database: localhost:3306"
 echo ""
-echo "🔗 Direkta service-URLer:"
-echo "   Admin:  http://localhost:8081"
-echo "   Blog:   http://localhost:8082"
-echo "   Email:  http://localhost:8083"
-echo "   Image:  http://localhost:8084"
-echo "   Shop:   http://localhost:8085"
+echo "💡 Användbara kommandon:"
+echo "   podman-compose logs -f          # Följ alla loggar"
+echo "   podman-compose logs -f shop-service  # Följ en service"
+echo "   podman ps                       # Lista containers"
+echo "   ./stop-backend.sh               # Stoppa allt"
+echo "   ./start-backend.sh --clean      # Starta från scratch (raderar data!)"
 echo ""
-echo "💡 Tips för frontend-utvecklare:"
-echo "   - Använd http://localhost:8080/api/v1/* för alla API-anrop"
-echo "   - JWT token krävs för skyddade endpoints"
-echo "   - CORS är konfigurerat för localhost:3000, 5173, 4200, 8080"
-echo ""
-echo "🛑 För att stoppa alla services:"
-echo "   ./stop-backend.sh"
+echo "📊 Kolla status:"
+echo "   curl http://localhost:8083/actuator/health  # Admin service"
+echo "   curl http://localhost:8082/actuator/health  # Shop service"
 echo ""

@@ -35,23 +35,23 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     // ========== Customer Status Queries ==========
 
-    Page<Customer> findByIsActiveTrue(Pageable pageable);
+    Page<Customer> findByActiveTrue(Pageable pageable);
 
-    Page<Customer> findByIsActiveFalse(Pageable pageable);
+    Page<Customer> findByActiveFalse(Pageable pageable);
 
-    long countByIsActiveTrue();
+    long countByActiveTrue();
 
-    long countByIsActiveFalse();
+    long countByActiveFalse();
 
-    long countByIsEmailVerifiedTrue();
+    long countByEmailVerifiedTrue();
 
-    long countByIsEmailVerifiedFalse();
+    long countByEmailVerifiedFalse();
 
-    List<Customer> findByIsEmailVerifiedTrue();
+    List<Customer> findByEmailVerifiedTrue();
 
-    List<Customer> findByIsEmailVerifiedFalse();
+    List<Customer> findByEmailVerifiedFalse();
 
-    List<Customer> findByIsActive(Boolean isActive);
+    List<Customer> findByActive(Boolean active);
 
     // ========== Search Queries ==========
 
@@ -84,7 +84,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query("SELECT c FROM Customer c WHERE c.orders IS EMPTY")
     List<Customer> findCustomersWithoutOrders();
 
-    @Query("SELECT c FROM Customer c WHERE c.isEmailVerified = false AND c.isActive = true")
+    @Query("SELECT c FROM Customer c WHERE c.emailVerified = false AND c.active = true")
     List<Customer> findCustomersNeedingEmailVerification();
 
     /* ========== VERSION 2.0 - COMMENTED OUT ==========

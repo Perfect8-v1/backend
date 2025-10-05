@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
  * Customer Service for Shop Service
  * Version 1.0 - Core customer management functionality
  * NO BACKWARD COMPATIBILITY - Built right from the start!
- * 
+ *
  * FIXED: Uses correct field names:
  * - Customer: phone (not phoneNumber), passwordHash
  * - Address: street, apartment, isDefault (Boolean)
- * - CustomerRepository: findByIsActiveTrue(pageable)
+ * - CustomerRepository: findByActiveTrue(pageable)
  */
 @Service
 @RequiredArgsConstructor
@@ -234,7 +234,7 @@ public class CustomerService {
     public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
         log.debug("Fetching all customers, page: {}", pageable.getPageNumber());
 
-        Page<Customer> customers = customerRepository.findByIsActiveTrue(pageable);
+        Page<Customer> customers = customerRepository.findByActiveTrue(pageable);
         return customers.map(this::convertToDTO);
     }
 
@@ -251,7 +251,7 @@ public class CustomerService {
 
         // Simple implementation for v1.0 - just return all active customers
         // TODO v2.0: Add proper search with Specifications or QueryDSL
-        Page<Customer> customers = customerRepository.findByIsActiveTrue(pageable);
+        Page<Customer> customers = customerRepository.findByActiveTrue(pageable);
 
         return customers.map(this::convertToDTO);
     }
@@ -314,8 +314,8 @@ public class CustomerService {
 
         // If first address, make it default for BOTH billing and shipping
         boolean isFirstAddress = customer.getAddresses().isEmpty();
-        String addressType = isFirstAddress ? "BOTH" : 
-                            (addressDTO.getAddressType() != null ? addressDTO.getAddressType() : "BOTH");
+        String addressType = isFirstAddress ? "BOTH" :
+                (addressDTO.getAddressType() != null ? addressDTO.getAddressType() : "BOTH");
 
         // FIXED: Use correct field names from Address entity
         Address address = Address.builder()
