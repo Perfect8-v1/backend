@@ -27,11 +27,13 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByEmailAndCustomerIdNot(String email, Long customerId);
 
-    Optional<Customer> findByPasswordResetToken(String passwordResetToken);
+    // FIXED: Changed from findByPasswordResetToken to findByResetPasswordToken
+    // to match actual field name in Customer entity (resetPasswordToken)
+    Optional<Customer> findByResetPasswordToken(String resetPasswordToken);
 
     Optional<Customer> findByEmailVerificationToken(String emailVerificationToken);
 
-    Optional<Customer> findByPhoneNumber(String phone);
+    Optional<Customer> findByPhone(String phone);
 
     // ========== Customer Status Queries ==========
 
@@ -70,7 +72,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(c.email) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-            "c.phoneNumber LIKE CONCAT('%', :searchTerm, '%')")
+            "c.phone LIKE CONCAT('%', :searchTerm, '%')")
     Page<Customer> searchCustomers(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     // ========== Basic Statistics for v1.0 ==========
@@ -84,7 +86,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query("SELECT c FROM Customer c WHERE c.orders IS EMPTY")
     List<Customer> findCustomersWithoutOrders();
 
-    // FIXED: Changed from c.isEmailVerified to c.emailVerified (Lombok boolean naming)
     @Query("SELECT c FROM Customer c WHERE c.emailVerified = false AND c.active = true")
     List<Customer> findCustomersNeedingEmailVerification();
 
@@ -112,14 +113,14 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     // @Query("SELECT c FROM Customer c WHERE c.registrationDate >= :date ORDER BY c.registrationDate DESC")
     // List<Customer> findNewCustomers(@Param("date") LocalDateTime date);
 
-    // @Query("SELECT c FROM Customer c WHERE c.passwordResetToken IS NOT NULL " +
-    //         "AND c.passwordResetTokenExpiry < :now")
+    // @Query("SELECT c FROM Customer c WHERE c.resetPasswordToken IS NOT NULL " +
+    //         "AND c.resetPasswordTokenExpiry < :now")
     // List<Customer> findCustomersWithExpiredPasswordResetTokens(@Param("now") LocalDateTime now);
 
     // @Query("SELECT c FROM Customer c WHERE c.isDeleted = true AND c.deletedDate < :date")
     // List<Customer> findDeletedCustomersOlderThan(@Param("date") LocalDateTime date);
 
-    // @Query("UPDATE Customer c SET c.passwordResetToken = null, c.passwordResetTokenExpiry = null " +
-    //         "WHERE c.passwordResetTokenExpiry < :now")
+    // @Query("UPDATE Customer c SET c.resetPasswordToken = null, c.resetPasswordTokenExpiry = null " +
+    //         "WHERE c.resetPasswordTokenExpiry < :now")
     // int clearExpiredPasswordResetTokens(@Param("now") LocalDateTime now);
 }

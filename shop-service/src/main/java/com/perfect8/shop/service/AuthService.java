@@ -201,7 +201,7 @@ public class AuthService {
      */
     @Transactional
     public void resetPassword(String resetTokenString, String newPasswordString) {
-        Customer customer = customerRepository.findByPasswordResetToken(resetTokenString)
+        Customer customer = customerRepository.findByResetPasswordToken(resetTokenString)
                 .orElseThrow(() -> new BadCredentialsException("Invalid reset token"));
 
         // Check token expiry
