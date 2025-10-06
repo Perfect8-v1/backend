@@ -20,7 +20,8 @@ public interface EmailTemplateRepository extends JpaRepository<EmailTemplate, Lo
 
     List<EmailTemplate> findByActiveTrue();
 
-    List<EmailTemplate> findByTemplateName(String templateType);
+    // FIXED: Changed from findByTemplateName to findByName
+    List<EmailTemplate> findByName(String name);
 
     List<EmailTemplate> findByCategory(String category);
 

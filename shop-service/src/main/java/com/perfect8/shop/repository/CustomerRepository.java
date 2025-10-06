@@ -84,6 +84,7 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query("SELECT c FROM Customer c WHERE c.orders IS EMPTY")
     List<Customer> findCustomersWithoutOrders();
 
+    // FIXED: Changed from c.isEmailVerified to c.emailVerified (Lombok boolean naming)
     @Query("SELECT c FROM Customer c WHERE c.emailVerified = false AND c.active = true")
     List<Customer> findCustomersNeedingEmailVerification();
 
