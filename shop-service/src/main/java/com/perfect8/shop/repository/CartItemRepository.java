@@ -58,8 +58,10 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query("SELECT DISTINCT ci.product.category.name FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
     List<String> findDistinctCategoriesByCustomerId(@Param("customerId") Long customerId);
 
+    /* VERSION 2.0 - Product brand field not implemented in v1.0
     @Query("SELECT DISTINCT ci.product.brand FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
     List<String> findDistinctBrandsByCustomerId(@Param("customerId") Long customerId);
+    */
 
     @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId = :cartId")
     void deleteByCartId(@Param("cartId") Long cartId);
