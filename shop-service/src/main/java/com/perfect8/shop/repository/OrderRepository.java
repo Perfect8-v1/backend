@@ -19,6 +19,7 @@ import java.util.Optional;
  * Version 1.0 - Core order management
  * NO HELPERS, NO ALIASES, NO WRAPPERS - Built right from the start!
  * Follows Magnum Opus: orderId not id, customerId not id, createdDate not createdAt
+ * FIXED: Payment queries now use EXISTS with o.payments (List<Payment>) instead of o.payment
  */
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -51,7 +52,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * Kept for backward compatibility during refactoring
      */
     @Deprecated
-    default Page<Order> findByCustomerOrderByCreatedAtDesc(Customer customer, Pageable pageable) {
+    default Page<Order> findByCustomerOrderByCreatedDateDesc(Customer customer, Pageable pageable) {
         return findByCustomerOrderByCreatedDateDesc(customer, pageable);
     }
 
@@ -112,9 +113,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Find orders with payment issues
-     * Uses paymentId from Payment entity
+     * FIXED: Uses EXISTS with o.payments (List) instead of o.payment
+     * Checks if order has any payment with FAILED or PENDING status
      */
-    @Query("SELECT o FROM Order o WHERE o.payment.paymentStatus = 'FAILED' OR o.payment.paymentStatus = 'PENDING'")
+    @Query("SELECT o FROM Order o WHERE EXISTS (SELECT p FROM o.payments p WHERE p.paymentStatus = 'FAILED' OR p.paymentStatus = 'PENDING')")
     List<Order> findOrdersWithPaymentIssues(Pageable pageable);
 
     /**
@@ -125,8 +127,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Find orders ready to ship
+     * FIXED: Uses EXISTS with o.payments (List) instead of o.payment
+     * Checks if order is PROCESSING and has a COMPLETED payment
      */
-    @Query("SELECT o FROM Order o WHERE o.orderStatus = 'PROCESSING' AND o.payment.paymentStatus = 'COMPLETED'")
+    @Query("SELECT o FROM Order o WHERE o.orderStatus = 'PROCESSING' AND EXISTS (SELECT p FROM o.payments p WHERE p.paymentStatus = 'COMPLETED')")
     List<Order> findOrdersReadyToShip(Pageable pageable);
 
     /**
