@@ -11,6 +11,10 @@
 
 # Build
 target/
+*.class
+*.jar
+!**/src/main/**/*.jar
+!**/src/test/**/*.jar
 build/
 out/
 .env
@@ -23,7 +27,6 @@ out/
 *.zip
 *.tar.gz
 *.rar
-*.jar
 *.war
 *.ear
 
@@ -33,3 +36,7 @@ deploy/
 #Övrigt
 *.tmp
 *.swp
+
+# OS
+.DS_Store
+Thumbs.db
