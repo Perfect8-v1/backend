@@ -48,15 +48,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByCustomerOrderByCreatedDateDesc(Customer customer, Pageable pageable);
 
     /**
-     * @deprecated Use findByCustomerOrderByCreatedDateDesc instead
-     * Kept for backward compatibility during refactoring
-     */
-    @Deprecated
-    default Page<Order> findByCustomerOrderByCreatedDateDesc(Customer customer, Pageable pageable) {
-        return findByCustomerOrderByCreatedDateDesc(customer, pageable);
-    }
-
-    /**
      * Find orders by status
      */
     Page<Order> findByOrderStatus(OrderStatus status, Pageable pageable);

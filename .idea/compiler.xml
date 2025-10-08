@@ -7,21 +7,20 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="blog-service" />
+        <module name="admin-service" />
+        <module name="email-service" />
       </profile>
-      <profile name="Annotation profile for Perfect8 Parent" enabled="true">
+      <profile name="Annotation profile for Perfect8 Backend" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
-          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.30/lombok-1.18.30.jar" />
+          <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.36/lombok-1.18.36.jar" />
         </processorPath>
-        <module name="shop-service" />
-        <module name="blog-service" />
         <module name="common" />
-        <module name="admin-service" />
+        <module name="shop-service" />
         <module name="image-service" />
-        <module name="email-service" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>

@@ -1,14 +1,28 @@
 package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
 /**
- * Shipment Tracking Entity - Tracks shipment status updates
- * Version 2.0 - Advanced tracking functionality
+ * Shipment Tracking Entity - Version 1.0
+ * Magnum Opus Compliant: Lombok annotations, no manual getters/setters
+ * Tracks shipment status updates and location history
  */
 @Entity
 @Table(name = "shipment_tracking")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(exclude = {"shipment"})
+@ToString(exclude = {"shipment"})
 public class ShipmentTracking {
 
     @Id
@@ -21,7 +35,7 @@ public class ShipmentTracking {
     private Shipment shipment;
 
     @Column(nullable = false, length = 50)
-    private String status; // PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION, etc.
+    private String status; // PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION
 
     @Column(length = 255)
     private String location;
@@ -47,17 +61,7 @@ public class ShipmentTracking {
     @Column(name = "next_scheduled_delivery")
     private LocalDateTime nextScheduledDelivery;
 
-    // Default constructor
-    public ShipmentTracking() {}
-
-    // Constructor
-    public ShipmentTracking(Shipment shipment, String status, String location, String description) {
-        this.shipment = shipment;
-        this.status = status;
-        this.location = location;
-        this.description = description;
-        this.timestamp = LocalDateTime.now();
-    }
+    // ========== JPA LIFECYCLE CALLBACKS ==========
 
     @PrePersist
     protected void onCreate() {
@@ -66,96 +70,16 @@ public class ShipmentTracking {
         }
     }
 
-    // Getters and Setters
-    public Long getShipmentTrackingId() {
-        return shipmentTrackingId;
-    }
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates ALL getters/setters:
+    // getShipmentTrackingId() / setShipmentTrackingId()
+    // getShipment() / setShipment()
+    // getStatus() / setStatus()
+    // etc.
+    // NO manual getters/setters - Lombok handles everything
 
-    public void setShipmentTrackingId(Long shipmentTrackingId) {
-        this.shipmentTrackingId = shipmentTrackingId;
-    }
+    // ========== BUSINESS METHODS ==========
 
-    public Shipment getShipment() {
-        return shipment;
-    }
-
-    public void setShipment(Shipment shipment) {
-        this.shipment = shipment;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getEventCode() {
-        return eventCode;
-    }
-
-    public void setEventCode(String eventCode) {
-        this.eventCode = eventCode;
-    }
-
-    public String getEventDetails() {
-        return eventDetails;
-    }
-
-    public void setEventDetails(String eventDetails) {
-        this.eventDetails = eventDetails;
-    }
-
-    public String getDeliveryConfirmation() {
-        return deliveryConfirmation;
-    }
-
-    public void setDeliveryConfirmation(String deliveryConfirmation) {
-        this.deliveryConfirmation = deliveryConfirmation;
-    }
-
-    public String getExceptionType() {
-        return exceptionType;
-    }
-
-    public void setExceptionType(String exceptionType) {
-        this.exceptionType = exceptionType;
-    }
-
-    public LocalDateTime getNextScheduledDelivery() {
-        return nextScheduledDelivery;
-    }
-
-    public void setNextScheduledDelivery(LocalDateTime nextScheduledDelivery) {
-        this.nextScheduledDelivery = nextScheduledDelivery;
-    }
-
-    // Business methods
     public boolean isDelivered() {
         return "DELIVERED".equals(status);
     }
@@ -166,6 +90,10 @@ public class ShipmentTracking {
 
     public boolean isInTransit() {
         return "IN_TRANSIT".equals(status) || "OUT_FOR_DELIVERY".equals(status);
+    }
+
+    public boolean isPickedUp() {
+        return "PICKED_UP".equals(status);
     }
 
     public String getDisplayDescription() {
@@ -190,26 +118,19 @@ public class ShipmentTracking {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ShipmentTracking)) return false;
-        ShipmentTracking that = (ShipmentTracking) o;
-        return shipmentTrackingId != null && shipmentTrackingId.equals(that.shipmentTrackingId);
+    public boolean hasLocation() {
+        return location != null && !location.trim().isEmpty();
     }
 
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
+    public boolean hasException() {
+        return exceptionType != null && !exceptionType.trim().isEmpty();
     }
 
-    @Override
-    public String toString() {
-        return "ShipmentTracking{" +
-                "shipmentTrackingId=" + shipmentTrackingId +
-                ", status='" + status + '\'' +
-                ", location='" + location + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
+    public boolean hasDeliveryConfirmation() {
+        return deliveryConfirmation != null && !deliveryConfirmation.trim().isEmpty();
+    }
+
+    public boolean isRescheduled() {
+        return nextScheduledDelivery != null;
     }
 }
