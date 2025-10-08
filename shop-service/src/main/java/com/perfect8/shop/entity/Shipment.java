@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Shipment Entity - Version 1.0
  * Magnum Opus Compliant: No alias methods, consistent naming
- * UPDATED: Moved essential v2.0 fields to v1.0 for frontend compatibility
+ * UPDATED: Moved essential v2.0 fields to v1.0 for facilitate frontend compatibility
  */
 @Entity
 @Table(name = "shipments")
