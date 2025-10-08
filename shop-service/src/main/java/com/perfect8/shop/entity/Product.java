@@ -14,6 +14,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Product Entity - Version 1.0
+ * Magnum Opus Compliant: Descriptive field names (productId not id)
+ */
 @Entity
 @Table(name = "products")
 @Data
@@ -26,7 +30,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long productId;  // CHANGED: id → productId (Magnum Opus)
 
     @Column(name = "name", nullable = false, length = 200)
     private String name;
@@ -122,15 +126,15 @@ public class Product {
     private List<CartItem> cartItems = new ArrayList<>();
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
         if (stockQuantity == null) {
             stockQuantity = 0;
         }
@@ -150,20 +154,15 @@ public class Product {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
-    // Getter alias for compatibility with services expecting getProductId()
-    public Long getProductId() {
-        return id;
-    }
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates: getProductId() / setProductId()
+    // No alias methods - one method, one name
 
-    // Setter alias for compatibility with services expecting setProductId()
-    public void setProductId(Long productId) {
-        this.id = productId;
-    }
+    // ========== Business methods ==========
 
-    // Business methods
     public boolean isInStock() {
         return stockQuantity != null && stockQuantity > 0;
     }

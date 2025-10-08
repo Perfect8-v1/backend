@@ -13,55 +13,60 @@ import java.util.Optional;
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
-    List<CartItem> findByCartId(Long cartId);
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId")
+    List<CartItem> findByCartId(@Param("cartId") Long cartId);
 
-    List<CartItem> findByProductId(Long productId);
+    @Query("SELECT ci FROM CartItem ci WHERE ci.product.productId = :productId")
+    List<CartItem> findByProductId(@Param("productId") Long productId);
 
-    Optional<CartItem> findByCartIdAndProductId(Long cartId, Long productId);
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId AND ci.product.productId = :productId")
+    Optional<CartItem> findByCartIdAndProductId(@Param("cartId") Long cartId, @Param("productId") Long productId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.id = :customerId")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
     List<CartItem> findByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.id = :customerId AND ci.cart.saved = false")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = false")
     List<CartItem> findActiveCartItemsByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.id = :customerId AND ci.cart.saved = true")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = true")
     List<CartItem> findSavedCartItemsByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.available = false")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.stockAvailable = false")
     List<CartItem> findUnavailableItems();
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.selected = true")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId AND ci.isGift = true")
     List<CartItem> findSelectedItemsByCartId(@Param("cartId") Long cartId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.id = :cartId AND ci.selected = false")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId AND ci.isGift = false")
     List<CartItem> findUnselectedItemsByCartId(@Param("cartId") Long cartId);
 
-    @Query("SELECT COUNT(ci) FROM CartItem ci WHERE ci.cart.customer.id = :customerId")
+    @Query("SELECT COUNT(ci) FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
     Integer countByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT SUM(ci.quantity) FROM CartItem ci WHERE ci.cart.customer.id = :customerId AND ci.cart.saved = false")
+    @Query("SELECT SUM(ci.quantity) FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = false")
     Integer sumQuantityByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT SUM(ci.totalPrice) FROM CartItem ci WHERE ci.cart.customer.id = :customerId AND ci.cart.saved = false")
+    @Query("SELECT SUM(ci.subtotal) FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = false")
     Double sumTotalPriceByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.isGift = true AND ci.cart.customer.id = :customerId")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.isGift = true AND ci.cart.customer.customerId = :customerId")
     List<CartItem> findGiftItemsByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.addedAt < :cutoffDate AND ci.cart.saved = false")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.addedAt < :cutoffDate AND ci.isSavedForLater = false")
     List<CartItem> findOldCartItems(@Param("cutoffDate") LocalDateTime cutoffDate);
 
-    @Query("SELECT DISTINCT ci.productCategory FROM CartItem ci WHERE ci.cart.customer.id = :customerId")
+    @Query("SELECT DISTINCT ci.product.category.name FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
     List<String> findDistinctCategoriesByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT DISTINCT ci.productBrand FROM CartItem ci WHERE ci.cart.customer.id = :customerId")
+    @Query("SELECT DISTINCT ci.product.brand FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
     List<String> findDistinctBrandsByCustomerId(@Param("customerId") Long customerId);
 
-    void deleteByCartId(Long cartId);
+    @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId = :cartId")
+    void deleteByCartId(@Param("cartId") Long cartId);
 
-    void deleteByProductId(Long productId);
+    @Query("DELETE FROM CartItem ci WHERE ci.product.productId = :productId")
+    void deleteByProductId(@Param("productId") Long productId);
 
-    @Query("DELETE FROM CartItem ci WHERE ci.cart.id IN (SELECT c.id FROM Cart c WHERE c.expiresAt < :expiryDate)")
+    @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId IN (SELECT c.cartId FROM Cart c WHERE c.expiresAt < :expiryDate)")
     void deleteByExpiredCart(@Param("expiryDate") LocalDateTime expiryDate);
 }

@@ -18,6 +18,7 @@ import java.util.Optional;
  * Repository for Order entity
  * Version 1.0 - Core order management
  * NO HELPERS, NO ALIASES, NO WRAPPERS - Built right from the start!
+ * Follows Magnum Opus: orderId not id, customerId not id, createdDate not createdAt
  */
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -29,20 +30,30 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Find orders by customer
-     * FIXED: Was findByCustomer_CustomerId - Spring understands the relationship!
+     * Spring Data understands the relationship - no underscore needed!
      */
     Page<Order> findByCustomer(Customer customer, Pageable pageable);
 
     /**
      * Find orders by customer ID with pagination
-     * Alternative method using customer ID directly
+     * Alternative method using customerId directly
      */
     Page<Order> findByCustomerCustomerId(Long customerId, Pageable pageable);
 
     /**
-     * Find orders by customer ordered by created date
+     * Find orders by customer ordered by created date (DESC)
+     * FIXED: Uses createdDate to match Order entity (Magnum Opus)
      */
-    Page<Order> findByCustomerOrderByCreatedAtDesc(Customer customer, Pageable pageable);
+    Page<Order> findByCustomerOrderByCreatedDateDesc(Customer customer, Pageable pageable);
+
+    /**
+     * @deprecated Use findByCustomerOrderByCreatedDateDesc instead
+     * Kept for backward compatibility during refactoring
+     */
+    @Deprecated
+    default Page<Order> findByCustomerOrderByCreatedAtDesc(Customer customer, Pageable pageable) {
+        return findByCustomerOrderByCreatedDateDesc(customer, pageable);
+    }
 
     /**
      * Find orders by status
@@ -56,8 +67,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Find orders created between dates
+     * FIXED: Uses createdDate to match Order entity
      */
-    Page<Order> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+    Page<Order> findByCreatedDateBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
     /**
      * Find orders by customer and status
@@ -86,19 +98,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Find recent orders
-     * FIXED: Was findTopNByOrderByCreatedAtDesc - use Pageable for limiting
+     * FIXED: Uses createdDate to match Order entity
      */
-    List<Order> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    List<Order> findAllByOrderByCreatedDateDesc(Pageable pageable);
 
     /**
      * Find orders requiring attention (specific statuses)
      * For v1.0, this is a simple status check
+     * FIXED: Uses createdDate in ORDER BY
      */
-    @Query("SELECT o FROM Order o WHERE o.orderStatus IN :statuses ORDER BY o.createdAt DESC")
+    @Query("SELECT o FROM Order o WHERE o.orderStatus IN :statuses ORDER BY o.createdDate DESC")
     List<Order> findOrdersRequiringAttention(@Param("statuses") List<OrderStatus> statuses, Pageable pageable);
 
     /**
      * Find orders with payment issues
+     * Uses paymentId from Payment entity
      */
     @Query("SELECT o FROM Order o WHERE o.payment.paymentStatus = 'FAILED' OR o.payment.paymentStatus = 'PENDING'")
     List<Order> findOrdersWithPaymentIssues(Pageable pageable);
@@ -117,14 +131,17 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Get order count for customer since date
+     * Uses customerId explicitly
+     * FIXED: Uses createdDate to match Order entity
      */
-    @Query("SELECT COUNT(o) FROM Order o WHERE o.customer.customerId = :customerId AND o.createdAt >= :sinceDate")
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.customer.customerId = :customerId AND o.createdDate >= :sinceDate")
     long countCustomerOrdersSince(@Param("customerId") Long customerId, @Param("sinceDate") LocalDateTime sinceDate);
 
     /**
      * Find customer's last order
+     * FIXED: Uses createdDate to match Order entity
      */
-    Optional<Order> findFirstByCustomerOrderByCreatedAtDesc(Customer customer);
+    Optional<Order> findFirstByCustomerOrderByCreatedDateDesc(Customer customer);
 
     /**
      * Delete orders by customer (for GDPR compliance)
@@ -138,8 +155,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     /**
      * Find orders by customer email
      * Simple implementation for v1.0
+     * FIXED: Uses createdDate in ORDER BY
      */
-    @Query("SELECT o FROM Order o WHERE o.customer.email = :email ORDER BY o.createdAt DESC")
+    @Query("SELECT o FROM Order o WHERE o.customer.email = :email ORDER BY o.createdDate DESC")
     Page<Order> findByCustomerEmail(@Param("email") String email, Pageable pageable);
 
     /**
@@ -151,20 +169,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Find today's orders
+     * FIXED: Uses createdDate to match Order entity
      */
-    @Query("SELECT o FROM Order o WHERE DATE(o.createdAt) = CURRENT_DATE ORDER BY o.createdAt DESC")
+    @Query("SELECT o FROM Order o WHERE DATE(o.createdDate) = CURRENT_DATE ORDER BY o.createdDate DESC")
     List<Order> findTodaysOrders();
 
     /**
      * Count today's orders
+     * FIXED: Uses createdDate to match Order entity
      */
-    @Query("SELECT COUNT(o) FROM Order o WHERE DATE(o.createdAt) = CURRENT_DATE")
+    @Query("SELECT COUNT(o) FROM Order o WHERE DATE(o.createdDate) = CURRENT_DATE")
     long countTodaysOrders();
 
     // Version 2.0 features - commented out
     /*
     // Analytics queries for v2.0
-    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.createdAt BETWEEN :startDate AND :endDate")
+    @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.createdDate BETWEEN :startDate AND :endDate")
     BigDecimal calculateRevenueBetween(@Param("startDate") LocalDateTime startDate,
                                        @Param("endDate") LocalDateTime endDate);
 

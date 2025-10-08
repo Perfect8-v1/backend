@@ -14,21 +14,26 @@ import java.util.Optional;
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
-    Optional<Cart> findByCustomer(Customer customer);
+    @Query("SELECT c FROM Cart c WHERE c.customer = :customer")
+    Optional<Cart> findByCustomer(@Param("customer") Customer customer);
 
-    Optional<Cart> findByCustomerId(Long customerId);
+    @Query("SELECT c FROM Cart c WHERE c.customer.customerId = :customerId")
+    Optional<Cart> findByCustomerId(@Param("customerId") Long customerId);
 
-    List<Cart> findByCustomerIdAndCreatedAtBetween(Long customerId, LocalDateTime start, LocalDateTime end);
+    @Query("SELECT c FROM Cart c WHERE c.customer.customerId = :customerId AND c.createdAt BETWEEN :start AND :end")
+    List<Cart> findByCustomerIdAndCreatedAtBetween(@Param("customerId") Long customerId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    @Query("SELECT c FROM Cart c WHERE c.customer.id = :customerId AND c.updatedAt > :since")
+    @Query("SELECT c FROM Cart c WHERE c.customer.customerId = :customerId AND c.lastModified > :since")
     List<Cart> findRecentCartsByCustomer(@Param("customerId") Long customerId, @Param("since") LocalDateTime since);
 
-    @Query("SELECT COUNT(c) FROM Cart c WHERE c.customer.id = :customerId")
+    @Query("SELECT COUNT(c) FROM Cart c WHERE c.customer.customerId = :customerId")
     Long countByCustomerId(@Param("customerId") Long customerId);
 
-    void deleteByCustomer(Customer customer);
+    @Query("DELETE FROM Cart c WHERE c.customer = :customer")
+    void deleteByCustomer(@Param("customer") Customer customer);
 
-    void deleteByCustomerId(Long customerId);
+    @Query("DELETE FROM Cart c WHERE c.customer.customerId = :customerId")
+    void deleteByCustomerId(@Param("customerId") Long customerId);
 
     @Query("SELECT c FROM Cart c WHERE c.totalAmount > :minAmount")
     List<Cart> findCartsWithMinimumAmount(@Param("minAmount") java.math.BigDecimal minAmount);

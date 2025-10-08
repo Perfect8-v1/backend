@@ -15,6 +15,7 @@ import java.util.Optional;
 /**
  * ShipmentService - Version 1.0
  * CRUD operations for Shipment entities
+ * MAGNUM OPUS COMPLIANT: Uses setShipmentStatus() matching entity field
  */
 @Slf4j
 @Service
@@ -43,7 +44,8 @@ public class ShipmentService {
     @Transactional
     public void updateShipmentStatus(Long shipmentId, String status) {
         Shipment shipment = getShipmentById(shipmentId);
-        shipment.setStatus(status);
+        // FIXED: setStatus() → setShipmentStatus() (matches Shipment.shipmentStatus field)
+        shipment.setShipmentStatus(status);
         shipmentRepository.save(shipment);
     }
 

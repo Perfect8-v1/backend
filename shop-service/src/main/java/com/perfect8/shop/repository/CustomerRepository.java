@@ -25,10 +25,9 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     boolean existsByEmail(String email);
 
-    boolean existsByEmailAndCustomerIdNot(String email, Long customerId);
+    @Query("SELECT CASE WHEN COUNT(c) > 0 THEN true ELSE false END FROM Customer c WHERE c.email = :email AND c.customerId != :customerId")
+    boolean existsByEmailAndCustomerIdNot(@Param("email") String email, @Param("customerId") Long customerId);
 
-    // FIXED: Changed from findByPasswordResetToken to findByResetPasswordToken
-    // to match actual field name in Customer entity (resetPasswordToken)
     Optional<Customer> findByResetPasswordToken(String resetPasswordToken);
 
     Optional<Customer> findByEmailVerificationToken(String emailVerificationToken);

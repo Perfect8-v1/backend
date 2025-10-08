@@ -63,13 +63,13 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     /**
      * Get total quantity ordered for a product
      */
-    @Query("SELECT SUM(oi.quantity) FROM OrderItem oi WHERE oi.product.id = :productId")
+    @Query("SELECT SUM(oi.quantity) FROM OrderItem oi WHERE oi.product.productId = :productId")
     Integer getTotalQuantityOrderedForProduct(@Param("productId") Long productId);
 
     /**
      * Get total revenue for a product
      */
-    @Query("SELECT SUM(oi.price * oi.quantity) FROM OrderItem oi WHERE oi.product.id = :productId")
+    @Query("SELECT SUM(oi.price * oi.quantity) FROM OrderItem oi WHERE oi.product.productId = :productId")
     BigDecimal getTotalRevenueForProduct(@Param("productId") Long productId);
 
     /**
@@ -86,7 +86,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     @Query("SELECT oi FROM OrderItem oi " +
             "JOIN FETCH oi.order o " +
             "JOIN FETCH oi.product p " +
-            "WHERE oi.order.id = :orderId")
+            "WHERE oi.order.orderId = :orderId")
     List<OrderItem> findByOrderIdWithDetails(@Param("orderId") Long orderId);
 
     /**
@@ -98,21 +98,21 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     /**
      * Calculate total value of order items
      */
-    @Query("SELECT SUM(oi.price * oi.quantity) FROM OrderItem oi WHERE oi.order.id = :orderId")
+    @Query("SELECT SUM(oi.price * oi.quantity) FROM OrderItem oi WHERE oi.order.orderId = :orderId")
     BigDecimal calculateOrderTotal(@Param("orderId") Long orderId);
 
     /**
      * Find order items by customer
      */
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.customer.id = :customerId")
+    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.customer.customerId = :customerId")
     List<OrderItem> findByCustomerId(@Param("customerId") Long customerId);
 
     /**
      * Get customer's purchase history for a product
      */
     @Query("SELECT oi FROM OrderItem oi " +
-            "WHERE oi.order.customer.id = :customerId " +
-            "AND oi.product.id = :productId " +
+            "WHERE oi.order.customer.customerId = :customerId " +
+            "AND oi.product.productId = :productId " +
             "ORDER BY oi.order.createdAt DESC")
     List<OrderItem> findCustomerPurchaseHistoryForProduct(@Param("customerId") Long customerId,
                                                           @Param("productId") Long productId);
@@ -127,10 +127,10 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     /**
      * Get product sales by date range
      */
-    @Query("SELECT oi.product.id, SUM(oi.quantity), SUM(oi.price * oi.quantity) " +
+    @Query("SELECT oi.product.productId, SUM(oi.quantity), SUM(oi.price * oi.quantity) " +
             "FROM OrderItem oi " +
             "WHERE oi.order.createdAt BETWEEN :startDate AND :endDate " +
-            "GROUP BY oi.product.id")
+            "GROUP BY oi.product.productId")
     List<Object[]> getProductSalesByDateRange(@Param("startDate") LocalDateTime startDate,
                                               @Param("endDate") LocalDateTime endDate);
 
@@ -143,7 +143,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     /**
      * Get average order item quantity for a product
      */
-    @Query("SELECT AVG(oi.quantity) FROM OrderItem oi WHERE oi.product.id = :productId")
+    @Query("SELECT AVG(oi.quantity) FROM OrderItem oi WHERE oi.product.productId = :productId")
     Double getAverageQuantityForProduct(@Param("productId") Long productId);
 
     /**
@@ -155,23 +155,23 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     /**
      * Count unique customers who ordered a product
      */
-    @Query("SELECT COUNT(DISTINCT oi.order.customer.id) FROM OrderItem oi WHERE oi.product.id = :productId")
+    @Query("SELECT COUNT(DISTINCT oi.order.customer.customerId) FROM OrderItem oi WHERE oi.product.productId = :productId")
     Long countUniqueCustomersForProduct(@Param("productId") Long productId);
 
     /**
      * Update order item price
      */
-    @Query("UPDATE OrderItem oi SET oi.price = :price WHERE oi.id = :itemId")
-    int updatePrice(@Param("itemId") Long itemId, @Param("price") BigDecimal price);
+    @Query("UPDATE OrderItem oi SET oi.price = :price WHERE oi.orderItemId = :orderItemId")
+    int updatePrice(@Param("orderItemId") Long orderItemId, @Param("price") BigDecimal price);
 
     /**
      * Update order item quantity
      */
-    @Query("UPDATE OrderItem oi SET oi.quantity = :quantity WHERE oi.id = :itemId")
-    int updateQuantity(@Param("itemId") Long itemId, @Param("quantity") Integer quantity);
+    @Query("UPDATE OrderItem oi SET oi.quantity = :quantity WHERE oi.orderItemId = :orderItemId")
+    int updateQuantity(@Param("orderItemId") Long orderItemId, @Param("quantity") Integer quantity);
 
     /**
      * Bulk delete order items
      */
-    void deleteByIdIn(List<Long> itemIds);
+    void deleteByOrderItemIdIn(List<Long> orderItemIds);
 }

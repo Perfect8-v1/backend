@@ -9,7 +9,6 @@ import com.perfect8.shop.exception.UnauthorizedAccessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +18,17 @@ import java.util.UUID;
 /**
  * Authentication Service - Version 1.0
  * Handles authentication and authorization
- * NO BACKWARD COMPATIBILITY - Built right from the start!
+ *
+ * SECURITY MODEL:
+ * - Frontend creates passwordHash (NEVER sends plain password)
+ * - Backend stores and compares passwordHash only
+ * - NO passwordEncoder in this service - Frontend handles hashing
+ *
+ * Magnum Opus Principles:
+ * - Readable variable names (customerId not id)
+ * - NO backward compatibility - built right from start
+ * - NO alias methods - one method, one name
+ * - Use passwordHash ONLY - never password
  */
 @Service
 @RequiredArgsConstructor
@@ -28,12 +37,12 @@ import java.util.UUID;
 public class AuthService {
 
     private final CustomerRepository customerRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
 
     /**
      * Register new customer
+     * Frontend sends passwordHash - we store it directly
      */
     @Transactional
     public Customer registerCustomer(AuthDto.RegisterRequest registerRequest) {
@@ -44,13 +53,13 @@ public class AuthService {
             throw new BadCredentialsException("Email already registered");
         }
 
-        // Create new customer - FIXED: Use passwordHash not password
+        // Create new customer - FIXED: Use passwordHash directly from frontend
         Customer newCustomer = Customer.builder()
                 .email(registerRequest.getEmail())
-                .passwordHash(passwordEncoder.encode(registerRequest.getPassword()))  // FIXED
+                .passwordHash(registerRequest.getPasswordHash())  // FIXED: No encoding - frontend sends hash
                 .firstName(registerRequest.getFirstName())
                 .lastName(registerRequest.getLastName())
-                .phone(registerRequest.getPhoneNumber())  // FIXED: Use phone not phoneNumber
+                .phone(registerRequest.getPhone())
                 .role("ROLE_USER")
                 .active(true)
                 .emailVerified(false)
@@ -73,20 +82,21 @@ public class AuthService {
 
     /**
      * Authenticate customer
+     * Frontend sends passwordHash - we compare directly
      */
     @Transactional
     public AuthDto.JwtResponse authenticate(AuthDto.LoginRequest loginRequest) {
         log.info("Authenticating customer: {}", loginRequest.getEmail());
 
         Customer customer = customerRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new BadCredentialsException("Invalid email or password"));
+                .orElseThrow(() -> new BadCredentialsException("Invalid email or passwordHash"));
 
-        // Verify password
-        if (!passwordEncoder.matches(loginRequest.getPassword(), customer.getPasswordHash())) {
+        // FIXED: Compare passwordHash directly - NO passwordEncoder.matches()
+        if (!customer.getPasswordHash().equals(loginRequest.getPasswordHash())) {
             customer.incrementFailedLoginAttempts();
             customerRepository.save(customer);
             log.warn("Failed login attempt for email: {}", loginRequest.getEmail());
-            throw new BadCredentialsException("Invalid email or password");
+            throw new BadCredentialsException("Invalid email or passwordHash");
         }
 
         // Check if account is active
@@ -105,9 +115,9 @@ public class AuthService {
         customerRepository.save(customer);
 
         // Generate JWT token
-        Long customerIdLong = customer.getCustomerId();
+        Long customerId = customer.getCustomerId();
         String jwtToken = jwtTokenProvider.generateToken(
-                customerIdLong,
+                customerId,
                 customer.getEmail(),
                 customer.getRole()
         );
@@ -118,7 +128,7 @@ public class AuthService {
                 .token(jwtToken)
                 .tokenType("Bearer")
                 .expiresIn(3600L)
-                .customerId(customerIdLong)
+                .customerId(customerId)
                 .email(customer.getEmail())
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
@@ -134,9 +144,9 @@ public class AuthService {
         Customer customer = customerRepository.findByEmail(customerEmail)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        Long customerIdLong = customer.getCustomerId();
+        Long customerId = customer.getCustomerId();
         String newJwtToken = jwtTokenProvider.generateToken(
-                customerIdLong,
+                customerId,
                 customer.getEmail(),
                 customer.getRole()
         );
@@ -145,7 +155,7 @@ public class AuthService {
                 .token(newJwtToken)
                 .tokenType("Bearer")
                 .expiresIn(3600L)
-                .customerId(customerIdLong)
+                .customerId(customerId)
                 .email(customer.getEmail())
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
@@ -155,22 +165,23 @@ public class AuthService {
 
     /**
      * Change password
+     * FIXED: Takes passwordHash parameters - frontend sends hashes
      */
     @Transactional
-    public void changePassword(Long customerIdLong, String oldPasswordString, String newPasswordString) {
-        Customer customer = customerRepository.findById(customerIdLong)
+    public void changePassword(Long customerId, String oldPasswordHash, String newPasswordHash) {
+        Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        // Verify old password
-        if (!passwordEncoder.matches(oldPasswordString, customer.getPasswordHash())) {
-            throw new BadCredentialsException("Current password is incorrect");
+        // FIXED: Compare passwordHash directly - NO passwordEncoder.matches()
+        if (!customer.getPasswordHash().equals(oldPasswordHash)) {
+            throw new BadCredentialsException("Current passwordHash is incorrect");
         }
 
-        // Update password
-        customer.setPasswordHash(passwordEncoder.encode(newPasswordString));
+        // FIXED: Store new passwordHash directly - NO encoding
+        customer.setPasswordHash(newPasswordHash);
         customerRepository.save(customer);
 
-        log.info("Password changed for customer ID: {}", customerIdLong);
+        log.info("Password changed for customer ID: {}", customerId);
     }
 
     /**
@@ -182,15 +193,15 @@ public class AuthService {
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
         // Generate reset token
-        String resetTokenString = generateResetToken();
-        customer.setResetPasswordToken(resetTokenString);
+        String resetToken = generateResetToken();
+        customer.setResetPasswordToken(resetToken);
         customer.setResetPasswordTokenExpiry(LocalDateTime.now().plusHours(1));
         customerRepository.save(customer);
 
         // Send reset email
         emailService.sendPasswordResetEmail(
                 customer.getEmail(),
-                resetTokenString
+                resetToken
         );
 
         log.info("Password reset requested for email: {}", customerEmail);
@@ -198,10 +209,11 @@ public class AuthService {
 
     /**
      * Reset password with token
+     * FIXED: Takes passwordHash - frontend sends hash
      */
     @Transactional
-    public void resetPassword(String resetTokenString, String newPasswordString) {
-        Customer customer = customerRepository.findByResetPasswordToken(resetTokenString)
+    public void resetPassword(String resetToken, String newPasswordHash) {
+        Customer customer = customerRepository.findByResetPasswordToken(resetToken)
                 .orElseThrow(() -> new BadCredentialsException("Invalid reset token"));
 
         // Check token expiry
@@ -210,8 +222,8 @@ public class AuthService {
             throw new BadCredentialsException("Reset token has expired");
         }
 
-        // Update password
-        customer.setPasswordHash(passwordEncoder.encode(newPasswordString));
+        // FIXED: Store passwordHash directly - NO encoding
+        customer.setPasswordHash(newPasswordHash);
         customer.setResetPasswordToken(null);
         customer.setResetPasswordTokenExpiry(null);
         customerRepository.save(customer);
@@ -223,8 +235,8 @@ public class AuthService {
      * Verify email
      */
     @Transactional
-    public void verifyEmail(String verificationTokenString) {
-        Customer customer = customerRepository.findByEmailVerificationToken(verificationTokenString)
+    public void verifyEmail(String verificationToken) {
+        Customer customer = customerRepository.findByEmailVerificationToken(verificationToken)
                 .orElseThrow(() -> new BadCredentialsException("Invalid verification token"));
 
         // Check token expiry (24 hours)
@@ -256,15 +268,15 @@ public class AuthService {
         }
 
         // Generate new verification token
-        String verificationTokenString = generateVerificationToken();
-        customer.setEmailVerificationToken(verificationTokenString);
+        String verificationToken = generateVerificationToken();
+        customer.setEmailVerificationToken(verificationToken);
         customer.setEmailVerificationSentAt(LocalDateTime.now());
         customerRepository.save(customer);
 
         // Send verification email
         emailService.sendEmailVerification(
                 customer.getEmail(),
-                verificationTokenString
+                verificationToken
         );
 
         log.info("Verification email resent to: {}", customerEmail);
@@ -273,25 +285,25 @@ public class AuthService {
     /**
      * Validate JWT token
      */
-    public boolean validateToken(String jwtTokenString) {
-        return jwtTokenProvider.validateToken(jwtTokenString);
+    public boolean validateToken(String jwtToken) {
+        return jwtTokenProvider.validateToken(jwtToken);
     }
 
     /**
      * Get customer ID from token
      */
-    public Long getCustomerIdFromToken(String jwtTokenString) {
-        return jwtTokenProvider.getCustomerIdFromToken(jwtTokenString);
+    public Long getCustomerIdFromToken(String jwtToken) {
+        return jwtTokenProvider.getCustomerIdFromToken(jwtToken);
     }
 
     /**
      * Check if customer has role
      */
-    public boolean hasRole(Long customerIdLong, String requiredRoleString) {
-        Customer customer = customerRepository.findById(customerIdLong)
+    public boolean hasRole(Long customerId, String requiredRole) {
+        Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found"));
 
-        return customer.getRole().equals(requiredRoleString) ||
+        return customer.getRole().equals(requiredRole) ||
                 customer.getRole().equals("ROLE_ADMIN");
     }
 

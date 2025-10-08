@@ -13,6 +13,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Cart Entity - Version 1.0
+ * Magnum Opus Compliant: cartId not id, consistent naming
+ */
 @Entity
 @Table(name = "carts")
 @Data
@@ -25,7 +29,7 @@ public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long cartId;  // CHANGED: id → cartId (Magnum Opus)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
@@ -58,18 +62,18 @@ public class Cart {
     private String savedName;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
         if (totalAmount == null) {
             totalAmount = BigDecimal.ZERO;
         }
@@ -90,10 +94,15 @@ public class Cart {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
-    // Business methods
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates: getCartId() / setCartId()
+    // No alias methods - one method, one name
+
+    // ========== BUSINESS METHODS ==========
+
     public void addItem(CartItem item) {
         if (items == null) {
             items = new ArrayList<>();
@@ -159,7 +168,7 @@ public class Cart {
         }
         return items.stream()
                 .anyMatch(item -> item.getProduct() != null &&
-                        productId.equals(item.getProduct().getId()));
+                        productId.equals(item.getProduct().getProductId()));  // CHANGED: getId() → getProductId()
     }
 
     public CartItem findItemByProductId(Long productId) {
@@ -168,7 +177,7 @@ public class Cart {
         }
         return items.stream()
                 .filter(item -> item.getProduct() != null &&
-                        productId.equals(item.getProduct().getId()))
+                        productId.equals(item.getProduct().getProductId()))  // CHANGED: getId() → getProductId()
                 .findFirst()
                 .orElse(null);
     }

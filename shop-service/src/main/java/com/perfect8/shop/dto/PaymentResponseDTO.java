@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 /**
  * Payment Response DTO
  * Version 1.0 - Core payment response structure
+ * FIXED: Changed createdAt/processedAt to createdDate/processedDate for consistency with entity naming
  */
 @Data
 @Builder
@@ -25,8 +26,16 @@ public class PaymentResponseDTO {
     private BigDecimal amount;
     private String currency;
     private String paymentMethod;
-    private LocalDateTime createdAt;
-    private LocalDateTime processedAt;
+
+    /**
+     * FIXED: Changed from createdAt to createdDate (Magnum Opus principle - consistency with entities)
+     */
+    private LocalDateTime createdDate;
+
+    /**
+     * FIXED: Changed from processedAt to processedDate (Magnum Opus principle - consistency with entities)
+     */
+    private LocalDateTime processedDate;
 
     // Provider-specific response data
     private String approvalUrl;
@@ -80,9 +89,12 @@ public class PaymentResponseDTO {
                 (requiresVerification != null && requiresVerification);
     }
 
+    /**
+     * FIXED: Updated to use createdDate instead of createdAt
+     */
     public LocalDateTime getExpiryTime() {
-        if (expiresInMinutes != null && createdAt != null) {
-            return createdAt.plusMinutes(expiresInMinutes);
+        if (expiresInMinutes != null && createdDate != null) {
+            return createdDate.plusMinutes(expiresInMinutes);
         }
         return null;
     }
@@ -94,6 +106,7 @@ public class PaymentResponseDTO {
 
     /**
      * Create a successful response
+     * FIXED: Updated to use createdDate and processedDate
      */
     public static PaymentResponseDTO successResponse(String transactionId,
                                                      BigDecimal amount,
@@ -105,14 +118,15 @@ public class PaymentResponseDTO {
                 .amount(amount)
                 .paymentMethod(paymentMethod)
                 .currency("USD")
-                .createdAt(LocalDateTime.now())
-                .processedAt(LocalDateTime.now())
+                .createdDate(LocalDateTime.now())
+                .processedDate(LocalDateTime.now())
                 .message("Payment processed successfully")
                 .build();
     }
 
     /**
      * Create a failed response
+     * FIXED: Updated to use createdDate
      */
     public static PaymentResponseDTO failedResponse(String errorCode,
                                                     String errorMessage) {
@@ -121,13 +135,14 @@ public class PaymentResponseDTO {
                 .status("FAILED")
                 .errorCode(errorCode)
                 .errorMessage(errorMessage)
-                .createdAt(LocalDateTime.now())
+                .createdDate(LocalDateTime.now())
                 .message("Payment failed: " + errorMessage)
                 .build();
     }
 
     /**
      * Create a pending response
+     * FIXED: Updated to use createdDate
      */
     public static PaymentResponseDTO pendingResponse(String transactionId,
                                                      String approvalUrl) {
@@ -137,7 +152,7 @@ public class PaymentResponseDTO {
                 .transactionId(transactionId)
                 .approvalUrl(approvalUrl)
                 .requiresVerification(true)
-                .createdAt(LocalDateTime.now())
+                .createdDate(LocalDateTime.now())
                 .message("Payment pending approval")
                 .build();
     }

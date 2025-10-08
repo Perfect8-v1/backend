@@ -63,7 +63,6 @@ public class PaymentService {
             payment.setPaymentMethod(PaymentMethod.fromString(paymentRequest.getPaymentMethod()));
             payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setTransactionId(generateTransactionId());
-            payment.setCreatedAt(LocalDateTime.now());
 
             // Save initial payment record
             payment = paymentRepository.save(payment);
@@ -101,7 +100,6 @@ public class PaymentService {
                 payment.incrementRetryCount();
             }
 
-            payment.setUpdatedAt(LocalDateTime.now());
             return paymentRepository.save(payment);
 
         } catch (Exception paymentException) {
@@ -128,7 +126,6 @@ public class PaymentService {
         payment.setPaymentMethod(paymentMethodEnum);
         payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setTransactionId(generateTransactionId());
-        payment.setCreatedAt(LocalDateTime.now());
 
         // Extract payer information if available
         String payerEmailAddress = (String) paymentDetailsMap.get("payerEmail");
@@ -155,7 +152,6 @@ public class PaymentService {
         payment.setPaymentDate(LocalDateTime.now());
         payment.setIsVerified(Boolean.TRUE);
         payment.setVerificationDate(LocalDateTime.now());
-        payment.setUpdatedAt(LocalDateTime.now());
 
         // Update order to trigger update timestamp
         Order relatedOrder = payment.getOrder();
@@ -213,8 +209,6 @@ public class PaymentService {
                 payment.setIsPartialRefund(Boolean.TRUE);
             }
 
-            payment.setUpdatedAt(LocalDateTime.now());
-
             // Update order if fully refunded
             if (PaymentStatus.REFUNDED.equals(payment.getPaymentStatus())) {
                 Order relatedOrder = payment.getOrder();
@@ -251,14 +245,13 @@ public class PaymentService {
 
         // If payment is old and pending, verify with PayPal
         if (PaymentStatus.PENDING.equals(payment.getPaymentStatus()) &&
-                payment.getCreatedAt().isBefore(LocalDateTime.now().minusMinutes(5))) {
+                payment.getCreatedDate().isBefore(LocalDateTime.now().minusMinutes(5))) {
 
             String currentStatusString = payPalService.verifyPaymentStatus(payment.getTransactionId());
             PaymentStatus currentPaymentStatus = PaymentStatus.fromString(currentStatusString);
 
             if (!payment.getPaymentStatus().equals(currentPaymentStatus)) {
                 payment.setPaymentStatus(currentPaymentStatus);
-                payment.setUpdatedAt(LocalDateTime.now());
 
                 if (PaymentStatus.COMPLETED.equals(currentPaymentStatus)) {
                     payment.setPaymentDate(LocalDateTime.now());
@@ -346,7 +339,6 @@ public class PaymentService {
 
         payment.incrementRetryCount();
         payment.setPaymentStatus(PaymentStatus.PENDING);
-        payment.setUpdatedAt(LocalDateTime.now());
         payment.setLastRetryDate(LocalDateTime.now());
 
         paymentRepository.save(payment);
@@ -378,7 +370,6 @@ public class PaymentService {
 
         payment.setPaymentStatus(PaymentStatus.CANCELLED);
         payment.setNotes(cancellationReasonString);
-        payment.setUpdatedAt(LocalDateTime.now());
 
         return paymentRepository.save(payment);
     }

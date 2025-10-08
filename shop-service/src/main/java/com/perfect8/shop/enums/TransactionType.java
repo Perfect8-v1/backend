@@ -1,4 +1,4 @@
-package com.perfect8.common.enums;
+package com.perfect8.shop.enums;
 
 /**
  * Enumeration for different types of inventory transactions

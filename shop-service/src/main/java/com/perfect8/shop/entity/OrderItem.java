@@ -8,9 +8,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Order Item Entity
- * Represents individual items within an order
- * Version 1.0 - Core functionality
+ * Order Item Entity - Version 1.0
+ * Magnum Opus Compliant: price not subtotal, no alias methods
  */
 @Entity
 @Table(name = "order_items")
@@ -55,8 +54,10 @@ public class OrderItem {
     @Builder.Default
     private BigDecimal taxAmount = BigDecimal.ZERO;
 
+    // CHANGED: subtotal → price (Magnum Opus: descriptive names)
+    // Column name stays "subtotal" in database for backwards compatibility
     @Column(name = "subtotal", precision = 19, scale = 2)
-    private BigDecimal subtotal;
+    private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "item_status", length = 20)
@@ -86,23 +87,39 @@ public class OrderItem {
     @Builder.Default
     private Integer refundedQuantity = 0;
 
-    // Timestamps
+    // CHANGED: createdAt/updatedAt → createdDate/updatedDate (consistency)
     @Column(name = "created_at", nullable = false, updatable = false)
-    @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdDate;
 
     @Column(name = "updated_at")
-    @Builder.Default
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedDate;
 
-    // ================ HELPER METHODS ================
+    // ========== LIFECYCLE CALLBACKS ==========
+
+    @PrePersist
+    protected void onCreate() {
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
+        calculatePrice();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedDate = LocalDateTime.now();
+        calculatePrice();
+    }
+
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates: getPrice() / setPrice()
+    // REMOVED: getTotalPrice() - alias method (Magnum Opus violation)
+    // REMOVED: manual getPrice() - Lombok generates it from field
+
+    // ========== BUSINESS METHODS ==========
 
     /**
-     * Calculate and set the subtotal for this item
+     * Calculate and set the price for this item
      */
-    @PrePersist
-    @PreUpdate
-    public void calculateSubtotal() {
+    public void calculatePrice() {
         if (unitPrice != null && quantity != null) {
             BigDecimal baseAmount = unitPrice.multiply(BigDecimal.valueOf(quantity));
 
@@ -114,29 +131,8 @@ public class OrderItem {
                 baseAmount = baseAmount.add(taxAmount);
             }
 
-            this.subtotal = baseAmount;
+            this.price = baseAmount;
         }
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    /**
-     * Get the price for this order item (subtotal)
-     * This is the method shop-service expects
-     *
-     * @return the subtotal price for this item
-     */
-    public BigDecimal getPrice() {
-        if (subtotal == null) {
-            calculateSubtotal();
-        }
-        return subtotal != null ? subtotal : BigDecimal.ZERO;
-    }
-
-    /**
-     * Get the total price (alias for getPrice)
-     */
-    public BigDecimal getTotalPrice() {
-        return getPrice();
     }
 
     /**
@@ -207,7 +203,7 @@ public class OrderItem {
      */
     public void updateStatus(ItemStatus newStatus) {
         this.itemStatus = newStatus;
-        this.updatedAt = LocalDateTime.now();
+        this.updatedDate = LocalDateTime.now();
     }
 
     /**
@@ -216,7 +212,7 @@ public class OrderItem {
     public void applyDiscount(BigDecimal discount) {
         if (discount != null && discount.compareTo(BigDecimal.ZERO) > 0) {
             this.discountAmount = discount;
-            calculateSubtotal();
+            calculatePrice();
         }
     }
 
@@ -226,7 +222,7 @@ public class OrderItem {
     public void setTax(BigDecimal tax) {
         if (tax != null && tax.compareTo(BigDecimal.ZERO) >= 0) {
             this.taxAmount = tax;
-            calculateSubtotal();
+            calculatePrice();
         }
     }
 }

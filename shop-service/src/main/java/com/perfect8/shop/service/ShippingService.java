@@ -141,9 +141,6 @@ public class ShippingService {
                 // FIXED: Use shippedDate, actualDeliveryDate (not deliveryDate)
                 .shippedDate(null)
                 .actualDeliveryDate(null)
-                // FIXED: Use createdAt, lastUpdated (not createdDate, updatedDate)
-                .createdAt(LocalDateTime.now())
-                .lastUpdated(LocalDateTime.now())
                 .build();
 
         return shipmentRepository.save(shipment);
@@ -154,8 +151,8 @@ public class ShippingService {
         Shipment shipment = shipmentRepository.findById(shipmentId)
                 .orElseThrow(() -> new IllegalArgumentException("Shipment not found"));
 
-        // FIXED: Use setShipmentStatus (or setStatus alias method)
-        shipment.setStatus(status);
+        // FIXED: Use setShipmentStatus (not setStatus)
+        shipment.setShipmentStatus(status);
         
         if ("SHIPPED".equals(status)) {
             shipment.setShippedDate(LocalDateTime.now());
@@ -165,8 +162,6 @@ public class ShippingService {
             shipment.setActualDeliveryDate(LocalDate.now());
         }
 
-        // FIXED: Use setLastUpdated (not setUpdatedDate)
-        shipment.setLastUpdated(LocalDateTime.now());
         shipmentRepository.save(shipment);
 
         log.info("Updated shipment {} status to {} with notes: {}", shipmentId, status, notes);

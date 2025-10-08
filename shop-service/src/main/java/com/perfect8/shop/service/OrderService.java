@@ -70,7 +70,7 @@ public class OrderService {
                 .shippingFirstName(customer.getFirstName())
                 .shippingLastName(customer.getLastName())
                 .shippingEmail(customer.getEmail())
-                .shippingPhone(customer.getPhoneNumber())
+                .shippingPhone(customer.getPhone())  // FIXED: getPhoneNumber() -> getPhone()
                 .customerNotes(request.getNotes())
                 .build();
 
@@ -103,8 +103,8 @@ public class OrderService {
                     .productDescription(product.getDescription())
                     .build();
 
-            // Calculate subtotal
-            orderItem.setSubtotal(
+            // Calculate price (OrderItem uses 'price' not 'subtotal')
+            orderItem.setPrice(
                     orderItem.getUnitPrice().multiply(BigDecimal.valueOf(orderItem.getQuantity()))
             );
 
@@ -182,7 +182,6 @@ public class OrderService {
 
         // Update status
         order.setOrderStatus(newStatus);
-        order.setUpdatedAt(LocalDateTime.now());
 
         if (notes != null) {
             order.setInternalNotes(notes);
@@ -244,7 +243,6 @@ public class OrderService {
 
         // Update status
         order.setOrderStatus(OrderStatus.CANCELLED);
-        order.setUpdatedAt(LocalDateTime.now());
         order.setInternalNotes("Cancellation reason: " + (reason != null ? reason : "Customer request"));
 
         // Release inventory
@@ -286,7 +284,6 @@ public class OrderService {
 
         // Update status
         order.setOrderStatus(OrderStatus.RETURNED);
-        order.setUpdatedAt(LocalDateTime.now());
         order.setInternalNotes("Return reason: " + reason);
 
         // Return items to inventory
@@ -327,12 +324,12 @@ public class OrderService {
 
     /**
      * Get recent orders - Core functionality
-     * FIXED: Changed from findTopNByOrderByCreatedAtDesc to findAllByOrderByCreatedAtDesc with PageRequest
+     * FIXED: Changed from findAllByOrderByCreatedAtDesc to findAllByOrderByCreatedDateDesc
      */
     @Transactional(readOnly = true)
     public List<OrderDTO> getRecentOrders(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit);
-        return orderRepository.findAllByOrderByCreatedAtDesc(pageRequest).stream()
+        return orderRepository.findAllByOrderByCreatedDateDesc(pageRequest).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -395,7 +392,6 @@ public class OrderService {
 
         // Update order status to PAID
         order.setOrderStatus(OrderStatus.PAID);
-        order.setUpdatedAt(LocalDateTime.now());
 
         // Send payment confirmation
         emailService.sendEmail(
@@ -440,7 +436,6 @@ public class OrderService {
 
         // Update status
         order.setOrderStatus(OrderStatus.SHIPPED);
-        order.setUpdatedAt(LocalDateTime.now());
 
         // Send shipping notification
         emailService.sendEmail(
@@ -471,12 +466,11 @@ public class OrderService {
             shipment.setActualDeliveryDate(LocalDateTime.now().toLocalDate());
 // VERSION 2.0: deliveryNotes feature commented out
 // shipment.setDeliveryNotes(orderRequest.getDeliveryNotes());
-            shipment.setStatus("DELIVERED");
+            shipment.setShipmentStatus("DELIVERED");  // FIXED: setStatus() -> setShipmentStatus()
         }
 
         // Update status
         order.setOrderStatus(OrderStatus.DELIVERED);
-        order.setUpdatedAt(LocalDateTime.now());
 
         // Send delivery confirmation
         emailService.sendEmail(
@@ -535,8 +529,8 @@ public class OrderService {
         dto.setShippingAmount(order.getShippingAmount());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setCurrency(order.getCurrency());
-        dto.setCreatedAt(order.getCreatedAt());
-        dto.setUpdatedAt(order.getUpdatedAt());
+        dto.setCreatedAt(order.getCreatedDate());  // FIXED: getCreatedAt() -> getCreatedDate()
+        dto.setUpdatedAt(order.getUpdatedDate());  // FIXED: getUpdatedAt() -> getUpdatedDate()
 
         // Convert order items
         if (order.getOrderItems() != null) {
@@ -560,7 +554,7 @@ public class OrderService {
         dto.setProductSku(item.getProductSku());
         dto.setQuantity(item.getQuantity());
         dto.setUnitPrice(item.getUnitPrice());
-        dto.setSubtotal(item.getSubtotal());
+        dto.setSubtotal(item.getPrice());  // FIXED: getSubtotal() -> getPrice()
         return dto;
     }
 
@@ -614,7 +608,7 @@ public class OrderService {
     private void calculateOrderTotals(Order order) {
         BigDecimal subtotal = BigDecimal.ZERO;
         for (OrderItem item : order.getOrderItems()) {
-            subtotal = subtotal.add(item.getSubtotal());
+            subtotal = subtotal.add(item.getPrice());  // FIXED: getSubtotal() -> getPrice()
         }
         order.setSubtotal(subtotal);
 

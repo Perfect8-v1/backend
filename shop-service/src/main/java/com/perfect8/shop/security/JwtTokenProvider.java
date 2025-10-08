@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 /**
  * JWT Token Provider - Version 1.0
  * Handles JWT token generation and validation
+ * MAGNUM OPUS COMPLIANT: No alias methods
  */
 @Component
 @Slf4j
@@ -156,18 +157,20 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Get user ID from JWT token - REQUIRED METHOD
+     * Get customer ID from JWT token
+     * FIXED: Renamed from getUserIdFromToken - Magnum Opus principle (customerId not userId)
+     * This method handles both userId and customerId claims for token compatibility
      */
-    public Long getUserIdFromToken(String token) {
+    public Long getCustomerIdFromToken(String token) {
         try {
             Claims claims = getClaims(token);
 
-            // Try different possible claim names
-            if (claims.containsKey("userId")) {
-                return Long.valueOf(claims.get("userId").toString());
-            }
+            // Try different possible claim names (tokens may use either)
             if (claims.containsKey("customerId")) {
                 return Long.valueOf(claims.get("customerId").toString());
+            }
+            if (claims.containsKey("userId")) {
+                return Long.valueOf(claims.get("userId").toString());
             }
             if (claims.getId() != null) {
                 return Long.valueOf(claims.getId());
@@ -175,13 +178,13 @@ public class JwtTokenProvider {
 
             return null;
         } catch (Exception e) {
-            log.error("Error extracting user ID from token", e);
+            log.error("Error extracting customer ID from token", e);
             return null;
         }
     }
 
     /**
-     * Get role from JWT token - REQUIRED METHOD
+     * Get role from JWT token
      */
     public String getRoleFromToken(String token) {
         try {
@@ -346,7 +349,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Get authorities from token - REQUIRED METHOD
+     * Get authorities from token
      */
     public String getAuthoritiesFromToken(String token) {
         try {
@@ -359,15 +362,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Get customer ID from token - REQUIRED METHOD
-     */
-    public Long getCustomerIdFromToken(String token) {
-        // Use the existing getUserIdFromToken method
-        return getUserIdFromToken(token);
-    }
-
-    /**
-     * Resolve token from HTTP request - REQUIRED METHOD
+     * Resolve token from HTTP request
      */
     public String resolveToken(jakarta.servlet.http.HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
@@ -383,7 +378,7 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Check if token is a refresh token - REQUIRED METHOD
+     * Check if token is a refresh token
      */
     public boolean isRefreshToken(String token) {
         try {

@@ -17,31 +17,39 @@ import java.util.Optional;
 public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpecificationExecutor<Address> {
 
     // Basic customer address queries
-    List<Address> findByCustomerIdOrderByDefaultAddressDescCreatedAtDesc(Long customerId);
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId ORDER BY a.isDefault DESC, a.addressId DESC")
+    List<Address> findByCustomerIdOrderByDefaultAddressDescCreatedAtDesc(@Param("customerId") Long customerId);
 
-    List<Address> findByCustomerId(Long customerId);
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId")
+    List<Address> findByCustomerId(@Param("customerId") Long customerId);
 
-    Optional<Address> findByIdAndCustomerId(Long id, Long customerId);
+    @Query("SELECT a FROM Address a WHERE a.addressId = :addressId AND a.customer.customerId = :customerId")
+    Optional<Address> findByAddressIdAndCustomerId(@Param("addressId") Long addressId, @Param("customerId") Long customerId);
 
-    long countByCustomerId(Long customerId);
+    @Query("SELECT COUNT(a) FROM Address a WHERE a.customer.customerId = :customerId")
+    long countByCustomerId(@Param("customerId") Long customerId);
 
     // Default address management
-    Optional<Address> findByCustomerIdAndDefaultAddressTrue(Long customerId);
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.isDefault = true")
+    Optional<Address> findByCustomerIdAndDefaultAddressTrue(@Param("customerId") Long customerId);
 
-    boolean existsByCustomerIdAndDefaultAddressTrue(Long customerId);
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Address a WHERE a.customer.customerId = :customerId AND a.isDefault = true")
+    boolean existsByCustomerIdAndDefaultAddressTrue(@Param("customerId") Long customerId);
 
     @Modifying
-    @Query("UPDATE Address a SET a.defaultAddress = :isDefault WHERE a.customer.id = :customerId")
+    @Query("UPDATE Address a SET a.isDefault = :isDefault WHERE a.customer.customerId = :customerId")
     void updateDefaultAddressForCustomer(@Param("customerId") Long customerId, @Param("isDefault") boolean isDefault);
 
     @Modifying
-    @Query("UPDATE Address a SET a.defaultAddress = false WHERE a.customer.id = :customerId AND a.id != :excludeId")
-    void clearOtherDefaultAddresses(@Param("customerId") Long customerId, @Param("excludeId") Long excludeId);
+    @Query("UPDATE Address a SET a.isDefault = false WHERE a.customer.customerId = :customerId AND a.addressId != :excludeAddressId")
+    void clearOtherDefaultAddresses(@Param("customerId") Long customerId, @Param("excludeAddressId") Long excludeAddressId);
 
     // Address type queries
-    List<Address> findByCustomerIdAndAddressType(Long customerId, String addressType);
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType = :addressType")
+    List<Address> findByCustomerIdAndAddressType(@Param("customerId") Long customerId, @Param("addressType") String addressType);
 
-    Optional<Address> findByCustomerIdAndAddressTypeAndDefaultAddressTrue(Long customerId, String addressType);
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType = :addressType AND a.isDefault = true")
+    Optional<Address> findByCustomerIdAndAddressTypeAndDefaultAddressTrue(@Param("customerId") Long customerId, @Param("addressType") String addressType);
 
     List<Address> findByAddressType(String addressType);
 
@@ -61,7 +69,7 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
 
     // Search queries
     @Query("SELECT a FROM Address a WHERE " +
-            "LOWER(a.streetAddress) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(a.street) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(a.city) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(a.state) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
             "LOWER(a.country) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
@@ -88,19 +96,19 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
     List<Address> findAddressesWithoutState();
 
     @Query("SELECT a FROM Address a WHERE " +
-            "a.streetAddress IS NULL OR a.streetAddress = '' OR " +
+            "a.street IS NULL OR a.street = '' OR " +
             "a.city IS NULL OR a.city = '' OR " +
             "a.country IS NULL OR a.country = ''")
     List<Address> findIncompleteAddresses();
 
     // Customer address management
-    @Query("SELECT COUNT(a) FROM Address a WHERE a.customer.id = :customerId AND a.addressType = :addressType")
+    @Query("SELECT COUNT(a) FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType = :addressType")
     long countByCustomerIdAndAddressType(@Param("customerId") Long customerId, @Param("addressType") String addressType);
 
-    @Query("SELECT a FROM Address a WHERE a.customer.id = :customerId AND a.addressType IN ('BILLING', 'BOTH')")
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType IN ('BILLING', 'BOTH')")
     List<Address> findBillingAddressesByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT a FROM Address a WHERE a.customer.id = :customerId AND a.addressType IN ('SHIPPING', 'BOTH')")
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType IN ('SHIPPING', 'BOTH')")
     List<Address> findShippingAddressesByCustomerId(@Param("customerId") Long customerId);
 
     // Address verification and validation
@@ -117,13 +125,13 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
     List<String> findAllCountries();
 
     // Duplicate detection
-    @Query("SELECT a FROM Address a WHERE a.customer.id = :customerId AND " +
-            "LOWER(a.streetAddress) = LOWER(:streetAddress) AND " +
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND " +
+            "LOWER(a.street) = LOWER(:street) AND " +
             "LOWER(a.city) = LOWER(:city) AND " +
             "LOWER(a.postalCode) = LOWER(:postalCode) AND " +
             "LOWER(a.country) = LOWER(:country)")
     List<Address> findPotentialDuplicates(@Param("customerId") Long customerId,
-                                          @Param("streetAddress") String streetAddress,
+                                          @Param("street") String street,
                                           @Param("city") String city,
                                           @Param("postalCode") String postalCode,
                                           @Param("country") String country);
@@ -135,34 +143,24 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
     @Query("SELECT COUNT(a) FROM Address a WHERE a.country != :domesticCountry")
     long countInternationalAddresses(@Param("domesticCountry") String domesticCountry);
 
-    // Recent addresses
-    @Query("SELECT a FROM Address a ORDER BY a.createdAt DESC")
+    // Recent addresses - removed queries using createdAt/updatedAt as these fields don't exist in Address entity
+    @Query("SELECT a FROM Address a ORDER BY a.addressId DESC")
     List<Address> findRecentAddresses(Pageable pageable);
 
-    @Query("SELECT a FROM Address a WHERE a.customer.id = :customerId ORDER BY a.updatedAt DESC")
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId ORDER BY a.addressId DESC")
     List<Address> findRecentlyUpdatedByCustomer(@Param("customerId") Long customerId, Pageable pageable);
 
-    // Delivery instructions analysis
-    @Query("SELECT COUNT(a) FROM Address a WHERE a.deliveryInstructions IS NOT NULL AND a.deliveryInstructions != ''")
-    long countAddressesWithDeliveryInstructions();
-
-    List<Address> findByDeliveryInstructionsIsNotNull();
-
-    // Contact information
-    List<Address> findByRecipientPhoneIsNotNull();
-
-    @Query("SELECT COUNT(a) FROM Address a WHERE a.recipientPhone IS NOT NULL AND a.recipientPhone != ''")
-    long countAddressesWithPhone();
+    // Note: Removed delivery instructions and phone queries as these fields don't exist in Address entity
 
     // Advanced filtering
     @Query("SELECT a FROM Address a WHERE " +
-            "(:customerId IS NULL OR a.customer.id = :customerId) AND " +
+            "(:customerId IS NULL OR a.customer.customerId = :customerId) AND " +
             "(:addressType IS NULL OR a.addressType = :addressType) AND " +
             "(:country IS NULL OR LOWER(a.country) = LOWER(:country)) AND " +
             "(:state IS NULL OR LOWER(a.state) = LOWER(:state)) AND " +
             "(:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%'))) AND " +
             "(:postalCode IS NULL OR a.postalCode LIKE CONCAT(:postalCode, '%')) AND " +
-            "(:defaultAddress IS NULL OR a.defaultAddress = :defaultAddress)")
+            "(:isDefault IS NULL OR a.isDefault = :isDefault)")
     Page<Address> findAddressesWithFilters(
             @Param("customerId") Long customerId,
             @Param("addressType") String addressType,
@@ -170,15 +168,15 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
             @Param("state") String state,
             @Param("city") String city,
             @Param("postalCode") String postalCode,
-            @Param("defaultAddress") Boolean defaultAddress,
+            @Param("isDefault") Boolean isDefault,
             Pageable pageable
     );
 
     // Address usage tracking (for order history)
     @Query("SELECT a, COUNT(o) as orderCount FROM Address a LEFT JOIN Order o ON " +
-            "(o.shippingAddress LIKE CONCAT('%', a.streetAddress, '%') OR " +
-            "o.billingAddress LIKE CONCAT('%', a.streetAddress, '%')) " +
-            "WHERE a.customer.id = :customerId " +
+            "(o.shippingAddress LIKE CONCAT('%', a.street, '%') OR " +
+            "o.billingAddress LIKE CONCAT('%', a.street, '%')) " +
+            "WHERE a.customer.customerId = :customerId " +
             "GROUP BY a ORDER BY orderCount DESC")
     List<Object[]> findAddressUsageByCustomer(@Param("customerId") Long customerId);
 

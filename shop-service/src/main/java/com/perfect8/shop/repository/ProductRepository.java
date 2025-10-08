@@ -12,6 +12,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository for Product entity - Version 1.0
+ * Follows Magnum Opus: productId not id, categoryId not id
+ */
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
@@ -30,10 +34,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find featured and active products
     Page<Product> findByIsFeaturedTrueAndIsActiveTrue(Pageable pageable);
 
-    // Find low stock products - FIXED: Added this method
+    // Find low stock products
     List<Product> findByStockQuantityLessThanAndIsActiveTrue(Integer threshold);
 
-    // Search by name or description - FIXED: Added this method
+    // Search by name or description
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
             "(LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%')))")
@@ -41,7 +45,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // Find products with filters
     @Query("SELECT p FROM Product p WHERE p.isActive = true " +
-            "AND (:categoryId IS NULL OR p.category.id = :categoryId) " +
+            "AND (:categoryId IS NULL OR p.category.categoryId = :categoryId) " +
             "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
             "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
             "AND (:featured IS NULL OR p.isFeatured = :featured) " +
@@ -92,7 +96,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "(:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
             "(:sku IS NULL OR p.sku = :sku) AND " +
             "(:brand IS NULL OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :brand, '%'))) AND " +
-            "(:categoryId IS NULL OR p.category.id = :categoryId)")
+            "(:categoryId IS NULL OR p.category.categoryId = :categoryId)")
     Page<Product> advancedSearch(
             @Param("name") String name,
             @Param("sku") String sku,
@@ -102,11 +106,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     );
 
     // Update stock quantity
-    @Query("UPDATE Product p SET p.stockQuantity = :quantity WHERE p.id = :id")
-    void updateStockQuantity(@Param("id") Long id, @Param("quantity") Integer quantity);
+    @Query("UPDATE Product p SET p.stockQuantity = :quantity WHERE p.productId = :productId")
+    void updateStockQuantity(@Param("productId") Long productId, @Param("quantity") Integer quantity);
 
     // Bulk update prices
-    @Query("UPDATE Product p SET p.price = p.price * :multiplier WHERE p.category.id = :categoryId")
+    @Query("UPDATE Product p SET p.price = p.price * :multiplier WHERE p.category.categoryId = :categoryId")
     void bulkUpdatePricesByCategory(@Param("categoryId") Long categoryId, @Param("multiplier") BigDecimal multiplier);
 
     // Find products with no category

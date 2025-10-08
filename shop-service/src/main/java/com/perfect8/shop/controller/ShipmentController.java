@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
 import java.util.List;
 
 @Slf4j
@@ -122,29 +123,67 @@ public class ShipmentController {
 
     /**
      * Convert Shipment entity to DTO
-     * FIXED: Use correct field names from Shipment entity (Magnum Opus principle)
+     * MAGNUM OPUS COMPLIANT: SAMMA fältnamn som entity och DTO
+     * UPDATED: Includes all v1.0 fields including moved v2.0 fields
      */
     private ShipmentDTO convertToDTO(Shipment shipment) {
         return ShipmentDTO.builder()
+                // Core shipment info
                 .shipmentId(shipment.getShipmentId())
                 .orderId(shipment.getOrder().getOrderId())
                 .trackingNumber(shipment.getTrackingNumber())
                 .carrier(shipment.getCarrier())
                 .shippingMethod(shipment.getShippingMethod())
                 .status(shipment.getShipmentStatus())
-                // FIXED: Entity has shippedDate, DTO has shippedAt
-                .shippedAt(shipment.getShippedDate())
+
+                // Dates
+                .shippedDate(shipment.getShippedDate())
                 .estimatedDeliveryDate(shipment.getEstimatedDeliveryDate())
-                // FIXED: Entity has deliveredDate, DTO has deliveredAt
-                .deliveredAt(shipment.getDeliveredDate())
+                .deliveredDate(shipment.getDeliveredDate())
+
+                // Costs
+                .shippingCost(shipment.getShippingCost())
+
+                // Recipient info (v1.0)
                 .recipientName(shipment.getRecipientName())
-                // FIXED: Use shippingStreet, shippingCity, etc from entity
+                .recipientPhone(shipment.getRecipientPhone() != null ? shipment.getRecipientPhone() : "")
+                .recipientEmail(shipment.getRecipientEmail())
+
+                // Address fields
                 .shippingAddress(shipment.getShippingAddress())
                 .shippingStreet(shipment.getShippingStreet())
                 .shippingCity(shipment.getShippingCity())
                 .shippingState(shipment.getShippingState())
                 .shippingPostalCode(shipment.getShippingPostalCode())
                 .shippingCountry(shipment.getShippingCountry())
+
+                // Physical properties (moved from v2.0 to v1.0)
+                .weight(shipment.getWeight() != null ? shipment.getWeight() : BigDecimal.ZERO)
+                .dimensions(shipment.getDimensions() != null ? shipment.getDimensions() : "")
+
+                // Delivery options (moved from v2.0 to v1.0)
+                .deliveryInstructions(shipment.getDeliveryInstructions())
+                .signatureRequired(shipment.isSignatureRequired())
+                .insuranceAmount(shipment.getInsuranceAmount())
+
+                // Tracking
+                .currentLocation(shipment.getCurrentLocation())
+                .lastUpdated(shipment.getUpdatedDate())
+
+                // Label and notes
+                .labelUrl(shipment.getLabelUrl())
+                .notes(shipment.getNotes())
+
+                // Default values for DTO-only fields (v2.0)
+                .numberOfPackages(1)
+                .packageType("BOX")
+                .fragile(false)
+                .hazardous(false)
+                .perishable(false)
+                .priorityHandling(false)
+                .confirmationType("NONE")
+                .deliveryAttempts(0)
+
                 .build();
     }
 }

@@ -18,9 +18,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Order Entity - Represents a customer order
- * Version 1.0 - Core e-commerce functionality
- * NO BACKWARD COMPATIBILITY - Using proper method names!
+ * Order Entity - Version 1.0
+ * Magnum Opus Compliant: No alias methods, consistent naming
  */
 @Entity
 @Table(name = "orders")
@@ -111,25 +110,16 @@ public class Order {
     private String billingPostalCode;
     private String billingCountry;
 
-    // ========== RELATIONER ==========
+    // ========== RELATIONSHIPS ==========
 
-    /**
-     * Order items - alla produkter i ordern
-     */
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<OrderItem> orderItems = new ArrayList<>();
 
-    /**
-     * Payments - en order kan ha flera betalningar
-     */
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 
-    /**
-     * Shipment relation - leveransinformation
-     */
     @ManyToOne
     @JoinColumn(name = "shipment_id")
     private Shipment shipment;
@@ -141,17 +131,17 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String internalNotes;
 
-    // Timestamps
+    // FIXED: Changed from createdAt/updatedAt to createdDate/updatedDate for consistency
     @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
         if (orderDate == null) {
             orderDate = LocalDateTime.now();
         }
@@ -162,30 +152,22 @@ public class Order {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     // ========== PAYMENT HELPER METHODS ==========
 
-    /**
-     * Hämta huvudbetalningen (den senaste COMPLETED payment)
-     * FIXAT: Använder getPaymentStatus() istället för getStatus()
-     */
     public Payment getPayment() {
         if (payments == null || payments.isEmpty()) {
             return null;
         }
 
-        // Försök hitta en completed payment - ANVÄNDER ENUM!
         return payments.stream()
                 .filter(p -> PaymentStatus.COMPLETED.equals(p.getPaymentStatus()))
                 .findFirst()
-                .orElse(payments.get(payments.size() - 1)); // Annars ta senaste
+                .orElse(payments.get(payments.size() - 1));
     }
 
-    /**
-     * Sätt betalning (lägg till i listan)
-     */
     public void setPayment(Payment payment) {
         if (payment != null) {
             payment.setOrder(this);
@@ -196,9 +178,6 @@ public class Order {
         }
     }
 
-    /**
-     * Lägg till betalning
-     */
     public void addPayment(Payment payment) {
         if (payment != null) {
             payment.setOrder(this);
@@ -209,19 +188,11 @@ public class Order {
         }
     }
 
-    /**
-     * Kontrollera om ordern har en giltig betalning
-     * FIXAT: Använder getPaymentStatus() istället för getStatus()
-     */
     public boolean hasCompletedPayment() {
         return payments != null && payments.stream()
                 .anyMatch(p -> PaymentStatus.COMPLETED.equals(p.getPaymentStatus()));
     }
 
-    /**
-     * Hämta total betald summa
-     * FIXAT: Använder getPaymentStatus() istället för getStatus()
-     */
     public BigDecimal getTotalPaidAmount() {
         if (payments == null || payments.isEmpty()) {
             return BigDecimal.ZERO;
@@ -233,13 +204,9 @@ public class Order {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
-    /**
-     * Hämta pris (alias för totalAmount för bakåtkompabilitet)
-     * TODO: Ta bort detta i framtiden - använd getTotalAmount() direkt
-     */
-    public BigDecimal getPrice() {
-        return totalAmount;
-    }
+    // ========== REMOVED ALIAS METHOD ==========
+    // MAGNUM OPUS: Removed getPrice() alias method
+    // Use getTotalAmount() directly instead
 
     // ========== Business logic methods using OrderStatusHelper ==========
 
@@ -256,8 +223,6 @@ public class Order {
         }
 
         this.orderStatus = newStatus;
-
-        // Log transition
         OrderStatusHelper.logTransition(this.orderId, this.orderStatus, newStatus);
     }
 
@@ -275,9 +240,6 @@ public class Order {
                 orderStatus == OrderStatus.REFUNDED;
     }
 
-    /**
-     * Hämta nästa möjliga statusar som en komma-separerad sträng
-     */
     public String getNextPossibleStatuses() {
         List<OrderStatus> nextStatuses = OrderStatusHelper.getNextPossibleStatuses(this.orderStatus);
         if (nextStatuses == null || nextStatuses.isEmpty()) {
@@ -288,9 +250,6 @@ public class Order {
                 .collect(Collectors.joining(", "));
     }
 
-    /**
-     * Hämta krävda åtgärder för statusövergång som en sträng
-     */
     public String getRequiredActionsForTransition(OrderStatus targetStatus) {
         List<String> actions = OrderStatusHelper.getRequiredActions(this.orderStatus, targetStatus);
         if (actions == null || actions.isEmpty()) {
@@ -312,17 +271,12 @@ public class Order {
     }
 
     public void calculateTotals() {
-        // Recalculate subtotal from items
         BigDecimal calculatedSubtotal = orderItems.stream()
                 .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         this.subtotal = calculatedSubtotal;
-
-        // Calculate total
-        this.totalAmount = subtotal
-                .add(taxAmount)
-                .add(shippingAmount);
+        this.totalAmount = subtotal.add(taxAmount).add(shippingAmount);
     }
 
     public String getCustomerFullName() {

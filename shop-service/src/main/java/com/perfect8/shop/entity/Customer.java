@@ -6,6 +6,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Customer Entity - Version 1.0
+ * Magnum Opus Compliant: No alias methods, Lombok generates all getters/setters
+ */
 @Entity
 @Table(name = "customers")
 @Data
@@ -56,7 +60,6 @@ public class Customer {
 
     private LocalDateTime resetPasswordTokenExpiry;
 
-    // Version 1.0 - Enkla tillägg för att få det att kompilera
     @Column(length = 50)
     @Builder.Default
     private String role = "CUSTOMER";
@@ -91,6 +94,8 @@ public class Customer {
     @OneToOne(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Cart cart;
 
+    // ========== JPA Lifecycle Callbacks ==========
+
     @PrePersist
     protected void onCreate() {
         createdDate = LocalDateTime.now();
@@ -102,7 +107,8 @@ public class Customer {
         updatedDate = LocalDateTime.now();
     }
 
-    // Helper metoder för Version 1.0
+    // ========== Business Logic Helper Methods (NOT Aliases) ==========
+
     public String getFullName() {
         return firstName + " " + lastName;
     }
@@ -135,51 +141,12 @@ public class Customer {
         this.lastLoginDate = LocalDateTime.now();
     }
 
-    // Alias metoder för kompatibilitet
-    public String getPassword() {
-        return passwordHash;
-    }
-
-    public void setPassword(String password) {
-        this.passwordHash = password;
-    }
-
-    public String getPhoneNumber() {
-        return phone;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phone = phoneNumber;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdDate;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedDate;
-    }
-
-    public LocalDateTime getLastLoginAt() {
-        return lastLoginDate;
-    }
-
-    public void setPasswordResetToken(String token) {
-        this.resetPasswordToken = token;
-    }
-
-    public void setPasswordResetExpiresAt(LocalDateTime expiresAt) {
-        this.resetPasswordTokenExpiry = expiresAt;
-    }
-
-    public LocalDateTime getPasswordResetExpiresAt() {
-        return resetPasswordTokenExpiry;
-    }
-
     public void generateEmailVerificationToken() {
         this.emailVerificationToken = java.util.UUID.randomUUID().toString();
         this.emailVerificationSentAt = LocalDateTime.now();
     }
+
+    // ========== Address Management ==========
 
     public void addAddress(Address address) {
         addresses.add(address);

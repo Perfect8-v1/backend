@@ -16,6 +16,7 @@ import java.util.Optional;
 /**
  * Repository for Payment entity - Version 1.0
  * Focuses on core payment operations essential for e-commerce functionality
+ * Follows Magnum Opus: paymentId not id, orderId not id, customerId not id
  */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -66,11 +67,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByPayerEmail(String payerEmail);
 
     // Check if order has successful payment - Essential for order validation
-    @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.order.id = :orderId AND p.status = 'COMPLETED'")
+    @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.order.orderId = :orderId AND p.status = 'COMPLETED'")
     boolean hasSuccessfulPayment(@Param("orderId") Long orderId);
 
     // Find duplicate payments - Essential for preventing double charges
-    @Query("SELECT p FROM Payment p WHERE p.order.id = :orderId " +
+    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId " +
             "AND p.amount = :amount " +
             "AND p.status = 'COMPLETED' " +
             "AND p.createdAt BETWEEN :startTime AND :endTime")
@@ -95,10 +96,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByStatusIn(List<String> statuses);
 
     // Find payments by customer - Essential for customer service
-    @Query("SELECT p FROM Payment p WHERE p.order.customer.id = :customerId ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId ORDER BY p.createdAt DESC")
     List<Payment> findByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT p FROM Payment p WHERE p.order.customer.id = :customerId")
+    @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId")
     Page<Payment> findByCustomerId(@Param("customerId") Long customerId, Pageable pageable);
 
     /* ============================================

@@ -3,13 +3,18 @@ package com.perfect8.shop.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+/**
+ * Shipment Tracking Entity - Tracks shipment status updates
+ * Version 2.0 - Advanced tracking functionality
+ */
 @Entity
 @Table(name = "shipment_tracking")
 public class ShipmentTracking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "shipment_tracking_id")
+    private Long shipmentTrackingId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipment_id", nullable = false)
@@ -62,12 +67,12 @@ public class ShipmentTracking {
     }
 
     // Getters and Setters
-    public Long getId() {
-        return id;
+    public Long getShipmentTrackingId() {
+        return shipmentTrackingId;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setShipmentTrackingId(Long shipmentTrackingId) {
+        this.shipmentTrackingId = shipmentTrackingId;
     }
 
     public Shipment getShipment() {
@@ -190,7 +195,7 @@ public class ShipmentTracking {
         if (this == o) return true;
         if (!(o instanceof ShipmentTracking)) return false;
         ShipmentTracking that = (ShipmentTracking) o;
-        return id != null && id.equals(that.id);
+        return shipmentTrackingId != null && shipmentTrackingId.equals(that.shipmentTrackingId);
     }
 
     @Override
@@ -201,7 +206,7 @@ public class ShipmentTracking {
     @Override
     public String toString() {
         return "ShipmentTracking{" +
-                "id=" + id +
+                "shipmentTrackingId=" + shipmentTrackingId +
                 ", status='" + status + '\'' +
                 ", location='" + location + '\'' +
                 ", timestamp=" + timestamp +

@@ -12,6 +12,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Category Entity - Version 1.0
+ * Magnum Opus Compliant: Descriptive field names (categoryId not id)
+ */
 @Entity
 @Table(name = "categories")
 @Data
@@ -24,7 +28,7 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long categoryId;  // CHANGED: id → categoryId (Magnum Opus)
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
@@ -68,15 +72,15 @@ public class Category {
     private List<Product> products = new ArrayList<>();
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;  // CHANGED: createdAt → createdDate (consistency with Product.java)
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;  // CHANGED: updatedAt → updatedDate (consistency with Product.java)
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
         if (isActive == null) {
             isActive = true;
         }
@@ -87,10 +91,15 @@ public class Category {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
-    // Business methods
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates: getCategoryId() / setCategoryId()
+    // No alias methods - one method, one name
+
+    // ========== Business methods ==========
+
     public boolean hasProducts() {
         return products != null && !products.isEmpty();
     }

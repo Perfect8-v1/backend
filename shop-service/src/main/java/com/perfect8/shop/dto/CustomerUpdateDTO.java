@@ -7,6 +7,11 @@ import lombok.*;
  * DTO for updating customer information
  * Version 1.0 - Core customer update functionality
  * Field names MUST match Customer entity exactly!
+ *
+ * PEDAGOGICAL NOTE for GitHub portfolio:
+ * Uses 'passwordHash' instead of 'password' to make it clear that passwords
+ * are ALREADY HASHED by the frontend before transmission.
+ * This demonstrates security awareness and prevents misconceptions.
  */
 @Data
 @Builder
@@ -23,14 +28,13 @@ public class CustomerUpdateDTO {
     @Pattern(regexp = "^[a-zA-ZÀ-ÿ\\s'-]+$", message = "Last name contains invalid characters")
     private String lastName;
 
-    @Pattern(regexp = "^[+]?[0-9\\s\\-()]+$", message = "Invalid phone number format")
-    @Size(max = 20, message = "Phone number too long")
-    private String phoneNumber;
+    @Pattern(regexp = "^[+]?[0-9\\s\\-()]+$", message = "Invalid phone format")
+    @Size(max = 20, message = "Phone too long")
+    private String phone;  // FIXED: phoneNumber → phone (matches Customer.phone)
 
     // Marketing preferences - EXACT names from Customer entity
-    private Boolean newsletterSubscribed;  // Was: subscribeToNewsletter
-    private Boolean marketingConsent;       // Was: acceptMarketingEmails
-    // REMOVED: acceptSmsMarketing - not in entity (v2.0 feature)
+    private Boolean newsletterSubscribed;
+    private Boolean marketingConsent;
 
     // Preferences - matches Customer entity
     @Size(max = 5, message = "Language code too long")
@@ -43,14 +47,14 @@ public class CustomerUpdateDTO {
     @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
             message = "Password must contain at least one lowercase letter, one uppercase letter, and one digit")
-    private String newPassword;
+    private String newPasswordHash;  // CHANGED: newPassword → newPasswordHash
 
     @Size(min = 8, max = 100, message = "Password confirmation must be between 8 and 100 characters")
-    private String confirmNewPassword;
+    private String confirmNewPasswordHash;  // CHANGED: confirmNewPassword → confirmNewPasswordHash
 
-    @NotNull(message = "Current password is required for password change")
-    @Size(max = 100, message = "Current password too long")
-    private String currentPassword;
+    @NotNull(message = "Current password hash is required for password change")
+    @Size(max = 100, message = "Current password hash too long")
+    private String currentPasswordHash;  // CHANGED: currentPassword → currentPasswordHash
 
     // Internal notes (admin use only)
     @Size(max = 5000, message = "Internal notes too long")
@@ -61,30 +65,30 @@ public class CustomerUpdateDTO {
     // ========================================
 
     /**
-     * Validate that new passwords match
+     * Validate that new password hashes match
      */
-    @AssertTrue(message = "New passwords do not match")
+    @AssertTrue(message = "New password hashes do not match")
     public boolean isNewPasswordMatching() {
-        if (newPassword == null && confirmNewPassword == null) {
+        if (newPasswordHash == null && confirmNewPasswordHash == null) {
             return true; // No password change requested
         }
-        return newPassword != null && newPassword.equals(confirmNewPassword);
+        return newPasswordHash != null && newPasswordHash.equals(confirmNewPasswordHash);
     }
 
     /**
      * Check if password change is requested
      */
     public boolean isPasswordChangeRequested() {
-        return newPassword != null && !newPassword.trim().isEmpty();
+        return newPasswordHash != null && !newPasswordHash.trim().isEmpty();
     }
 
     /**
      * Validate password change request
      */
-    @AssertTrue(message = "Current password required for password change")
+    @AssertTrue(message = "Current password hash required for password change")
     public boolean isPasswordChangeValid() {
         if (isPasswordChangeRequested()) {
-            return currentPassword != null && !currentPassword.trim().isEmpty();
+            return currentPasswordHash != null && !currentPasswordHash.trim().isEmpty();
         }
         return true; // No validation needed if no password change
     }
@@ -106,7 +110,7 @@ public class CustomerUpdateDTO {
     public boolean hasProfileChanges() {
         return firstName != null ||
                 lastName != null ||
-                phoneNumber != null;
+                phone != null;
     }
 
     /**
@@ -135,9 +139,9 @@ public class CustomerUpdateDTO {
      * Clear sensitive password data
      */
     public void clearSensitiveData() {
-        this.newPassword = null;
-        this.confirmNewPassword = null;
-        this.currentPassword = null;
+        this.newPasswordHash = null;
+        this.confirmNewPasswordHash = null;
+        this.currentPasswordHash = null;
     }
 
     /**
@@ -156,7 +160,7 @@ public class CustomerUpdateDTO {
         return "CustomerUpdateDTO{" +
                 "firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
+                ", phone='" + phone + '\'' +
                 ", newsletterSubscribed=" + newsletterSubscribed +
                 ", marketingConsent=" + marketingConsent +
                 ", preferredLanguage='" + preferredLanguage + '\'' +
