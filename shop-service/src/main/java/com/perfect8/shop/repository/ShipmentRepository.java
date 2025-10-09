@@ -14,6 +14,7 @@ import java.util.Optional;
 
 /**
  * Shipment Repository - Version 1.0
+ * FIXED: updatedDate not lastUpdated, createdDate not createdAt
  */
 @Repository
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
@@ -81,13 +82,15 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
             "AND s.shipmentStatus NOT IN ('DELIVERED', 'CANCELLED')")
     List<Shipment> findDelayedShipments(@Param("now") LocalDateTime now);
 
-    @Query("SELECT s FROM Shipment s WHERE s.lastUpdated < :cutoffDate " +
+    // FIXED: updatedDate not lastUpdated
+    @Query("SELECT s FROM Shipment s WHERE s.updatedDate < :cutoffDate " +
             "AND s.shipmentStatus IN ('IN_TRANSIT', 'OUT_FOR_DELIVERY')")
     List<Shipment> findShipmentsNeedingUpdate(@Param("cutoffDate") LocalDateTime cutoffDate);
 
     // ========== Basic queries ==========
 
-    List<Shipment> findTop10ByOrderByCreatedAtDesc();
+    // FIXED: createdDate not createdAt
+    List<Shipment> findTop10ByOrderByCreatedDateDesc();
 
     // ========== Address queries ==========
 
