@@ -1,74 +1,149 @@
 package com.perfect8.shop.repository;
 
-import com.perfect8.shop.entity.CartItem;
+import com.perfect8.shop.entity.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository for Product entity - Version 1.0
+ * Follows Magnum Opus: productId not id, categoryId not id
+ * FIXED: All category references use explicit queries with p.category.categoryId
+ */
 @Repository
-public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId")
-    List<CartItem> findByCartId(@Param("cartId") Long cartId);
+    // Find by SKU
+    Optional<Product> findBySku(String sku);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.product.productId = :productId")
-    List<CartItem> findByProductId(@Param("productId") Long productId);
+    // Check if SKU exists
+    boolean existsBySku(String sku);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId AND ci.product.productId = :productId")
-    Optional<CartItem> findByCartIdAndProductId(@Param("cartId") Long cartId, @Param("productId") Long productId);
+    // Find all active products
+    Page<Product> findByIsActiveTrue(Pageable pageable);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
-    List<CartItem> findByCustomerId(@Param("customerId") Long customerId);
+    // Find by category and active - FIXED: Use explicit query
+    @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId AND p.isActive = true")
+    Page<Product> findByCategoryIdAndIsActiveTrue(@Param("categoryId") Long categoryId, Pageable pageable);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = false")
-    List<CartItem> findActiveCartItemsByCustomerId(@Param("customerId") Long customerId);
+    // Find featured and active products
+    Page<Product> findByIsFeaturedTrueAndIsActiveTrue(Pageable pageable);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = true")
-    List<CartItem> findSavedCartItemsByCustomerId(@Param("customerId") Long customerId);
+    // Find low stock products
+    List<Product> findByStockQuantityLessThanAndIsActiveTrue(Integer threshold);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.stockAvailable = false")
-    List<CartItem> findUnavailableItems();
+    // Search by name or description
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
+            "(LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+            "LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%')))")
+    Page<Product> searchByNameOrDescription(@Param("query") String query, Pageable pageable);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId AND ci.isGift = true")
-    List<CartItem> findSelectedItemsByCartId(@Param("cartId") Long cartId);
+    // Find products with filters
+    @Query("SELECT p FROM Product p WHERE p.isActive = true " +
+            "AND (:categoryId IS NULL OR p.category.categoryId = :categoryId) " +
+            "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
+            "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
+            "AND (:featured IS NULL OR p.isFeatured = :featured) " +
+            "AND (:inStock IS NULL OR ((:inStock = true AND p.stockQuantity > 0) OR (:inStock = false AND p.stockQuantity = 0)))")
+    Page<Product> findProductsWithFilters(
+            @Param("categoryId") Long categoryId,
+            @Param("minPrice") BigDecimal minPrice,
+            @Param("maxPrice") BigDecimal maxPrice,
+            @Param("featured") Boolean featured,
+            @Param("inStock") Boolean inStock,
+            Pageable pageable
+    );
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.cart.cartId = :cartId AND ci.isGift = false")
-    List<CartItem> findUnselectedItemsByCartId(@Param("cartId") Long cartId);
+    // Find by price range
+    Page<Product> findByPriceBetweenAndIsActiveTrue(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 
-    @Query("SELECT COUNT(ci) FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
-    Integer countByCustomerId(@Param("customerId") Long customerId);
+    // Find out of stock products
+    Page<Product> findByStockQuantityAndIsActiveTrue(Integer stockQuantity, Pageable pageable);
 
-    @Query("SELECT SUM(ci.quantity) FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = false")
-    Integer sumQuantityByCustomerId(@Param("customerId") Long customerId);
+    // Find by multiple categories - FIXED: Use explicit query
+    @Query("SELECT p FROM Product p WHERE p.category.categoryId IN :categoryIds AND p.isActive = true")
+    Page<Product> findByCategoryIdInAndIsActiveTrue(@Param("categoryIds") List<Long> categoryIds, Pageable pageable);
 
-    @Query("SELECT SUM(ci.subtotal) FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId AND ci.isSavedForLater = false")
-    Double sumTotalPriceByCustomerId(@Param("customerId") Long customerId);
+    // Count by category - FIXED: Use explicit query
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId AND p.isActive = true")
+    long countByCategoryIdAndIsActiveTrue(@Param("categoryId") Long categoryId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.isGift = true AND ci.cart.customer.customerId = :customerId")
-    List<CartItem> findGiftItemsByCustomerId(@Param("customerId") Long customerId);
+    // Find products needing reorder
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.stockQuantity <= p.reorderPoint")
+    List<Product> findProductsNeedingReorder();
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.addedAt < :cutoffDate AND ci.isSavedForLater = false")
-    List<CartItem> findOldCartItems(@Param("cutoffDate") LocalDateTime cutoffDate);
+    // Find best sellers (placeholder - would need order data)
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isFeatured = true")
+    Page<Product> findBestSellers(Pageable pageable);
 
-    @Query("SELECT DISTINCT ci.product.category.name FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
-    List<String> findDistinctCategoriesByCustomerId(@Param("customerId") Long customerId);
+    // Find new arrivals - FIXED: createdDate
+    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.createdDate DESC")
+    Page<Product> findNewArrivals(Pageable pageable);
+
+    // Find on sale products
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.discountPrice IS NOT NULL AND p.discountPrice < p.price")
+    Page<Product> findOnSaleProducts(Pageable pageable);
+
+    // Search by tags
+    @Query("SELECT DISTINCT p FROM Product p JOIN p.tags t WHERE p.isActive = true AND LOWER(t) IN :tags")
+    Page<Product> findByTags(@Param("tags") List<String> tags, Pageable pageable);
 
     /* VERSION 2.0 - Product brand field not implemented in v1.0
-    @Query("SELECT DISTINCT ci.product.brand FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
-    List<String> findDistinctBrandsByCustomerId(@Param("customerId") Long customerId);
+    // Complex search with multiple criteria
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
+            "(:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+            "(:sku IS NULL OR p.sku = :sku) AND " +
+            "(:brand IS NULL OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :brand, '%'))) AND " +
+            "(:categoryId IS NULL OR p.category.categoryId = :categoryId)")
+    Page<Product> advancedSearch(
+            @Param("name") String name,
+            @Param("sku") String sku,
+            @Param("brand") String brand,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
     */
 
-    @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId = :cartId")
-    void deleteByCartId(@Param("cartId") Long cartId);
+    // Complex search with multiple criteria - v1.0 version without brand
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
+            "(:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+            "(:sku IS NULL OR p.sku = :sku) AND " +
+            "(:categoryId IS NULL OR p.category.categoryId = :categoryId)")
+    Page<Product> advancedSearch(
+            @Param("name") String name,
+            @Param("sku") String sku,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
 
-    @Query("DELETE FROM CartItem ci WHERE ci.product.productId = :productId")
-    void deleteByProductId(@Param("productId") Long productId);
+    // Update stock quantity
+    @Query("UPDATE Product p SET p.stockQuantity = :quantity WHERE p.productId = :productId")
+    void updateStockQuantity(@Param("productId") Long productId, @Param("quantity") Integer quantity);
 
-    @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId IN (SELECT c.cartId FROM Cart c WHERE c.expiresAt < :expiryDate)")
-    void deleteByExpiredCart(@Param("expiryDate") LocalDateTime expiryDate);
+    // Bulk update prices
+    @Query("UPDATE Product p SET p.price = p.price * :multiplier WHERE p.category.categoryId = :categoryId")
+    void bulkUpdatePricesByCategory(@Param("categoryId") Long categoryId, @Param("multiplier") BigDecimal multiplier);
+
+    // Find products with no category
+    List<Product> findByCategoryIsNullAndIsActiveTrue();
+
+    // Find products by weight range
+    Page<Product> findByWeightBetweenAndIsActiveTrue(BigDecimal minWeight, BigDecimal maxWeight, Pageable pageable);
+
+    // Statistics queries
+    @Query("SELECT AVG(p.price) FROM Product p WHERE p.isActive = true")
+    BigDecimal findAveragePrice();
+
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.isActive = true AND p.stockQuantity = 0")
+    long countOutOfStockProducts();
+
+    @Query("SELECT SUM(p.stockQuantity * p.price) FROM Product p WHERE p.isActive = true")
+    BigDecimal calculateTotalInventoryValue();
 }

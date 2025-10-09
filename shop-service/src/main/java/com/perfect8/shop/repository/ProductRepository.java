@@ -83,8 +83,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.isFeatured = true")
     Page<Product> findBestSellers(Pageable pageable);
 
-    // Find new arrivals
-    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.createdAt DESC")
+    // Find new arrivals - FIXED: createdDate
+    @Query("SELECT p FROM Product p WHERE p.isActive = true ORDER BY p.createdDate DESC")
     Page<Product> findNewArrivals(Pageable pageable);
 
     // Find on sale products
