@@ -17,6 +17,8 @@ import java.util.Optional;
  * Repository for Payment entity - Version 1.0
  * Focuses on core payment operations essential for e-commerce functionality
  * Follows Magnum Opus: paymentId not id, orderId not id, customerId not id
+ * FIXED: All Order references use explicit queries with p.order.orderId
+ * FIXED: All date fields use correct Payment entity field names
  */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -29,14 +31,17 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Find by transaction ID - Essential for payment tracking
     Optional<Payment> findByTransactionId(String transactionId);
 
-    // Find by order - Essential for order management
-    List<Payment> findByOrderId(Long orderId);
+    // Find by order - Essential for order management - FIXED: Explicit query
+    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId")
+    List<Payment> findByOrderId(@Param("orderId") Long orderId);
 
-    // Find most recent payment for order - Essential for payment status
-    Optional<Payment> findFirstByOrderIdOrderByCreatedAtDesc(Long orderId);
+    // Find most recent payment for order - Essential for payment status - FIXED: orderId + paymentDate
+    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId ORDER BY p.paymentDate DESC")
+    Optional<Payment> findFirstByOrderIdOrderByCreatedAtDesc(@Param("orderId") Long orderId);
 
-    // Find successful payment for order - Essential for order completion
-    Optional<Payment> findFirstByOrderIdAndStatus(Long orderId, String status);
+    // Find successful payment for order - Essential for order completion - FIXED: orderId
+    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId AND p.status = :status ORDER BY p.paymentDate DESC")
+    Optional<Payment> findFirstByOrderIdAndStatus(@Param("orderId") Long orderId, @Param("status") String status);
 
     // Find by status - Essential for payment management
     List<Payment> findByStatus(String status);
@@ -45,8 +50,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Find by payment method - Essential for PayPal integration
     List<Payment> findByPaymentMethod(String paymentMethod);
 
-    // Find pending payments older than specified time - Essential for timeout handling
-    @Query("SELECT p FROM Payment p WHERE p.status = 'PENDING' AND p.createdAt < :cutoffTime")
+    // Find pending payments older than specified time - Essential for timeout handling - FIXED: paymentDate
+    @Query("SELECT p FROM Payment p WHERE p.status = 'PENDING' AND p.paymentDate < :cutoffTime")
     List<Payment> findPendingPaymentsOlderThan(@Param("cutoffTime") LocalDateTime cutoffTime);
 
     // Find failed payments for retry - Essential for payment recovery
@@ -70,11 +75,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.order.orderId = :orderId AND p.status = 'COMPLETED'")
     boolean hasSuccessfulPayment(@Param("orderId") Long orderId);
 
-    // Find duplicate payments - Essential for preventing double charges
+    // Find duplicate payments - Essential for preventing double charges - FIXED: paymentDate
     @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId " +
             "AND p.amount = :amount " +
             "AND p.status = 'COMPLETED' " +
-            "AND p.createdAt BETWEEN :startTime AND :endTime")
+            "AND p.paymentDate BETWEEN :startTime AND :endTime")
     List<Payment> findPotentialDuplicates(
             @Param("orderId") Long orderId,
             @Param("amount") BigDecimal amount,
@@ -95,8 +100,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Find by multiple statuses - Essential for bulk status checks
     List<Payment> findByStatusIn(List<String> statuses);
 
-    // Find payments by customer - Essential for customer service
-    @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId ORDER BY p.createdAt DESC")
+    // Find payments by customer - Essential for customer service - FIXED: paymentDate
+    @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId ORDER BY p.paymentDate DESC")
     List<Payment> findByCustomerId(@Param("customerId") Long customerId);
 
     @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId")
@@ -111,8 +116,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * Page<Payment> findByPaymentMethod(String paymentMethod, Pageable pageable);
      *
      * // Date range queries for reporting
-     * List<Payment> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate);
-     * Page<Payment> findByCreatedAtBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
+     * List<Payment> findByPaymentDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+     * Page<Payment> findByPaymentDateBetween(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
      *
      * // Refund analytics
      * Page<Payment> findRefundedPayments(Pageable pageable);
@@ -121,7 +126,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = :status")
      * BigDecimal calculateTotalAmountByStatus(@Param("status") String status);
      *
-     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = :status AND p.createdAt BETWEEN :startDate AND :endDate")
+     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = :status AND p.paymentDate BETWEEN :startDate AND :endDate")
      * BigDecimal calculateTotalAmountByStatusAndDateRange(
      *         @Param("status") String status,
      *         @Param("startDate") LocalDateTime startDate,
@@ -137,9 +142,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      *
      * // Statistics and metrics
      * Long countByStatus(String status);
-     * Long countByStatusAndCreatedAtBetween(String status, LocalDateTime startDate, LocalDateTime endDate);
+     * Long countByStatusAndPaymentDateBetween(String status, LocalDateTime startDate, LocalDateTime endDate);
      *
-     * @Query("SELECT COUNT(p) FROM Payment p WHERE p.status = :status AND DATE(p.createdAt) = CURRENT_DATE")
+     * @Query("SELECT COUNT(p) FROM Payment p WHERE p.status = :status AND DATE(p.paymentDate) = CURRENT_DATE")
      * Long countTodaysPaymentsByStatus(@Param("status") String status);
      *
      * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'COMPLETED' AND DATE(p.paymentDate) = CURRENT_DATE")
@@ -149,7 +154,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * List<Payment> findRecentSuccessfulPayments(Pageable pageable);
      *
      * // Cleanup operations
-     * @Query("DELETE FROM Payment p WHERE p.status IN ('CANCELLED', 'FAILED') AND p.createdAt < :cutoffDate")
+     * @Query("DELETE FROM Payment p WHERE p.status IN ('CANCELLED', 'FAILED') AND p.paymentDate < :cutoffDate")
      * void deleteOldFailedPayments(@Param("cutoffDate") LocalDateTime cutoffDate);
      *
      * Page<Payment> findByStatusIn(List<String> statuses, Pageable pageable);

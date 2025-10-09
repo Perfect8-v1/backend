@@ -15,6 +15,7 @@ import java.util.Optional;
 /**
  * Repository for Product entity - Version 1.0
  * Follows Magnum Opus: productId not id, categoryId not id
+ * FIXED: All category references use explicit queries with p.category.categoryId
  */
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -28,8 +29,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find all active products
     Page<Product> findByIsActiveTrue(Pageable pageable);
 
-    // Find by category and active
-    Page<Product> findByCategoryIdAndIsActiveTrue(Long categoryId, Pageable pageable);
+    // Find by category and active - FIXED: Use explicit query
+    @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId AND p.isActive = true")
+    Page<Product> findByCategoryIdAndIsActiveTrue(@Param("categoryId") Long categoryId, Pageable pageable);
 
     // Find featured and active products
     Page<Product> findByIsFeaturedTrueAndIsActiveTrue(Pageable pageable);
@@ -65,11 +67,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find out of stock products
     Page<Product> findByStockQuantityAndIsActiveTrue(Integer stockQuantity, Pageable pageable);
 
-    // Find by multiple categories
-    Page<Product> findByCategoryIdInAndIsActiveTrue(List<Long> categoryIds, Pageable pageable);
+    // Find by multiple categories - FIXED: Use explicit query
+    @Query("SELECT p FROM Product p WHERE p.category.categoryId IN :categoryIds AND p.isActive = true")
+    Page<Product> findByCategoryIdInAndIsActiveTrue(@Param("categoryIds") List<Long> categoryIds, Pageable pageable);
 
-    // Count by category
-    long countByCategoryIdAndIsActiveTrue(Long categoryId);
+    // Count by category - FIXED: Use explicit query
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId AND p.isActive = true")
+    long countByCategoryIdAndIsActiveTrue(@Param("categoryId") Long categoryId);
 
     // Find products needing reorder
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND p.stockQuantity <= p.reorderPoint")
@@ -91,6 +95,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT DISTINCT p FROM Product p JOIN p.tags t WHERE p.isActive = true AND LOWER(t) IN :tags")
     Page<Product> findByTags(@Param("tags") List<String> tags, Pageable pageable);
 
+    /* VERSION 2.0 - Product brand field not implemented in v1.0
     // Complex search with multiple criteria
     @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
             "(:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
@@ -101,6 +106,19 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("name") String name,
             @Param("sku") String sku,
             @Param("brand") String brand,
+            @Param("categoryId") Long categoryId,
+            Pageable pageable
+    );
+    */
+
+    // Complex search with multiple criteria - v1.0 version without brand
+    @Query("SELECT p FROM Product p WHERE p.isActive = true AND " +
+            "(:name IS NULL OR LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))) AND " +
+            "(:sku IS NULL OR p.sku = :sku) AND " +
+            "(:categoryId IS NULL OR p.category.categoryId = :categoryId)")
+    Page<Product> advancedSearch(
+            @Param("name") String name,
+            @Param("sku") String sku,
             @Param("categoryId") Long categoryId,
             Pageable pageable
     );
