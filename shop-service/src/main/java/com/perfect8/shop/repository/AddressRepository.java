@@ -174,8 +174,8 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
 
     // Address usage tracking (for order history)
     @Query("SELECT a, COUNT(o) as orderCount FROM Address a LEFT JOIN Order o ON " +
-            "(o.shippingAddress LIKE CONCAT('%', a.street, '%') OR " +
-            "o.billingAddress LIKE CONCAT('%', a.street, '%')) " +
+            "(o.shippingAddressLine1 LIKE CONCAT('%', a.street, '%') OR " +
+            "o.billingAddressLine1 LIKE CONCAT('%', a.street, '%')) " +
             "WHERE a.customer.customerId = :customerId " +
             "GROUP BY a ORDER BY orderCount DESC")
     List<Object[]> findAddressUsageByCustomer(@Param("customerId") Long customerId);
