@@ -159,7 +159,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
      * Find orders by shipping address postal code
      * Critical for logistics
      */
-    @Query("SELECT o FROM Order o WHERE o.shippingAddress.postalCode = :postalCode")
+    @Query("SELECT o FROM Order o WHERE o.shippingPostalCode = :postalCode")
     List<Order> findByShippingPostalCode(@Param("postalCode") String postalCode);
 
     /**
