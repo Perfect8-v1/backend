@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * Cart Entity - Version 1.0
  * Magnum Opus Compliant: cartId not id, consistent naming
+ * FIXED: expiresAt → expirationDate for consistency with other date fields
  */
 @Entity
 @Table(name = "carts")
@@ -67,8 +68,9 @@ public class Cart {
     @Column(name = "updated_at")
     private LocalDateTime updatedDate;
 
+    // FIXED: expiresAt → expirationDate for consistency
     @Column(name = "expires_at")
-    private LocalDateTime expiresAt;
+    private LocalDateTime expirationDate;
 
     @PrePersist
     protected void onCreate() {
@@ -87,8 +89,9 @@ public class Cart {
             isSaved = false;
         }
         // Set cart expiration to 30 days from now if not saved
-        if (!isSaved && expiresAt == null) {
-            expiresAt = LocalDateTime.now().plusDays(30);
+        // FIXED: expiresAt → expirationDate
+        if (!isSaved && expirationDate == null) {
+            expirationDate = LocalDateTime.now().plusDays(30);
         }
     }
 
@@ -99,6 +102,7 @@ public class Cart {
 
     // ========== MAGNUM OPUS COMPLIANT ==========
     // Lombok generates: getCartId() / setCartId()
+    // Lombok generates: getExpirationDate() / setExpirationDate()
     // No alias methods - one method, one name
 
     // ========== BUSINESS METHODS ==========
@@ -192,8 +196,9 @@ public class Cart {
         couponCode = null;
     }
 
+    // FIXED: expiresAt → expirationDate
     public boolean isExpired() {
-        return expiresAt != null && LocalDateTime.now().isAfter(expiresAt);
+        return expirationDate != null && LocalDateTime.now().isAfter(expirationDate);
     }
 
     public void applyCoupon(String code, BigDecimal discount) {
