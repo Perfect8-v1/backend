@@ -1,6 +1,7 @@
 package com.perfect8.shop.repository;
 
 import com.perfect8.shop.entity.Payment;
+import com.perfect8.shop.enums.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,10 +16,9 @@ import java.util.Optional;
 
 /**
  * Repository for Payment entity - Version 1.0
- * Focuses on core payment operations essential for e-commerce functionality
+ * FIXED: All references changed from 'status' to 'paymentStatus' to match Payment entity
  * Follows Magnum Opus: paymentId not id, orderId not id, customerId not id
- * FIXED: All Order references use explicit queries with p.order.orderId
- * FIXED: All date fields use correct Payment entity field names
+ * MAGNUM OPUS COMPLIANT: SAMMA namn överallt
  */
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -35,31 +35,28 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId")
     List<Payment> findByOrderId(@Param("orderId") Long orderId);
 
-    // Find most recent payment for order - Essential for payment status - FIXED: orderId + paymentDate
-    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId ORDER BY p.paymentDate DESC")
-    Optional<Payment> findFirstByOrderIdOrderByCreatedAtDesc(@Param("orderId") Long orderId);
+    // Find most recent payment for order - Essential for payment status - FIXED: orderId + createdDate
+    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId ORDER BY p.createdDate DESC")
+    Optional<Payment> findFirstByOrderIdOrderByCreatedDateDesc(@Param("orderId") Long orderId);
 
-    // Find successful payment for order - Essential for order completion - FIXED: orderId
-    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId AND p.status = :status ORDER BY p.paymentDate DESC")
-    Optional<Payment> findFirstByOrderIdAndStatus(@Param("orderId") Long orderId, @Param("status") String status);
+    // Find successful payment for order - Essential for order completion - FIXED: orderId + paymentStatus
+    @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId AND p.paymentStatus = :paymentStatus ORDER BY p.createdDate DESC")
+    Optional<Payment> findFirstByOrderIdAndPaymentStatus(@Param("orderId") Long orderId, @Param("paymentStatus") PaymentStatus paymentStatus);
 
-    // Find by status - Essential for payment management
-    List<Payment> findByStatus(String status);
-    Page<Payment> findByStatus(String status, Pageable pageable);
+    // Find by payment status - Essential for payment management - FIXED: paymentStatus
+    List<Payment> findByPaymentStatus(PaymentStatus paymentStatus);
+    Page<Payment> findByPaymentStatus(PaymentStatus paymentStatus, Pageable pageable);
 
     // Find by payment method - Essential for PayPal integration
     List<Payment> findByPaymentMethod(String paymentMethod);
 
-    // Find pending payments older than specified time - Essential for timeout handling - FIXED: paymentDate
-    @Query("SELECT p FROM Payment p WHERE p.status = 'PENDING' AND p.paymentDate < :cutoffTime")
-    List<Payment> findPendingPaymentsOlderThan(@Param("cutoffTime") LocalDateTime cutoffTime);
+    // Find pending payments older than specified time - Essential for timeout handling - FIXED: paymentStatus
+    @Query("SELECT p FROM Payment p WHERE p.paymentStatus = :paymentStatus AND p.createdDate < :cutoffTime")
+    List<Payment> findPendingPaymentsOlderThan(@Param("paymentStatus") PaymentStatus paymentStatus, @Param("cutoffTime") LocalDateTime cutoffTime);
 
-    // Find failed payments for retry - Essential for payment recovery
-    @Query("SELECT p FROM Payment p WHERE p.status = 'FAILED' AND p.retryCount < :maxRetries")
-    List<Payment> findFailedPaymentsForRetry(@Param("maxRetries") Integer maxRetries);
-
-    // Find by reference number - Essential for payment lookup
-    Optional<Payment> findByReferenceNumber(String referenceNumber);
+    // Find failed payments for retry - Essential for payment recovery - FIXED: paymentStatus
+    @Query("SELECT p FROM Payment p WHERE p.paymentStatus = :paymentStatus AND p.retryCount < :maxRetries")
+    List<Payment> findFailedPaymentsForRetry(@Param("paymentStatus") PaymentStatus paymentStatus, @Param("maxRetries") Integer maxRetries);
 
     // Find by gateway payment ID - Essential for PayPal integration
     Optional<Payment> findByGatewayPaymentId(String gatewayPaymentId);
@@ -71,24 +68,25 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     // Find by payer email - Essential for customer service
     List<Payment> findByPayerEmail(String payerEmail);
 
-    // Check if order has successful payment - Essential for order validation
-    @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.order.orderId = :orderId AND p.status = 'COMPLETED'")
-    boolean hasSuccessfulPayment(@Param("orderId") Long orderId);
+    // Check if order has successful payment - Essential for order validation - FIXED: paymentStatus
+    @Query("SELECT COUNT(p) > 0 FROM Payment p WHERE p.order.orderId = :orderId AND p.paymentStatus = :paymentStatus")
+    boolean hasSuccessfulPayment(@Param("orderId") Long orderId, @Param("paymentStatus") PaymentStatus paymentStatus);
 
-    // Find duplicate payments - Essential for preventing double charges - FIXED: paymentDate
+    // Find duplicate payments - Essential for preventing double charges - FIXED: paymentStatus
     @Query("SELECT p FROM Payment p WHERE p.order.orderId = :orderId " +
             "AND p.amount = :amount " +
-            "AND p.status = 'COMPLETED' " +
-            "AND p.paymentDate BETWEEN :startTime AND :endTime")
+            "AND p.paymentStatus = :paymentStatus " +
+            "AND p.createdDate BETWEEN :startTime AND :endTime")
     List<Payment> findPotentialDuplicates(
             @Param("orderId") Long orderId,
             @Param("amount") BigDecimal amount,
+            @Param("paymentStatus") PaymentStatus paymentStatus,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
 
-    // Find payments needing verification - Essential for payment security
-    @Query("SELECT p FROM Payment p WHERE p.status = 'COMPLETED' AND p.isVerified = false")
-    List<Payment> findPaymentsNeedingVerification();
+    // Find payments needing verification - Essential for payment security - FIXED: paymentStatus
+    @Query("SELECT p FROM Payment p WHERE p.paymentStatus = :paymentStatus AND p.isVerified = false")
+    List<Payment> findPaymentsNeedingVerification(@Param("paymentStatus") PaymentStatus paymentStatus);
 
     // Check if transaction ID exists - Essential for preventing duplicates
     boolean existsByTransactionId(String transactionId);
@@ -97,11 +95,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p WHERE p.retryCount >= :minRetries ORDER BY p.retryCount DESC")
     List<Payment> findHighRetryPayments(@Param("minRetries") Integer minRetries);
 
-    // Find by multiple statuses - Essential for bulk status checks
-    List<Payment> findByStatusIn(List<String> statuses);
+    // Find by multiple payment statuses - Essential for bulk status checks - FIXED: paymentStatus
+    List<Payment> findByPaymentStatusIn(List<PaymentStatus> paymentStatuses);
 
-    // Find payments by customer - Essential for customer service - FIXED: paymentDate
-    @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId ORDER BY p.paymentDate DESC")
+    // Find payments by customer - Essential for customer service - FIXED: createdDate
+    @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId ORDER BY p.createdDate DESC")
     List<Payment> findByCustomerId(@Param("customerId") Long customerId);
 
     @Query("SELECT p FROM Payment p WHERE p.order.customer.customerId = :customerId")
@@ -123,12 +121,12 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      * Page<Payment> findRefundedPayments(Pageable pageable);
      *
      * // Revenue calculations
-     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = :status")
-     * BigDecimal calculateTotalAmountByStatus(@Param("status") String status);
+     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.paymentStatus = :paymentStatus")
+     * BigDecimal calculateTotalAmountByPaymentStatus(@Param("paymentStatus") PaymentStatus paymentStatus);
      *
-     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = :status AND p.paymentDate BETWEEN :startDate AND :endDate")
-     * BigDecimal calculateTotalAmountByStatusAndDateRange(
-     *         @Param("status") String status,
+     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.paymentStatus = :paymentStatus AND p.paymentDate BETWEEN :startDate AND :endDate")
+     * BigDecimal calculateTotalAmountByPaymentStatusAndDateRange(
+     *         @Param("paymentStatus") PaymentStatus paymentStatus,
      *         @Param("startDate") LocalDateTime startDate,
      *         @Param("endDate") LocalDateTime endDate);
      *
@@ -141,22 +139,22 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
      *         @Param("endDate") LocalDateTime endDate);
      *
      * // Statistics and metrics
-     * Long countByStatus(String status);
-     * Long countByStatusAndPaymentDateBetween(String status, LocalDateTime startDate, LocalDateTime endDate);
+     * Long countByPaymentStatus(PaymentStatus paymentStatus);
+     * Long countByPaymentStatusAndPaymentDateBetween(PaymentStatus paymentStatus, LocalDateTime startDate, LocalDateTime endDate);
      *
-     * @Query("SELECT COUNT(p) FROM Payment p WHERE p.status = :status AND DATE(p.paymentDate) = CURRENT_DATE")
-     * Long countTodaysPaymentsByStatus(@Param("status") String status);
+     * @Query("SELECT COUNT(p) FROM Payment p WHERE p.paymentStatus = :paymentStatus AND DATE(p.paymentDate) = CURRENT_DATE")
+     * Long countTodaysPaymentsByPaymentStatus(@Param("paymentStatus") PaymentStatus paymentStatus);
      *
-     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.status = 'COMPLETED' AND DATE(p.paymentDate) = CURRENT_DATE")
+     * @Query("SELECT SUM(p.amount) FROM Payment p WHERE p.paymentStatus = 'COMPLETED' AND DATE(p.paymentDate) = CURRENT_DATE")
      * BigDecimal calculateTodaysRevenue();
      *
-     * @Query("SELECT p FROM Payment p WHERE p.status = 'COMPLETED' ORDER BY p.paymentDate DESC")
-     * List<Payment> findRecentSuccessfulPayments(Pageable pageable);
+     * @Query("SELECT p FROM Payment p WHERE p.paymentStatus = :paymentStatus ORDER BY p.paymentDate DESC")
+     * List<Payment> findRecentSuccessfulPayments(@Param("paymentStatus") PaymentStatus paymentStatus, Pageable pageable);
      *
      * // Cleanup operations
-     * @Query("DELETE FROM Payment p WHERE p.status IN ('CANCELLED', 'FAILED') AND p.paymentDate < :cutoffDate")
+     * @Query("DELETE FROM Payment p WHERE p.paymentStatus IN ('CANCELLED', 'FAILED') AND p.paymentDate < :cutoffDate")
      * void deleteOldFailedPayments(@Param("cutoffDate") LocalDateTime cutoffDate);
      *
-     * Page<Payment> findByStatusIn(List<String> statuses, Pageable pageable);
+     * Page<Payment> findByPaymentStatusIn(List<PaymentStatus> paymentStatuses, Pageable pageable);
      */
 }
