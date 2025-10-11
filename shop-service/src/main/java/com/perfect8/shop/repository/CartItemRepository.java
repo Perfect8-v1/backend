@@ -10,6 +10,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * CartItemRepository - Version 1.0
+ * FIXED: Changed expiresAt to expirationDate to match Cart entity field name
+ * Magnum Opus Compliant: SAMMA namn överallt
+ */
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
@@ -69,6 +74,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query("DELETE FROM CartItem ci WHERE ci.product.productId = :productId")
     void deleteByProductId(@Param("productId") Long productId);
 
-    @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId IN (SELECT c.cartId FROM Cart c WHERE c.expiresAt < :expiryDate)")
+    // FIXED: Changed c.expiresAt to c.expirationDate to match Cart entity field name
+    @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId IN (SELECT c.cartId FROM Cart c WHERE c.expirationDate < :expiryDate)")
     void deleteByExpiredCart(@Param("expiryDate") LocalDateTime expiryDate);
 }
