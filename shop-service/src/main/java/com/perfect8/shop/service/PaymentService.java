@@ -270,9 +270,10 @@ public class PaymentService {
 
     /**
      * Get payment by order ID - Core functionality
+     * FIXED: Changed from CreatedAt to CreatedDate to match Payment entity
      */
     public Payment getPaymentByOrderId(Long orderIdLong) {
-        return paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(orderIdLong)
+        return paymentRepository.findFirstByOrderIdOrderByCreatedDateDesc(orderIdLong)
                 .orElse(null);
     }
 
