@@ -1,6 +1,5 @@
 #!/bin/bash
 # Perfect8 Backend Startup Script
-
 # Optimerat för Podman på Alpine Linux med --replace för automatisk ersättning
 
 set -e
@@ -85,7 +84,7 @@ echo "🐳 Steg 1: Bygger Docker images (Docker format för healthchecks)..."
 echo "---------------------------------------------------------------------"
 echo "   (Detta kan ta 5-10 minuter första gången)"
 
-podman-compose build --no-cache --format=docker
+podman-compose build --no-cache
 
 if [ $? -eq 0 ]; then
     echo "✅ Alla Docker images byggda i Docker-format!"
