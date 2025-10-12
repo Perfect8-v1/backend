@@ -1,182 +1,141 @@
-version: '3.8'
+#!/bin/bash
+# Perfect8 Backend Startup Script
+# Optimerat för Podman på Alpine Linux
 
-services:
-  # ============================================================================
-  # MariaDB Database
-  # ============================================================================
-  database:
-    image: mariadb:11.2
-    container_name: perfect8-database
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
-      MYSQL_DATABASE: perfect8_shop
-      MYSQL_USER: ${DB_USER:-perfect8user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-perfect8pass}
-    ports:
-      - "3306:3306"
-    volumes:
-      - db_data:/var/lib/mysql
-      - ./init-databases.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+  set -e
+  
+  # Hantera --clean flagga
+  CLEAN_START=false
+  if [ "$1" == "--clean" ]; then
+  CLEAN_START=true
+  echo "⚠️  CLEAN START MODE"
+  echo "   Detta raderar ALL data (databas + bilder)!"
+  echo ""
+read -p "   Är du säker? (yes/no): " CONFIRM
+    if [ "$CONFIRM" != "yes" ]; then
+                                     echo "❌ Avbruten"
+                                     exit 0
+  fi
+  fi
+  
+  echo "🚀 Perfect8 Backend Startup"
+  echo "=========================="
+  
+  # Exportera Docker format för healthchecks
+  export BUILDAH_FORMAT=docker
+  echo "✅ BUILDAH_FORMAT=docker (för healthchecks)"
+  
+  # Kontrollera att Podman är installerat
+  if ! command -v podman &> /dev/null; then
+  echo "❌ Podman hittades inte!"
+echo "   Installera Podman först: apk add podman"
+  exit 1
+  fi
 
-  # ============================================================================
-  # Admin Service (Port 8083)
-  # ============================================================================
-  admin-service:
-    build:
-      context: .
-      dockerfile: admin-service/Dockerfile
-    container_name: perfect8-admin
-    ports:
-      - "8083:8083"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_admin?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-perfect8pass}
-      JWT_SECRET: ${JWT_SECRET:-mySecretKeyForPerfect8ShopServiceVersion1Point0}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
-    depends_on:
-      database:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+echo "✅ Använder: Podman"
 
-  # ============================================================================
-  # Blog Service (Port 8080)
-  # ============================================================================
-  blog-service:
-    build:
-      context: .
-      dockerfile: blog-service/Dockerfile
-    container_name: perfect8-blog
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_blog?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-perfect8pass}
-      JWT_SECRET: ${JWT_SECRET:-mySecretKeyForPerfect8ShopServiceVersion1Point0}
-      IMAGE_SERVICE_URL: http://image-service:8081
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
-    depends_on:
-      database:
-        condition: service_healthy
-      image-service:
-        condition: service_started
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # ============================================================================
-  # Email Service (Port 8084)
-  # ============================================================================
-  email-service:
-    build:
-      context: .
-      dockerfile: email-service/Dockerfile
-    container_name: perfect8-email
-    ports:
-      - "8084:8084"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_email?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-perfect8pass}
-      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-      MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_USERNAME: ${MAIL_USERNAME:-noreply@perfect8.com}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      SHOP_SERVICE_URL: http://shop-service:8082
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
-    depends_on:
-      database:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8084/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # ============================================================================
-  # Image Service (Port 8081)
-  # ============================================================================
-  image-service:
-    build:
-      context: .
-      dockerfile: image-service/Dockerfile
-    container_name: perfect8-image
-    ports:
-      - "8081:8081"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_images?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-perfect8pass}
-      STORAGE_LOCATION: ${STORAGE_LOCATION:-/app/uploads}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
-    depends_on:
-      database:
-        condition: service_healthy
-    volumes:
-      - image_storage:/app/uploads
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # ============================================================================
-  # Shop Service (Port 8082)
-  # ============================================================================
-  shop-service:
-    build:
-      context: .
-      dockerfile: shop-service/Dockerfile
-    container_name: perfect8-shop
-    ports:
-      - "8082:8082"
-    environment:
-      SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_shop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-perfect8pass}
-      JWT_SECRET: ${JWT_SECRET:-mySecretKeyForPerfect8ShopServiceVersion1Point0}
-      ADMIN_SERVICE_URL: http://admin-service:8083
-      IMAGE_SERVICE_URL: http://image-service:8081
-      BLOG_SERVICE_URL: http://blog-service:8080
-      EMAIL_SERVICE_URL: http://email-service:8084
-      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-      MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_USERNAME: ${MAIL_USERNAME:-noreply@perfect8.com}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID:-}
-      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET:-}
-      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
-    depends_on:
-      database:
-        condition: service_healthy
-      admin-service:
-        condition: service_started
-      image-service:
-        condition: service_started
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-# ============================================================================
-# Volumes (Persistent Storage)
-# ============================================================================
-volumes:
-  db_data:
-    driver: local
-  image_storage:
-    driver: local
+# Kontrollera att podman-compose finns
+  if ! command -v podman-compose &> /dev/null; then
+  echo "❌ podman-compose hittades inte!"
+echo "   Installera: pip install podman-compose"
+  exit 1
+  fi
+  
+  # Steg 1: Verifiera att vi är i rätt mapp
+  if [ ! -f "docker-compose.yml" ]; then
+  echo "❌ docker-compose.yml hittades inte!"
+  echo "   Kör detta skript från ~/perfect8 mappen"
+  exit 1
+  fi
+  
+  if [ ! -f ".env" ]; then
+  echo "⚠️  .env fil saknas! Skapar från .env.example..."
+  if [ -f ".env.example" ]; then
+  cp .env.example .env
+echo "   ⚠️  VIKTIGT: Redigera .env med riktiga lösenord!"
+  echo "   nano .env"
+  exit 1
+  else
+  echo "❌ Ingen .env.example hittades!"
+  exit 1
+  fi
+  fi
+  
+  echo "✅ Konfigurationsfiler OK"
+  
+  # Steg 2: Stoppa gamla containers (alltid, inte bara vid --clean)
+  echo ""
+  echo "🧹 Stoppar gamla containers..."
+  echo "-------------------------------"
+  podman-compose down 2>/dev/null || true
+  
+  # Om --clean, ta även bort volymer
+  if [ "$CLEAN_START" = true ]; then
+  echo ""
+  echo "🗑️  Tar bort alla volymer (databas + bilder)..."
+  podman volume rm perfect8_db_data 2>/dev/null || true
+  podman volume rm perfect8_image_storage 2>/dev/null || true
+  echo "✅ Clean start - börjar från scratch"
+  fi
+  
+  # Steg 3: Bygga alla Docker images
+  echo ""
+echo "🐳 Steg 1: Bygger Docker images..."
+  echo "-----------------------------------"
+  echo "   (Detta kan ta 5-10 minuter första gången)"
+  
+  podman-compose build --no-cache
+  
+  if [ $? -eq 0 ]; then
+  echo "✅ Alla images byggda!"
+  else
+  echo "❌ Build misslyckades!"
+  exit 1
+  fi
+  
+  # Steg 4: Starta alla services
+  echo ""
+echo "🎯 Steg 2: Startar alla services..."
+  echo "------------------------------------"
+  
+  podman-compose up -d
+  
+  # Vänta på att services ska starta
+  echo ""
+  echo "⏳ Väntar på att services ska bli redo (60 sekunder)..."
+  sleep 60
+  
+  # Steg 5: Visa status
+  echo ""
+echo "🔍 Steg 3: Verifierar services..."
+  echo "----------------------------------"
+  
+  podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+  
+  echo ""
+  echo "=================================="
+  echo "🎉 Perfect8 Backend är igång!"
+  echo "=================================="
+  echo ""
+  echo "🔗 Service-URLer:"
+echo "   Image:    http://localhost:8081"
+echo "   Shop:     http://localhost:8082"
+echo "   Admin:    http://localhost:8083"
+echo "   Email:    http://localhost:8084"
+echo "   Blog:     http://localhost:8080"
+echo "   Database: localhost:3306"
+  echo ""
+  echo "💡 Användbara kommandon:"
+  echo "   podman-compose logs -f              # Följ alla loggar"
+  echo "   podman-compose logs -f shop-service # Följ en service"
+  echo "   podman ps                           # Lista containers"
+  echo "   ./start-backend.sh                  # Starta om"
+  echo "   ./start-backend.sh --clean          # Starta från scratch (raderar data!)"
+  echo ""
+  echo "📊 Kolla healthcheck-status (vänta 2 minuter efter start):"
+  echo "   curl http://localhost:8081/actuator/health  # Image"
+  echo "   curl http://localhost:8082/actuator/health  # Shop"
+  echo "   curl http://localhost:8083/actuator/health  # Admin"
+  echo "   curl http://localhost:8084/actuator/health  # Email"
+  echo "   curl http://localhost:8080/actuator/health  # Blog"
+  echo ""
