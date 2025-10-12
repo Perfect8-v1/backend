@@ -1,36 +1,38 @@
 #!/bin/bash
-# Perfect8 Backend Stop Script
-# Stoppar alla services säkert
 
-echo "🛑 Perfect8 Backend Shutdown"
-echo "============================"
+echo "=========================================="
+echo "Stopping Perfect8 Backend Services"
+echo "=========================================="
 
-# Kontrollera att vi är i rätt mapp
-if [ ! -f "docker-compose.yml" ]; then
-    echo "❌ docker-compose.yml hittades inte!"
-    echo "   Kör detta skript från ~/perfect8 mappen"
+# Check if podman-compose is installed
+if ! command -v podman-compose &> /dev/null; then
+    echo "ERROR: podman-compose is not installed!"
     exit 1
 fi
 
-# Stoppa alla services
-echo "Stoppar alla services..."
+echo ""
+echo "Stopping all services..."
 podman-compose down
 
-# Ta bort pod (om den finns)
-podman pod rm -f pod_perfect8 2>/dev/null || true
-
-# Visa status
-echo ""
-echo "Status efter stopp:"
-podman ps -a
+if [ $? -ne 0 ]; then
+    echo "WARNING: Some services may not have stopped cleanly"
+fi
 
 echo ""
-echo "✅ Perfect8 Backend stoppad!"
+echo "Verifying all containers stopped:"
+echo "=========================================="
+podman ps -a | grep perfect8
+
+if [ $? -ne 0 ]; then
+    echo "All Perfect8 containers stopped successfully!"
+else
+    echo ""
+    echo "Some containers are still running. To force stop:"
+    echo "  podman stop \$(podman ps -q --filter name=perfect8)"
+    echo "  podman rm \$(podman ps -aq --filter name=perfect8)"
+fi
+
 echo ""
-echo "💡 För att starta igen:"
-echo "   ./start-backend.sh"
-echo ""
-echo "🗑️  För att ta bort ALLT (inklusive data):"
-echo "   podman-compose down -v"
-echo "   (Detta raderar databas och bilder!)"
-echo ""
+echo "=========================================="
+echo "Perfect8 Backend Stopped"
+echo "=========================================="
