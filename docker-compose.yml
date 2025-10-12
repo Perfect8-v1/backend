@@ -32,7 +32,7 @@ services:
       dockerfile: admin-service/Dockerfile
     container_name: perfect8-admin
     ports:
-      - "8081:8081"
+      - "8083:8083"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_admin?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
@@ -57,7 +57,7 @@ services:
       dockerfile: blog-service/Dockerfile
     container_name: perfect8-blog
     ports:
-      - "8082:8082"
+      - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_blog?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
@@ -85,7 +85,7 @@ services:
       dockerfile: email-service/Dockerfile
     container_name: perfect8-email
     ports:
-      - "8083:8083"
+      - "8084:8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_email?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
@@ -114,7 +114,7 @@ services:
       dockerfile: image-service/Dockerfile
     container_name: perfect8-image
     ports:
-      - "8084:8084"
+      - "8081:8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_images?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
@@ -141,8 +141,9 @@ services:
       dockerfile: shop-service/Dockerfile
     container_name: perfect8-shop
     ports:
-      - "8085:8085"
+      - "8082:8082"
     environment:
+      SPRING_PROFILES_ACTIVE: prod
       SPRING_DATASOURCE_URL: jdbc:mysql://database:3306/perfect8_shop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-perfect8user}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-perfect8pass}
