@@ -1,6 +1,6 @@
 #!/bin/bash
 # Perfect8 Backend Startup Script
-# Optimerat för Podman på Alpine Linux med --replace för automatisk ersättning
+# Optimerat för Podman på Alpine Linux
 
 set -e
 
@@ -63,42 +63,42 @@ fi
 
 echo "✅ Konfigurationsfiler OK"
 
-# Steg 2: Stoppa gamla containers (om --clean)
-if [ "$CLEAN_START" = true ]; then
-    echo ""
-    echo "🧹 Stoppar och tar bort gamla containers..."
-    echo "-------------------------------------------"
-    podman-compose down 2>/dev/null || true
-    podman pod rm -f pod_perfect8 2>/dev/null || true
+# Steg 2: Stoppa gamla containers (alltid, inte bara vid --clean)
+echo ""
+echo "🧹 Stoppar gamla containers..."
+echo "-------------------------------"
+podman-compose down 2>/dev/null || true
 
+# Om --clean, ta även bort volymer
+if [ "$CLEAN_START" = true ]; then
     echo ""
     echo "🗑️  Tar bort alla volymer (databas + bilder)..."
     podman volume rm perfect8_db_data 2>/dev/null || true
     podman volume rm perfect8_image_storage 2>/dev/null || true
-    echo "✅ Clean start klar - börjar från scratch"
+    echo "✅ Clean start - börjar från scratch"
 fi
 
 # Steg 3: Bygga alla Docker images
 echo ""
-echo "🐳 Steg 1: Bygger Docker images (Docker format för healthchecks)..."
-echo "---------------------------------------------------------------------"
+echo "🐳 Steg 1: Bygger Docker images..."
+echo "-----------------------------------"
 echo "   (Detta kan ta 5-10 minuter första gången)"
 
 podman-compose build --no-cache
 
 if [ $? -eq 0 ]; then
-    echo "✅ Alla Docker images byggda i Docker-format!"
+    echo "✅ Alla images byggda!"
 else
     echo "❌ Build misslyckades!"
     exit 1
 fi
 
-# Steg 4: Starta alla services med --replace
+# Steg 4: Starta alla services
 echo ""
-echo "🎯 Steg 2: Startar alla services (ersätter automatiskt gamla)..."
-echo "----------------------------------------------------------------"
+echo "🎯 Steg 2: Startar alla services..."
+echo "------------------------------------"
 
-podman-compose up -d --replace
+podman-compose up -d
 
 # Vänta på att services ska starta
 echo ""
@@ -129,14 +129,13 @@ echo "💡 Användbara kommandon:"
 echo "   podman-compose logs -f              # Följ alla loggar"
 echo "   podman-compose logs -f shop-service # Följ en service"
 echo "   podman ps                           # Lista containers"
-echo "   ./stop-backend.sh                   # Stoppa allt (valfritt)"
-echo "   ./start-backend.sh                  # Starta om (ersätter automatiskt!)"
+echo "   ./start-backend.sh                  # Starta om"
 echo "   ./start-backend.sh --clean          # Starta från scratch (raderar data!)"
 echo ""
 echo "📊 Kolla healthcheck-status (vänta 2 minuter efter start):"
-echo "   curl http://localhost:8081/actuator/health  # Admin service"
-echo "   curl http://localhost:8082/actuator/health  # Blog service"
-echo "   curl http://localhost:8083/actuator/health  # Email service"
-echo "   curl http://localhost:8084/actuator/health  # Image service"
-echo "   curl http://localhost:8085/actuator/health  # Shop service"
+echo "   curl http://localhost:8081/actuator/health  # Admin"
+echo "   curl http://localhost:8082/actuator/health  # Blog"
+echo "   curl http://localhost:8083/actuator/health  # Email"
+echo "   curl http://localhost:8084/actuator/health  # Image"
+echo "   curl http://localhost:8085/actuator/health  # Shop"
 echo ""
