@@ -1,5 +1,4 @@
-
-        package com.perfect8.image.config;
+package com.perfect8.image.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,14 +12,21 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/images/view/**").permitAll()
-                        .anyRequest().authenticated()
-                );
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // Health check endpoint - NO authentication required
+                .requestMatchers("/actuator/health").permitAll()
+                // Public image viewing endpoints
+                .requestMatchers("/api/v1/images/view/**").permitAll()
+                .requestMatchers("/api/v1/images/public/**").permitAll()
+                // Image upload/management requires authentication
+                .requestMatchers("/api/v1/images/**").authenticated()
+                // All other requests require authentication
+                .anyRequest().authenticated()
+            );
 
         return http.build();
     }
