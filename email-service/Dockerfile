@@ -1,25 +1,28 @@
+# Email Service Dockerfile with wget for healthcheck
 FROM eclipse-temurin:21-jre-alpine
 
+# Metadata
 LABEL maintainer="Perfect8"
-LABEL version="1.0.0"
+LABEL version="1.0"
 LABEL description="Perfect8 Email Service"
 
+# Install wget for healthcheck
+RUN apk add --no-cache wget
+
+# Create app user
 RUN addgroup -S spring && adduser -S spring -G spring
 
+# Working directory
 WORKDIR /app
 
-COPY email-service/target/email-service-1.0.0.jar app.jar
+# Copy JAR file
+COPY target/email-service-1.0.0.jar app.jar
 
+# Switch to app user
 USER spring:spring
 
+# Expose port
 EXPOSE 8083
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8083/actuator/health || exit 1
-
-ENTRYPOINT ["java", \
-  "-XX:+UseContainerSupport", \
-  "-XX:MaxRAMPercentage=75.0", \
-  "-Djava.security.egd=file:/dev/./urandom", \
-  "-jar", \
-  "app.jar"]
+# Start application
+ENTRYPOINT ["java", "-jar", "app.jar"]
