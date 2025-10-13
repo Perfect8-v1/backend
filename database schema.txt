@@ -1,0 +1,285 @@
+perfect8alpine:~/perfect8$ podman exec -it perfect8-database mariadb -u root -pjava100rootpassword123
+
+MariaDB [(none)]> SHOW DATABASES;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| perfect8_admin     |
+| perfect8_blog      |
+| perfect8_email     |
+| perfect8_images    |
+| perfect8_shop      |
+| performance_schema |
+| sys                |
++--------------------+
+9 rows in set (0.466 sec)
+
+MariaDB [(none)]> USE perfect8_shop;
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+MariaDB [perfect8_shop]> SHOW TABLES;
++-------------------------+
+| Tables_in_perfect8_shop |
++-------------------------+
+| addresses               |
+| cart_items              |
+| carts                   |
+| categories              |
+| customers               |
+| inventory_transactions  |
+| order_items             |
+| orders                  |
+| payments                |
+| product_images          |
+| product_tags            |
+| products                |
+| shipment_tracking       |
+| shipments               |
++-------------------------+
+14 rows in set (0.001 sec)
+
+MariaDB [perfect8_shop]> DESCRIBE orders;
++--------------------------+------------------------------------------------------------------------------------------------------------------------------------+------+-----+---------+----------------+
+| Field                    | Type                                                                                                                               | Null | Key | Default | Extra          |
++--------------------------+------------------------------------------------------------------------------------------------------------------------------------+------+-----+---------+----------------+
+| order_id                 | bigint(20)                                                                                                                         | NO   | PRI | NULL    | auto_increment |
+| billing_address_line1    | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| billing_address_line2    | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| billing_city             | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| billing_country          | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| billing_postal_code      | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| billing_same_as_shipping | bit(1)                                                                                                                             | YES  |     | NULL    |                |
+| billing_state            | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| created_at               | datetime(6)                                                                                                                        | NO   |     | NULL    |                |
+| currency                 | varchar(3)                                                                                                                         | YES  |     | NULL    |                |
+| customer_notes           | text                                                                                                                               | YES  |     | NULL    |                |
+| internal_notes           | text                                                                                                                               | YES  |     | NULL    |                |
+| order_date               | datetime(6)                                                                                                                        | NO   |     | NULL    |                |
+| order_number             | varchar(50)                                                                                                                        | NO   | UNI | NULL    |                |
+| order_status             | enum('CANCELLED','COMPLETED','DELIVERED','ON_HOLD','PAID','PAYMENT_FAILED','PENDING','PROCESSING','REFUNDED','RETURNED','SHIPPED') | NO   |     | NULL    |                |
+| shipping_address_line1   | varchar(255)                                                                                                                       | NO   |     | NULL    |                |
+| shipping_address_line2   | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| shipping_amount          | decimal(10,2)                                                                                                                      | NO   |     | NULL    |                |
+| shipping_city            | varchar(255)                                                                                                                       | NO   |     | NULL    |                |
+| shipping_country         | varchar(2)                                                                                                                         | NO   |     | NULL    |                |
+| shipping_email           | varchar(255)                                                                                                                       | NO   |     | NULL    |                |
+| shipping_first_name      | varchar(255)                                                                                                                       | NO   |     | NULL    |                |
+| shipping_last_name       | varchar(255)                                                                                                                       | NO   |     | NULL    |                |
+| shipping_phone           | varchar(20)                                                                                                                        | YES  |     | NULL    |                |
+| shipping_postal_code     | varchar(255)                                                                                                                       | NO   |     | NULL    |                |
+| shipping_state           | varchar(255)                                                                                                                       | YES  |     | NULL    |                |
+| subtotal                 | decimal(10,2)                                                                                                                      | NO   |     | NULL    |                |
+| tax_amount               | decimal(10,2)                                                                                                                      | NO   |     | NULL    |                |
+| total_amount             | decimal(10,2)                                                                                                                      | NO   |     | NULL    |                |
+| updated_at               | datetime(6)                                                                                                                        | NO   |     | NULL    |                |
+| customer_id              | bigint(20)                                                                                                                         | NO   | MUL | NULL    |                |
+| shipment_id              | bigint(20)                                                                                                                         | YES  | MUL | NULL    |                |
+| created_date             | datetime(6)                                                                                                                        | NO   |     | NULL    |                |
+| updated_date             | datetime(6)                                                                                                                        | NO   |     | NULL    |                |
++--------------------------+------------------------------------------------------------------------------------------------------------------------------------+------+-----+---------+----------------+
+34 rows in set (0.189 sec)
+
+MariaDB [perfect8_shop]> DESCRIBE shipments;
++-------------------------+---------------+------+-----+---------+----------------+
+| Field                   | Type          | Null | Key | Default | Extra          |
++-------------------------+---------------+------+-----+---------+----------------+
+| shipment_id             | bigint(20)    | NO   | PRI | NULL    | auto_increment |
+| actual_delivery_date    | date          | YES  |     | NULL    |                |
+| carrier                 | varchar(50)   | NO   |     | NULL    |                |
+| created_at              | datetime(6)   | YES  |     | NULL    |                |
+| delivered_date          | datetime(6)   | YES  |     | NULL    |                |
+| estimated_delivery_date | date          | YES  |     | NULL    |                |
+| last_updated            | datetime(6)   | YES  |     | NULL    |                |
+| notes                   | text          | YES  |     | NULL    |                |
+| recipient_name          | varchar(100)  | YES  |     | NULL    |                |
+| shipment_status         | varchar(20)   | NO   |     | NULL    |                |
+| shipped_date            | datetime(6)   | YES  |     | NULL    |                |
+| shipping_address        | text          | YES  |     | NULL    |                |
+| shipping_city           | varchar(100)  | YES  |     | NULL    |                |
+| shipping_cost           | decimal(10,2) | YES  |     | NULL    |                |
+| shipping_country        | varchar(50)   | YES  |     | NULL    |                |
+| shipping_method         | varchar(50)   | YES  |     | NULL    |                |
+| shipping_postal_code    | varchar(20)   | YES  |     | NULL    |                |
+| shipping_state          | varchar(50)   | YES  |     | NULL    |                |
+| shipping_street         | varchar(255)  | YES  |     | NULL    |                |
+| tracking_number         | varchar(100)  | NO   | UNI | NULL    |                |
+| order_id                | bigint(20)    | NO   | MUL | NULL    |                |
+| current_location        | varchar(255)  | YES  |     | NULL    |                |
+| delivery_instructions   | varchar(500)  | YES  |     | NULL    |                |
+| dimensions              | varchar(50)   | YES  |     | NULL    |                |
+| insurance_amount        | decimal(10,2) | YES  |     | NULL    |                |
+| label_url               | varchar(500)  | YES  |     | NULL    |                |
+| recipient_email         | varchar(100)  | YES  |     | NULL    |                |
+| recipient_phone         | varchar(20)   | YES  |     | NULL    |                |
+| signature_required      | tinyint(1)    | YES  |     | 0       |                |
+| weight                  | decimal(8,3)  | YES  |     | NULL    |                |
++-------------------------+---------------+------+-----+---------+----------------+
+30 rows in set (0.002 sec)
+MariaDB [perfect8_shop]>
+
+
+Unraveled Hibernate naming strategy mismatch in database columns.
+
+
+
+
+
+
+
+
+
+
+🚨 HITTADE PROBLEMET!
+Shipments-tabellen har:
+
+Rad 4: created_at ✅ (finns)
+Rad 7: last_updated ✅ (finns)
+Men ShipmentRepository använder:
+
+s.createdDate → Hibernate letar efter created_date (FINNS INTE!)
+s.updatedDate → Hibernate letar efter updated_date (FINNS INTE!)
+🔍 Detta förklarar ALLT!
+Hibernate naming strategy:
+
+Java: createdDate → Databas: created_date (default)
+Men faktisk databas har: created_at och last_updated
+Vi har 2 alternativ:
+
+Ändra entity - lägg till @Column annotations
+Ändra queries - använd databasens faktiska namn
+📋 Fortsätt kolla resten:
+sql
+DESCRIBE products;
+DESCRIBE cart_items;
+DESCRIBE carts;
+DESCRIBE payments;
+Sen fixar vi ALLT på en gång! 🎯
+
+MariaDB [perfect8_shop]> DESCRIBE products;
++------------------+---------------+------+-----+---------+----------------+
+| Field            | Type          | Null | Key | Default | Extra          |
++------------------+---------------+------+-----+---------+----------------+
+| id               | bigint(20)    | NO   | PRI | NULL    | auto_increment |
+| created_at       | datetime(6)   | YES  |     | NULL    |                |
+| description      | text          | YES  |     | NULL    |                |
+| dimensions       | varchar(100)  | YES  |     | NULL    |                |
+| discount_price   | decimal(10,2) | YES  |     | NULL    |                |
+| image_url        | varchar(500)  | YES  |     | NULL    |                |
+| is_active        | bit(1)        | NO   |     | NULL    |                |
+| is_featured      | bit(1)        | NO   |     | NULL    |                |
+| meta_description | varchar(500)  | YES  |     | NULL    |                |
+| meta_keywords    | varchar(500)  | YES  |     | NULL    |                |
+| meta_title       | varchar(200)  | YES  |     | NULL    |                |
+| name             | varchar(200)  | NO   |     | NULL    |                |
+| price            | decimal(10,2) | NO   |     | NULL    |                |
+| rating           | decimal(3,2)  | YES  |     | NULL    |                |
+| reorder_point    | int(11)       | YES  |     | NULL    |                |
+| reorder_quantity | int(11)       | YES  |     | NULL    |                |
+| review_count     | int(11)       | YES  |     | NULL    |                |
+| sales_count      | bigint(20)    | YES  |     | NULL    |                |
+| sku              | varchar(100)  | NO   | UNI | NULL    |                |
+| stock_quantity   | int(11)       | NO   |     | NULL    |                |
+| updated_at       | datetime(6)   | YES  |     | NULL    |                |
+| views            | bigint(20)    | YES  |     | NULL    |                |
+| weight           | decimal(8,2)  | YES  |     | NULL    |                |
+| category_id      | bigint(20)    | YES  | MUL | NULL    |                |
++------------------+---------------+------+-----+---------+----------------+
+24 rows in set (0.003 sec)
+MariaDB [perfect8_shop]>
+
+
+Uncovered database field naming mismatches causing entity conflicts.
+
+
+
+
+🚨 KRITISKT FEL - Products!
+Products-tabellen har:
+
+Rad 1: id ❌ → Men våra queries använder productId!
+Rad 2: created_at ❌ → Men vi använder createdDate!
+Rad 21: updated_at ❌ → Men vi använder updatedDate!
+📋 Fortsätt - sista tabellerna:
+sql
+DESCRIBE cart_items;
+DESCRIBE carts;
+DESCRIBE payments;
+💡 Nu förstår jag ALLT!
+Problemet:
+
+Databasen skapades med GAMLA entity-definitioner (id, created_at, updated_at)
+Vi ändrade entities till Magnum Opus (productId, createdDate, updatedDate)
+Hibernate försöker hitta product_id, created_date, updated_date → FINNS INTE!
+Lösning: Vi måste antingen:
+
+Köra Hibernate create-drop → Skapa nya tabeller
+Lägg till @Column annotations → Mappa till gamla namn
+Visa resten av tabellerna först! 🎯
+
+MariaDB [perfect8_shop]> DESCRIBE cart_items;
++--------------------+---------------+------+-----+---------+----------------+
+| Field              | Type          | Null | Key | Default | Extra          |
++--------------------+---------------+------+-----+---------+----------------+
+| cart_item_id       | bigint(20)    | NO   | PRI | NULL    | auto_increment |
+| added_at           | datetime(6)   | NO   |     | NULL    |                |
+| custom_message     | varchar(500)  | YES  |     | NULL    |                |
+| discount_price     | decimal(10,2) | YES  |     | NULL    |                |
+| gift_message       | varchar(500)  | YES  |     | NULL    |                |
+| is_gift            | bit(1)        | YES  |     | NULL    |                |
+| is_saved_for_later | bit(1)        | YES  |     | NULL    |                |
+| notes              | text          | YES  |     | NULL    |                |
+| product_image_url  | varchar(255)  | YES  |     | NULL    |                |
+| product_name       | varchar(255)  | NO   |     | NULL    |                |
+| product_sku        | varchar(255)  | NO   |     | NULL    |                |
+| quantity           | int(11)       | NO   |     | NULL    |                |
+| requested_quantity | int(11)       | YES  |     | NULL    |                |
+| selected_options   | text          | YES  |     | NULL    |                |
+| stock_available    | bit(1)        | YES  |     | NULL    |                |
+| stock_checked_at   | datetime(6)   | YES  |     | NULL    |                |
+| subtotal           | decimal(10,2) | YES  |     | NULL    |                |
+| unit_price         | decimal(10,2) | NO   |     | NULL    |                |
+| updated_at         | datetime(6)   | YES  |     | NULL    |                |
+| cart_id            | bigint(20)    | NO   | MUL | NULL    |                |
+| product_id         | bigint(20)    | NO   | MUL | NULL    |                |
++--------------------+---------------+------+-----+---------+----------------+
+21 rows in set (0.002 sec)
+
+
+Verified cart_items table structure and naming conventions.
+
+
+📋 Cart_items - samma problem!
+Cart_items-tabellen har:
+
+added_at ❌ → Vi använder addedDate
+updated_at ❌ → Vi använder updatedDate
+📋 Sista 2 tabellerna:
+sql
+DESCRIBE carts;
+DESCRIBE payments;
+EXIT;
+Visa dessa, sen fixar vi ALLT! 🎯
+
+MariaDB [perfect8_shop]> DESCRIBE carts;
++-----------------+---------------+------+-----+---------+----------------+
+| Field           | Type          | Null | Key | Default | Extra          |
++-----------------+---------------+------+-----+---------+----------------+
+| id              | bigint(20)    | NO   | PRI | NULL    | auto_increment |
+| coupon_code     | varchar(50)   | YES  |     | NULL    |                |
+| created_at      | datetime(6)   | YES  |     | NULL    |                |
+| discount_amount | decimal(10,2) | YES  |     | NULL    |                |
+| expires_at      | datetime(6)   | YES  |     | NULL    |                |
+| is_saved        | bit(1)        | YES  |     | NULL    |                |
+| item_count      | int(11)       | YES  |     | NULL    |                |
+| saved_name      | varchar(100)  | YES  |     | NULL    |                |
+| total_amount    | decimal(10,2) | YES  |     | NULL    |                |
+| updated_at      | datetime(6)   | YES  |     | NULL    |                |
+| customer_id     | bigint(20)    | NO   | MUL | NULL    |                |
++-----------------+---------------+------+-----+---------+----------------+
+11 rows in set (0.009 sec)
+
+

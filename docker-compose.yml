@@ -1,141 +1,130 @@
-#!/bin/bash
-# Perfect8 Backend Startup Script
-# Optimerat för Podman på Alpine Linux
+version: '3.8'
 
-  set -e
-  
-  # Hantera --clean flagga
-  CLEAN_START=false
-  if [ "$1" == "--clean" ]; then
-  CLEAN_START=true
-  echo "⚠️  CLEAN START MODE"
-  echo "   Detta raderar ALL data (databas + bilder)!"
-  echo ""
-read -p "   Är du säker? (yes/no): " CONFIRM
-    if [ "$CONFIRM" != "yes" ]; then
-                                     echo "❌ Avbruten"
-                                     exit 0
-  fi
-  fi
-  
-  echo "🚀 Perfect8 Backend Startup"
-  echo "=========================="
-  
-  # Exportera Docker format för healthchecks
-  export BUILDAH_FORMAT=docker
-  echo "✅ BUILDAH_FORMAT=docker (för healthchecks)"
-  
-  # Kontrollera att Podman är installerat
-  if ! command -v podman &> /dev/null; then
-  echo "❌ Podman hittades inte!"
-echo "   Installera Podman först: apk add podman"
-  exit 1
-  fi
+services:
+  mysql:
+    image: mysql:8.0.33
+    container_name: perfect8-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: perfect8_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - perfect8-network
 
-echo "✅ Använder: Podman"
+  blog-service:
+    build:
+      context: ./blog-service
+      dockerfile: admin-service/Dockerfile
+    container_name: blog-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/blog_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - perfect8-network
 
-# Kontrollera att podman-compose finns
-  if ! command -v podman-compose &> /dev/null; then
-  echo "❌ podman-compose hittades inte!"
-echo "   Installera: pip install podman-compose"
-  exit 1
-  fi
-  
-  # Steg 1: Verifiera att vi är i rätt mapp
-  if [ ! -f "docker-compose.yml" ]; then
-  echo "❌ docker-compose.yml hittades inte!"
-  echo "   Kör detta skript från ~/perfect8 mappen"
-  exit 1
-  fi
-  
-  if [ ! -f ".env" ]; then
-  echo "⚠️  .env fil saknas! Skapar från .env.example..."
-  if [ -f ".env.example" ]; then
-  cp .env.example .env
-echo "   ⚠️  VIKTIGT: Redigera .env med riktiga lösenord!"
-  echo "   nano .env"
-  exit 1
-  else
-  echo "❌ Ingen .env.example hittades!"
-  exit 1
-  fi
-  fi
-  
-  echo "✅ Konfigurationsfiler OK"
-  
-  # Steg 2: Stoppa gamla containers (alltid, inte bara vid --clean)
-  echo ""
-  echo "🧹 Stoppar gamla containers..."
-  echo "-------------------------------"
-  podman-compose down 2>/dev/null || true
-  
-  # Om --clean, ta även bort volymer
-  if [ "$CLEAN_START" = true ]; then
-  echo ""
-  echo "🗑️  Tar bort alla volymer (databas + bilder)..."
-  podman volume rm perfect8_db_data 2>/dev/null || true
-  podman volume rm perfect8_image_storage 2>/dev/null || true
-  echo "✅ Clean start - börjar från scratch"
-  fi
-  
-  # Steg 3: Bygga alla Docker images
-  echo ""
-echo "🐳 Steg 1: Bygger Docker images..."
-  echo "-----------------------------------"
-  echo "   (Detta kan ta 5-10 minuter första gången)"
-  
-  podman-compose build --no-cache
-  
-  if [ $? -eq 0 ]; then
-  echo "✅ Alla images byggda!"
-  else
-  echo "❌ Build misslyckades!"
-  exit 1
-  fi
-  
-  # Steg 4: Starta alla services
-  echo ""
-echo "🎯 Steg 2: Startar alla services..."
-  echo "------------------------------------"
-  
-  podman-compose up -d
-  
-  # Vänta på att services ska starta
-  echo ""
-  echo "⏳ Väntar på att services ska bli redo (60 sekunder)..."
-  sleep 60
-  
-  # Steg 5: Visa status
-  echo ""
-echo "🔍 Steg 3: Verifierar services..."
-  echo "----------------------------------"
-  
-  podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-  
-  echo ""
-  echo "=================================="
-  echo "🎉 Perfect8 Backend är igång!"
-  echo "=================================="
-  echo ""
-  echo "🔗 Service-URLer:"
-echo "   Image:    http://localhost:8081"
-echo "   Shop:     http://localhost:8082"
-echo "   Admin:    http://localhost:8083"
-echo "   Email:    http://localhost:8084"
-echo "   Blog:     http://localhost:8080"
-echo "   Database: localhost:3306"
-  echo ""
-  echo "💡 Användbara kommandon:"
-  echo "   podman-compose logs -f              # Följ alla loggar"
-  echo "   podman-compose logs -f shop-service # Följ en service"
-  echo "   podman ps                           # Lista containers"
-  echo "   ./start-backend.sh                  # Starta om"
-  echo "   ./start-backend.sh --clean          # Starta från scratch (raderar data!)"
-  echo ""
-  echo "📊 Kolla healthcheck-status (vänta 2 minuter efter start):"
-  echo "   curl http://localhost:8081/actuator/health  # Image"
-  echo "   curl http://localhost:8082/actuator/health  # Shop"
-  echo "   curl http://localhost:8083/actuator/health  # Admin"
-  echo "   curl http://localhost:8084/actuator/health  # Email"
-  echo "   curl http://localhost:8080/actuator/health  # Blog"
-  echo ""
+  image-service:
+    build:
+      context: ./image-service
+      dockerfile: admin-service/Dockerfile
+    container_name: image-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/image_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - image_uploads:/app/uploads
+    networks:
+      - perfect8-network
+
+  shop-service:
+    build:
+      context: ./shop-service
+      dockerfile: admin-service/Dockerfile
+    container_name: shop-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/shop_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
+      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
+      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
+      PAYPAL_MODE: sandbox
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - perfect8-network
+
+  admin-service:
+    build:
+      context: ./admin-service
+      dockerfile: admin-service/Dockerfile
+    container_name: admin-service
+    ports:
+      - "8081:8081"
+    environment:
+      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
+      BLOG_SERVICE_URL: http://blog-service:8080
+      IMAGE_SERVICE_URL: http://image-service:8081
+      SHOP_SERVICE_URL: http://shop-service:8082
+      EMAIL_SERVICE_URL: http://email-service:8084
+    depends_on:
+      - blog-service
+      - image-service
+      - shop-service
+    networks:
+      - perfect8-network
+
+  email-service:
+    build:
+      context: ./email-service
+      dockerfile: admin-service/Dockerfile
+    container_name: email-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/email_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      SHOP_SERVICE_URL: http://shop-service:8082
+      BLOG_SERVICE_URL: http://blog-service:8080
+      ADMIN_SERVICE_URL: http://admin-service:8083
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - perfect8-network
+
+volumes:
+  mysql_data:
+  image_uploads:
+
+networks:
+  perfect8-network:
+    driver: bridge
