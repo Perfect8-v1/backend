@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   mysql:
-    image: mysql:8.0.33
+    image: mariadb:11.2
     container_name: perfect8-mysql
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
@@ -87,10 +87,10 @@ services:
       - "8081:8081"
     environment:
       JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
-      BLOG_SERVICE_URL: http://blog-service:8080
-      IMAGE_SERVICE_URL: http://image-service:8081
-      SHOP_SERVICE_URL: http://shop-service:8082
-      EMAIL_SERVICE_URL: http://email-service:8084
+      BLOG_SERVICE_URL: http://blog-service:8082
+      IMAGE_SERVICE_URL: http://image-service:8084
+      SHOP_SERVICE_URL: http://shop-service:8085
+      EMAIL_SERVICE_URL: http://email-service:8083
     depends_on:
       - blog-service
       - image-service
@@ -112,9 +112,9 @@ services:
       JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
       MAIL_USERNAME: ${MAIL_USERNAME}
       MAIL_PASSWORD: ${MAIL_PASSWORD}
-      SHOP_SERVICE_URL: http://shop-service:8082
-      BLOG_SERVICE_URL: http://blog-service:8080
-      ADMIN_SERVICE_URL: http://admin-service:8083
+      SHOP_SERVICE_URL: http://shop-service:8085
+      BLOG_SERVICE_URL: http://blog-service:8082
+      ADMIN_SERVICE_URL: http://admin-service:8081
     depends_on:
       mysql:
         condition: service_healthy

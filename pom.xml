@@ -36,7 +36,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-cloud.version>2024.0.0</spring-cloud.version>
         <jjwt.version>0.12.3</jjwt.version>
-        <mysql.version>8.0.33</mysql.version>
+        <mysql.version>11.2</mysql.version>
     </properties>
 
     <dependencyManagement>
