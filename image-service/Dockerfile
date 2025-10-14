@@ -26,7 +26,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \
 USER spring:spring
 
 # Expose port
-EXPOSE 8083
+EXPOSE 8084
 
 # Start application
 ENTRYPOINT ["java", "-jar", "app.jar"]
