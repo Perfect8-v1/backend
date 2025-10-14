@@ -23,7 +23,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Security Configuration for Shop Service
@@ -84,7 +83,8 @@ public class SecurityConfig {
                         // Health check endpoints
                         .requestMatchers(
                                 "/api/health",
-                                "/actuator/health"
+                                "/actuator/health",
+                                "/actuator/health/**"
                         ).permitAll()
 
                         // Cart endpoints - authenticated users only
