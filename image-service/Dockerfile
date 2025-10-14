@@ -16,7 +16,7 @@ RUN addgroup -S spring && adduser -S spring -G spring
 WORKDIR /app
 
 # Copy JAR file
-COPY target/image-service-1.0.0.jar app.jar
+COPY target/image-service.jar app.jar
 
 # Healthcheck - retry every 30s, wait 6 minutes for startup
 HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \
