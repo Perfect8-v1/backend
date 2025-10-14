@@ -16,12 +16,12 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init-scripts:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD", "mariadb", "-h", "localhost", "-u", "root", "-prootpassword", "-e", "SELECT 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    #healthcheck:
+    #  test: ["CMD", "mariadb", "-h", "localhost", "-u", "root", "-prootpassword", "-e", "SELECT 1"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 5
+    #  start_period: 30s
     networks:
       - perfect8-network
 
@@ -48,12 +48,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 360s
+    #healthcheck:
+    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+    #  interval: 30s
+    #  timeout: 10s
+    #  retries: 10
+    #  start_period: 360s
     networks:
       - perfect8-network
 
@@ -77,12 +77,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 360s
+    #healthcheck:
+    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+    #  interval: 30s
+    #  timeout: 10s
+    #  retries: 10
+    #  start_period: 360s
     networks:
       - perfect8-network
 
@@ -110,12 +110,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 360s
+    #healthcheck:
+    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+    #  interval: 30s
+    #  timeout: 10s
+    #  retries: 10
+    #  start_period: 360s
     networks:
       - perfect8-network
 
@@ -139,12 +139,12 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 360s
+    #healthcheck:
+    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+    #  interval: 30s
+    #  timeout: 10s
+    #  retries: 10
+    #  start_period: 360s
     volumes:
       - image_uploads:/app/uploads
     networks:
@@ -178,12 +178,12 @@ services:
         condition: service_healthy
       admin-service:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 360s
+    #healthcheck:
+    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
+    #  interval: 30s
+    #  timeout: 10s
+    #  retries: 10
+    #  start_period: 360s
     networks:
       - perfect8-network
 
