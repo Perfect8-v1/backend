@@ -18,6 +18,10 @@ WORKDIR /app
 # Copy JAR file
 COPY target/shop-service-1.0.0.jar app.jar
 
+# Healthcheck - retry every 30s, wait 6 minutes for startup
+HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8085/actuator/health || exit 1
+
 # Switch to app user
 USER spring:spring
 
