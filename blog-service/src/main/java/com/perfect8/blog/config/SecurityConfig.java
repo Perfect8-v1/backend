@@ -1,7 +1,5 @@
 package com.perfect8.blog.config;
 
-import com.perfect8.blog.security.JwtAuthenticationFilter;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -13,7 +11,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -22,15 +19,12 @@ import java.util.Arrays;
 
 /**
  * Security Configuration for Blog Service
- * Version 1.0 - Core security setup for blog content management
+ * Version 1.0 - Simplified security without JWT filter
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
-@RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * Configure Security Filter Chain
@@ -51,13 +45,6 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(authorize -> authorize
-                        // Public endpoints - authentication
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/refresh"
-                        ).permitAll()
-
                         // Health check endpoints
                         .requestMatchers(
                                 "/api/health",
@@ -68,26 +55,15 @@ public class SecurityConfig {
                         // Public blog post reading
                         .requestMatchers(HttpMethod.GET,
                                 "/api/posts",
-                                "/api/posts/{postId}",
+                                "/api/posts/**",
                                 "/api/posts/search",
                                 "/api/posts/category/**",
                                 "/api/posts/author/**"
                         ).permitAll()
 
-                        // Blog post creation/modification - require authentication
-                        .requestMatchers(HttpMethod.POST, "/api/posts").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").authenticated()
-
-                        // Admin endpoints - require ADMIN role
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // All other requests require authentication
-                        .anyRequest().authenticated()
-                )
-
-                // Add JWT filter before UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                        // All other requests permitted for v1.0
+                        .anyRequest().permitAll()
+                );
 
         return http.build();
     }
@@ -150,8 +126,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // Version 2.0 - Commented out for future implementation
+    // Version 2.0 - JWT Authentication and authorization will be added
     /*
+    // Add JwtAuthenticationFilter
+    // Add authentication endpoints
+    // Add role-based access control
+
     // Analytics endpoints - to be added in version 2.0
     .requestMatchers("/api/analytics/**").hasRole("ADMIN")
 
