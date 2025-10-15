@@ -21,7 +21,7 @@ services:
     depends_on:
       - mysql
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -43,7 +43,7 @@ services:
       - mysql
       - email-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -62,7 +62,7 @@ services:
       - email-service
       - image-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -83,7 +83,7 @@ services:
       - image-service
       - admin-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -106,7 +106,7 @@ services:
       - admin-service
       - blog-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
