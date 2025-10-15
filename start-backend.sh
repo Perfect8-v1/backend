@@ -9,7 +9,7 @@
 #   ./start-backend.sh --only <svc>    # start a single service (still waits for its deps)
 #
 # Services (adjust if your compose file uses other names):
-#   mysql, email-service, image-service, admin-service, blog-service, shop-service
+#   mariadb, email-service, image-service, admin-service, blog-service, shop-service
 #
 set -Eeuo pipefail
 
@@ -22,7 +22,7 @@ RETRY_WAIT=3      # seconds between polls
 RETRY_MAX=120     # ~6 min per service
 
 ORDER=(
-  "mysql"
+  "mariadb"
   "email-service"
   "image-service"
   "admin-service"
@@ -113,12 +113,12 @@ status_table() {
 deps_for() {
   local svc="$1"
   case "$svc" in
-    mysql)               echo "" ;;
-    email-service)       echo "mysql" ;;
-    image-service)       echo "mysql email-service" ;;
-    admin-service)       echo "mysql email-service image-service" ;;
-    blog-service)        echo "mysql email-service image-service admin-service" ;;
-    shop-service)        echo "mysql email-service image-service admin-service blog-service" ;;
+    mariadb)               echo "" ;;
+    email-service)       echo "mariadb" ;;
+    image-service)       echo "mariadb email-service" ;;
+    admin-service)       echo "mariadb email-service image-service" ;;
+    blog-service)        echo "mariadb email-service image-service admin-service" ;;
+    shop-service)        echo "mariadb email-service image-service admin-service blog-service" ;;
     *) echo "" ;;
   esac
 }
