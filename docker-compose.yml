@@ -6,173 +6,121 @@ services:
     container_name: mysql
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-      - MARIADB_DATABASE=${DB_NAME}
+      - MARIADB_DATABASE=${DB_NAME:-perfect8_shop}
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
-      interval: 5s
-      timeout: 3s
-      retries: 40
-    restart: always
+    restart: unless-stopped
 
   email-service:
     build: ./email-service
     container_name: email-service
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      # Gör /actuator/health åtkomligt för healthcheck
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
-      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
-      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
-      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
-      # SMTP (valfritt – sätt i .env)
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_PROTOCOL=${MAIL_PROTOCOL:-smtp}
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8083:8083"
-    healthcheck:
-      # Se till att din image har curl eller lägg in det i Dockerfile
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
-      interval: 5s
-      timeout: 3s
-      retries: 40
-    restart: always
+    restart: unless-stopped
 
   image-service:
     build: ./image-service
     container_name: image-service
     depends_on:
-      mysql:
-        condition: service_healthy
-      email-service:
-        condition: service_started
+      - mysql
+      - email-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
-      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
-      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
-      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
-      # Om image-service skickar mail/notifications
       - EMAIL_BASE_URL=http://email-service:8083
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8084:8084"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8084/actuator/health | grep -q '\"status\":\"UP\"'"]
-      interval: 5s
-      timeout: 3s
-      retries: 40
-    restart: always
+    restart: unless-stopped
 
   admin-service:
     build: ./admin-service
     container_name: admin-service
     depends_on:
-      mysql:
-        condition: service_healthy
-      email-service:
-        condition: service_started
-      image-service:
-        condition: service_started
+      - mysql
+      - email-service
+      - image-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
-      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
-      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
-      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8081:8081"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
-      interval: 5s
-      timeout: 3s
-      retries: 40
-    restart: always
+    restart: unless-stopped
 
   blog-service:
     build: ./blog-service
     container_name: blog-service
     depends_on:
-      mysql:
-        condition: service_healthy
-      email-service:
-        condition: service_started
-      image-service:
-        condition: service_started
-      admin-service:
-        condition: service_started
+      - mysql
+      - email-service
+      - image-service
+      - admin-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
-      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
-      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
-      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
       - ADMIN_BASE_URL=http://admin-service:8081
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8082:8082"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"'"]
-      interval: 5s
-      timeout: 3s
-      retries: 40
-    restart: always
+    restart: unless-stopped
 
   shop-service:
     build: ./shop-service
     container_name: shop-service
     depends_on:
-      mysql:
-        condition: service_healthy
-      email-service:
-        condition: service_started
-      image-service:
-        condition: service_started
-      admin-service:
-        condition: service_started
-      blog-service:
-        condition: service_started
+      - mysql
+      - email-service
+      - image-service
+      - admin-service
+      - blog-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
-      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
-      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
-      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
       - ADMIN_BASE_URL=http://admin-service:8081
       - BLOG_BASE_URL=http://blog-service:8082
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8085:8085"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
-      interval: 5s
-      timeout: 3s
-      retries: 40
-    restart: always
+    restart: unless-stopped
 
 volumes:
   db_data:
