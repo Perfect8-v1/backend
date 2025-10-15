@@ -1,5 +1,26 @@
 package com.perfect8.blog.service;
 
+/* VERSION 2.0 - COMMENTED OUT FOR CLEAN V1.0 RELEASE
+ * 
+ * This authentication service will be uncommented and enhanced in version 2.0
+ * 
+ * Version 1.0 Strategy:
+ * - blog-service focuses on READING posts (public access)
+ * - admin-service handles ALL user authentication
+ * - No separate user registration in blog-service
+ * 
+ * Version 2.0 Will Add:
+ * - Blog-specific user authentication
+ * - Comment system with user accounts
+ * - Author profiles
+ * - User preferences
+ * 
+ * Reason for commenting out:
+ * - Eliminates AuthenticationManager dependency (causing crash)
+ * - Simplifies v1.0 deployment
+ * - Follows Magnum Opus principle: Version 1.0 fokus - kärnfunktionalitet först
+ */
+
 import com.perfect8.blog.dto.AuthDto;
 import com.perfect8.blog.model.Role;
 import com.perfect8.blog.model.User;
@@ -18,6 +39,7 @@ import java.util.Set;
 
 /**
  * Authentication Service for blog-service
+ * VERSION 2.0 - Currently commented out
  * Handles user login and registration
  */
 @Slf4j
@@ -27,19 +49,25 @@ import java.util.Set;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtTokenProvider tokenProvider;
+    // VERSION 2.0: Uncomment when adding blog user authentication
+    // private final PasswordEncoder passwordEncoder;
+    // private final AuthenticationManager authenticationManager;
+    // private final JwtTokenProvider tokenProvider;
 
     /**
-     * Authenticate user and generate JWT token
+     * VERSION 1.0 - Placeholder method
+     * Returns true to indicate service is operational
      */
+    public boolean isServiceHealthy() {
+        return true;
+    }
+
+    /* VERSION 2.0 - Authenticate user and generate JWT token
     public AuthDto.JwtResponse login(AuthDto.LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        // FIXED: Extract username from Authentication object
         String username = authentication.getName();
         String token = tokenProvider.generateToken(username);
 
@@ -49,30 +77,25 @@ public class AuthService {
         log.info("User {} successfully logged in", username);
         return new AuthDto.JwtResponse(token, user.getUsername(), user.getEmail());
     }
+    */
 
-    /**
-     * Register new user and generate JWT token
-     */
+    /* VERSION 2.0 - Register new user and generate JWT token
     public AuthDto.JwtResponse register(AuthDto.RegisterRequest request) {
-        // Validate username availability
         if (userRepository.existsByUsername(request.getUsername())) {
             log.warn("Registration failed - username already exists: {}", request.getUsername());
             throw new RuntimeException("Username already exists");
         }
 
-        // Validate email availability
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Registration failed - email already exists: {}", request.getEmail());
             throw new RuntimeException("Email already exists");
         }
 
-        // Create new user
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        // Default role is READER for blog users
         Set<Role> roles = new HashSet<>();
         Role readerRole = new Role();
         readerRole.setName("READER");
@@ -82,20 +105,20 @@ public class AuthService {
         userRepository.save(user);
         log.info("New user registered: {}", user.getUsername());
 
-        // Authenticate the newly registered user
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
         );
 
-        // FIXED: Extract username from Authentication object
         String username = authentication.getName();
         String token = tokenProvider.generateToken(username);
 
         return new AuthDto.JwtResponse(token, user.getUsername(), user.getEmail());
     }
+    */
 
     /**
      * Check if username is available
+     * VERSION 1.0 - Simplified version
      */
     public boolean isUsernameAvailable(String username) {
         return !userRepository.existsByUsername(username);
@@ -103,6 +126,7 @@ public class AuthService {
 
     /**
      * Check if email is available
+     * VERSION 1.0 - Simplified version
      */
     public boolean isEmailAvailable(String email) {
         return !userRepository.existsByEmail(email);
@@ -110,28 +134,26 @@ public class AuthService {
 
     /**
      * Get user by username
+     * VERSION 1.0 - Simplified version
      */
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found: " + username));
     }
 
-    /**
-     * Change user password
-     */
+    /* VERSION 2.0 - Change user password
     @Transactional
     public void changePassword(String username, String oldPassword, String newPassword) {
         User user = getUserByUsername(username);
 
-        // Verify old password
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             log.warn("Password change failed for user {} - incorrect old password", username);
             throw new RuntimeException("Incorrect old password");
         }
 
-        // Update password
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
         log.info("Password successfully changed for user: {}", username);
     }
+    */
 }
