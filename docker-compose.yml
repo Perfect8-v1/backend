@@ -1,202 +1,179 @@
-version: '3.8'
+version: "3.9"
 
 services:
-  # ============================================================================
-  # MariaDB Database
-  # ============================================================================
   mysql:
-    image: mariadb:11.2
-    container_name: perfect8-mysql
-    restart: unless-stopped
+    image: mariadb:11
+    container_name: mysql
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: perfect8_db
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=${DB_NAME}
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    #healthcheck:
-    #  test: ["CMD", "mariadb", "-h", "localhost", "-u", "root", "-prootpassword", "-e", "SELECT 1"]
-    #  interval: 10s
-    #  timeout: 5s
-    #  retries: 5
-    #  start_period: 30s
-    networks:
-      - perfect8-network
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: always
 
-  # ============================================================================
-  # Admin Service (Port 8081)
-  # ============================================================================
-  admin-service:
-    build:
-      context: ./admin-service
-      dockerfile: Dockerfile
-    container_name: admin-service
-    restart: unless-stopped
-    ports:
-      - "8081:8081"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/admin_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
-      BLOG_SERVICE_URL: http://blog-service:8082
-      IMAGE_SERVICE_URL: http://image-service:8084
-      SHOP_SERVICE_URL: http://shop-service:8085
-      EMAIL_SERVICE_URL: http://email-service:8083
-    depends_on:
-      mysql:
-        condition: service_healthy
-    #healthcheck:
-    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
-    #  interval: 30s
-    #  timeout: 10s
-    #  retries: 10
-    #  start_period: 360s
-    networks:
-      - perfect8-network
-
-  # ============================================================================
-  # Blog Service (Port 8082)
-  # ============================================================================
-  blog-service:
-    build:
-      context: ./blog-service
-      dockerfile: Dockerfile
-    container_name: blog-service
-    restart: unless-stopped
-    ports:
-      - "8082:8082"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/blog_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
-      IMAGE_SERVICE_URL: http://image-service:8084
-    depends_on:
-      mysql:
-        condition: service_healthy
-    #healthcheck:
-    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
-    #  interval: 30s
-    #  timeout: 10s
-    #  retries: 10
-    #  start_period: 360s
-    networks:
-      - perfect8-network
-
-  # ============================================================================
-  # Email Service (Port 8083)
-  # ============================================================================
   email-service:
-    build:
-      context: ./email-service
-      dockerfile: Dockerfile
+    build: ./email-service
     container_name: email-service
-    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      # Gör /actuator/health åtkomligt för healthcheck
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      # SMTP (valfritt – sätt i .env)
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_PROTOCOL=${MAIL_PROTOCOL:-smtp}
     ports:
       - "8083:8083"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/email_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
-      MAIL_USERNAME: ${MAIL_USERNAME}
-      MAIL_PASSWORD: ${MAIL_PASSWORD}
-      SHOP_SERVICE_URL: http://shop-service:8085
-      BLOG_SERVICE_URL: http://blog-service:8082
-      ADMIN_SERVICE_URL: http://admin-service:8081
+    healthcheck:
+      # Se till att din image har curl eller lägg in det i Dockerfile
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: always
+
+  image-service:
+    build: ./image-service
+    container_name: image-service
     depends_on:
       mysql:
         condition: service_healthy
-    #healthcheck:
-    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
-    #  interval: 30s
-    #  timeout: 10s
-    #  retries: 10
-    #  start_period: 360s
-    networks:
-      - perfect8-network
-
-  # ============================================================================
-  # Image Service (Port 8084)
-  # ============================================================================
-  image-service:
-    build:
-      context: ./image-service
-      dockerfile: Dockerfile
-    container_name: image-service
-    restart: unless-stopped
+      email-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      # Om image-service skickar mail/notifications
+      - EMAIL_BASE_URL=http://email-service:8083
     ports:
       - "8084:8084"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/image_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
-      STORAGE_LOCATION: /app/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8084/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: always
+
+  admin-service:
+    build: ./admin-service
+    container_name: admin-service
     depends_on:
       mysql:
         condition: service_healthy
-    #healthcheck:
-    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
-    #  interval: 30s
-    #  timeout: 10s
-    #  retries: 10
-    #  start_period: 360s
-    volumes:
-      - image_uploads:/app/uploads
-    networks:
-      - perfect8-network
+      email-service:
+        condition: service_started
+      image-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - EMAIL_BASE_URL=http://email-service:8083
+      - IMAGE_BASE_URL=http://image-service:8084
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: always
 
-  # ============================================================================
-  # Shop Service (Port 8085)
-  # ============================================================================
+  blog-service:
+    build: ./blog-service
+    container_name: blog-service
+    depends_on:
+      mysql:
+        condition: service_healthy
+      email-service:
+        condition: service_started
+      image-service:
+        condition: service_started
+      admin-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - EMAIL_BASE_URL=http://email-service:8083
+      - IMAGE_BASE_URL=http://image-service:8084
+      - ADMIN_BASE_URL=http://admin-service:8081
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: always
+
   shop-service:
-    build:
-      context: ./shop-service
-      dockerfile: Dockerfile
+    build: ./shop-service
     container_name: shop-service
-    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      email-service:
+        condition: service_started
+      image-service:
+        condition: service_started
+      admin-service:
+        condition: service_started
+      blog-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - EMAIL_BASE_URL=http://email-service:8083
+      - IMAGE_BASE_URL=http://image-service:8084
+      - ADMIN_BASE_URL=http://admin-service:8081
+      - BLOG_BASE_URL=http://blog-service:8082
     ports:
       - "8085:8085"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/shop_db?useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=true
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
-      JWT_SECRET: your-256-bit-secret-key-for-jwt-token-generation-keep-it-secure-java100
-      PAYPAL_CLIENT_ID: ${PAYPAL_CLIENT_ID}
-      PAYPAL_CLIENT_SECRET: ${PAYPAL_CLIENT_SECRET}
-      PAYPAL_MODE: sandbox
-      ADMIN_SERVICE_URL: http://admin-service:8081
-      IMAGE_SERVICE_URL: http://image-service:8084
-      BLOG_SERVICE_URL: http://blog-service:8082
-      EMAIL_SERVICE_URL: http://email-service:8083
-    depends_on:
-      mysql:
-        condition: service_healthy
-      admin-service:
-        condition: service_healthy
-    #healthcheck:
-    #  test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
-    #  interval: 30s
-    #  timeout: 10s
-    #  retries: 10
-    #  start_period: 360s
-    networks:
-      - perfect8-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"'"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: always
 
-# ============================================================================
-# Volumes (Persistent Storage)
-# ============================================================================
 volumes:
-  mysql_data:
-  image_uploads:
-
-# ============================================================================
-# Networks
-# ============================================================================
-networks:
-  perfect8-network:
-    driver: bridge
+  db_data:
+    driver: local
