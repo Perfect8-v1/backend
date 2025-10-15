@@ -9,6 +9,9 @@ LABEL description="Perfect8 Shop Service"
 # Install wget for healthcheck
 RUN apk add --no-cache wget
 
+#Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Create app user
 RUN addgroup -S spring && adduser -S spring -G spring
 

@@ -6,7 +6,7 @@ services:
     container_name: mysql
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-      - MARIADB_DATABASE=${DB_NAME}
+      - MARIADB_DATABASE=${DB_NAME:-perfect8_shop}
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
@@ -18,7 +18,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 40
-    restart: always
+    restart: unless-stopped
 
   email-service:
     build: ./email-service
@@ -27,29 +27,32 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      # Database (single shared DB; falls back to perfect8_shop if DB_NAME is not set)
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      # Gör /actuator/health åtkomligt för healthcheck
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      # Actuator for health checks
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
       - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
-      # SMTP (valfritt – sätt i .env)
+      # Email (from .env)
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_PROTOCOL=${MAIL_PROTOCOL:-smtp}
+      # JWT (if used by this service; harmless if unused)
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8083:8083"
     healthcheck:
-      # Se till att din image har curl eller lägg in det i Dockerfile
       test: ["CMD-SHELL", "curl -fsS http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"'"]
       interval: 5s
       timeout: 3s
       retries: 40
-    restart: always
+    restart: unless-stopped
 
   image-service:
     build: ./image-service
@@ -60,15 +63,16 @@ services:
       email-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
       - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
-      # Om image-service skickar mail/notifications
       - EMAIL_BASE_URL=http://email-service:8083
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8084:8084"
     healthcheck:
@@ -76,7 +80,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 40
-    restart: always
+    restart: unless-stopped
 
   admin-service:
     build: ./admin-service
@@ -89,15 +93,17 @@ services:
       image-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
       - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8081:8081"
     healthcheck:
@@ -105,7 +111,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 40
-    restart: always
+    restart: unless-stopped
 
   blog-service:
     build: ./blog-service
@@ -120,9 +126,10 @@ services:
       admin-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
@@ -130,6 +137,7 @@ services:
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
       - ADMIN_BASE_URL=http://admin-service:8081
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8082:8082"
     healthcheck:
@@ -137,7 +145,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 40
-    restart: always
+    restart: unless-stopped
 
   shop-service:
     build: ./shop-service
@@ -154,9 +162,10 @@ services:
       blog-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
@@ -165,6 +174,9 @@ services:
       - IMAGE_BASE_URL=http://image-service:8084
       - ADMIN_BASE_URL=http://admin-service:8081
       - BLOG_BASE_URL=http://blog-service:8082
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8085:8085"
     healthcheck:
@@ -172,7 +184,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 40
-    restart: always
+    restart: unless-stopped
 
 volumes:
   db_data:
