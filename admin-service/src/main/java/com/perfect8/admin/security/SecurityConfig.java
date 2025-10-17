@@ -24,6 +24,7 @@ import java.util.Arrays;
 /**
  * Security Configuration for Admin Service
  * Version 1.0 - Core security setup for admin authentication and authorization
+ * UPDATED: Added production URLs to CORS configuration
  */
 @Configuration
 @EnableWebSecurity
@@ -88,11 +89,13 @@ public class SecurityConfig {
 
         // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",  // React development
-                "http://localhost:4200",  // Angular development
-                "http://localhost:8080",  // Local testing
-                "http://localhost:8081"   // Admin service port
-                // Add production URLs here
+                "http://localhost:3000",      // React development
+                "http://localhost:4200",      // Angular development
+                "http://localhost:8080",      // Local testing
+                "http://localhost:8081",      // Admin service port
+                "http://localhost:5500",      // Flutter web dev
+                "http://cmagnusb.org",        // Production domain
+                "http://perfect8alpine.rantila.com"  // Production server
         ));
 
         // Allow methods

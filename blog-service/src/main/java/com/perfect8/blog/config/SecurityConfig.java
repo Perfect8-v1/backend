@@ -20,6 +20,7 @@ import java.util.Arrays;
 /**
  * Security Configuration for Blog Service
  * Version 1.0 - Simplified security without JWT filter
+ * UPDATED: Added production URLs to CORS configuration
  */
 @Configuration
 @EnableWebSecurity
@@ -58,7 +59,8 @@ public class SecurityConfig {
                                 "/api/posts/**",
                                 "/api/posts/search",
                                 "/api/posts/category/**",
-                                "/api/posts/author/**"
+                                "/api/posts/author/**",
+                                "/api/posts/published"
                         ).permitAll()
 
                         // All other requests permitted for v1.0
@@ -77,11 +79,13 @@ public class SecurityConfig {
 
         // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",  // React development
-                "http://localhost:4200",  // Angular development
-                "http://localhost:8080",  // Local testing
-                "http://localhost:8082"   // Blog service port
-                // Add production URLs here
+                "http://localhost:3000",      // React development
+                "http://localhost:4200",      // Angular development
+                "http://localhost:8080",      // Local testing
+                "http://localhost:8082",      // Blog service port
+                "http://localhost:5500",      // Flutter web dev
+                "http://cmagnusb.org",        // Production domain
+                "http://perfect8alpine.rantila.com"  // Production server
         ));
 
         // Allow methods
