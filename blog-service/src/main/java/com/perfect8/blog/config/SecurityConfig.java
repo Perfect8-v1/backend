@@ -20,7 +20,7 @@ import java.util.Arrays;
 /**
  * Security Configuration for Blog Service
  * Version 1.0 - Simplified security without JWT filter
- * UPDATED: Added production URLs to CORS configuration
+ * UPDATED: Fixed URL patterns to match /api/v1/posts
  */
 @Configuration
 @EnableWebSecurity
@@ -53,14 +53,14 @@ public class SecurityConfig {
                                 "/actuator/health/**"
                         ).permitAll()
 
-                        // Public blog post reading
+                        // Public blog post reading - FIXED: Added /v1 to all patterns
                         .requestMatchers(HttpMethod.GET,
-                                "/api/posts",
-                                "/api/posts/**",
-                                "/api/posts/search",
-                                "/api/posts/category/**",
-                                "/api/posts/author/**",
-                                "/api/posts/published"
+                                "/api/v1/posts",
+                                "/api/v1/posts/**",
+                                "/api/v1/posts/search",
+                                "/api/v1/posts/category/**",
+                                "/api/v1/posts/author/**",
+                                "/api/v1/posts/published"
                         ).permitAll()
 
                         // All other requests permitted for v1.0
@@ -137,9 +137,9 @@ public class SecurityConfig {
     // Add role-based access control
 
     // Analytics endpoints - to be added in version 2.0
-    .requestMatchers("/api/analytics/**").hasRole("ADMIN")
+    .requestMatchers("/api/v1/analytics/**").hasRole("ADMIN")
 
     // Content metrics - to be added in version 2.0
-    .requestMatchers("/api/metrics/**").hasRole("ADMIN")
+    .requestMatchers("/api/v1/metrics/**").hasRole("ADMIN")
     */
 }
