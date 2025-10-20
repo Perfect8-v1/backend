@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
  * Version 1.0 - Core authentication filtering only
  * Validates JWT tokens and sets up Spring Security context
  * MAGNUM OPUS COMPLIANT: Uses getUserIdFromToken() instead of alias method
+ * FIXED: Updated shouldNotFilter to match v1 API paths
  */
 @Component
 @RequiredArgsConstructor
@@ -120,19 +121,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     /**
      * Check if this filter should not run for the request
+     * FIXED: Updated to match v1 API endpoint structure
      */
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getRequestURI();
+        String method = request.getMethod();
 
-        // Skip filter for public endpoints
-        return path.startsWith("/api/public/") ||
-                path.startsWith("/api/auth/login") ||
-                path.startsWith("/api/auth/register") ||
-                path.startsWith("/api/products/public") ||
-                path.startsWith("/api/categories/public") ||
-                path.equals("/api/health") ||
-                path.equals("/actuator/health");
+        // Skip filter for public endpoints that don't require authentication
+        
+        // Auth endpoints
+        if (path.startsWith("/api/auth/")) {
+            return true;
+        }
+        
+        // Health check endpoints
+        if (path.equals("/api/health") || 
+            path.startsWith("/actuator/health")) {
+            return true;
+        }
+        
+        // Public product endpoints (GET only)
+        if (method.equals("GET") && 
+            (path.startsWith("/api/v1/products") || 
+             path.matches("/api/v1/products/\\d+"))) {
+            return true;
+        }
+        
+        // Public category endpoints (GET only)
+        if (method.equals("GET") && 
+            (path.startsWith("/api/v1/categories") || 
+             path.matches("/api/v1/categories/\\d+"))) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
