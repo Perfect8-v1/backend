@@ -27,7 +27,7 @@ import java.util.Arrays;
 /**
  * Security Configuration for Shop Service
  * Version 1.0 - Core security setup with versioned API endpoints
- * FIXED: Added /api/v1/ prefix to match actual endpoint paths
+ * FIXED: Public endpoints FIRST in chain to prevent 403
  */
 @Configuration
 @EnableWebSecurity
@@ -57,6 +57,22 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(authorize -> authorize
+                        // CRITICAL: Public endpoints MUST BE FIRST!
+                        // Order matters in Spring Security filter chain
+                        
+                        // Health check endpoints
+                        .requestMatchers(
+                                "/api/health",
+                                "/actuator/health",
+                                "/actuator/health/**"
+                        ).permitAll()
+
+                        // Public product endpoints - v1 API (GET only)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+
+                        // Public category endpoints - v1 API (GET only)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+
                         // Public auth endpoints - no authentication required
                         .requestMatchers(
                                 "/api/auth/login",
@@ -64,31 +80,6 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/forgot-password",
                                 "/api/auth/reset-password"
-                        ).permitAll()
-
-                        // Public product endpoints - v1 API
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/v1/products",
-                                "/api/v1/products/{productId}",
-                                "/api/v1/products/search",
-                                "/api/v1/products/category/**",
-                                "/api/v1/products/featured",
-                                "/api/v1/products/new"
-                        ).permitAll()
-
-                        // Public category endpoints - v1 API
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/v1/categories",
-                                "/api/v1/categories/{categoryId}",
-                                "/api/v1/categories/tree",
-                                "/api/v1/categories/{categoryId}/products"
-                        ).permitAll()
-
-                        // Health check endpoints
-                        .requestMatchers(
-                                "/api/health",
-                                "/actuator/health",
-                                "/actuator/health/**"
                         ).permitAll()
 
                         // Cart endpoints - v1 API - authenticated users only
