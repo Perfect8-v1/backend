@@ -19,6 +19,14 @@
     <description>Shop Service for Perfect8 E-commerce Platform</description>
 
     <dependencies>
+
+        <!-- H2 Database for local development -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Internal dependency -->
         <dependency>
             <groupId>com.perfect8</groupId>

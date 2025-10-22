@@ -1,6 +1,7 @@
 package com.perfect8.shop.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 /**
  * Security Configuration for Shop Service
  * Version 1.0 - Core security setup with versioned API endpoints
+ * FIXED: Added @Qualifier for UserDetailsService (located in service package)
  * FIXED: Public endpoints FIRST in chain to prevent 403
  */
 @Configuration
@@ -36,6 +38,8 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Qualifier("customerUserDetailsService")
     private final UserDetailsService userDetailsService;
 
     /**
@@ -59,7 +63,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // CRITICAL: Public endpoints MUST BE FIRST!
                         // Order matters in Spring Security filter chain
-                        
+
                         // Health check endpoints
                         .requestMatchers(
                                 "/api/health",
@@ -67,11 +71,23 @@ public class SecurityConfig {
                                 "/actuator/health/**"
                         ).permitAll()
 
-                        // Public product endpoints - v1 API (GET only)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/products/**").permitAll()
+                        // Public product endpoints - v1 API (GET only, specific paths)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/products",                          // List all products
+                                "/api/v1/products/{productId}",              // Get by ID
+                                "/api/v1/products/search",                   // Search products
+                                "/api/v1/products/category/{categoryId}",    // By category
+                                "/api/v1/products/featured",                 // Featured products
+                                "/api/v1/products/new"                       // New products
+                        ).permitAll()
 
-                        // Public category endpoints - v1 API (GET only)
-                        .requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                        // Public category endpoints - v1 API (GET only, specific paths)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/categories",                        // List all categories
+                                "/api/v1/categories/{categoryId}",           // Get by ID
+                                "/api/v1/categories/tree",                   // Category tree
+                                "/api/v1/categories/{categoryId}/products"   // Products in category
+                        ).permitAll()
 
                         // Public auth endpoints - no authentication required
                         .requestMatchers(

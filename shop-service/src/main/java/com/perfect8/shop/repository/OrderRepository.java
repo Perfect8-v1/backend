@@ -20,6 +20,7 @@ import java.util.Optional;
  * NO HELPERS, NO ALIASES, NO WRAPPERS - Built right from the start!
  * Follows Magnum Opus: orderId not id, customerId not id, createdDate not createdAt
  * FIXED: Payment queries now use EXISTS with o.payments (List<Payment>) instead of o.payment
+ * FIXED: DATE() replaced with CAST for H2 compatibility
  */
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
@@ -164,16 +165,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
      * Find today's orders
-     * FIXED: Uses createdDate to match Order entity
+     * FIXED: Uses CAST instead of DATE() for H2 compatibility
      */
-    @Query("SELECT o FROM Order o WHERE DATE(o.createdDate) = CURRENT_DATE ORDER BY o.createdDate DESC")
+    @Query("SELECT o FROM Order o WHERE CAST(o.createdDate AS DATE) = CURRENT_DATE ORDER BY o.createdDate DESC")
     List<Order> findTodaysOrders();
 
     /**
      * Count today's orders
-     * FIXED: Uses createdDate to match Order entity
+     * FIXED: Uses CAST instead of DATE() for H2 compatibility
      */
-    @Query("SELECT COUNT(o) FROM Order o WHERE DATE(o.createdDate) = CURRENT_DATE")
+    @Query("SELECT COUNT(o) FROM Order o WHERE CAST(o.createdDate AS DATE) = CURRENT_DATE")
     long countTodaysOrders();
 
     // Version 2.0 features - commented out

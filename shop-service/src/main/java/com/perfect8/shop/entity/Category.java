@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * Category Entity - Version 1.0
  * Magnum Opus Compliant: Descriptive field names (categoryId not id)
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case automatically
  */
 @Entity
 @Table(name = "categories")
@@ -28,39 +29,39 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long categoryId;  // CHANGED: id → categoryId (Magnum Opus)
+    private Long categoryId;  // CHANGED: id → categoryId (Magnum Opus) → DB: category_id
 
-    @Column(name = "name", nullable = false, length = 100)
-    private String name;
+    @Column(nullable = false, length = 100)
+    private String name;  // → DB: name
 
-    @Column(name = "description", length = 500)
-    private String description;
+    @Column(length = 500)
+    private String description;  // → DB: description
 
-    @Column(name = "slug", unique = true, nullable = false, length = 100)
-    private String slug;
+    @Column(unique = true, nullable = false, length = 100)
+    private String slug;  // → DB: slug
 
-    @Column(name = "image_url", length = 500)
-    private String imageUrl;
+    @Column(length = 500)
+    private String imageUrl;  // → DB: image_url
 
-    @Column(name = "is_active", nullable = false)
+    @Column(nullable = false)
     @Builder.Default
-    private Boolean isActive = true;
+    private Boolean isActive = true;  // → DB: is_active
 
-    @Column(name = "sort_order")
+    @Column
     @Builder.Default
-    private Integer sortOrder = 0;
+    private Integer sortOrder = 0;  // → DB: sort_order
 
-    @Column(name = "meta_title", length = 200)
-    private String metaTitle;
+    @Column(length = 200)
+    private String metaTitle;  // → DB: meta_title
 
-    @Column(name = "meta_description", length = 500)
-    private String metaDescription;
+    @Column(length = 500)
+    private String metaDescription;  // → DB: meta_description
 
-    @Column(name = "meta_keywords", length = 500)
-    private String metaKeywords;
+    @Column(length = 500)
+    private String metaKeywords;  // → DB: meta_keywords
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
+    @JoinColumn(name = "parent_id")  // KEEP: JoinColumn needs explicit name
     private Category parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -71,11 +72,9 @@ public class Category {
     @Builder.Default
     private List<Product> products = new ArrayList<>();
 
-    @Column(name = "created_at")
-    private LocalDateTime createdDate;  // CHANGED: createdAt → createdDate (consistency with Product.java)
+    private LocalDateTime createdDate;  // → DB: created_date
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedDate;  // CHANGED: updatedAt → updatedDate (consistency with Product.java)
+    private LocalDateTime updatedDate;  // → DB: updated_date
 
     @PrePersist
     protected void onCreate() {
