@@ -5,7 +5,7 @@
 -- ============================================================================
 -- CATEGORIES
 -- ============================================================================
-INSERT INTO categories (category_id, name, slug, description, parent_id, is_active, created_date, updated_date) VALUES
+INSERT INTO categories (category_id, name, slug, description, parent_id, is_active, created_at, updated_at) VALUES
 (1, 'Electronics', 'electronics', 'Electronic devices and accessories', NULL, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 'Laptops', 'laptops', 'Laptop computers', 1, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (3, 'Phones', 'phones', 'Smartphones and mobile devices', 1, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -14,7 +14,7 @@ INSERT INTO categories (category_id, name, slug, description, parent_id, is_acti
 -- ============================================================================
 -- PRODUCTS
 -- ============================================================================
-INSERT INTO products (product_id, name, slug, description, sku, price, discount_price, stock_quantity, weight, dimensions, category_id, is_active, is_featured, created_date, updated_date) VALUES
+INSERT INTO products (product_id, name, slug, description, sku, price, discount_price, stock_quantity, weight, dimensions, category_id, is_active, is_featured, created_at, updated_at) VALUES
 (1, 'MacBook Pro 16"', 'macbook-pro-16', 'Powerful laptop with M3 chip', 'LAPTOP-001', 2499.00, NULL, 15, 2.1, '35.79 x 24.81 x 1.68 cm', 2, true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 'iPhone 15 Pro', 'iphone-15-pro', 'Latest iPhone with titanium design', 'PHONE-001', 1199.00, NULL, 50, 0.221, '14.67 x 7.08 x 0.83 cm', 3, true, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (3, 'AirPods Pro', 'airpods-pro', 'Wireless earbuds with noise cancellation', 'ACC-001', 249.00, NULL, 100, 0.056, '4.5 x 6.0 x 2.1 cm', 4, true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -49,7 +49,7 @@ INSERT INTO orders (order_id, customer_id, order_number, order_date, order_statu
 -- ============================================================================
 -- ORDER ITEMS
 -- ============================================================================
-INSERT INTO order_items (order_item_id, order_id, product_id, product_name, product_sku, quantity, unit_price, discount_amount, subtotal, item_status, created_date, updated_date) VALUES
+INSERT INTO order_items (order_item_id, order_id, product_id, product_name, product_sku, quantity, unit_price, discount_amount, subtotal, item_status, created_at, updated_at) VALUES
 (1, 1, 1, 'MacBook Pro 16"', 'LAPTOP-001', 1, 2499.00, 0.00, 2499.00, 'DELIVERED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 2, 2, 'iPhone 15 Pro', 'PHONE-001', 1, 1199.00, 0.00, 1199.00, 'PROCESSING', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (3, 3, 3, 'AirPods Pro', 'ACC-001', 1, 249.00, 0.00, 249.00, 'PENDING', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
@@ -57,7 +57,7 @@ INSERT INTO order_items (order_item_id, order_id, product_id, product_name, prod
 -- ============================================================================
 -- PAYMENTS
 -- ============================================================================
-INSERT INTO payments (payment_id, order_id, payment_method, payment_status, amount, currency, transaction_id, gateway_payment_id, payment_date, created_date, updated_date) VALUES
+INSERT INTO payments (payment_id, order_id, payment_method, payment_status, amount, currency, transaction_id, gateway_payment_id, payment_date, created_at, updated_at) VALUES
 (1, 1, 'CREDIT_CARD', 'COMPLETED', 2748.00, 'SEK', 'TXN-001-TEST', 'STRIPE-TEST-001', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 2, 'PAYPAL', 'PENDING', 1448.00, 'SEK', 'TXN-002-TEST', 'PAYPAL-TEST-002', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (3, 3, 'CREDIT_CARD', 'PENDING', 298.00, 'SEK', 'TXN-003-TEST', 'STRIPE-TEST-003', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
@@ -65,20 +65,20 @@ INSERT INTO payments (payment_id, order_id, payment_method, payment_status, amou
 -- ============================================================================
 -- CARTS
 -- ============================================================================
-INSERT INTO carts (cart_id, customer_id, item_count, total_amount, discount_amount, is_saved, created_date, updated_date) VALUES
+INSERT INTO carts (cart_id, customer_id, item_count, total_amount, discount_amount, is_saved, created_at, updated_at) VALUES
 (1, 3, 3, 3597.00, 0.00, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- ============================================================================
 -- CART ITEMS
 -- ============================================================================
-INSERT INTO cart_items (cart_item_id, cart_id, product_id, product_name, product_sku, quantity, unit_price, subtotal, added_date, updated_date) VALUES
+INSERT INTO cart_items (cart_item_id, cart_id, product_id, product_name, product_sku, quantity, unit_price, subtotal, added_at, updated_at) VALUES
 (1, 1, 4, 'Dell XPS 15', 'LAPTOP-002', 1, 1799.00, 1799.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 1, 5, 'Samsung Galaxy S24', 'PHONE-002', 2, 999.00, 1998.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- ============================================================================
 -- SHIPMENTS
 -- ============================================================================
-INSERT INTO shipments (shipment_id, order_id, tracking_number, carrier, shipping_method, shipment_status, shipping_street, shipping_city, shipping_state, shipping_postal_code, shipping_country, recipient_name, recipient_email, recipient_phone, shipped_date, estimated_delivery_date, delivered_date, created_date, last_updated) VALUES
+INSERT INTO shipments (shipment_id, order_id, tracking_number, carrier, shipping_method, shipment_status, shipping_street, shipping_city, shipping_state, shipping_postal_code, shipping_country, recipient_name, recipient_email, recipient_phone, shipped_date, estimated_delivery_date, delivered_date, created_at, last_updated) VALUES
 (1, 1, 'TRACK-001-TEST', 'DHL', 'STANDARD', 'DELIVERED', 'Storgatan 1', 'Stockholm', 'Stockholm', '11420', 'Sweden', 'John Doe', 'john@example.com', '+46701234567', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- ============================================================================

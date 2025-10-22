@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 /**
  * Cart Item Entity - Represents individual items in shopping cart
  * Version 1.0 - Core shopping cart functionality
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * FIXED: addedAt/updatedAt → addedDate/updatedDate (Magnum Opus)
  */
 @Entity
 @Table(name = "cart_items", indexes = {
@@ -28,8 +30,7 @@ public class CartItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "cart_item_id")
-    private Long cartItemId;
+    private Long cartItemId;  // → DB: cart_item_id
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart_id", nullable = false)
@@ -39,70 +40,66 @@ public class CartItem {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(name = "quantity", nullable = false)
+    @Column(nullable = false)
     @Builder.Default
-    private Integer quantity = 1;
+    private Integer quantity = 1;  // → DB: quantity
 
-    @Column(name = "unit_price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal unitPrice;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitPrice;  // → DB: unit_price
 
-    @Column(name = "discount_price", precision = 10, scale = 2)
-    private BigDecimal discountPrice;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal discountPrice;  // → DB: discount_price
 
-    @Column(name = "subtotal", precision = 10, scale = 2)
-    private BigDecimal subtotal;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal subtotal;  // → DB: subtotal
 
     // Product snapshot at time of adding to cart
-    @Column(name = "product_name", nullable = false)
-    private String productName;
+    @Column(nullable = false)
+    private String productName;  // → DB: product_name
 
-    @Column(name = "product_sku", nullable = false)
-    private String productSku;
+    @Column(nullable = false)
+    private String productSku;  // → DB: product_sku
 
-    @Column(name = "product_image_url")
-    private String productImageUrl;
+    @Column
+    private String productImageUrl;  // → DB: product_image_url
 
     // Options and customization (for future)
-    @Column(name = "selected_options", columnDefinition = "TEXT")
-    private String selectedOptions;
+    @Column(columnDefinition = "TEXT")
+    private String selectedOptions;  // → DB: selected_options
 
-    @Column(name = "custom_message", length = 500)
-    private String customMessage;
+    @Column(length = 500)
+    private String customMessage;  // → DB: custom_message
 
     // Status flags
-    @Column(name = "is_saved_for_later")
+    @Column
     @Builder.Default
-    private Boolean isSavedForLater = false;
+    private Boolean isSavedForLater = false;  // → DB: is_saved_for_later
 
-    @Column(name = "is_gift")
+    @Column
     @Builder.Default
-    private Boolean isGift = false;
+    private Boolean isGift = false;  // → DB: is_gift
 
-    @Column(name = "gift_message", length = 500)
-    private String giftMessage;
+    @Column(length = 500)
+    private String giftMessage;  // → DB: gift_message
 
     // Stock validation
-    @Column(name = "stock_checked_at")
-    private LocalDateTime stockCheckedAt;
+    private LocalDateTime stockCheckedAt;  // → DB: stock_checked_at
 
-    @Column(name = "stock_available")
-    private Boolean stockAvailable;
+    private Boolean stockAvailable;  // → DB: stock_available
 
-    @Column(name = "requested_quantity")
-    private Integer requestedQuantity;
+    private Integer requestedQuantity;  // → DB: requested_quantity
 
     // Notes
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
+    @Column(columnDefinition = "TEXT")
+    private String notes;  // → DB: notes
 
-    // Timestamps
+    // Timestamps (Magnum Opus: use Date suffix)
     @CreationTimestamp
-    @Column(name = "added_at", nullable = false, updatable = false)
-    private LocalDateTime addedAt;
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime addedDate;  // → DB: added_date
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;  // → DB: updated_date
 
     // ========================================
     // Business methods
