@@ -6,6 +6,12 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Image Entity - Version 1.0
+ * Magnum Opus Compliant: No @Column(name=...) overrides
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * FIXED: createdAt/updatedAt → createdDate/updatedDate (Magnum Opus)
+ */
 @Entity
 @Table(name = "images")
 @Data
@@ -16,90 +22,68 @@ public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "image_id")
-    private Long imageId;
+    private Long imageId;  // → DB: image_id
 
-    @Column(name = "original_filename")
-    private String originalFilename;
+    private String originalFilename;  // → DB: original_filename
 
-    @Column(name = "stored_filename", unique = true)
-    private String storedFilename;
+    @Column(unique = true)
+    private String storedFilename;  // → DB: stored_filename
 
-    @Column(name = "mime_type")
-    private String mimeType;
+    private String mimeType;  // → DB: mime_type
 
-    @Column(name = "image_format")
-    private String imageFormat;
+    private String imageFormat;  // → DB: image_format
 
-    @Column(name = "original_size_bytes")
-    private Long originalSizeBytes;
+    private Long originalSizeBytes;  // → DB: original_size_bytes
 
-    @Column(name = "original_width")
-    private Integer originalWidth;
+    private Integer originalWidth;  // → DB: original_width
 
-    @Column(name = "original_height")
-    private Integer originalHeight;
+    private Integer originalHeight;  // → DB: original_height
 
-    @Column(name = "original_url")
-    private String originalUrl;
+    private String originalUrl;  // → DB: original_url
 
-    @Column(name = "thumbnail_url")
-    private String thumbnailUrl;
+    private String thumbnailUrl;  // → DB: thumbnail_url
 
-    @Column(name = "small_url")
-    private String smallUrl;
+    private String smallUrl;  // → DB: small_url
 
-    @Column(name = "medium_url")
-    private String mediumUrl;
+    private String mediumUrl;  // → DB: medium_url
 
-    @Column(name = "large_url")
-    private String largeUrl;
+    private String largeUrl;  // → DB: large_url
 
-    @Column(name = "image_status")
     @Enumerated(EnumType.STRING)
-    @Builder.Default  // FIXAT: Lagt till @Builder.Default
-    private ImageStatus imageStatus = ImageStatus.PENDING;
+    @Builder.Default
+    private ImageStatus imageStatus = ImageStatus.PENDING;  // → DB: image_status
 
-    @Column(name = "processing_time_ms")
-    private Long processingTimeMs;
+    private Long processingTimeMs;  // → DB: processing_time_ms
 
-    @Column(name = "error_message")
-    private String errorMessage;
+    private String errorMessage;  // → DB: error_message
 
-    @Column(name = "alt_text")
-    private String altText;
+    private String altText;  // → DB: alt_text
 
-    @Column(name = "title")
-    private String title;
+    private String title;  // → DB: title
 
-    @Column(name = "category")
-    private String category;
+    private String category;  // → DB: category
 
-    @Column(name = "reference_type")
-    private String referenceType;
+    private String referenceType;  // → DB: reference_type
 
-    @Column(name = "reference_id")
-    private Long referenceId;
+    private Long referenceId;  // → DB: reference_id
 
-    @Column(name = "is_deleted")
-    @Builder.Default  // FIXAT: Lagt till @Builder.Default
-    private Boolean isDeleted = false;
+    @Builder.Default
+    private Boolean isDeleted = false;  // → DB: is_deleted
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(updatable = false)
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     // Business logic methods

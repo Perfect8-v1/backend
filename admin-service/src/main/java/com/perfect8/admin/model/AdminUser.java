@@ -1,106 +1,70 @@
 package com.perfect8.admin.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
+/**
+ * Admin User Entity - Version 1.0
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * FIXED: id → adminUserId (Magnum Opus)
+ * FIXED: createdAt/updatedAt → createdDate/updatedDate (Magnum Opus)
+ * FIXED: Added Lombok annotations
+ */
 @Entity
 @Table(name = "admin_users")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AdminUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long adminUserId;  // → DB: admin_user_id (Magnum Opus)
 
     @Column(unique = true, nullable = false)
-    private String username;
+    private String username;  // → DB: username
 
     @Column(unique = true, nullable = false)
-    private String email;
+    private String email;  // → DB: email
 
     @Column(nullable = false)
-    private String password;
+    private String password;  // → DB: password
 
-    @Column(name = "first_name")
-    private String firstName;
+    private String firstName;  // → DB: first_name
 
-    @Column(name = "last_name")
-    private String lastName;
+    private String lastName;  // → DB: last_name
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Role role;  // → DB: role
 
     @Column(nullable = false)
-    private Boolean active = true;
+    @Builder.Default
+    private Boolean active = true;  // → DB: active
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    private LocalDateTime lastLogin;  // → DB: last_login
 
     public enum Role {
         SUPER_ADMIN, SHOP_ADMIN, CONTENT_ADMIN
     }
 
-    // Constructors
-    public AdminUser() {}
-
-    public AdminUser(String username, String email, String password, String firstName,
-                     String lastName, Role role) {
-        this.username = username;
-        this.email = email;
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.role = role;
-        this.active = true;
-    }
-
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
-
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
-
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
-
-    public Boolean getActive() { return active; }
-    public void setActive(Boolean active) { this.active = active; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    public LocalDateTime getLastLogin() { return lastLogin; }
-    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
-
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 }

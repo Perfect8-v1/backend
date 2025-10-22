@@ -1,99 +1,80 @@
 package com.perfect8.blog.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Post Entity - Version 1.0
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * FIXED: id → postId (Magnum Opus)
+ * FIXED: createdAt/updatedAt → createdDate/updatedDate (Magnum Opus)
+ * FIXED: Added Lombok annotations
+ */
 @Entity
 @Table(name = "posts")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(exclude = {"author", "images"})
+@ToString(exclude = {"author", "images"})
 public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long postId;  // → DB: post_id (Magnum Opus)
 
     @Column(nullable = false)
-    private String title;
+    private String title;  // → DB: title
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
+    private String content;  // → DB: content
 
-    @Column(name = "slug", unique = true)
-    private String slug;
+    @Column(unique = true)
+    private String slug;  // → DB: slug
 
-    @Column(name = "excerpt")
-    private String excerpt;
+    private String excerpt;  // → DB: excerpt
 
-    @Column(name = "published")
-    private boolean published = false;
+    @Builder.Default
+    private boolean published = false;  // → DB: published
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
-    @Column(name = "published_at")
-    private LocalDateTime publishedAt;
+    private LocalDateTime publishedAt;  // → DB: published_at
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
     private User author;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<ImageReference> images = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "post_links", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "url")
+    @Builder.Default
     private List<String> links = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
-
-    // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-
-    public String getSlug() { return slug; }
-    public void setSlug(String slug) { this.slug = slug; }
-
-    public String getExcerpt() { return excerpt; }
-    public void setExcerpt(String excerpt) { this.excerpt = excerpt; }
-
-    public boolean isPublished() { return published; }
-    public void setPublished(boolean published) { this.published = published; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
-
-    public LocalDateTime getPublishedAt() { return publishedAt; }
-    public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
-
-    public User getAuthor() { return author; }
-    public void setAuthor(User author) { this.author = author; }
-
-    public List<ImageReference> getImages() { return images; }
-    public void setImages(List<ImageReference> images) { this.images = images; }
-
-    public List<String> getLinks() { return links; }
-    public void setLinks(List<String> links) { this.links = links; }
 }

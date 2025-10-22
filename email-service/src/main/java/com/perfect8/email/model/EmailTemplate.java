@@ -1,4 +1,4 @@
-package com.perfect8.email.entity;
+package com.perfect8.email.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 /**
  * Email template entity for storing reusable email templates
  * Version 1.0 - Core template functionality
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * FIXED: createdAt/updatedAt → createdDate/updatedDate (Magnum Opus)
+ * FIXED: id → emailTemplateId (Magnum Opus)
  */
 @Entity
 @Table(name = "email_templates",
@@ -26,78 +29,76 @@ public class EmailTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long emailTemplateId;  // → DB: email_template_id (Magnum Opus)
 
-    @Column(name = "name", unique = true, nullable = false, length = 100)
-    private String name;
+    @Column(unique = true, nullable = false, length = 100)
+    private String name;  // → DB: name
 
-    @Column(name = "subject", nullable = false, length = 500)
-    private String subject;
+    @Column(nullable = false, length = 500)
+    private String subject;  // → DB: subject
 
-    @Column(name = "content", columnDefinition = "TEXT", nullable = false)
-    private String content;
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String content;  // → DB: content
 
-    @Column(name = "html_content", columnDefinition = "TEXT")
-    private String htmlContent;
+    @Column(columnDefinition = "TEXT")
+    private String htmlContent;  // → DB: html_content
 
-    @Column(name = "description", length = 500)
-    private String description;
+    @Column(length = 500)
+    private String description;  // → DB: description
 
-    @Column(name = "template_type", length = 50)
-    private String templateType; // ORDER, MARKETING, SYSTEM, NEWSLETTER
+    @Column(length = 50)
+    private String templateType;  // → DB: template_type (ORDER, MARKETING, SYSTEM, NEWSLETTER)
 
-    @Column(name = "category", length = 50)
-    private String category; // TRANSACTIONAL, PROMOTIONAL, INFORMATIONAL
+    @Column(length = 50)
+    private String category;  // → DB: category (TRANSACTIONAL, PROMOTIONAL, INFORMATIONAL)
 
-    @Column(name = "active")
-    @lombok.Builder.Default
-    private boolean active = true;
+    @Column
+    @Builder.Default
+    private boolean active = true;  // → DB: active
 
-    @Column(name = "version")
+    @Column
     @Version
-    private Long version;
+    private Long version;  // → DB: version
 
-    @Column(name = "created_by", length = 100)
-    private String createdBy;
+    @Column(length = 100)
+    private String createdBy;  // → DB: created_by
 
-    @Column(name = "updated_by", length = 100)
-    private String updatedBy;
+    @Column(length = 100)
+    private String updatedBy;  // → DB: updated_by
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
     // Template variables tracking
-    @Column(name = "required_variables", length = 1000)
-    private String requiredVariables; // Comma-separated list of required variable names
+    @Column(length = 1000)
+    private String requiredVariables;  // → DB: required_variables (Comma-separated list)
 
-    @Column(name = "optional_variables", length = 1000)
-    private String optionalVariables; // Comma-separated list of optional variable names
+    @Column(length = 1000)
+    private String optionalVariables;  // → DB: optional_variables (Comma-separated list)
 
     // Usage tracking
-    @Column(name = "usage_count")
-    @lombok.Builder.Default
-    private Long usageCount = 0L;
+    @Column
+    @Builder.Default
+    private Long usageCount = 0L;  // → DB: usage_count
 
-    @Column(name = "last_used_at")
-    private LocalDateTime lastUsedAt;
+    private LocalDateTime lastUsedAt;  // → DB: last_used_at
 
     // Version 2.0 features - commented out
-    // @Column(name = "language", length = 10)
+    // @Column(length = 10)
     // private String language; // en, es, fr, etc.
 
-    // @Column(name = "ab_test_variant", length = 10)
+    // @Column(length = 10)
     // private String abTestVariant; // A, B, C for A/B testing
 
-    // @Column(name = "performance_score")
     // private Double performanceScore; // Based on open/click rates
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
         if (usageCount == null) {
             usageCount = 0L;
         }
@@ -105,7 +106,7 @@ public class EmailTemplate {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     // Helper methods

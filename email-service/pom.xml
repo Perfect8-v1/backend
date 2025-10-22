@@ -18,6 +18,14 @@
     <description>Email service for Perfect8 platform</description>
 
     <dependencies>
+
+        <!-- H2 Database for local development -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Common Module for shared enums -->
         <dependency>
             <groupId>com.perfect8</groupId>

@@ -1,60 +1,53 @@
-// blog-service/src/main/java/com/perfect8/blog/model/ImageReference.java
 package com.perfect8.blog.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
+/**
+ * Image Reference Entity - Version 1.0
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * FIXED: id → imageReferenceId (Magnum Opus)
+ * FIXED: createdAt → createdDate (Magnum Opus)
+ * FIXED: Added Lombok annotations
+ */
 @Entity
 @Table(name = "image_references")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(exclude = {"post"})
+@ToString(exclude = {"post"})
 public class ImageReference {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long imageReferenceId;  // → DB: image_reference_id (Magnum Opus)
 
-    @Column(name = "image_id", nullable = false)
-    private String imageId;
+    @Column(nullable = false)
+    private String imageId;  // → DB: image_id
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    private String imageUrl;  // → DB: image_url
 
-    @Column(name = "alt_text")
-    private String altText;
+    private String altText;  // → DB: alt_text
 
-    @Column(name = "caption")
-    private String caption;
+    private String caption;  // → DB: caption
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
     }
-
-    // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getImageId() { return imageId; }
-    public void setImageId(String imageId) { this.imageId = imageId; }
-
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-
-    public String getAltText() { return altText; }
-    public void setAltText(String altText) { this.altText = altText; }
-
-    public String getCaption() { return caption; }
-    public void setCaption(String caption) { this.caption = caption; }
-
-    public Post getPost() { return post; }
-    public void setPost(Post post) { this.post = post; }
-
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
