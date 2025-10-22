@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * Shipment Entity - Version 1.0
  * Magnum Opus Compliant: No alias methods, consistent naming
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
  * UPDATED: Moved essential v2.0 fields to v1.0 for facilitate frontend compatibility
  */
 @Entity
@@ -27,107 +28,100 @@ public class Shipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "shipment_id")
-    private Long shipmentId;
+    private Long shipmentId;  // → DB: shipment_id
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "tracking_number", unique = true, nullable = false, length = 100)
-    private String trackingNumber;
+    @Column(unique = true, nullable = false, length = 100)
+    private String trackingNumber;  // → DB: tracking_number
 
     @Column(nullable = false, length = 50)
     @Builder.Default
-    private String carrier = "PostNord";
+    private String carrier = "PostNord";  // → DB: carrier
 
-    @Column(name = "shipment_status", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     @Builder.Default
-    private String shipmentStatus = "PENDING";
+    private String shipmentStatus = "PENDING";  // → DB: shipment_status
 
-    @Column(name = "shipped_date")
-    private LocalDateTime shippedDate;
+    private LocalDateTime shippedDate;  // → DB: shipped_date
 
-    @Column(name = "estimated_delivery_date")
-    private LocalDate estimatedDeliveryDate;
+    private LocalDate estimatedDeliveryDate;  // → DB: estimated_delivery_date
 
-    @Column(name = "actual_delivery_date")
-    private LocalDate actualDeliveryDate;
+    private LocalDate actualDeliveryDate;  // → DB: actual_delivery_date
 
-    @Column(name = "delivered_date")
-    private LocalDateTime deliveredDate;
+    private LocalDateTime deliveredDate;  // → DB: delivered_date
 
-    @Column(name = "shipping_cost", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     @Builder.Default
-    private BigDecimal shippingCost = BigDecimal.ZERO;
+    private BigDecimal shippingCost = BigDecimal.ZERO;  // → DB: shipping_cost
 
     // Recipient information
-    @Column(name = "recipient_name", length = 100)
-    private String recipientName;
+    @Column(length = 100)
+    private String recipientName;  // → DB: recipient_name
 
-    @Column(name = "recipient_phone", length = 20)
-    private String recipientPhone;
+    @Column(length = 20)
+    private String recipientPhone;  // → DB: recipient_phone
 
-    @Column(name = "recipient_email", length = 100)
-    private String recipientEmail;
-
-    @Column(name = "shipping_address", columnDefinition = "TEXT")
-    private String shippingAddress;
-
-    @Column(name = "shipping_street", length = 255)
-    private String shippingStreet;
-
-    @Column(name = "shipping_city", length = 100)
-    private String shippingCity;
-
-    @Column(name = "shipping_state", length = 50)
-    private String shippingState;
-
-    @Column(name = "shipping_postal_code", length = 20)
-    private String shippingPostalCode;
-
-    @Column(name = "shipping_country", length = 50)
-    @Builder.Default
-    private String shippingCountry = "SE";
-
-    @Column(name = "shipping_method", length = 50)
-    @Builder.Default
-    private String shippingMethod = "STANDARD";
-
-    // Weight and dimensions (moved from v2.0 to v1.0)
-    @Column(name = "weight", precision = 8, scale = 3)
-    private BigDecimal weight; // in kg
-
-    @Column(name = "dimensions", length = 50)
-    private String dimensions; // e.g., "30x20x15"
-
-    // Delivery options (moved from v2.0 to v1.0)
-    @Column(name = "delivery_instructions", length = 500)
-    private String deliveryInstructions;
-
-    @Column(name = "signature_required", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    @Builder.Default
-    private boolean signatureRequired = false;
-
-    @Column(name = "insurance_amount", precision = 10, scale = 2)
-    private BigDecimal insuranceAmount;
-
-    // Label management (moved from v2.0 to v1.0)
-    @Column(name = "label_url", length = 500)
-    private String labelUrl;
-
-    // Current location tracking (moved from v2.0 to v1.0)
-    @Column(name = "current_location", length = 255)
-    private String currentLocation;
+    @Column(length = 100)
+    private String recipientEmail;  // → DB: recipient_email
 
     @Column(columnDefinition = "TEXT")
-    private String notes;
+    private String shippingAddress;  // → DB: shipping_address
 
-    @Column(name = "created_at")
-    private LocalDateTime createdDate;
+    @Column(length = 255)
+    private String shippingStreet;  // → DB: shipping_street
 
-    @Column(name = "last_updated")
-    private LocalDateTime updatedDate;
+    @Column(length = 100)
+    private String shippingCity;  // → DB: shipping_city
+
+    @Column(length = 50)
+    private String shippingState;  // → DB: shipping_state
+
+    @Column(length = 20)
+    private String shippingPostalCode;  // → DB: shipping_postal_code
+
+    @Column(length = 50)
+    @Builder.Default
+    private String shippingCountry = "SE";  // → DB: shipping_country
+
+    @Column(length = 50)
+    @Builder.Default
+    private String shippingMethod = "STANDARD";  // → DB: shipping_method
+
+    // Weight and dimensions (moved from v2.0 to v1.0)
+    @Column(precision = 8, scale = 3)
+    private BigDecimal weight;  // → DB: weight (in kg)
+
+    @Column(length = 50)
+    private String dimensions;  // → DB: dimensions (e.g., "30x20x15")
+
+    // Delivery options (moved from v2.0 to v1.0)
+    @Column(length = 500)
+    private String deliveryInstructions;  // → DB: delivery_instructions
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
+    private boolean signatureRequired = false;  // → DB: signature_required
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal insuranceAmount;  // → DB: insurance_amount
+
+    // Label management (moved from v2.0 to v1.0)
+    @Column(length = 500)
+    private String labelUrl;  // → DB: label_url
+
+    // Current location tracking (moved from v2.0 to v1.0)
+    @Column(length = 255)
+    private String currentLocation;  // → DB: current_location
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;  // → DB: notes
+
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
+
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
@@ -138,46 +132,44 @@ public class Shipment {
      */
 
     // Advanced tracking (v2.0)
-    // @Column(name = "last_location", length = 255)
+    // @Column(length = 255)
     // private String lastLocation;
     //
-    // @Column(name = "tracking_notes", columnDefinition = "TEXT")
+    // @Column(columnDefinition = "TEXT")
     // private String trackingNotes;
 
     // Advanced delivery (v2.0)
-    // @Column(name = "delivery_notes", length = 500)
+    // @Column(length = 500)
     // private String deliveryNotes;
     //
-    // @Column(name = "number_of_packages")
     // private Integer numberOfPackages;
     //
-    // @Column(name = "package_type", length = 50)
+    // @Column(length = 50)
     // private String packageType;
 
     // Special handling flags (v2.0)
-    // @Column(name = "fragile", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     // private boolean fragile;
     //
-    // @Column(name = "hazardous", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     // private boolean hazardous;
     //
-    // @Column(name = "perishable", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     // private boolean perishable;
     //
-    // @Column(name = "priority_handling", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
     // private boolean priorityHandling;
 
     // Advanced options (v2.0)
-    // @Column(name = "confirmation_type", length = 50)
+    // @Column(length = 50)
     // private String confirmationType;
     //
-    // @Column(name = "delivery_attempts")
     // private Integer deliveryAttempts;
     //
-    // @Column(name = "exception_description", columnDefinition = "TEXT")
+    // @Column(columnDefinition = "TEXT")
     // private String exceptionDescription;
     //
-    // @Column(name = "return_tracking_number", length = 100)
+    // @Column(length = 100)
     // private String returnTrackingNumber;
 
     /* ========== END VERSION 2.0 FEATURES ========== */
@@ -217,9 +209,8 @@ public class Shipment {
     // ========== MAGNUM OPUS COMPLIANT ==========
     // Lombok generates: getShipmentStatus() / setShipmentStatus()
     // Lombok generates: getCreatedDate() / setCreatedDate()
-    // Lombok generates: getUpdatedDate() / setUpdatedDate()
-    // REMOVED: getStatus() / setStatus() - alias methods
-    // REMOVED: getUpdatedAt() / setUpdatedAt() - alias methods
+    // Lombok generates: getLastUpdated() / setLastUpdated()
+    // No alias methods
 
     // ========== BUSINESS METHODS ==========
 

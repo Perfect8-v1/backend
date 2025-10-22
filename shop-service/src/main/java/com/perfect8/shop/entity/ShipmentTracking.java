@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 /**
  * Shipment Tracking Entity - Version 1.0
  * Magnum Opus Compliant: Lombok annotations, no manual getters/setters
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
  * Tracks shipment status updates and location history
  */
 @Entity
@@ -27,39 +28,37 @@ public class ShipmentTracking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "shipment_tracking_id")
-    private Long shipmentTrackingId;
+    private Long shipmentTrackingId;  // → DB: shipment_tracking_id
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipment_id", nullable = false)
     private Shipment shipment;
 
     @Column(nullable = false, length = 50)
-    private String status; // PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION
+    private String status;  // → DB: status (PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION)
 
     @Column(length = 255)
-    private String location;
+    private String location;  // → DB: location
 
     @Column(length = 500)
-    private String description;
+    private String description;  // → DB: description
 
     @Column(nullable = false)
-    private LocalDateTime timestamp;
+    private LocalDateTime timestamp;  // → DB: timestamp
 
-    @Column(name = "event_code", length = 20)
-    private String eventCode; // Carrier-specific event codes
+    @Column(length = 20)
+    private String eventCode;  // → DB: event_code (Carrier-specific event codes)
 
-    @Column(name = "event_details", length = 1000)
-    private String eventDetails;
+    @Column(length = 1000)
+    private String eventDetails;  // → DB: event_details
 
-    @Column(name = "delivery_confirmation", length = 100)
-    private String deliveryConfirmation; // Signature, left at door, etc.
+    @Column(length = 100)
+    private String deliveryConfirmation;  // → DB: delivery_confirmation (Signature, left at door, etc.)
 
-    @Column(name = "exception_type", length = 50)
-    private String exceptionType; // WEATHER_DELAY, ADDRESS_ISSUE, etc.
+    @Column(length = 50)
+    private String exceptionType;  // → DB: exception_type (WEATHER_DELAY, ADDRESS_ISSUE, etc.)
 
-    @Column(name = "next_scheduled_delivery")
-    private LocalDateTime nextScheduledDelivery;
+    private LocalDateTime nextScheduledDelivery;  // → DB: next_scheduled_delivery
 
     // ========== JPA LIFECYCLE CALLBACKS ==========
 

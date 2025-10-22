@@ -11,13 +11,14 @@ import java.time.LocalDateTime;
 /**
  * Payment Entity - Version 1.0
  * Magnum Opus Compliant: Consistent naming (createdDate/updatedDate)
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
  */
 @Entity
 @Table(name = "payments", indexes = {
         @Index(name = "idx_payment_order", columnList = "order_id"),
         @Index(name = "idx_payment_status", columnList = "payment_status"),
         @Index(name = "idx_payment_transaction", columnList = "transaction_id", unique = true),
-        @Index(name = "idx_payment_created", columnList = "created_at")
+        @Index(name = "idx_payment_created", columnList = "created_date")
 })
 @Data
 @Builder
@@ -29,91 +30,85 @@ public class Payment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "payment_id")
-    private Long paymentId;
+    private Long paymentId;  // → DB: payment_id
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "amount", nullable = false, precision = 10, scale = 2)
-    private BigDecimal amount;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;  // → DB: amount
 
-    @Column(name = "currency", nullable = false, length = 3)
+    @Column(nullable = false, length = 3)
     @Builder.Default
-    private String currency = "USD";
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false, length = 50)
-    @Builder.Default
-    private PaymentMethod paymentMethod = PaymentMethod.PAYPAL;
+    private String currency = "USD";  // → DB: currency
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_status", nullable = false, length = 50)
+    @Column(nullable = false, length = 50)
     @Builder.Default
-    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
+    private PaymentMethod paymentMethod = PaymentMethod.PAYPAL;  // → DB: payment_method
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;  // → DB: payment_status
 
     // Transaction identifiers
-    @Column(name = "transaction_id", nullable = false, unique = true, length = 100)
-    private String transactionId;
+    @Column(nullable = false, unique = true, length = 100)
+    private String transactionId;  // → DB: transaction_id
 
-    @Column(name = "gateway_payment_id", length = 100)
-    private String gatewayPaymentId;
+    @Column(length = 100)
+    private String gatewayPaymentId;  // → DB: gateway_payment_id
 
     // Payment details
-    @Column(name = "payment_date")
-    private LocalDateTime paymentDate;
+    private LocalDateTime paymentDate;  // → DB: payment_date
 
-    @Column(name = "payer_email", length = 255)
-    private String payerEmail;
+    @Column(length = 255)
+    private String payerEmail;  // → DB: payer_email
 
-    @Column(name = "payer_name", length = 255)
-    private String payerName;
+    @Column(length = 255)
+    private String payerName;  // → DB: payer_name
 
     // Verification
-    @Column(name = "is_verified")
+    @Column
     @Builder.Default
-    private Boolean isVerified = false;
+    private Boolean isVerified = false;  // → DB: is_verified
 
-    @Column(name = "verification_date")
-    private LocalDateTime verificationDate;
+    private LocalDateTime verificationDate;  // → DB: verification_date
 
     // Refund information
-    @Column(name = "refund_amount", precision = 10, scale = 2)
-    private BigDecimal refundAmount;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal refundAmount;  // → DB: refund_amount
 
-    @Column(name = "refund_reason", length = 500)
-    private String refundReason;
+    @Column(length = 500)
+    private String refundReason;  // → DB: refund_reason
 
-    @Column(name = "refund_date")
-    private LocalDateTime refundDate;
+    private LocalDateTime refundDate;  // → DB: refund_date
 
-    @Column(name = "is_partial_refund")
+    @Column
     @Builder.Default
-    private Boolean isPartialRefund = false;
+    private Boolean isPartialRefund = false;  // → DB: is_partial_refund
 
     // Retry information
-    @Column(name = "retry_count")
+    @Column
     @Builder.Default
-    private Integer retryCount = 0;
+    private Integer retryCount = 0;  // → DB: retry_count
 
-    @Column(name = "last_retry_date")
-    private LocalDateTime lastRetryDate;
+    private LocalDateTime lastRetryDate;  // → DB: last_retry_date
 
     // Failure information
-    @Column(name = "failure_reason", length = 500)
-    private String failureReason;
+    @Column(length = 500)
+    private String failureReason;  // → DB: failure_reason
 
     // Additional notes
-    @Column(name = "notes", columnDefinition = "TEXT")
-    private String notes;
+    @Column(columnDefinition = "TEXT")
+    private String notes;  // → DB: notes
 
-    // FIXED: Changed from createdAt/updatedAt to createdDate/updatedDate for consistency
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdDate;
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedDate;
+    @Column
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
     @PrePersist
     protected void onCreate() {

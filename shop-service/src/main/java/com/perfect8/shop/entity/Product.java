@@ -17,6 +17,7 @@ import java.util.List;
 /**
  * Product Entity - Version 1.0
  * Magnum Opus Compliant: Descriptive field names (productId not id)
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
  */
 @Entity
 @Table(name = "products")
@@ -30,37 +31,37 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productId;  // CHANGED: id → productId (Magnum Opus)
+    private Long productId;  // → DB: product_id (Magnum Opus)
 
-    @Column(name = "name", nullable = false, length = 200)
-    private String name;
+    @Column(nullable = false, length = 200)
+    private String name;  // → DB: name
 
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
+    @Column(columnDefinition = "TEXT")
+    private String description;  // → DB: description
 
-    @Column(name = "price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal price;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;  // → DB: price
 
-    @Column(name = "discount_price", precision = 10, scale = 2)
-    private BigDecimal discountPrice;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal discountPrice;  // → DB: discount_price
 
-    @Column(name = "sku", unique = true, nullable = false, length = 100)
-    private String sku;
+    @Column(unique = true, nullable = false, length = 100)
+    private String sku;  // → DB: sku
 
-    @Column(name = "stock_quantity", nullable = false)
+    @Column(nullable = false)
     @Builder.Default
-    private Integer stockQuantity = 0;
+    private Integer stockQuantity = 0;  // → DB: stock_quantity
 
-    @Column(name = "reorder_point")
+    @Column
     @Builder.Default
-    private Integer reorderPoint = 10;
+    private Integer reorderPoint = 10;  // → DB: reorder_point
 
-    @Column(name = "reorder_quantity")
+    @Column
     @Builder.Default
-    private Integer reorderQuantity = 50;
+    private Integer reorderQuantity = 50;  // → DB: reorder_quantity
 
-    @Column(name = "image_url", length = 500)
-    private String imageUrl;
+    @Column(length = 500)
+    private String imageUrl;  // → DB: image_url
 
     @ElementCollection
     @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
@@ -72,28 +73,28 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @Column(name = "is_featured", nullable = false)
+    @Column(nullable = false)
     @Builder.Default
-    private boolean isFeatured = false;
+    private boolean isFeatured = false;  // → DB: is_featured
 
-    @Column(name = "is_active", nullable = false)
+    @Column(nullable = false)
     @Builder.Default
-    private boolean isActive = true;
+    private boolean isActive = true;  // → DB: is_active
 
-    @Column(name = "weight", precision = 8, scale = 2)
-    private BigDecimal weight;
+    @Column(precision = 8, scale = 2)
+    private BigDecimal weight;  // → DB: weight
 
-    @Column(name = "dimensions", length = 100)
-    private String dimensions;
+    @Column(length = 100)
+    private String dimensions;  // → DB: dimensions
 
-    @Column(name = "meta_title", length = 200)
-    private String metaTitle;
+    @Column(length = 200)
+    private String metaTitle;  // → DB: meta_title
 
-    @Column(name = "meta_description", length = 500)
-    private String metaDescription;
+    @Column(length = 500)
+    private String metaDescription;  // → DB: meta_description
 
-    @Column(name = "meta_keywords", length = 500)
-    private String metaKeywords;
+    @Column(length = 500)
+    private String metaKeywords;  // → DB: meta_keywords
 
     @ElementCollection
     @CollectionTable(name = "product_tags", joinColumns = @JoinColumn(name = "product_id"))
@@ -101,21 +102,21 @@ public class Product {
     @Builder.Default
     private List<String> tags = new ArrayList<>();
 
-    @Column(name = "views")
+    @Column
     @Builder.Default
-    private Long views = 0L;
+    private Long views = 0L;  // → DB: views
 
-    @Column(name = "sales_count")
+    @Column
     @Builder.Default
-    private Long salesCount = 0L;
+    private Long salesCount = 0L;  // → DB: sales_count
 
-    @Column(name = "rating", precision = 3, scale = 2)
+    @Column(precision = 3, scale = 2)
     @Builder.Default
-    private BigDecimal rating = BigDecimal.ZERO;
+    private BigDecimal rating = BigDecimal.ZERO;  // → DB: rating
 
-    @Column(name = "review_count")
+    @Column
     @Builder.Default
-    private Integer reviewCount = 0;
+    private Integer reviewCount = 0;  // → DB: review_count
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     @Builder.Default
@@ -125,11 +126,9 @@ public class Product {
     @Builder.Default
     private List<CartItem> cartItems = new ArrayList<>();
 
-    @Column(name = "created_at")
-    private LocalDateTime createdDate;
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedDate;
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
     @PrePersist
     protected void onCreate() {
