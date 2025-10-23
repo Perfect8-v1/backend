@@ -51,6 +51,7 @@ com\perfect8\admin\dto\AuthRequest.class
 com\perfect8\admin\dto\DatabasePerformanceResponse.class
 com\perfect8\admin\service\CustomerService.class
 com\perfect8\admin\dto\SalesReportResponse.class
+com\perfect8\admin\model\AdminUser$AdminUserBuilder.class
 com\perfect8\admin\dto\PaymentInitiationRequest.class
 com\perfect8\admin\AdminServiceApplication.class
 com\perfect8\admin\model\AdminUser$Role.class

@@ -6,13 +6,15 @@ services:
     container_name: mysql
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-      - MARIADB_DATABASE=${DB_NAME:-perfect8_shop}
+      # Create main database on startup
+      - MARIADB_DATABASE=${DB_NAME:-shopDB}
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
     restart: unless-stopped
 
   email-service:
@@ -21,10 +23,11 @@ services:
     depends_on:
       - mysql
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/emailDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO:-update}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
@@ -43,15 +46,18 @@ services:
       - mysql
       - email-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/imageDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO:-update}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - EMAIL_BASE_URL=http://email-service:8083
       - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8084:8084"
+    volumes:
+      - image_storage:/app/images
     restart: unless-stopped
 
   admin-service:
@@ -62,10 +68,11 @@ services:
       - email-service
       - image-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/adminDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO:-update}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
@@ -83,10 +90,11 @@ services:
       - image-service
       - admin-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/blogDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO:-update}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
@@ -106,10 +114,11 @@ services:
       - admin-service
       - blog-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/shopDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO:-update}
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
@@ -124,4 +133,6 @@ services:
 
 volumes:
   db_data:
+    driver: local
+  image_storage:
     driver: local

@@ -73,8 +73,8 @@ podman-compose down 2>/dev/null || true
 if [ "$CLEAN_START" = true ]; then
     echo ""
     echo "🗑️  Tar bort alla volymer (databas + bilder)..."
-    podman volume rm perfect8_db_data 2>/dev/null || true
-    podman volume rm perfect8_image_storage 2>/dev/null || true
+    podman volume rm db_data 2>/dev/null || true
+    podman volume rm image_storage 2>/dev/null || true
     echo "✅ Clean start - börjar från scratch"
 fi
 

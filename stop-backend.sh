@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "=========================================="
-echo "Stopping Perfect8 Backend Services"
+echo "Stopping Backend Services"
 echo "=========================================="
 
 # Check if podman-compose is installed
@@ -21,18 +21,18 @@ fi
 echo ""
 echo "Verifying all containers stopped:"
 echo "=========================================="
-podman ps -a | grep perfect8
+podman ps -a
 
 if [ $? -ne 0 ]; then
-    echo "All Perfect8 containers stopped successfully!"
+    echo "All containers stopped successfully!"
 else
     echo ""
     echo "Some containers are still running. To force stop:"
-    echo "  podman stop \$(podman ps -q --filter name=perfect8)"
-    echo "  podman rm \$(podman ps -aq --filter name=perfect8)"
+    echo "  podman stop \$(podman ps -q)"
+    echo "  podman rm \$(podman ps -aq)"
 fi
 
 echo ""
 echo "=========================================="
-echo "Perfect8 Backend Stopped"
+echo "Backend Stopped"
 echo "=========================================="

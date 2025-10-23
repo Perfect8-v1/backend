@@ -1,15 +1,11 @@
--- Create all databases for microservices
-CREATE DATABASE IF NOT EXISTS perfect8_admin CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS perfect8_blog CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS perfect8_email CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS perfect8_images CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE DATABASE IF NOT EXISTS perfect8_shop CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+-- Init script for microservices - Creates all databases
+-- This runs automatically when MariaDB container starts for the first time
 
--- Grant permissions
-GRANT ALL PRIVILEGES ON perfect8_admin.* TO 'perfect8user'@'%';
-GRANT ALL PRIVILEGES ON perfect8_blog.* TO 'perfect8user'@'%';
-GRANT ALL PRIVILEGES ON perfect8_email.* TO 'perfect8user'@'%';
-GRANT ALL PRIVILEGES ON perfect8_images.* TO 'perfect8user'@'%';
-GRANT ALL PRIVILEGES ON perfect8_shop.* TO 'perfect8user'@'%';
+CREATE DATABASE IF NOT EXISTS adminDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS blogDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS emailDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS imageDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS shopDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-FLUSH PRIVILEGES;
+-- Note: User privileges are automatically granted by MariaDB environment variables
+-- The user specified in MARIADB_USER will have access to all databases
