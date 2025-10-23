@@ -29,14 +29,14 @@ public class UserService {
 
     private UserDto convertToDto(User user) {
         UserDto dto = new UserDto();
-        dto.setId(user.getId());
+        dto.setId(user.getUserId());
         dto.setUsername(user.getUsername());
         dto.setEmail(user.getEmail());
         dto.setRoles(user.getRoles().stream()
                 .map(role -> role.getName())
                 .collect(Collectors.toSet()));
-        dto.setCreatedAt(user.getCreatedAt());
-        dto.setUpdatedAt(user.getUpdatedAt());
+        dto.setCreatedAt(user.getCreatedDate());
+        dto.setUpdatedAt(user.getUpdatedDate());
         return dto;
     }
 }
