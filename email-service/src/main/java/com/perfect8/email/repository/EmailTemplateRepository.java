@@ -1,6 +1,6 @@
 package com.perfect8.email.repository;
 
-import com.perfect8.email.entity.EmailTemplate;
+import com.perfect8.email.model.EmailTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

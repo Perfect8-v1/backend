@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
  * Magnum Opus Compliant: No @Column(name=...) overrides
  * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
  * FIXED: createdAt/updatedAt → createdDate/updatedDate (Magnum Opus)
+ * FIXED: Boolean isDeleted → boolean isDeleted (for correct Lombok getter)
  */
 @Entity
 @Table(name = "images")
@@ -68,7 +69,7 @@ public class Image {
     private Long referenceId;  // → DB: reference_id
 
     @Builder.Default
-    private Boolean isDeleted = false;  // → DB: is_deleted
+    private boolean isDeleted = false;  // → DB: is_deleted (primitiv för isDeleted() getter)
 
     @Column(updatable = false)
     private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)

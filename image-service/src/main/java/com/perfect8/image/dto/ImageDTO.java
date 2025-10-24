@@ -17,13 +17,14 @@ import java.util.Map;
  *
  * Uses Lombok for clean code
  * Follows "Less Strings, More Objects" principle
+ * FIXED: createdAt/updatedAt → createdDate/updatedDate (matches Image entity)
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ImageDto {
+public class ImageDTO {
 
     /**
      * Image identification
@@ -89,18 +90,23 @@ public class ImageDto {
     private String errorMessage;
 
     /**
-     * Audit fields
+     * Audit fields - FIXED: Matches Image entity field names
      */
+    /* VERSION 2.0 - Analytics/Audit feature
     private Long uploadedBy;
     private String uploadedByUsername;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    */
+    private LocalDateTime createdDate;  // FIXED: Was createdAt, now matches entity
+    private LocalDateTime updatedDate;  // FIXED: Was updatedAt, now matches entity
 
+    /* VERSION 2.0 - Analytics/Metrics feature
     /**
      * Usage statistics (for v2.0, but structure ready)
      */
+    /*
     private Long viewCount;
     private LocalDateTime lastViewedAt;
+    */
 
     /**
      * Nested DTO for image dimensions
@@ -174,8 +180,8 @@ public class ImageDto {
     /**
      * Create simplified DTO for list views
      */
-    public static ImageDto createSimple(Long imageId, String filename, String displayUrl, ImageStatus status) {
-        return ImageDto.builder()
+    public static ImageDTO createSimple(Long imageId, String filename, String displayUrl, ImageStatus status) {
+        return ImageDTO.builder()
                 .imageId(imageId)
                 .originalFilename(filename)
                 .displayUrl(displayUrl)
@@ -187,8 +193,8 @@ public class ImageDto {
     /**
      * Create thumbnail-only DTO
      */
-    public static ImageDto createThumbnail(Long imageId, String thumbnailUrl, String altText) {
-        return ImageDto.builder()
+    public static ImageDTO createThumbnail(Long imageId, String thumbnailUrl, String altText) {
+        return ImageDTO.builder()
                 .imageId(imageId)
                 .thumbnailUrl(thumbnailUrl)
                 .altText(altText)
