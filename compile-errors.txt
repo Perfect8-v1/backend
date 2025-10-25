@@ -1,0 +1,624 @@
+[ERROR] COMPILATION ERROR : 
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[3,30] cannot access com.perfect8.image.dto.ImageDto
+  bad source file: C:\_Perfect8\backend\image-service\src\main\java\com\perfect8\image\dto\ImageDto.java
+    file does not contain class com.perfect8.image.dto.ImageDto
+    Please remove or make sure it appears in the correct subdirectory of the sourcepath.
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[23,8] class ImageMapper is public, should be declared in a file named ImageMapper.java
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/mapper/ImageMapper.java:[22,8] duplicate class: com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[29,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[91,17] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[110,27] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[160,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[176,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[215,58] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[241,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[254,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[268,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[40,27] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[75,32] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[112,27] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[119,32] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[135,32] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[148,27] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[45,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[110,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[120,17] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[133,17] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[144,12] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[41,9] cannot find symbol
+  symbol:   variable log
+  location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[41,60] cannot find symbol
+  symbol:   method getOriginalFilename()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[48,77] cannot find symbol
+  symbol:   method getStoredFilename()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[59,13] cannot find symbol
+  symbol:   variable log
+  location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[59,77] cannot find symbol
+  symbol:   method getImageId()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[62,13] cannot find symbol
+  symbol:   variable log
+  location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[71,32] cannot find symbol
+  symbol:   method getDirectory()
+  location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[72,70] cannot find symbol
+  symbol:   method getStoredFilename()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[75,9] cannot find symbol
+  symbol:   variable log
+  location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[75,65] cannot find symbol
+  symbol:   method getWidth()
+  location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[75,82] cannot find symbol
+  symbol:   method getHeight()
+  location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[81,31] cannot find symbol
+  symbol:   method getWidth()
+  location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[81,48] cannot find symbol
+  symbol:   method getHeight()
+  location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[88,31] cannot find symbol
+  symbol:   method getWidth()
+  location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[88,48] cannot find symbol
+  symbol:   method getHeight()
+  location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[95,68] cannot find symbol
+  symbol:   method getStoredFilename()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[98,22] cannot find symbol
+  symbol:   method setThumbnailUrl(java.lang.String)
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[101,22] cannot find symbol
+  symbol:   method setSmallUrl(java.lang.String)
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[104,22] cannot find symbol
+  symbol:   method setMediumUrl(java.lang.String)
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[107,22] cannot find symbol
+  symbol:   method setLargeUrl(java.lang.String)
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[111,9] cannot find symbol
+  symbol:   variable log
+  location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[133,13] cannot find symbol
+  symbol:   variable log
+  location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[10,14] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+  required: no arguments
+  found:    int,int,java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[11,10] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+  required: no arguments
+  found:    int,int,java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[12,11] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+  required: no arguments
+  found:    int,int,java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[13,10] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+  required: no arguments
+  found:    int,int,java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[35,30] cannot find symbol
+  symbol:   method getDirectory()
+  location: variable imageSize of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[10,12] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[11,15] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[12,11] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[13,11] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[14,12] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+  required: no arguments
+  found:    java.lang.String
+  reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[34,9] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[34,24] cannot find symbol
+  symbol:   variable ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[36,31] cannot find symbol
+  symbol:   method getImageId()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[37,40] cannot find symbol
+  symbol:   method getOriginalFilename()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[38,38] cannot find symbol
+  symbol:   method getStoredFilename()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[44,35] cannot find symbol
+  symbol:   method getOriginalUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[45,36] cannot find symbol
+  symbol:   method getThumbnailUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[46,32] cannot find symbol
+  symbol:   method getSmallUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[47,33] cannot find symbol
+  symbol:   method getMediumUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[48,32] cannot find symbol
+  symbol:   method getLargeUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[54,35] cannot find symbol
+  symbol:   method getImageFormat()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[55,32] cannot find symbol
+  symbol:   method getMimeType()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[56,37] cannot find symbol
+  symbol:   method getOriginalWidth()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[57,38] cannot find symbol
+  symbol:   method getOriginalHeight()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[58,41] cannot find symbol
+  symbol:   method getOriginalSizeBytes()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[61,35] cannot find symbol
+  symbol:   method getImageStatus()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[66,37] cannot find symbol
+  symbol:   method getReferenceType()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[67,35] cannot find symbol
+  symbol:   method getReferenceId()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[70,31] cannot find symbol
+  symbol:   method getAltText()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[71,29] cannot find symbol
+  symbol:   method getTitle()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[74,40] cannot find symbol
+  symbol:   method getProcessingTimeMs()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[75,36] cannot find symbol
+  symbol:   method getErrorMessage()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[78,35] cannot find symbol
+  symbol:   method getCreatedDate()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[79,35] cannot find symbol
+  symbol:   method getUpdatedDate()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[96,14] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[98,13] cannot find symbol
+  symbol:   class ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[115,28] cannot find symbol
+  symbol:   method builder()
+  location: class com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[165,16] cannot find symbol
+  symbol:   variable ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[166,22] cannot find symbol
+  symbol:   method getImageId()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[167,22] cannot find symbol
+  symbol:   method getOriginalFilename()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[169,22] cannot find symbol
+  symbol:   method getImageStatus()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[181,16] cannot find symbol
+  symbol:   variable ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[182,22] cannot find symbol
+  symbol:   method getImageId()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[183,22] cannot find symbol
+  symbol:   method getThumbnailUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[184,22] cannot find symbol
+  symbol:   method getAltText()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[195,18] cannot find symbol
+  symbol:   method getThumbnailUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[196,48] cannot find symbol
+  symbol:   method getThumbnailUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[198,18] cannot find symbol
+  symbol:   method getSmallUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[199,44] cannot find symbol
+  symbol:   method getSmallUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[201,18] cannot find symbol
+  symbol:   method getMediumUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[202,45] cannot find symbol
+  symbol:   method getMediumUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[204,18] cannot find symbol
+  symbol:   method getLargeUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[205,44] cannot find symbol
+  symbol:   method getLargeUrl()
+  location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[242,16] cannot find symbol
+  symbol:   variable ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[255,16] cannot find symbol
+  symbol:   variable ImageDto
+  location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:compile (default-compile) on project image-service: Compilation failure: Compilation failure: 
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[3,30] cannot access com.perfect8.image.dto.ImageDto
+[ERROR]   bad source file: C:\_Perfect8\backend\image-service\src\main\java\com\perfect8\image\dto\ImageDto.java
+[ERROR]     file does not contain class com.perfect8.image.dto.ImageDto
+[ERROR]     Please remove or make sure it appears in the correct subdirectory of the sourcepath.
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[23,8] class ImageMapper is public, should be declared in a file named ImageMapper.java
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/mapper/ImageMapper.java:[22,8] duplicate class: com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[29,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[91,17] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[110,27] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[160,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[176,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[215,58] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[241,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[254,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[268,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[40,27] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[75,32] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[112,27] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[119,32] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[135,32] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/controller/ImageController.java:[148,27] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.controller.ImageController
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[45,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[110,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[120,17] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[133,17] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageService.java:[144,12] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.service.ImageService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[41,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[41,60] cannot find symbol
+[ERROR]   symbol:   method getOriginalFilename()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[48,77] cannot find symbol
+[ERROR]   symbol:   method getStoredFilename()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[59,13] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[59,77] cannot find symbol
+[ERROR]   symbol:   method getImageId()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[62,13] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[71,32] cannot find symbol
+[ERROR]   symbol:   method getDirectory()
+[ERROR]   location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[72,70] cannot find symbol
+[ERROR]   symbol:   method getStoredFilename()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[75,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[75,65] cannot find symbol
+[ERROR]   symbol:   method getWidth()
+[ERROR]   location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[75,82] cannot find symbol
+[ERROR]   symbol:   method getHeight()
+[ERROR]   location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[81,31] cannot find symbol
+[ERROR]   symbol:   method getWidth()
+[ERROR]   location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[81,48] cannot find symbol
+[ERROR]   symbol:   method getHeight()
+[ERROR]   location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[88,31] cannot find symbol
+[ERROR]   symbol:   method getWidth()
+[ERROR]   location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[88,48] cannot find symbol
+[ERROR]   symbol:   method getHeight()
+[ERROR]   location: variable size of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[95,68] cannot find symbol
+[ERROR]   symbol:   method getStoredFilename()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[98,22] cannot find symbol
+[ERROR]   symbol:   method setThumbnailUrl(java.lang.String)
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[101,22] cannot find symbol
+[ERROR]   symbol:   method setSmallUrl(java.lang.String)
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[104,22] cannot find symbol
+[ERROR]   symbol:   method setMediumUrl(java.lang.String)
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[107,22] cannot find symbol
+[ERROR]   symbol:   method setLargeUrl(java.lang.String)
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[111,9] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/service/ImageProcessingService.java:[133,13] cannot find symbol
+[ERROR]   symbol:   variable log
+[ERROR]   location: class com.perfect8.image.service.ImageProcessingService
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[10,14] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    int,int,java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[11,10] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    int,int,java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[12,11] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    int,int,java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[13,10] constructor ImageSize in enum com.perfect8.image.enums.ImageSize cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    int,int,java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageSize.java:[35,30] cannot find symbol
+[ERROR]   symbol:   method getDirectory()
+[ERROR]   location: variable imageSize of type com.perfect8.image.enums.ImageSize
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[10,12] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[11,15] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[12,11] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[13,11] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/enums/ImageStatus.java:[14,12] constructor ImageStatus in enum com.perfect8.image.enums.ImageStatus cannot be applied to given types;
+[ERROR]   required: no arguments
+[ERROR]   found:    java.lang.String
+[ERROR]   reason: actual and formal argument lists differ in length
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[34,9] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[34,24] cannot find symbol
+[ERROR]   symbol:   variable ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[36,31] cannot find symbol
+[ERROR]   symbol:   method getImageId()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[37,40] cannot find symbol
+[ERROR]   symbol:   method getOriginalFilename()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[38,38] cannot find symbol
+[ERROR]   symbol:   method getStoredFilename()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[44,35] cannot find symbol
+[ERROR]   symbol:   method getOriginalUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[45,36] cannot find symbol
+[ERROR]   symbol:   method getThumbnailUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[46,32] cannot find symbol
+[ERROR]   symbol:   method getSmallUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[47,33] cannot find symbol
+[ERROR]   symbol:   method getMediumUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[48,32] cannot find symbol
+[ERROR]   symbol:   method getLargeUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[54,35] cannot find symbol
+[ERROR]   symbol:   method getImageFormat()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[55,32] cannot find symbol
+[ERROR]   symbol:   method getMimeType()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[56,37] cannot find symbol
+[ERROR]   symbol:   method getOriginalWidth()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[57,38] cannot find symbol
+[ERROR]   symbol:   method getOriginalHeight()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[58,41] cannot find symbol
+[ERROR]   symbol:   method getOriginalSizeBytes()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[61,35] cannot find symbol
+[ERROR]   symbol:   method getImageStatus()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[66,37] cannot find symbol
+[ERROR]   symbol:   method getReferenceType()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[67,35] cannot find symbol
+[ERROR]   symbol:   method getReferenceId()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[70,31] cannot find symbol
+[ERROR]   symbol:   method getAltText()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[71,29] cannot find symbol
+[ERROR]   symbol:   method getTitle()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[74,40] cannot find symbol
+[ERROR]   symbol:   method getProcessingTimeMs()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[75,36] cannot find symbol
+[ERROR]   symbol:   method getErrorMessage()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[78,35] cannot find symbol
+[ERROR]   symbol:   method getCreatedDate()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[79,35] cannot find symbol
+[ERROR]   symbol:   method getUpdatedDate()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[96,14] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[98,13] cannot find symbol
+[ERROR]   symbol:   class ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[115,28] cannot find symbol
+[ERROR]   symbol:   method builder()
+[ERROR]   location: class com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[165,16] cannot find symbol
+[ERROR]   symbol:   variable ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[166,22] cannot find symbol
+[ERROR]   symbol:   method getImageId()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[167,22] cannot find symbol
+[ERROR]   symbol:   method getOriginalFilename()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[169,22] cannot find symbol
+[ERROR]   symbol:   method getImageStatus()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[181,16] cannot find symbol
+[ERROR]   symbol:   variable ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[182,22] cannot find symbol
+[ERROR]   symbol:   method getImageId()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[183,22] cannot find symbol
+[ERROR]   symbol:   method getThumbnailUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[184,22] cannot find symbol
+[ERROR]   symbol:   method getAltText()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[195,18] cannot find symbol
+[ERROR]   symbol:   method getThumbnailUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[196,48] cannot find symbol
+[ERROR]   symbol:   method getThumbnailUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[198,18] cannot find symbol
+[ERROR]   symbol:   method getSmallUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[199,44] cannot find symbol
+[ERROR]   symbol:   method getSmallUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[201,18] cannot find symbol
+[ERROR]   symbol:   method getMediumUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[202,45] cannot find symbol
+[ERROR]   symbol:   method getMediumUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[204,18] cannot find symbol
+[ERROR]   symbol:   method getLargeUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[205,44] cannot find symbol
+[ERROR]   symbol:   method getLargeUrl()
+[ERROR]   location: variable image of type com.perfect8.image.model.Image
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[242,16] cannot find symbol
+[ERROR]   symbol:   variable ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] /C:/_Perfect8/backend/image-service/src/main/java/com/perfect8/image/dto/ImageDto.java:[255,16] cannot find symbol
+[ERROR]   symbol:   variable ImageDto
+[ERROR]   location: class com.perfect8.image.mapper.ImageMapper
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :image-service
