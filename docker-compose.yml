@@ -1,18 +1,22 @@
 version: "3.9"
 
 services:
-  mysql:
+  # ==========================================
+  # MariaDB Databases (5 separate containers)
+  # ==========================================
+  
+  adminCon:
     image: mariadb:10.11.4
-    container_name: mysql
+    container_name: adminCon
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-      - MARIADB_DATABASE=${DB_NAME:-perfect8_shop}
+      - MARIADB_DATABASE=adminDB
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
-      - db_data:/var/lib/mysql
+      - adminVol:/var/lib/mysql
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 5s
@@ -20,30 +24,106 @@ services:
       retries: 40
     restart: unless-stopped
 
+  blogCon:
+    image: mariadb:10.11.4
+    container_name: blogCon
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=blogDB
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - blogVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  emailCon:
+    image: mariadb:10.11.4
+    container_name: emailCon
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=emailDB
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "3308:3306"
+    volumes:
+      - emailVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  imagesCon:
+    image: mariadb:10.11.4
+    container_name: imagesCon
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=imagesDB
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "3309:3306"
+    volumes:
+      - imagesVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  shopCon:
+    image: mariadb:10.11.4
+    container_name: shopCon
+    environment:
+      - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=shopDB
+      - MARIADB_USER=${DB_USER}
+      - MARIADB_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "3310:3306"
+    volumes:
+      - shopVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  # ==========================================
+  # Email Service (Port 8083)
+  # ==========================================
+  
   email-service:
     build: ./email-service
     container_name: email-service
     depends_on:
-      mysql:
+      emailCon:
         condition: service_healthy
     environment:
-      # Database (single shared DB; falls back to perfect8_shop if DB_NAME is not set)
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://emailCon:3306/emailDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
-      # Actuator for health checks
       - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
       - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
       - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
       - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
-      # Email (from .env)
       - MAIL_HOST=${MAIL_HOST}
       - MAIL_PORT=${MAIL_PORT}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_PROTOCOL=${MAIL_PROTOCOL:-smtp}
-      # JWT (if used by this service; harmless if unused)
       - JWT_SECRET=${JWT_SECRET}
     ports:
       - "8083:8083"
@@ -54,16 +134,20 @@ services:
       retries: 40
     restart: unless-stopped
 
+  # ==========================================
+  # Image Service (Port 8084)
+  # ==========================================
+  
   image-service:
     build: ./image-service
     container_name: image-service
     depends_on:
-      mysql:
+      imagesCon:
         condition: service_healthy
       email-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://imagesCon:3306/imagesDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -82,18 +166,22 @@ services:
       retries: 40
     restart: unless-stopped
 
+  # ==========================================
+  # Admin Service (Port 8081)
+  # ==========================================
+  
   admin-service:
     build: ./admin-service
     container_name: admin-service
     depends_on:
-      mysql:
+      adminCon:
         condition: service_healthy
       email-service:
         condition: service_started
       image-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://adminCon:3306/adminDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -113,11 +201,15 @@ services:
       retries: 40
     restart: unless-stopped
 
+  # ==========================================
+  # Blog Service (Port 8082)
+  # ==========================================
+  
   blog-service:
     build: ./blog-service
     container_name: blog-service
     depends_on:
-      mysql:
+      blogCon:
         condition: service_healthy
       email-service:
         condition: service_started
@@ -126,7 +218,7 @@ services:
       admin-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://blogCon:3306/blogDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -147,11 +239,15 @@ services:
       retries: 40
     restart: unless-stopped
 
+  # ==========================================
+  # Shop Service (Port 8085)
+  # ==========================================
+  
   shop-service:
     build: ./shop-service
     container_name: shop-service
     depends_on:
-      mysql:
+      shopCon:
         condition: service_healthy
       email-service:
         condition: service_started
@@ -162,7 +258,7 @@ services:
       blog-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://mysql:3306/${DB_NAME:-perfect8_shop}
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://shopCon:3306/shopDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -186,6 +282,18 @@ services:
       retries: 40
     restart: unless-stopped
 
+# ==========================================
+# Volumes (5 separate volumes)
+# ==========================================
+
 volumes:
-  db_data:
+  adminVol:
+    driver: local
+  blogVol:
+    driver: local
+  emailVol:
+    driver: local
+  imagesVol:
+    driver: local
+  shopVol:
     driver: local
