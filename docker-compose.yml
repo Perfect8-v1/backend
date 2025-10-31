@@ -5,96 +5,96 @@ services:
   # MariaDB Databases (5 separate containers)
   # ==========================================
   
-  adminCon:
+  adminDB:
     image: mariadb:10.11.4
-    container_name: adminCon
+    container_name: adminDB
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MARIADB_DATABASE=adminDB
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - adminVol:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 5s
       timeout: 3s
       retries: 40
     restart: unless-stopped
 
-  blogCon:
+  blog:
     image: mariadb:10.11.4
-    container_name: blogCon
+    container_name: blog
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MARIADB_DATABASE=blogDB
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - blogVol:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 5s
       timeout: 3s
       retries: 40
     restart: unless-stopped
 
-  emailCon:
+  email:
     image: mariadb:10.11.4
-    container_name: emailCon
+    container_name: email
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MARIADB_DATABASE=emailDB
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
-      - "3308:3306"
+      - "3309:3306"
     volumes:
       - emailVol:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 5s
       timeout: 3s
       retries: 40
     restart: unless-stopped
 
-  imagesCon:
+  image:
     image: mariadb:10.11.4
-    container_name: imagesCon
+    container_name: image
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MARIADB_DATABASE=imagesDB
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
-      - "3309:3306"
+      - "3310:3306"
     volumes:
-      - imagesVol:/var/lib/mysql
+      - imageVol:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 5s
       timeout: 3s
       retries: 40
     restart: unless-stopped
 
-  shopCon:
+  shop:
     image: mariadb:10.11.4
-    container_name: shopCon
+    container_name: shop
     environment:
       - MARIADB_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
       - MARIADB_DATABASE=shopDB
       - MARIADB_USER=${DB_USER}
       - MARIADB_PASSWORD=${DB_PASSWORD}
     ports:
-      - "3310:3306"
+      - "3311:3306"
     volumes:
       - shopVol:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
+      test: ["CMD-SHELL", "mariadb-admin ping -h 127.0.0.1 -u$${MARIADB_USER} -p$${MARIADB_PASSWORD} --silent"]
       interval: 5s
       timeout: 3s
       retries: 40
@@ -111,7 +111,7 @@ services:
       emailCon:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://emailCon:3306/emailDB
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://email:8083/emailDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -147,7 +147,7 @@ services:
       email-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://imagesCon:3306/imagesDB
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://images:8084/imageDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -181,7 +181,7 @@ services:
       image-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://adminCon:3306/adminDB
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://admin:8081/adminDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -218,7 +218,7 @@ services:
       admin-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://blogCon:3306/blogDB
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://blog:8082/blogDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -258,7 +258,7 @@ services:
       blog-service:
         condition: service_started
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mariadb://shopCon:3306/shopDB
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://shop:8085/shopDB
       - SPRING_DATASOURCE_USERNAME=${DB_USER}
       - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
@@ -293,7 +293,7 @@ volumes:
     driver: local
   emailVol:
     driver: local
-  imagesVol:
+  imageVol:
     driver: local
   shopVol:
     driver: local
