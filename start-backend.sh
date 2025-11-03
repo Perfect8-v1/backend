@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-export BUILDAH_FORMAT="${BUILDAH_FORMAT:-docker}"
 PROJECT_NAME="${COMPOSE_PROJECT_NAME:-perfect8}"
 COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yml}"
 
 RETRY_WAIT=3
 RETRY_MAX=120
 
-# Use the exact service names from docker-compose.yml. It's 'mysql', not 'mariadb'.
+# Correct service names from docker-compose.yml
 ORDER=(
-  "mysql"
+  "adminDB"
+  "blogDB"
+  "emailDB"
+  "imageDB"
+  "shopDB"
   "email-service"
   "image-service"
   "admin-service"
@@ -26,11 +29,7 @@ bold()  { printf "\033[1m%s\033[0m\n" "$*"; }
 require_cmd() { command -v "$1" >/dev/null 2>&1 || { red "Missing command: $1"; exit 1; }; }
 
 compose() {
-  if command -v podman-compose >/dev/null 2>&1; then
-    podman-compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" "$@"
-  else
-    podman compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" "$@"
-  fi
+  docker compose -f "$COMPOSE_FILE" -p "$PROJECT_NAME" "$@"
 }
 
 list_services() { compose config --services 2>/dev/null | sort; }
@@ -53,12 +52,12 @@ preflight_validate_names() {
 
 container_id_for() {
   local svc="$1"
-  podman ps -aq --filter "name=${PROJECT_NAME}_${svc}" | head -n1
+  docker ps -aq --filter "name=^${svc}$" | head -n1
 }
 
 health_status() {
   local cid="$1"
-  podman inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$cid" 2>/dev/null || echo "unknown"
+  docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$cid" 2>/dev/null || echo "unknown"
 }
 
 wait_healthy() {
@@ -80,22 +79,22 @@ wait_healthy() {
     sleep "$RETRY_WAIT"; ((tries++))
   done
   echo; red "❌ Timeout: $svc not healthy in time."
-  podman logs --tail 100 "$(container_id_for "$svc" || true)" 2>/dev/null || true
+  docker logs --tail 100 "$svc" 2>/dev/null || true
   return 1
 }
 
 start_service() { bold "▶ Starting: $1"; compose up -d "$1"; wait_healthy "$1"; }
 
-status_table() { podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"; }
+status_table() { docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"; }
 
 deps_for() {
   case "$1" in
-    mysql) echo "" ;;
-    email-service) echo "mysql" ;;
-    image-service) echo "mysql email-service" ;;
-    admin-service) echo "mysql email-service image-service" ;;
-    blog-service) echo "mysql email-service image-service admin-service" ;;
-    shop-service) echo "mysql email-service image-service admin-service blog-service" ;;
+    adminDB|blogDB|emailDB|imageDB|shopDB) echo "" ;;
+    email-service) echo "emailDB" ;;
+    image-service) echo "imageDB email-service" ;;
+    admin-service) echo "adminDB email-service image-service" ;;
+    blog-service) echo "blogDB email-service image-service admin-service" ;;
+    shop-service) echo "shopDB email-service image-service admin-service blog-service" ;;
     *) echo "" ;;
   esac
 }
@@ -109,23 +108,24 @@ start_with_deps() {
 do_start_all() {
   preflight_validate_names
   for svc in "${ORDER[@]}"; do start_with_deps "$svc"; done
-  bold "✔ All services attempted. Current status:"
+  bold "✓ All services attempted. Current status:"
   status_table
 }
 
 do_logs() {
   local svc="${1:-}"; [[ -z "$svc" ]] && { red "Usage: --logs <service>"; exit 1; }
-  local cid; cid="$(container_id_for "$svc")"
-  [[ -z "$cid" ]] && { red "Service '$svc' not running."; exit 1; }
-  podman logs -f "$cid"
+  docker logs -f "$svc"
 }
 
 do_down() { bold "⏹ Stopping stack (keeping volumes)..."; compose down; }
-do_clean(){ bold "🧹 Stopping stack and removing volumes."; compose down -v; yellow "DB volume removed."; }
+do_clean(){ bold "🧹 Stopping stack and removing volumes."; compose down -v; yellow "DB volumes removed."; }
 
-require_cmd podman
-if ! command -v podman-compose >/dev/null 2>&1 && ! podman compose version >/dev/null 2>&1; then
-  red "Neither 'podman-compose' nor 'podman compose' found."; exit 1
+require_cmd docker
+
+# Check if Docker is running
+if ! docker info >/dev/null 2>&1; then
+  red "Docker daemon is not running. Please start Docker Desktop first."
+  exit 1
 fi
 
 case "${1:-}" in
@@ -135,6 +135,6 @@ case "${1:-}" in
   --only ) shift; svc="${1:-}"; [[ -z "$svc" ]] && { red "Usage: --only <service>"; exit 1; }; preflight_validate_names; start_with_deps "$svc" ;;
   --down ) do_down ;;
   --clean ) do_clean ;;
-  -h|--help ) sed -n '1,200p' "$0" ;;
+  -h|--help ) echo "Usage: $0 [--status|--logs <service>|--only <service>|--down|--clean]" ;;
   * ) red "Unknown option: $1" ; exit 1 ;;
 esac
