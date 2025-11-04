@@ -4,7 +4,7 @@ FROM eclipse-temurin:21-jre-jammy
 # Metadata
 LABEL maintainer="Perfect8"
 LABEL version="1.0"
-LABEL description="Perfect8 Shop Service"
+LABEL description="Perfect8 Image Service"
 
 # Install wget and curl for healthcheck
 RUN apt-get update && apt-get install -y wget curl && rm -rf /var/lib/apt/lists/*
@@ -16,7 +16,7 @@ RUN groupadd -r spring && useradd -r -g spring spring
 WORKDIR /app
 
 # Copy JAR file - från service-mappen (inte target)
-COPY shop-service-1.0.0.jar app.jar
+COPY image-service-1.0.0.jar app.jar
 
 # Healthcheck - retry every 30s, wait 6 minutes for startup
 HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \
@@ -26,7 +26,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \
 USER spring:spring
 
 # Expose port
-EXPOSE 8085
+EXPOSE 8084
 
 # Start application
 ENTRYPOINT ["java", "-jar", "app.jar"]
