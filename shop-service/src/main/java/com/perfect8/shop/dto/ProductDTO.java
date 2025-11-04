@@ -10,13 +10,21 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Product DTO
+ * Version 1.0 - Core product data transfer
+ * FIXED: Changed 'id' to 'productId', 'createdAt/updatedAt' to 'createdDate/updatedDate' (Magnum Opus principle)
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductDTO {
 
-    private Long id;
+    /**
+     * FIXED: Changed from 'id' to 'productId' for clarity (Magnum Opus principle)
+     */
+    private Long productId;
 
     @NotBlank(message = "Product name is required")
     @Size(max = 200, message = "Product name must not exceed 200 characters")
@@ -66,8 +74,15 @@ public class ProductDTO {
     @Size(max = 50, message = "Status must not exceed 50 characters")
     private String status;
 
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    /**
+     * FIXED: Changed from 'createdAt' to 'createdDate' for consistency with entities (Magnum Opus principle)
+     */
+    private LocalDateTime createdDate;
+
+    /**
+     * FIXED: Changed from 'updatedAt' to 'updatedDate' for consistency with entities (Magnum Opus principle)
+     */
+    private LocalDateTime updatedDate;
 
     // Additional product information
     private String barcode;
@@ -160,12 +175,19 @@ public class ProductDTO {
 
     // Nested DTOs for complex fields
 
+    /**
+     * Product Variant DTO
+     * FIXED: Changed 'id' to 'productVariantId' (Magnum Opus principle)
+     */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProductVariantDTO {
-        private Long id;
+        /**
+         * FIXED: Changed from 'id' to 'productVariantId' for clarity (Magnum Opus principle)
+         */
+        private Long productVariantId;
         private String name;
         private String sku;
         private BigDecimal price;
@@ -176,12 +198,19 @@ public class ProductDTO {
         private boolean active;
     }
 
+    /**
+     * Product Option DTO
+     * FIXED: Changed 'id' to 'productOptionId' (Magnum Opus principle)
+     */
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProductOptionDTO {
-        private Long id;
+        /**
+         * FIXED: Changed from 'id' to 'productOptionId' for clarity (Magnum Opus principle)
+         */
+        private Long productOptionId;
         private String name;
         private String type; // "color", "size", "material", etc.
         private List<String> values;

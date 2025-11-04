@@ -19,7 +19,12 @@ import java.util.stream.Collectors;
 /**
  * Cart Service - Version 1.0
  * Core shopping cart functionality
- * NO BACKWARD COMPATIBILITY - Built right from the start!
+ *
+ * Magnum Opus Principles:
+ * - Readable variable names (customerId not id, not customerIdLong)
+ * - NO backward compatibility - built right from start
+ * - NO alias methods - one method, one name
+ * - Clean variable names without redundant suffixes
  */
 @Service
 @RequiredArgsConstructor
@@ -36,13 +41,13 @@ public class CartService {
     /**
      * Validate checkout - Core functionality for v1.0
      */
-    public CheckoutValidationResponse validateCheckout(Long customerIdLong) {
-        if (customerIdLong == null) {
+    public CheckoutValidationResponse validateCheckout(Long customerId) {
+        if (customerId == null) {
             throw new CustomerNotFoundException("Customer ID cannot be null");
         }
 
-        Customer customer = customerRepository.findById(customerIdLong)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -51,8 +56,8 @@ public class CartService {
         CheckoutValidationResponse response = CheckoutValidationResponse.builder()
                 .isValid(true)
                 .issues(new ArrayList<>())
-                .cartId(cart.getId())  // FIXED: Cart has getId() not getCartId()
-                .customerId(customerIdLong)
+                .cartId(cart.getCartId())
+                .customerId(customerId)
                 .itemCount(cart.getItems().size())
                 .subtotal(cart.getTotalAmount())
                 .total(cart.getTotalAmount())
@@ -81,28 +86,28 @@ public class CartService {
                 CheckoutValidationResponse.OutOfStockItem outOfStockItem =
                         CheckoutValidationResponse.OutOfStockItem.builder()
                                 .productId(product.getProductId())
-                                .productName(product.getName())  // FIXED: Was getProductName()
-                                .sku(product.getSku())  // FIXED: Was getProductSku()
+                                .productName(product.getName())
+                                .sku(product.getSku())
                                 .requestedQuantity(cartItem.getQuantity())
                                 .availableQuantity(0)
                                 .build();
                 inventoryValidation.getOutOfStockItems().add(outOfStockItem);
                 inventoryValidation.setValid(false);
-                response.addIssue("Out of stock: " + product.getName());  // FIXED
+                response.addIssue("Out of stock: " + product.getName());
 
             } else if (product.getStockQuantity() < cartItem.getQuantity()) {
                 CheckoutValidationResponse.LowStockItem lowStockItem =
                         CheckoutValidationResponse.LowStockItem.builder()
                                 .productId(product.getProductId())
-                                .productName(product.getName())  // FIXED: Was getProductName()
-                                .sku(product.getSku())  // FIXED: Was getProductSku()
+                                .productName(product.getName())
+                                .sku(product.getSku())
                                 .requestedQuantity(cartItem.getQuantity())
                                 .availableQuantity(product.getStockQuantity())
                                 .warning("Only " + product.getStockQuantity() + " available")
                                 .build();
                 inventoryValidation.getLowStockItems().add(lowStockItem);
                 inventoryValidation.setValid(false);
-                response.addIssue("Insufficient stock for " + product.getName() +  // FIXED
+                response.addIssue("Insufficient stock for " + product.getName() +
                         " (requested: " + cartItem.getQuantity() +
                         ", available: " + product.getStockQuantity() + ")");
             }
@@ -121,13 +126,13 @@ public class CartService {
     /**
      * Get cart for customer - Core functionality
      */
-    public CartResponse getCart(Long customerIdLong) {
-        if (customerIdLong == null) {
+    public CartResponse getCart(Long customerId) {
+        if (customerId == null) {
             throw new CustomerNotFoundException("Customer ID cannot be null");
         }
 
-        Customer customer = customerRepository.findById(customerIdLong)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElse(createNewCart(customer));
@@ -138,19 +143,19 @@ public class CartService {
     /**
      * Add item to cart - Core functionality
      */
-    public CartResponse addToCart(Long customerIdLong, AddToCartRequest request) {
-        if (customerIdLong == null) {
+    public CartResponse addToCart(Long customerId, AddToCartRequest request) {
+        if (customerId == null) {
             throw new CustomerNotFoundException("Customer ID cannot be null");
         }
 
-        Customer customer = customerRepository.findById(customerIdLong)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + request.getProductId()));
 
         if (product.getStockQuantity() < request.getQuantity()) {
-            throw new InsufficientStockException("Insufficient stock for product: " + product.getName());  // FIXED
+            throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
         }
 
         Cart cart = cartRepository.findByCustomer(customer)
@@ -187,19 +192,19 @@ public class CartService {
     /**
      * Update cart item quantity - Core functionality
      */
-    public CartResponse updateCartItem(Long customerIdLong, UpdateCartItemRequest request) {
-        if (customerIdLong == null) {
+    public CartResponse updateCartItem(Long customerId, UpdateCartItemRequest request) {
+        if (customerId == null) {
             throw new CustomerNotFoundException("Customer ID cannot be null");
         }
 
-        Customer customer = customerRepository.findById(customerIdLong)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
 
         CartItem cartItem = cart.getItems().stream()
-                .filter(currentItem -> currentItem.getProduct().getProductId().equals(request.getProductId()))
+                .filter(currentCartItem -> currentCartItem.getProduct().getProductId().equals(request.getProductId()))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found in cart"));
 
@@ -223,19 +228,19 @@ public class CartService {
     /**
      * Remove item from cart - Core functionality
      */
-    public CartResponse removeFromCart(Long customerIdLong, Long productIdLong) {
-        if (customerIdLong == null) {
+    public CartResponse removeFromCart(Long customerId, Long productId) {
+        if (customerId == null) {
             throw new CustomerNotFoundException("Customer ID cannot be null");
         }
 
-        Customer customer = customerRepository.findById(customerIdLong)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
 
         CartItem cartItemToRemove = cart.getItems().stream()
-                .filter(cartItem -> cartItem.getProduct().getProductId().equals(productIdLong))
+                .filter(cartItem -> cartItem.getProduct().getProductId().equals(productId))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Item not found in cart"));
 
@@ -251,13 +256,13 @@ public class CartService {
     /**
      * Clear cart - Core functionality
      */
-    public void clearCart(Long customerIdLong) {
-        if (customerIdLong == null) {
+    public void clearCart(Long customerId) {
+        if (customerId == null) {
             throw new CustomerNotFoundException("Customer ID cannot be null");
         }
 
-        Customer customer = customerRepository.findById(customerIdLong)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -272,21 +277,21 @@ public class CartService {
     /**
      * Get cart item count - Core functionality
      */
-    public Integer getCartItemCount(Long customerIdLong) {
-        if (customerIdLong == null) {
+    public Integer getCartItemCount(Long customerId) {
+        if (customerId == null) {
             return 0;
         }
 
         try {
-            Customer customer = customerRepository.findById(customerIdLong)
-                    .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+            Customer customer = customerRepository.findById(customerId)
+                    .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
             Cart cart = cartRepository.findByCustomer(customer)
                     .orElse(null);
 
             return cart != null ? cart.getItemCount() : 0;
-        } catch (Exception exception) {
-            log.error("Error getting cart item count for customer {}: {}", customerIdLong, exception.getMessage());
+        } catch (Exception e) {
+            log.error("Error getting cart item count for customer {}: {}", customerId, e.getMessage());
             return 0;
         }
     }
@@ -294,15 +299,15 @@ public class CartService {
     /**
      * Prepare checkout - Core functionality for v1.0
      */
-    public CheckoutPreparationResponse prepareCheckout(Long customerIdLong, CheckoutPreparationRequest request) {
-        log.info("Preparing checkout for customer: {}", customerIdLong);
+    public CheckoutPreparationResponse prepareCheckout(Long customerId, CheckoutPreparationRequest request) {
+        log.info("Preparing checkout for customer: {}", customerId);
 
-        if (customerIdLong == null) {
+        if (customerId == null) {
             throw new CustomerNotFoundException("Customer ID cannot be null");
         }
 
-        Customer customer = customerRepository.findById(customerIdLong)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerIdLong));
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -320,22 +325,22 @@ public class CartService {
         // Calculate amounts
         BigDecimal subtotalAmount = cart.getTotalAmount();
         BigDecimal shippingCostAmount = BigDecimal.valueOf(9.99); // Default shipping
-        BigDecimal taxRateDecimal = BigDecimal.valueOf(0.08); // 8% tax rate
-        BigDecimal taxAmountCalculated = subtotalAmount.multiply(taxRateDecimal);
-        BigDecimal totalAmountCalculated = subtotalAmount.add(shippingCostAmount).add(taxAmountCalculated);
+        BigDecimal taxRate = BigDecimal.valueOf(0.08); // 8% tax rate
+        BigDecimal taxAmount = subtotalAmount.multiply(taxRate);
+        BigDecimal totalAmount = subtotalAmount.add(shippingCostAmount).add(taxAmount);
 
         // Build checkout preparation response
-        CheckoutPreparationResponse checkoutResponse = CheckoutPreparationResponse.builder()
-                .cartId(cart.getId())  // FIXED: Cart has getId() not getCartId()
-                .customerId(customerIdLong)
+        CheckoutPreparationResponse response = CheckoutPreparationResponse.builder()
+                .cartId(cart.getCartId())
+                .customerId(customerId)
                 .itemCount(cart.getItems().size())
                 .totalQuantity(cart.getItems().stream().mapToInt(CartItem::getQuantity).sum())
                 .items(cartItemResponses)
                 .subtotal(subtotalAmount)
                 .shippingCost(shippingCostAmount)
-                .taxAmount(taxAmountCalculated)
-                .taxRate(taxRateDecimal)
-                .totalAmount(totalAmountCalculated)
+                .taxAmount(taxAmount)
+                .taxRate(taxRate)
+                .totalAmount(totalAmount)
                 .currency("USD")
                 .isValid(true)
                 .preparedAt(LocalDateTime.now())
@@ -343,7 +348,7 @@ public class CartService {
 
         // Convert shipping address from request fields to AddressDTO
         if (request != null && request.getShippingStreetAddress() != null) {
-            AddressDTO shippingAddressDto = AddressDTO.builder()
+            AddressDTO shippingAddress = AddressDTO.builder()
                     .streetAddress(request.getShippingStreetAddress())
                     .addressLine2(request.getShippingStreetAddress2())
                     .city(request.getShippingCity())
@@ -352,16 +357,16 @@ public class CartService {
                     .country(request.getShippingCountry())
                     .addressType("SHIPPING")
                     .build();
-            checkoutResponse.setShippingAddress(shippingAddressDto);
+            response.setShippingAddress(shippingAddress);
         }
 
         // Add payment method if provided
         if (request != null && request.getPaymentMethod() != null) {
-            checkoutResponse.setPaymentMethod(request.getPaymentMethod());
+            response.setPaymentMethod(request.getPaymentMethod());
         }
 
-        log.info("Checkout prepared successfully for customer: {}", customerIdLong);
-        return checkoutResponse;
+        log.info("Checkout prepared successfully for customer: {}", customerId);
+        return response;
     }
 
     // ========== Helper methods ==========
@@ -371,8 +376,8 @@ public class CartService {
         newCart.setCustomer(customer);
         newCart.setTotalAmount(BigDecimal.ZERO);
         newCart.setItemCount(0);
-        newCart.setCreatedAt(LocalDateTime.now());
-        newCart.setUpdatedAt(LocalDateTime.now());
+        newCart.setCreatedDate(LocalDateTime.now());
+        newCart.setUpdatedDate(LocalDateTime.now());
         return cartRepository.save(newCart);
     }
 
@@ -383,7 +388,7 @@ public class CartService {
 
         cart.setTotalAmount(totalAmount);
         cart.setItemCount(cart.getItems().size());
-        cart.setUpdatedAt(LocalDateTime.now());
+        cart.setUpdatedDate(LocalDateTime.now());
     }
 
     private CartResponse convertToCartResponse(Cart cart) {
@@ -392,24 +397,24 @@ public class CartService {
                 .collect(Collectors.toList());
 
         return CartResponse.builder()
-                .cartId(cart.getId())  // FIXED: Cart has getId() not getCartId()
+                .cartId(cart.getCartId())
                 .customerId(cart.getCustomer().getCustomerId())
                 .items(cartItemResponses)
                 .totalAmount(cart.getTotalAmount())
                 .itemCount(cart.getItems().size())
                 .totalQuantity(cart.getItems().stream().mapToInt(CartItem::getQuantity).sum())
-                .createdAt(cart.getCreatedAt())
-                .updatedAt(cart.getUpdatedAt())
+                .createdDate(cart.getCreatedDate())
+                .updatedDate(cart.getUpdatedDate())
                 .build();
     }
 
     private CartItemResponse convertToCartItemResponse(CartItem cartItem) {
         Product product = cartItem.getProduct();
         return CartItemResponse.builder()
-                .id(cartItem.getCartItemId())
+                .cartItemId(cartItem.getCartItemId())
                 .productId(product.getProductId())
-                .productName(product.getName())  // FIXED: Was getProductName()
-                .productSku(product.getSku())  // FIXED: Was getProductSku()
+                .productName(product.getName())
+                .productSku(product.getSku())
                 .imageUrl(product.getImageUrl())
                 .quantity(cartItem.getQuantity())
                 .unitPrice(cartItem.getUnitPrice())

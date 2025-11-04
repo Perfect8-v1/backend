@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect8 - Services Status</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-12 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-5xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                Perfect8
+            </h1>
+            <p class="text-xl text-gray-400">Microservices Architecture - Version 1.0</p>
+            <p class="text-sm text-gray-500 mt-2">Spring Boot 3.4.1 • Java 21 • MariaDB 11</p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid md:grid-cols-3 gap-4 mb-12">
+            <a href="#services" class="bg-blue-800 hover:bg-blue-700 p-6 rounded-lg text-center transition">
+                <div class="text-3xl mb-2">🚀</div>
+                <div class="font-semibold">Services</div>
+                <div class="text-sm text-gray-300">6 Microservices</div>
+            </a>
+            <a href="#api" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg text-center transition">
+                <div class="text-3xl mb-2">📡</div>
+                <div class="font-semibold">API Endpoints</div>
+                <div class="text-sm text-gray-300">RESTful API</div>
+            </a>
+            <a href="#docs" class="bg-green-800 hover:bg-green-700 p-6 rounded-lg text-center transition">
+                <div class="text-3xl mb-2">📚</div>
+                <div class="font-semibold">Documentation</div>
+                <div class="text-sm text-gray-300">API Docs</div>
+            </a>
+        </div>
+
+        <!-- Services Status -->
+        <div id="services" class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <span class="mr-3">🔧</span>
+                Services Status
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- MySQL -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">🗄️</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">MySQL Database</h3>
+                                <p class="text-sm text-gray-400">MariaDB 11.8.3</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="mysql">
+                            <div class="pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <div>Port: 3306</div>
+                        <div>Database: perfect8_shop</div>
+                    </div>
+                </div>
+
+                <!-- Admin Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">🔐</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Admin Service</h3>
+                                <p class="text-sm text-gray-400">Authentication & Authorization</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="admin">
+                            <div class="pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <div>Port: 8081</div>
+                        <div>Endpoint: <a href="/admin/actuator/health" class="text-blue-400 hover:underline">/admin/actuator/health</a></div>
+                    </div>
+                </div>
+
+                <!-- Blog Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">📝</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Blog Service</h3>
+                                <p class="text-sm text-gray-400">Content Management</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="blog">
+                            <div class="pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <div>Port: 8082</div>
+                        <div>Endpoint: <a href="/blog/actuator/health" class="text-blue-400 hover:underline">/blog/actuator/health</a></div>
+                    </div>
+                </div>
+
+                <!-- Email Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">📧</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Email Service</h3>
+                                <p class="text-sm text-gray-400">Notifications & Templates</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="email">
+                            <div class="pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <div>Port: 8083 (Internal)</div>
+                        <div class="text-xs text-gray-500">Not exposed externally</div>
+                    </div>
+                </div>
+
+                <!-- Image Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">🖼️</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Image Service</h3>
+                                <p class="text-sm text-gray-400">Media Processing</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="image">
+                            <div class="pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <div>Port: 8084</div>
+                        <div>Endpoint: <a href="/images/" class="text-blue-400 hover:underline">/images/</a></div>
+                    </div>
+                </div>
+
+                <!-- Shop Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-3xl mr-3">🛒</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Shop Service</h3>
+                                <p class="text-sm text-gray-400">E-Commerce Core</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="shop">
+                            <div class="pulse w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <div>Port: 8085</div>
+                        <div>Endpoint: <a href="/api/v1/products" class="text-blue-400 hover:underline">/api/v1/products</a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <div id="api" class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <span class="mr-3">📡</span>
+                Main API Endpoints
+            </h2>
+            
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-400 mb-1">Authentication</div>
+                        <code class="bg-gray-900 px-3 py-1 rounded text-green-400">POST /admin/api/auth/login</code>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-400 mb-1">Products</div>
+                        <code class="bg-gray-900 px-3 py-1 rounded text-blue-400">GET /api/v1/products</code>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-400 mb-1">Shopping Cart</div>
+                        <code class="bg-gray-900 px-3 py-1 rounded text-blue-400">GET /api/v1/cart</code>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-400 mb-1">Blog Posts</div>
+                        <code class="bg-gray-900 px-3 py-1 rounded text-blue-400">GET /blog/posts</code>
+                    </div>
+                    <div>
+                        <div class="text-sm text-gray-400 mb-1">Health Check</div>
+                        <code class="bg-gray-900 px-3 py-1 rounded text-yellow-400">GET /health/</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Stack -->
+        <div class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <span class="mr-3">⚙️</span>
+                Technology Stack
+            </h2>
+            
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                    <div class="text-2xl mb-2">☕</div>
+                    <div class="font-semibold">Java 21</div>
+                    <div class="text-xs text-gray-400">LTS</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                    <div class="text-2xl mb-2">🍃</div>
+                    <div class="font-semibold">Spring Boot</div>
+                    <div class="text-xs text-gray-400">3.4.1</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                    <div class="text-2xl mb-2">🗄️</div>
+                    <div class="font-semibold">MariaDB</div>
+                    <div class="text-xs text-gray-400">11.8.3</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-4 text-center border border-gray-700">
+                    <div class="text-2xl mb-2">🐳</div>
+                    <div class="font-semibold">Podman</div>
+                    <div class="text-xs text-gray-400">Alpine</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation -->
+        <div id="docs" class="mb-12">
+            <h2 class="text-3xl font-bold mb-6 flex items-center">
+                <span class="mr-3">📚</span>
+                Documentation
+            </h2>
+            
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <p class="text-gray-300 mb-4">
+                    For complete API documentation, testing with Postman, and integration examples, 
+                    please refer to our comprehensive API documentation.
+                </p>
+                <a href="#" class="inline-block bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition">
+                    View Full API Documentation →
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-gray-500 text-sm">
+            <p>Perfect8 v1.0 • Built with Spring Boot • Deployed on Alpine Linux</p>
+            <p class="mt-2">© 2025 C Magnus Berglund • MIT License</p>
+        </div>
+    </div>
+
+    <!-- Status Check Script -->
+    <script>
+        // Check service health on page load
+        async function checkServiceHealth() {
+            const services = [
+                { name: 'admin', url: '/admin/actuator/health' },
+                { name: 'blog', url: '/blog/actuator/health' },
+                { name: 'shop', url: '/health/' },
+                { name: 'image', url: '/images/' }
+            ];
+
+            for (const service of services) {
+                const indicator = document.querySelector(`.status-indicator[data-service="${service.name}"] div`);
+                
+                try {
+                    const response = await fetch(service.url);
+                    if (response.ok) {
+                        indicator.classList.remove('pulse', 'bg-yellow-500');
+                        indicator.classList.add('bg-green-500');
+                    } else {
+                        indicator.classList.remove('pulse', 'bg-yellow-500');
+                        indicator.classList.add('bg-red-500');
+                    }
+                } catch (error) {
+                    indicator.classList.remove('pulse', 'bg-yellow-500');
+                    indicator.classList.add('bg-red-500');
+                }
+            }
+
+            // MySQL (can't check directly, assume UP if shop is UP)
+            const mysqlIndicator = document.querySelector(`.status-indicator[data-service="mysql"] div`);
+            const shopIndicator = document.querySelector(`.status-indicator[data-service="shop"] div`);
+            if (shopIndicator.classList.contains('bg-green-500')) {
+                mysqlIndicator.classList.remove('pulse', 'bg-yellow-500');
+                mysqlIndicator.classList.add('bg-green-500');
+            } else {
+                mysqlIndicator.classList.remove('pulse', 'bg-yellow-500');
+                mysqlIndicator.classList.add('bg-red-500');
+            }
+
+            // Email (internal, can't check)
+            const emailIndicator = document.querySelector(`.status-indicator[data-service="email"] div`);
+            emailIndicator.classList.remove('pulse', 'bg-yellow-500');
+            emailIndicator.classList.add('bg-gray-500');
+        }
+
+        // Run on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkServiceHealth, 1000);
+        });
+
+        // Refresh every 30 seconds
+        setInterval(checkServiceHealth, 30000);
+    </script>
+</body>
+</html>

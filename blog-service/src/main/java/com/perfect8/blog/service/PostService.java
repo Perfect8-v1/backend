@@ -101,14 +101,14 @@ public class PostService {
 
     private PostDto convertToDto(Post post) {
         PostDto dto = new PostDto();
-        dto.setId(post.getId());
+        dto.setId(post.getPostId());
         dto.setTitle(post.getTitle());
         dto.setContent(post.getContent());
         dto.setSlug(post.getSlug());
         dto.setExcerpt(post.getExcerpt());
         dto.setPublished(post.isPublished());
-        dto.setCreatedAt(post.getCreatedAt());
-        dto.setUpdatedAt(post.getUpdatedAt());
+        dto.setCreatedAt(post.getCreatedDate());
+        dto.setUpdatedAt(post.getUpdatedDate());
         dto.setPublishedAt(post.getPublishedAt());
         dto.setAuthorName(post.getAuthor().getUsername());
         dto.setLinks(post.getLinks());

@@ -13,6 +13,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Cart Entity - Version 1.0
+ * Magnum Opus Compliant: cartId not id, consistent naming with Date suffix
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ */
 @Entity
 @Table(name = "carts")
 @Data
@@ -25,51 +30,48 @@ public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long cartId;  // → DB: cart_id
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(name = "customer_id", nullable = false)  // KEEP: explicit foreign key
     private Customer customer;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<CartItem> items = new ArrayList<>();
 
-    @Column(name = "total_amount", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     @Builder.Default
-    private BigDecimal totalAmount = BigDecimal.ZERO;
+    private BigDecimal totalAmount = BigDecimal.ZERO;  // → DB: total_amount
 
-    @Column(name = "item_count")
+    @Column
     @Builder.Default
-    private Integer itemCount = 0;
+    private Integer itemCount = 0;  // → DB: item_count
 
-    @Column(name = "coupon_code", length = 50)
-    private String couponCode;
+    @Column(length = 50)
+    private String couponCode;  // → DB: coupon_code
 
-    @Column(name = "discount_amount", precision = 10, scale = 2)
+    @Column(precision = 10, scale = 2)
     @Builder.Default
-    private BigDecimal discountAmount = BigDecimal.ZERO;
+    private BigDecimal discountAmount = BigDecimal.ZERO;  // → DB: discount_amount
 
-    @Column(name = "is_saved")
+    @Column
     @Builder.Default
-    private Boolean isSaved = false;
+    private Boolean isSaved = false;  // → DB: is_saved
 
-    @Column(name = "saved_name", length = 100)
-    private String savedName;
+    @Column(length = 100)
+    private String savedName;  // → DB: saved_name
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
-    @Column(name = "expires_at")
-    private LocalDateTime expiresAt;
+    private LocalDateTime expiresDate;  // → DB: expires_date (Magnum Opus)
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
         if (totalAmount == null) {
             totalAmount = BigDecimal.ZERO;
         }
@@ -83,17 +85,25 @@ public class Cart {
             isSaved = false;
         }
         // Set cart expiration to 30 days from now if not saved
-        if (!isSaved && expiresAt == null) {
-            expiresAt = LocalDateTime.now().plusDays(30);
+        if (!isSaved && expiresDate == null) {
+            expiresDate = LocalDateTime.now().plusDays(30);
         }
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
-    // Business methods
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates: getCartId() / setCartId()
+    // Lombok generates: getCreatedDate() / setCreatedDate()
+    // Lombok generates: getUpdatedDate() / setUpdatedDate()
+    // Lombok generates: getExpiresDate() / setExpiresDate()
+    // No alias methods - one method, one name
+
+    // ========== BUSINESS METHODS ==========
+
     public void addItem(CartItem item) {
         if (items == null) {
             items = new ArrayList<>();
@@ -159,7 +169,7 @@ public class Cart {
         }
         return items.stream()
                 .anyMatch(item -> item.getProduct() != null &&
-                        productId.equals(item.getProduct().getId()));
+                        productId.equals(item.getProduct().getProductId()));
     }
 
     public CartItem findItemByProductId(Long productId) {
@@ -168,7 +178,7 @@ public class Cart {
         }
         return items.stream()
                 .filter(item -> item.getProduct() != null &&
-                        productId.equals(item.getProduct().getId()))
+                        productId.equals(item.getProduct().getProductId()))
                 .findFirst()
                 .orElse(null);
     }
@@ -184,7 +194,7 @@ public class Cart {
     }
 
     public boolean isExpired() {
-        return expiresAt != null && LocalDateTime.now().isAfter(expiresAt);
+        return expiresDate != null && LocalDateTime.now().isAfter(expiresDate);
     }
 
     public void applyCoupon(String code, BigDecimal discount) {

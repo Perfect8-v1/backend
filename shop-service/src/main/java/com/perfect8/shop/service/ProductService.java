@@ -31,11 +31,12 @@ public class ProductService {
 
     /**
      * Find product by ID
+     * FIXED: Changed parameter from 'id' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
-    public Product findById(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + id));
+    public Product findById(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + productId));
     }
 
     /**
@@ -97,6 +98,7 @@ public class ProductService {
 
     /**
      * Find related products
+     * FIXED: Changed .getId() to .getProductId() and .getCategoryId() (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public List<Product> findRelatedProducts(Long productId, int limit) {
@@ -107,16 +109,16 @@ public class ProductService {
             PageRequest pageRequest = PageRequest.of(0, limit);
             return productRepository.findByIsActiveTrue(pageRequest)
                     .stream()
-                    .filter(p -> !p.getId().equals(productId))
+                    .filter(p -> !p.getProductId().equals(productId))
                     .collect(Collectors.toList());
         }
 
         // Find products in same category
         PageRequest pageRequest = PageRequest.of(0, limit + 1); // +1 to exclude current
         List<Product> related = productRepository
-                .findByCategoryIdAndIsActiveTrue(product.getCategory().getId(), pageRequest)
+                .findByCategoryIdAndIsActiveTrue(product.getCategory().getCategoryId(), pageRequest)
                 .stream()
-                .filter(p -> !p.getId().equals(productId))
+                .filter(p -> !p.getProductId().equals(productId))
                 .limit(limit)
                 .collect(Collectors.toList());
 
@@ -125,6 +127,7 @@ public class ProductService {
 
     /**
      * Create new product
+     * FIXED: Changed createdAt -> createdDate (Magnum Opus principle)
      */
     public Product createProduct(ProductDTO productDTO) {
         log.info("Creating new product: {}", productDTO.getName());
@@ -156,22 +159,22 @@ public class ProductService {
                 .weight(productDTO.getWeight())
                 .dimensions(convertDimensionsToString(productDTO.getDimensions()))  // FIXED: Convert List<String> to String
                 .tags(productDTO.getTags())
-                .createdAt(LocalDateTime.now())
                 .build();
 
         Product savedProduct = productRepository.save(product);
-        log.info("Product created with ID: {}", savedProduct.getId());
+        log.info("Product created with ID: {}", savedProduct.getProductId());
 
         return savedProduct;
     }
 
     /**
      * Update existing product
+     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
      */
     public Product updateProduct(ProductDTO productDTO) {
-        log.info("Updating product with ID: {}", productDTO.getId());
+        log.info("Updating product with ID: {}", productDTO.getProductId());
 
-        Product product = findById(productDTO.getId());
+        Product product = findById(productDTO.getProductId());
 
         // Check for duplicate SKU if SKU is being changed
         if (!product.getSku().equals(productDTO.getSku()) &&
@@ -181,7 +184,7 @@ public class ProductService {
 
         // Update category if changed
         if (productDTO.getCategoryId() != null &&
-                (product.getCategory() == null || !product.getCategory().getId().equals(productDTO.getCategoryId()))) {
+                (product.getCategory() == null || !product.getCategory().getCategoryId().equals(productDTO.getCategoryId()))) {
             Category category = categoryRepository.findById(productDTO.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found with ID: " + productDTO.getCategoryId()));
             product.setCategory(category);
@@ -200,7 +203,6 @@ public class ProductService {
         product.setWeight(productDTO.getWeight());
         product.setDimensions(convertDimensionsToString(productDTO.getDimensions()));  // FIXED: Convert List<String> to String
         product.setTags(productDTO.getTags());
-        product.setUpdatedAt(LocalDateTime.now());
 
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated successfully");
@@ -210,13 +212,13 @@ public class ProductService {
 
     /**
      * Delete product (soft delete)
+     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
      */
-    public void deleteProduct(Long id) {
-        log.info("Deleting product with ID: {}", id);
+    public void deleteProduct(Long productId) {
+        log.info("Deleting product with ID: {}", productId);
 
-        Product product = findById(id);
+        Product product = findById(productId);
         product.setActive(false);
-        product.setUpdatedAt(LocalDateTime.now());
         productRepository.save(product);
 
         log.info("Product deleted (soft delete) successfully");
@@ -224,13 +226,13 @@ public class ProductService {
 
     /**
      * Toggle product active status
+     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
      */
-    public Product toggleActiveStatus(Long id) {
-        log.info("Toggling active status for product ID: {}", id);
+    public Product toggleActiveStatus(Long productId) {
+        log.info("Toggling active status for product ID: {}", productId);
 
-        Product product = findById(id);
+        Product product = findById(productId);
         product.setActive(!product.isActive());
-        product.setUpdatedAt(LocalDateTime.now());
 
         Product updatedProduct = productRepository.save(product);
         log.info("Product active status toggled to: {}", updatedProduct.isActive());
@@ -240,13 +242,13 @@ public class ProductService {
 
     /**
      * Update stock quantity
+     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
      */
-    public Product updateStock(Long id, Integer quantity) {
-        log.info("Updating stock for product ID: {} to quantity: {}", id, quantity);
+    public Product updateStock(Long productId, Integer quantity) {
+        log.info("Updating stock for product ID: {} to quantity: {}", productId, quantity);
 
-        Product product = findById(id);
+        Product product = findById(productId);
         product.setStockQuantity(quantity);
-        product.setUpdatedAt(LocalDateTime.now());
 
         Product updatedProduct = productRepository.save(product);
         log.info("Stock updated successfully");
@@ -256,11 +258,12 @@ public class ProductService {
 
     /**
      * Adjust stock quantity (increase or decrease)
+     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
      */
-    public Product adjustStock(Long id, Integer adjustment) {
-        log.info("Adjusting stock for product ID: {} by: {}", id, adjustment);
+    public Product adjustStock(Long productId, Integer adjustment) {
+        log.info("Adjusting stock for product ID: {} by: {}", productId, adjustment);
 
-        Product product = findById(id);
+        Product product = findById(productId);
         int newQuantity = product.getStockQuantity() + adjustment;
 
         if (newQuantity < 0) {
@@ -268,7 +271,6 @@ public class ProductService {
         }
 
         product.setStockQuantity(newQuantity);
-        product.setUpdatedAt(LocalDateTime.now());
 
         Product updatedProduct = productRepository.save(product);
         log.info("Stock adjusted successfully. New quantity: {}", newQuantity);
@@ -278,19 +280,21 @@ public class ProductService {
 
     /**
      * Check if product is in stock
+     * FIXED: Changed parameter from 'id' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
-    public boolean isInStock(Long id) {
-        Product product = findById(id);
+    public boolean isInStock(Long productId) {
+        Product product = findById(productId);
         return product.getStockQuantity() > 0;
     }
 
     /**
      * Check if sufficient stock is available
+     * FIXED: Changed parameter from 'id' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
-    public boolean hasStock(Long id, Integer requiredQuantity) {
-        Product product = findById(id);
+    public boolean hasStock(Long productId, Integer requiredQuantity) {
+        Product product = findById(productId);
         return product.getStockQuantity() >= requiredQuantity;
     }
 

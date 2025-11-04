@@ -1,6 +1,6 @@
 package com.perfect8.image.controller;
 
-import com.perfect8.image.dto.ImageDto;
+import com.perfect8.image.dto.ImageDTO;
 import com.perfect8.image.service.ImageService;
 import com.perfect8.image.exception.InvalidImageException;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class ImageController {
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ImageDto> uploadImage(
+    public ResponseEntity<ImageDTO> uploadImage(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "altText", required = false) String altText,
             @RequestParam(value = "category", required = false) String category) {
@@ -60,7 +60,7 @@ public class ImageController {
                 throw new InvalidImageException("Invalid file type. Allowed types: JPEG, PNG, WEBP, BMP. Detected: " + detectedMimeType);
             }
 
-            ImageDto savedImage = imageService.saveImage(file, altText, category);
+            ImageDTO savedImage = imageService.saveImage(file, altText, category);
             log.info("Successfully uploaded image with ID: {}", savedImage.getImageId());
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedImage);
@@ -72,7 +72,7 @@ public class ImageController {
     }
 
     @PostMapping(value = "/upload/multiple", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<ImageDto>> uploadMultipleImages(
+    public ResponseEntity<List<ImageDTO>> uploadMultipleImages(
             @RequestParam("files") MultipartFile[] files,
             @RequestParam(value = "category", required = false) String category) {
 
@@ -82,7 +82,7 @@ public class ImageController {
             throw new InvalidImageException("Maximum 10 images can be uploaded at once");
         }
 
-        List<ImageDto> uploadedImages = Arrays.stream(files)
+        List<ImageDTO> uploadedImages = Arrays.stream(files)
                 .map(file -> {
                     try {
                         // Validate each file
@@ -109,19 +109,19 @@ public class ImageController {
     }
 
     @GetMapping("/{imageId}")
-    public ResponseEntity<ImageDto> getImage(@PathVariable Long imageId) {
+    public ResponseEntity<ImageDTO> getImage(@PathVariable Long imageId) {
         log.info("Fetching image with ID: {}", imageId);
-        ImageDto image = imageService.getImage(imageId);
+        ImageDTO image = imageService.getImage(imageId);
         return ResponseEntity.ok(image);
     }
 
     @GetMapping("/reference/{referenceType}/{referenceId}")
-    public ResponseEntity<List<ImageDto>> getImagesByReference(
+    public ResponseEntity<List<ImageDTO>> getImagesByReference(
             @PathVariable String referenceType,
             @PathVariable Long referenceId) {
 
         log.info("Fetching images for reference type: {} with ID: {}", referenceType, referenceId);
-        List<ImageDto> images = imageService.getImagesByReference(referenceType, referenceId);
+        List<ImageDTO> images = imageService.getImagesByReference(referenceType, referenceId);
 
         if (images.isEmpty()) {
             log.info("No images found for reference");
@@ -132,9 +132,9 @@ public class ImageController {
     }
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<ImageDto>> getImagesByCategory(@PathVariable String category) {
+    public ResponseEntity<List<ImageDTO>> getImagesByCategory(@PathVariable String category) {
         log.info("Fetching images for category: {}", category);
-        List<ImageDto> images = imageService.getImagesByCategory(category);
+        List<ImageDTO> images = imageService.getImagesByCategory(category);
 
         if (images.isEmpty()) {
             log.info("No images found in category: {}", category);
@@ -145,7 +145,7 @@ public class ImageController {
     }
 
     @PutMapping("/{imageId}")
-    public ResponseEntity<ImageDto> updateImage(
+    public ResponseEntity<ImageDTO> updateImage(
             @PathVariable Long imageId,
             @RequestParam(value = "altText", required = false) String altText,
             @RequestParam(value = "category", required = false) String category,
@@ -154,7 +154,7 @@ public class ImageController {
         log.info("Updating image {} - altText: {}, category: {}, status: {}",
                 imageId, altText, category, status);
 
-        ImageDto updatedImage = imageService.updateImageMetadata(imageId, altText, category, status);
+        ImageDTO updatedImage = imageService.updateImageMetadata(imageId, altText, category, status);
         return ResponseEntity.ok(updatedImage);
     }
 

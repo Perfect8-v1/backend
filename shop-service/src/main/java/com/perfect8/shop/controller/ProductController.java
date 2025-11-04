@@ -240,9 +240,10 @@ public class ProductController {
     }
 
     // Helper conversion methods
+    // FIXED: Changed getId() -> getProductId(), getCreatedAt() -> getCreatedDate(), getUpdatedAt() -> getUpdatedDate()
     private ProductResponse convertToProductResponse(Product product) {
         return ProductResponse.builder()
-                .id(product.getId())
+                .id(product.getProductId())  // FIXED: getId() -> getProductId()
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
@@ -256,8 +257,9 @@ public class ProductController {
                 .weight(product.getWeight())
                 .dimensions(product.getDimensions())
                 .tags(product.getTags())
-                .createdAt(product.getCreatedAt())
-                .updatedAt(product.getUpdatedAt())
+                .createdAt(product.getCreatedDate())  // FIXED: getCreatedAt() -> getCreatedDate()
+                .updatedAt(product.getUpdatedDate())  // FIXED: getUpdatedAt() -> getUpdatedDate()
+                .inStock(product.getStockQuantity() != null && product.getStockQuantity() > 0)
                 .build();
     }
 
@@ -273,15 +275,15 @@ public class ProductController {
                 .categoryId(request.getCategoryId())
                 .featured(request.isFeatured())
                 .active(true)
-                .weight(request.getWeight() != null ? new BigDecimal(request.getWeight()) : null)  // FIXED: Convert Double to BigDecimal
-                .dimensions(request.getDimensions())  // This is already List<String> in request
+                .weight(request.getWeight() != null ? new BigDecimal(request.getWeight()) : null)
+                .dimensions(request.getDimensions())
                 .tags(request.getTags())
                 .build();
     }
 
     private ProductDTO convertToProductDTO(ProductUpdateRequest request, Long id) {
         return ProductDTO.builder()
-                .id(id)
+                .productId(id)  // FIXED: id() -> productId()
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
@@ -291,8 +293,8 @@ public class ProductController {
                 .categoryId(request.getCategoryId())
                 .featured(request.isFeatured())
                 .active(request.isActive())
-                .weight(request.getWeight() != null ? new BigDecimal(request.getWeight()) : null)  // FIXED: Convert Double to BigDecimal
-                .dimensions(request.getDimensions())  // This is already List<String> in request
+                .weight(request.getWeight() != null ? new BigDecimal(request.getWeight()) : null)
+                .dimensions(request.getDimensions())
                 .tags(request.getTags())
                 .build();
     }

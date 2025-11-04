@@ -1,6 +1,6 @@
 package com.perfect8.image.service;
 
-import com.perfect8.image.dto.ImageDto;
+import com.perfect8.image.dto.ImageDTO;
 import com.perfect8.image.enums.ImageStatus;
 import com.perfect8.image.exception.ImageNotFoundException;
 import com.perfect8.image.exception.ImageProcessingException;
@@ -42,7 +42,7 @@ public class ImageService {
 
     // Main upload method
     @Transactional
-    public ImageDto saveImage(MultipartFile file, String altText, String category) {
+    public ImageDTO saveImage(MultipartFile file, String altText, String category) {
         try {
             log.info("Starting image save process for file: {}", file.getOriginalFilename());
 
@@ -107,7 +107,7 @@ public class ImageService {
 
     // Get single image
     @Transactional(readOnly = true)
-    public ImageDto getImage(Long imageId) {
+    public ImageDTO getImage(Long imageId) {
         log.info("Fetching image with ID: {}", imageId);
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ImageNotFoundException("Image not found with ID: " + imageId));
@@ -117,7 +117,7 @@ public class ImageService {
 
     // Get images by category
     @Transactional(readOnly = true)
-    public List<ImageDto> getImagesByCategory(String category) {
+    public List<ImageDTO> getImagesByCategory(String category) {
         log.info("Fetching images for category: {}", category);
         List<Image> images = imageRepository.findByCategoryAndImageStatusAndIsDeletedFalse(
                 category, ImageStatus.ACTIVE
@@ -130,7 +130,7 @@ public class ImageService {
 
     // Get by reference
     @Transactional(readOnly = true)
-    public List<ImageDto> getImagesByReference(String referenceType, Long referenceId) {
+    public List<ImageDTO> getImagesByReference(String referenceType, Long referenceId) {
         log.info("Fetching images for {} with ID: {}", referenceType, referenceId);
         List<Image> images = imageRepository.findByReferenceTypeAndReferenceId(referenceType, referenceId);
 
@@ -141,7 +141,7 @@ public class ImageService {
 
     // Update with status parameter
     @Transactional
-    public ImageDto updateImageMetadata(Long imageId, String altText, String category, String status) {
+    public ImageDTO updateImageMetadata(Long imageId, String altText, String category, String status) {
         log.info("Updating image {} metadata", imageId);
 
         Image image = imageRepository.findById(imageId)

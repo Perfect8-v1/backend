@@ -1,58 +1,66 @@
 package com.perfect8.shop.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
+/**
+ * Shipment Tracking Entity - Version 1.0
+ * Magnum Opus Compliant: Lombok annotations, no manual getters/setters
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * Tracks shipment status updates and location history
+ */
 @Entity
 @Table(name = "shipment_tracking")
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(exclude = {"shipment"})
+@ToString(exclude = {"shipment"})
 public class ShipmentTracking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long shipmentTrackingId;  // → DB: shipment_tracking_id
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shipment_id", nullable = false)
     private Shipment shipment;
 
     @Column(nullable = false, length = 50)
-    private String status; // PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION, etc.
+    private String status;  // → DB: status (PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION)
 
     @Column(length = 255)
-    private String location;
+    private String location;  // → DB: location
 
     @Column(length = 500)
-    private String description;
+    private String description;  // → DB: description
 
     @Column(nullable = false)
-    private LocalDateTime timestamp;
+    private LocalDateTime timestamp;  // → DB: timestamp
 
-    @Column(name = "event_code", length = 20)
-    private String eventCode; // Carrier-specific event codes
+    @Column(length = 20)
+    private String eventCode;  // → DB: event_code (Carrier-specific event codes)
 
-    @Column(name = "event_details", length = 1000)
-    private String eventDetails;
+    @Column(length = 1000)
+    private String eventDetails;  // → DB: event_details
 
-    @Column(name = "delivery_confirmation", length = 100)
-    private String deliveryConfirmation; // Signature, left at door, etc.
+    @Column(length = 100)
+    private String deliveryConfirmation;  // → DB: delivery_confirmation (Signature, left at door, etc.)
 
-    @Column(name = "exception_type", length = 50)
-    private String exceptionType; // WEATHER_DELAY, ADDRESS_ISSUE, etc.
+    @Column(length = 50)
+    private String exceptionType;  // → DB: exception_type (WEATHER_DELAY, ADDRESS_ISSUE, etc.)
 
-    @Column(name = "next_scheduled_delivery")
-    private LocalDateTime nextScheduledDelivery;
+    private LocalDateTime nextScheduledDelivery;  // → DB: next_scheduled_delivery
 
-    // Default constructor
-    public ShipmentTracking() {}
-
-    // Constructor
-    public ShipmentTracking(Shipment shipment, String status, String location, String description) {
-        this.shipment = shipment;
-        this.status = status;
-        this.location = location;
-        this.description = description;
-        this.timestamp = LocalDateTime.now();
-    }
+    // ========== JPA LIFECYCLE CALLBACKS ==========
 
     @PrePersist
     protected void onCreate() {
@@ -61,96 +69,16 @@ public class ShipmentTracking {
         }
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates ALL getters/setters:
+    // getShipmentTrackingId() / setShipmentTrackingId()
+    // getShipment() / setShipment()
+    // getStatus() / setStatus()
+    // etc.
+    // NO manual getters/setters - Lombok handles everything
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    // ========== BUSINESS METHODS ==========
 
-    public Shipment getShipment() {
-        return shipment;
-    }
-
-    public void setShipment(Shipment shipment) {
-        this.shipment = shipment;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public LocalDateTime getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(LocalDateTime timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getEventCode() {
-        return eventCode;
-    }
-
-    public void setEventCode(String eventCode) {
-        this.eventCode = eventCode;
-    }
-
-    public String getEventDetails() {
-        return eventDetails;
-    }
-
-    public void setEventDetails(String eventDetails) {
-        this.eventDetails = eventDetails;
-    }
-
-    public String getDeliveryConfirmation() {
-        return deliveryConfirmation;
-    }
-
-    public void setDeliveryConfirmation(String deliveryConfirmation) {
-        this.deliveryConfirmation = deliveryConfirmation;
-    }
-
-    public String getExceptionType() {
-        return exceptionType;
-    }
-
-    public void setExceptionType(String exceptionType) {
-        this.exceptionType = exceptionType;
-    }
-
-    public LocalDateTime getNextScheduledDelivery() {
-        return nextScheduledDelivery;
-    }
-
-    public void setNextScheduledDelivery(LocalDateTime nextScheduledDelivery) {
-        this.nextScheduledDelivery = nextScheduledDelivery;
-    }
-
-    // Business methods
     public boolean isDelivered() {
         return "DELIVERED".equals(status);
     }
@@ -161,6 +89,10 @@ public class ShipmentTracking {
 
     public boolean isInTransit() {
         return "IN_TRANSIT".equals(status) || "OUT_FOR_DELIVERY".equals(status);
+    }
+
+    public boolean isPickedUp() {
+        return "PICKED_UP".equals(status);
     }
 
     public String getDisplayDescription() {
@@ -185,26 +117,19 @@ public class ShipmentTracking {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ShipmentTracking)) return false;
-        ShipmentTracking that = (ShipmentTracking) o;
-        return id != null && id.equals(that.id);
+    public boolean hasLocation() {
+        return location != null && !location.trim().isEmpty();
     }
 
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
+    public boolean hasException() {
+        return exceptionType != null && !exceptionType.trim().isEmpty();
     }
 
-    @Override
-    public String toString() {
-        return "ShipmentTracking{" +
-                "id=" + id +
-                ", status='" + status + '\'' +
-                ", location='" + location + '\'' +
-                ", timestamp=" + timestamp +
-                '}';
+    public boolean hasDeliveryConfirmation() {
+        return deliveryConfirmation != null && !deliveryConfirmation.trim().isEmpty();
+    }
+
+    public boolean isRescheduled() {
+        return nextScheduledDelivery != null;
     }
 }

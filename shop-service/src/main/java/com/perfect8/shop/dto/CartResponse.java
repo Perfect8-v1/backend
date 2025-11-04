@@ -10,8 +10,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- DTO for cart operations response.
+ * DTO for cart operations response.
  * Used by CartService and CartController.
+ * FIXED: Uses createdDate/updatedDate to match Cart entity (Magnum Opus)
  */
 @Data
 @Builder
@@ -81,13 +82,15 @@ public class CartResponse {
 
     /**
      * When the cart was created
+     * FIXED: Changed from createdAt to createdDate (Magnum Opus - match Cart entity)
      */
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     /**
      * When the cart was last updated
+     * FIXED: Changed from updatedAt to updatedDate (Magnum Opus - match Cart entity)
      */
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     /**
      * Whether the cart is ready for checkout

@@ -7,6 +7,11 @@ import lombok.*;
  * DTO for customer registration
  * Version 1.0 - Core registration functionality
  * Field names MUST match Customer entity exactly!
+ *
+ * PEDAGOGICAL NOTE for GitHub portfolio:
+ * Uses 'passwordHash' instead of 'password' to make it clear that passwords
+ * are ALREADY HASHED by the frontend before transmission.
+ * This demonstrates security awareness and prevents misconceptions.
  */
 @Data
 @Builder
@@ -30,27 +35,26 @@ public class CustomerRegistrationDTO {
     @Size(max = 255, message = "Email address too long")
     private String email;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "Password hash is required")
     @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).*$",
             message = "Password must contain at least one lowercase letter, one uppercase letter, and one digit")
-    private String password;
+    private String passwordHash;  // CHANGED: password → passwordHash (matches Customer.passwordHash)
 
     @NotBlank(message = "Password confirmation is required")
-    private String confirmPassword;
+    private String confirmPasswordHash;  // CHANGED: confirmPassword → confirmPasswordHash
 
     // Optional fields - matches Customer entity
-    @Pattern(regexp = "^[+]?[0-9\\s\\-()]+$", message = "Invalid phone number format")
-    @Size(max = 20, message = "Phone number too long")
-    private String phoneNumber;
+    @Pattern(regexp = "^[+]?[0-9\\s\\-()]+$", message = "Invalid phone format")
+    @Size(max = 20, message = "Phone too long")
+    private String phone;  // FIXED: phoneNumber → phone (matches Customer.phone)
 
     // Marketing preferences - EXACT names from Customer entity
     @Builder.Default
-    private Boolean newsletterSubscribed = false;  // Was: subscribeToNewsletter
+    private Boolean newsletterSubscribed = false;
 
     @Builder.Default
-    private Boolean marketingConsent = false;       // Was: acceptMarketingEmails
-    // REMOVED: acceptSmsMarketing - not in entity (v2.0 feature)
+    private Boolean marketingConsent = false;
 
     // Registration-only fields (not stored in entity but needed for legal compliance)
     @NotNull(message = "You must accept the terms and conditions")
@@ -75,11 +79,11 @@ public class CustomerRegistrationDTO {
     // ========================================
 
     /**
-     * Validate that passwords match
+     * Validate that password hashes match
      */
-    @AssertTrue(message = "Passwords do not match")
+    @AssertTrue(message = "Password hashes do not match")
     public boolean isPasswordMatching() {
-        return password != null && password.equals(confirmPassword);
+        return passwordHash != null && passwordHash.equals(confirmPasswordHash);
     }
 
     /**
@@ -113,8 +117,8 @@ public class CustomerRegistrationDTO {
      * Clear sensitive data after registration
      */
     public void clearSensitiveData() {
-        this.password = null;
-        this.confirmPassword = null;
+        this.passwordHash = null;
+        this.confirmPasswordHash = null;
     }
 
     /**
@@ -131,7 +135,7 @@ public class CustomerRegistrationDTO {
                 "firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
-                ", phoneNumber='" + phoneNumber + '\'' +
+                ", phone='" + phone + '\'' +
                 ", newsletterSubscribed=" + newsletterSubscribed +
                 ", marketingConsent=" + marketingConsent +
                 ", preferredLanguage='" + preferredLanguage + '\'' +

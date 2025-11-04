@@ -1,0 +1,12 @@
+shop-service/src/main/java/com/perfect8/shop/entity/Address.java
+shop-service/src/main/java/com/perfect8/shop/entity/Cart.java
+shop-service/src/main/java/com/perfect8/shop/entity/CartItem.java
+shop-service/src/main/java/com/perfect8/shop/entity/Category.java
+shop-service/src/main/java/com/perfect8/shop/entity/Customer.java
+shop-service/src/main/java/com/perfect8/shop/entity/InventoryTransaction.java
+shop-service/src/main/java/com/perfect8/shop/entity/Order.java
+shop-service/src/main/java/com/perfect8/shop/entity/OrderItem.java
+shop-service/src/main/java/com/perfect8/shop/entity/Payment.java
+shop-service/src/main/java/com/perfect8/shop/entity/Product.java
+shop-service/src/main/java/com/perfect8/shop/entity/Shipment.java
+shop-service/src/main/java/com/perfect8/shop/entity/ShipmentTracking.java

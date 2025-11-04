@@ -18,6 +18,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Category Service - Version 1.0
+ * Core category management functionality
+ *
+ * Magnum Opus Principles:
+ * - Readable variable names (categoryId not id)
+ * - NO backward compatibility - built right from start
+ * - Use createdDate/updatedDate (consistent with Customer entity)
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,9 +44,9 @@ public class CategoryService {
         return categoryRepository.findByIsActiveTrue();
     }
 
-    public Category getCategoryById(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Category not found with ID: " + id));
+    public Category getCategoryById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("Category not found with ID: " + categoryId));
     }
 
     public Category getCategoryBySlug(String slug) {
@@ -55,8 +64,8 @@ public class CategoryService {
 
     public List<Category> getCategoryTree() {
         List<Category> parentCategories = getParentCategories();
-        for (Category parent : parentCategories) {
-            parent.setSubcategories(getSubcategoriesByParentId(parent.getId()));
+        for (Category parentCategory : parentCategories) {
+            parentCategory.setSubcategories(getSubcategoriesByParentId(parentCategory.getCategoryId()));
         }
         return parentCategories;
     }
@@ -71,51 +80,51 @@ public class CategoryService {
                 .description(categoryDTO.getDescription())
                 .slug(categoryDTO.getSlug())
                 .isActive(true)
-                .createdAt(LocalDateTime.now())
+                .createdDate(LocalDateTime.now())
                 .build();
 
         if (categoryDTO.getParentId() != null) {
-            Category parent = getCategoryById(categoryDTO.getParentId());
-            category.setParent(parent);
+            Category parentCategory = getCategoryById(categoryDTO.getParentId());
+            category.setParent(parentCategory);
         }
 
         return categoryRepository.save(category);
     }
 
-    public Category updateCategory(Long id, CategoryDTO categoryDTO) {
-        Category category = getCategoryById(id);
+    public Category updateCategory(Long categoryId, CategoryDTO categoryDTO) {
+        Category category = getCategoryById(categoryId);
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
         category.setSlug(categoryDTO.getSlug());
-        category.setUpdatedAt(LocalDateTime.now());
+        category.setUpdatedDate(LocalDateTime.now());
 
         if (categoryDTO.getParentId() != null) {
-            Category parent = getCategoryById(categoryDTO.getParentId());
-            category.setParent(parent);
+            Category parentCategory = getCategoryById(categoryDTO.getParentId());
+            category.setParent(parentCategory);
         }
 
         return categoryRepository.save(category);
     }
 
-    public void deleteCategory(Long id) {
-        Category category = getCategoryById(id);
+    public void deleteCategory(Long categoryId) {
+        Category category = getCategoryById(categoryId);
         category.setIsActive(false);
-        category.setUpdatedAt(LocalDateTime.now());
+        category.setUpdatedDate(LocalDateTime.now());
         categoryRepository.save(category);
     }
 
-    public Category restoreCategory(Long id) {
-        Category category = getCategoryById(id);
+    public Category restoreCategory(Long categoryId) {
+        Category category = getCategoryById(categoryId);
         category.setIsActive(true);
-        category.setUpdatedAt(LocalDateTime.now());
+        category.setUpdatedDate(LocalDateTime.now());
         return categoryRepository.save(category);
     }
 
-    public Category toggleCategoryStatus(Long id) {
-        Category category = getCategoryById(id);
+    public Category toggleCategoryStatus(Long categoryId) {
+        Category category = getCategoryById(categoryId);
         category.setIsActive(!category.getIsActive());
-        category.setUpdatedAt(LocalDateTime.now());
+        category.setUpdatedDate(LocalDateTime.now());
         return categoryRepository.save(category);
     }
 
@@ -138,7 +147,6 @@ public class CategoryService {
         return new CategoryStatistics(totalCategories, activeCategories);
     }
 
-    // FIXED: Changed return type and implementation to handle Object[] from repository
     public List<CategoryWithProductCount> getCategoriesWithProductCount() {
         List<Object[]> rawResults = categoryRepository.findCategoriesWithProductCount();
         List<CategoryWithProductCount> results = new ArrayList<>();
@@ -159,13 +167,13 @@ public class CategoryService {
         Category category = getCategoryById(categoryId);
 
         if (newParentId != null) {
-            Category newParent = getCategoryById(newParentId);
-            category.setParent(newParent);
+            Category newParentCategory = getCategoryById(newParentId);
+            category.setParent(newParentCategory);
         } else {
             category.setParent(null);
         }
 
-        category.setUpdatedAt(LocalDateTime.now());
+        category.setUpdatedDate(LocalDateTime.now());
         return categoryRepository.save(category);
     }
 
@@ -181,9 +189,9 @@ public class CategoryService {
         return breadcrumb;
     }
 
-    public boolean isSlugAvailable(String slug, Long excludeId) {
-        if (excludeId != null) {
-            return !categoryRepository.existsBySlugAndIdNot(slug, excludeId);
+    public boolean isSlugAvailable(String slug, Long excludeCategoryId) {
+        if (excludeCategoryId != null) {
+            return !categoryRepository.existsBySlugAndCategoryIdNot(slug, excludeCategoryId);
         }
         return !categoryRepository.existsBySlug(slug);
     }
@@ -193,7 +201,7 @@ public class CategoryService {
         List<CategoryDropdownItem> dropdown = new ArrayList<>();
 
         for (Category category : categories) {
-            dropdown.add(new CategoryDropdownItem(category.getId(), category.getName()));
+            dropdown.add(new CategoryDropdownItem(category.getCategoryId(), category.getName()));
         }
 
         return dropdown;
@@ -211,16 +219,15 @@ public class CategoryService {
     }
 
     public static class CategoryDropdownItem {
-        public final Long id;
+        public final Long categoryId;
         public final String name;
 
-        public CategoryDropdownItem(Long id, String name) {
-            this.id = id;
+        public CategoryDropdownItem(Long categoryId, String name) {
+            this.categoryId = categoryId;
             this.name = name;
         }
     }
 
-    // FIXED: Added new class to properly represent category with product count
     public static class CategoryWithProductCount {
         public final Category category;
         public final Long productCount;
@@ -241,7 +248,7 @@ public class CategoryService {
         // Helper method to convert to a simple map (for JSON serialization)
         public Map<String, Object> toMap() {
             Map<String, Object> map = new HashMap<>();
-            map.put("categoryId", category.getId());
+            map.put("categoryId", category.getCategoryId());
             map.put("categoryName", category.getName());
             map.put("categorySlug", category.getSlug());
             map.put("productCount", productCount);

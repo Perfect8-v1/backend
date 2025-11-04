@@ -2,89 +2,203 @@ package com.perfect8.email.client;
 
 import com.perfect8.email.dto.OrderDto;
 import com.perfect8.email.dto.CustomerEmailDTO;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestHeader;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import java.util.Collections;
 import java.util.List;
 
 /**
- * Feign client for communication with Shop Service
+ * Client for communication with Shop Service using RestTemplate
  * Version 1.0 - Core order and customer operations only
  */
-@FeignClient(
-        name = "shop-service",
-        url = "${shop.service.url:http://localhost:8082}",
-        fallback = ShopServiceClientFallback.class
-)
-public interface ShopServiceClient {
+@Slf4j
+@Service
+public class ShopServiceClient {
+
+    private final RestTemplate restTemplate;
+
+    @Value("${shop.service.url:http://localhost:8082}")
+    private String shopServiceUrl;
+
+    public ShopServiceClient(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     // Order endpoints
-    @GetMapping("/api/orders/{orderId}")
-    OrderDto getOrderById(
-            @PathVariable("orderId") Long orderId,
-            @RequestHeader("Authorization") String token
-    );
+    public OrderDto getOrderById(Long orderId, String token) {
+        try {
+            String url = shopServiceUrl + "/api/orders/" + orderId;
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
 
-    @GetMapping("/api/orders/reference/{orderReference}")
-    OrderDto getOrderByReference(
-            @PathVariable("orderReference") String orderReference,
-            @RequestHeader("Authorization") String token
-    );
+            ResponseEntity<OrderDto> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, OrderDto.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch order with ID: {}", orderId, e);
+            return null;
+        }
+    }
 
-    @GetMapping("/api/orders/customer/{customerId}")
-    List<OrderDto> getOrdersByCustomerId(
-            @PathVariable("customerId") Long customerId,
-            @RequestHeader("Authorization") String token
-    );
+    public OrderDto getOrderByReference(String orderReference, String token) {
+        try {
+            String url = shopServiceUrl + "/api/orders/reference/" + orderReference;
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<OrderDto> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, OrderDto.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch order with reference: {}", orderReference, e);
+            return null;
+        }
+    }
+
+    public List<OrderDto> getOrdersByCustomerId(Long customerId, String token) {
+        try {
+            String url = shopServiceUrl + "/api/orders/customer/" + customerId;
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<List<OrderDto>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<List<OrderDto>>() {}
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch orders for customer ID: {}", customerId, e);
+            return Collections.emptyList();
+        }
+    }
 
     // Customer endpoints
-    @GetMapping("/api/customers/{customerId}")
-    CustomerEmailDTO getCustomerById(
-            @PathVariable("customerId") Long customerId,
-            @RequestHeader("Authorization") String token
-    );
+    public CustomerEmailDTO getCustomerById(Long customerId, String token) {
+        try {
+            String url = shopServiceUrl + "/api/customers/" + customerId;
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
 
-    @GetMapping("/api/customers/email/{email}")
-    CustomerEmailDTO getCustomerByEmail(
-            @PathVariable("email") String email,
-            @RequestHeader("Authorization") String token
-    );
+            ResponseEntity<CustomerEmailDTO> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, CustomerEmailDTO.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch customer with ID: {}", customerId, e);
+            return null;
+        }
+    }
+
+    public CustomerEmailDTO getCustomerByEmail(String email, String token) {
+        try {
+            String url = shopServiceUrl + "/api/customers/email/" + email;
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<CustomerEmailDTO> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, CustomerEmailDTO.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch customer with email: {}", email, e);
+            return null;
+        }
+    }
 
     // Newsletter subscribers
-    @GetMapping("/api/customers/newsletter/subscribers")
-    List<CustomerEmailDTO> getNewsletterSubscribers(
-            @RequestHeader("Authorization") String token
-    );
+    public List<CustomerEmailDTO> getNewsletterSubscribers(String token) {
+        try {
+            String url = shopServiceUrl + "/api/customers/newsletter/subscribers";
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
 
-    @GetMapping("/api/customers/active")
-    List<CustomerEmailDTO> getActiveCustomers(
-            @RequestHeader("Authorization") String token
-    );
+            ResponseEntity<List<CustomerEmailDTO>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<List<CustomerEmailDTO>>() {}
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch newsletter subscribers", e);
+            return Collections.emptyList();
+        }
+    }
+
+    public List<CustomerEmailDTO> getActiveCustomers(String token) {
+        try {
+            String url = shopServiceUrl + "/api/customers/active";
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<List<CustomerEmailDTO>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity,
+                    new ParameterizedTypeReference<List<CustomerEmailDTO>>() {}
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch active customers", e);
+            return Collections.emptyList();
+        }
+    }
 
     // Order status checks (for email triggers)
-    @GetMapping("/api/orders/{orderId}/shipping-info")
-    OrderDto.ShippingInfo getShippingInfo(
-            @PathVariable("orderId") Long orderId,
-            @RequestHeader("Authorization") String token
-    );
+    public OrderDto.ShippingInfo getShippingInfo(Long orderId, String token) {
+        try {
+            String url = shopServiceUrl + "/api/orders/" + orderId + "/shipping-info";
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
 
-    @GetMapping("/api/orders/{orderId}/payment-status")
-    OrderDto.PaymentStatus getPaymentStatus(
-            @PathVariable("orderId") Long orderId,
-            @RequestHeader("Authorization") String token
-    );
+            ResponseEntity<OrderDto.ShippingInfo> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, OrderDto.ShippingInfo.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch shipping info for order ID: {}", orderId, e);
+            return null;
+        }
+    }
+
+    public OrderDto.PaymentStatus getPaymentStatus(Long orderId, String token) {
+        try {
+            String url = shopServiceUrl + "/api/orders/" + orderId + "/payment-status";
+            HttpHeaders headers = createHeaders(token);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<OrderDto.PaymentStatus> response = restTemplate.exchange(
+                    url, HttpMethod.GET, entity, OrderDto.PaymentStatus.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to fetch payment status for order ID: {}", orderId, e);
+            return null;
+        }
+    }
+
+    // Helper method to create headers with Authorization token
+    private HttpHeaders createHeaders(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        if (token != null && !token.isEmpty()) {
+            headers.set("Authorization", token);
+        }
+        return headers;
+    }
 
     // Version 2.0 - Analytics endpoints (commented out for now)
     /*
-    @GetMapping("/api/orders/analytics/abandoned-carts")
-    List<OrderDto> getAbandonedCarts(
-        @RequestHeader("Authorization") String token
-    );
+    public List<OrderDto> getAbandonedCarts(String token) {
+        // Implementation for v2.0
+    }
 
-    @GetMapping("/api/customers/analytics/engagement")
-    List<CustomerEngagementDto> getCustomerEngagement(
-        @RequestHeader("Authorization") String token
-    );
+    public List<CustomerEngagementDto> getCustomerEngagement(String token) {
+        // Implementation for v2.0
+    }
     */
 }

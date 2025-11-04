@@ -14,7 +14,9 @@ import java.util.List;
 
 /**
  * Shipment Entity - Version 1.0
- * Core shipment tracking and management
+ * Magnum Opus Compliant: No alias methods, consistent naming
+ * FIXED: Removed all @Column(name=...) - Hibernate handles camelCase → snake_case
+ * UPDATED: Moved essential v2.0 fields to v1.0 for facilitate frontend compatibility
  */
 @Entity
 @Table(name = "shipments")
@@ -26,124 +28,151 @@ public class Shipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "shipment_id")
-    private Long shipmentId;
+    private Long shipmentId;  // → DB: shipment_id
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @Column(name = "tracking_number", unique = true, nullable = false, length = 100)
-    private String trackingNumber;
+    @Column(unique = true, nullable = false, length = 100)
+    private String trackingNumber;  // → DB: tracking_number
 
     @Column(nullable = false, length = 50)
-    private String carrier; // UPS, FedEx, DHL, USPS, etc.
+    @Builder.Default
+    private String carrier = "PostNord";  // → DB: carrier
 
-    @Column(name = "shipment_status", nullable = false, length = 20)
-    private String shipmentStatus; // PENDING, SHIPPED, IN_TRANSIT, DELIVERED, CANCELLED
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private String shipmentStatus = "PENDING";  // → DB: shipment_status
 
-    // Alias for backward compatibility
-    public String getStatus() {
-        return shipmentStatus;
-    }
+    private LocalDateTime shippedDate;  // → DB: shipped_date
 
-    public void setStatus(String status) {
-        this.shipmentStatus = status;
-    }
+    private LocalDate estimatedDeliveryDate;  // → DB: estimated_delivery_date
 
-    @Column(name = "shipped_date")
-    private LocalDateTime shippedDate;
+    private LocalDate actualDeliveryDate;  // → DB: actual_delivery_date
 
-    @Column(name = "estimated_delivery_date")
-    private LocalDate estimatedDeliveryDate;
+    private LocalDateTime deliveredDate;  // → DB: delivered_date
 
-    @Column(name = "actual_delivery_date")
-    private LocalDate actualDeliveryDate;
-
-    @Column(name = "delivered_date")
-    private LocalDateTime deliveredDate;
-
-    @Column(name = "shipping_cost", precision = 10, scale = 2)
-    private BigDecimal shippingCost;
-
-    @Column(name = "weight", precision = 8, scale = 2)
-    private BigDecimal weight; // in kg
-
-    @Column(length = 500)
-    private String dimensions; // e.g., "30x20x15 cm"
+    @Column(precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal shippingCost = BigDecimal.ZERO;  // → DB: shipping_cost
 
     // Recipient information
-    @Column(name = "recipient_name", length = 100)
-    private String recipientName;
+    @Column(length = 100)
+    private String recipientName;  // → DB: recipient_name
 
-    @Column(name = "shipping_address", columnDefinition = "TEXT")
-    private String shippingAddress;
+    @Column(length = 20)
+    private String recipientPhone;  // → DB: recipient_phone
 
-    @Column(name = "shipping_street", length = 255)
-    private String shippingStreet;
-
-    @Column(name = "shipping_city", length = 100)
-    private String shippingCity;
-
-    @Column(name = "shipping_state", length = 50)
-    private String shippingState;
-
-    @Column(name = "shipping_postal_code", length = 20)
-    private String shippingPostalCode;
-
-    @Column(name = "shipping_country", length = 50)
-    private String shippingCountry;
-
-    @Column(name = "shipping_method", length = 50)
-    private String shippingMethod; // STANDARD, EXPRESS, OVERNIGHT, etc.
-
-    // Tracking information
-    @Column(name = "current_location", length = 255)
-    private String currentLocation;
-
-    @Column(name = "last_location", length = 255)
-    private String lastLocation;
-
-    @Column(name = "tracking_notes", columnDefinition = "TEXT")
-    private String trackingNotes;
-
-    // Delivery information
-    @Column(name = "delivery_instructions", length = 500)
-    private String deliveryInstructions;
-
-    @Column(name = "delivery_notes", length = 500)
-    private String deliveryNotes;
-
-    @Column(name = "signature_required", columnDefinition = "BOOLEAN DEFAULT FALSE")
-    private boolean signatureRequired;
-
-    @Column(name = "insurance_amount", precision = 10, scale = 2)
-    private BigDecimal insuranceAmount;
-
-    @Column(name = "label_url", length = 500)
-    private String labelUrl;
+    @Column(length = 100)
+    private String recipientEmail;  // → DB: recipient_email
 
     @Column(columnDefinition = "TEXT")
-    private String notes;
+    private String shippingAddress;  // → DB: shipping_address
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(length = 255)
+    private String shippingStreet;  // → DB: shipping_street
 
-    @Column(name = "last_updated")
-    private LocalDateTime lastUpdated;
+    @Column(length = 100)
+    private String shippingCity;  // → DB: shipping_city
 
-    // Alias for backward compatibility
-    public LocalDateTime getUpdatedAt() {
-        return lastUpdated;
-    }
+    @Column(length = 50)
+    private String shippingState;  // → DB: shipping_state
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.lastUpdated = updatedAt;
-    }
+    @Column(length = 20)
+    private String shippingPostalCode;  // → DB: shipping_postal_code
+
+    @Column(length = 50)
+    @Builder.Default
+    private String shippingCountry = "SE";  // → DB: shipping_country
+
+    @Column(length = 50)
+    @Builder.Default
+    private String shippingMethod = "STANDARD";  // → DB: shipping_method
+
+    // Weight and dimensions (moved from v2.0 to v1.0)
+    @Column(precision = 8, scale = 3)
+    private BigDecimal weight;  // → DB: weight (in kg)
+
+    @Column(length = 50)
+    private String dimensions;  // → DB: dimensions (e.g., "30x20x15")
+
+    // Delivery options (moved from v2.0 to v1.0)
+    @Column(length = 500)
+    private String deliveryInstructions;  // → DB: delivery_instructions
+
+    @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Builder.Default
+    private boolean signatureRequired = false;  // → DB: signature_required
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal insuranceAmount;  // → DB: insurance_amount
+
+    // Label management (moved from v2.0 to v1.0)
+    @Column(length = 500)
+    private String labelUrl;  // → DB: label_url
+
+    // Current location tracking (moved from v2.0 to v1.0)
+    @Column(length = 255)
+    private String currentLocation;  // → DB: current_location
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;  // → DB: notes
+
+    private LocalDateTime createdDate;  // → DB: created_date (Magnum Opus)
+
+    private LocalDateTime updatedDate;  // → DB: updated_date (Magnum Opus)
 
     @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<ShipmentTracking> trackingHistory = new ArrayList<>();
+
+    /* ========== VERSION 2.0 FEATURES - COMMENTED OUT ==========
+     * These advanced features will be implemented in version 2.0
+     */
+
+    // Advanced tracking (v2.0)
+    // @Column(length = 255)
+    // private String lastLocation;
+    //
+    // @Column(columnDefinition = "TEXT")
+    // private String trackingNotes;
+
+    // Advanced delivery (v2.0)
+    // @Column(length = 500)
+    // private String deliveryNotes;
+    //
+    // private Integer numberOfPackages;
+    //
+    // @Column(length = 50)
+    // private String packageType;
+
+    // Special handling flags (v2.0)
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // private boolean fragile;
+    //
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // private boolean hazardous;
+    //
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // private boolean perishable;
+    //
+    // @Column(columnDefinition = "BOOLEAN DEFAULT FALSE")
+    // private boolean priorityHandling;
+
+    // Advanced options (v2.0)
+    // @Column(length = 50)
+    // private String confirmationType;
+    //
+    // private Integer deliveryAttempts;
+    //
+    // @Column(columnDefinition = "TEXT")
+    // private String exceptionDescription;
+    //
+    // @Column(length = 100)
+    // private String returnTrackingNumber;
+
+    /* ========== END VERSION 2.0 FEATURES ========== */
 
     // Constructor with essential fields
     public Shipment(Order order, String trackingNumber, String carrier) {
@@ -151,18 +180,18 @@ public class Shipment {
         this.trackingNumber = trackingNumber;
         this.carrier = carrier;
         this.shipmentStatus = "PENDING";
-        this.createdAt = LocalDateTime.now();
-        this.lastUpdated = LocalDateTime.now();
+        this.createdDate = LocalDateTime.now();
+        this.updatedDate = LocalDateTime.now();
         this.trackingHistory = new ArrayList<>();
     }
 
     @PrePersist
     protected void onCreate() {
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
+        if (createdDate == null) {
+            createdDate = LocalDateTime.now();
         }
-        if (lastUpdated == null) {
-            lastUpdated = LocalDateTime.now();
+        if (updatedDate == null) {
+            updatedDate = LocalDateTime.now();
         }
         if (shipmentStatus == null) {
             shipmentStatus = "PENDING";
@@ -174,10 +203,17 @@ public class Shipment {
 
     @PreUpdate
     protected void onUpdate() {
-        lastUpdated = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
-    // Business methods
+    // ========== MAGNUM OPUS COMPLIANT ==========
+    // Lombok generates: getShipmentStatus() / setShipmentStatus()
+    // Lombok generates: getCreatedDate() / setCreatedDate()
+    // Lombok generates: getLastUpdated() / setLastUpdated()
+    // No alias methods
+
+    // ========== BUSINESS METHODS ==========
+
     public boolean isDelivered() {
         return "DELIVERED".equals(shipmentStatus);
     }
@@ -218,12 +254,8 @@ public class Shipment {
 
         this.trackingHistory.add(tracking);
 
-        // Update shipment status and location
+        // Update shipment status
         this.shipmentStatus = status;
-        if (this.currentLocation != null) {
-            this.lastLocation = this.currentLocation;
-        }
-        this.currentLocation = location;
 
         // Mark as delivered if status is DELIVERED
         if ("DELIVERED".equals(status) && actualDeliveryDate == null) {
@@ -241,7 +273,7 @@ public class Shipment {
                 .orElse(null);
     }
 
-    // Utility method to convert LocalDate to LocalDateTime if needed
+    // Utility methods for LocalDate/LocalDateTime conversion
     public LocalDateTime getEstimatedDeliveryDateTime() {
         return estimatedDeliveryDate != null ? estimatedDeliveryDate.atStartOfDay() : null;
     }
@@ -265,7 +297,6 @@ public class Shipment {
                 ", trackingNumber='" + trackingNumber + '\'' +
                 ", carrier='" + carrier + '\'' +
                 ", status='" + shipmentStatus + '\'' +
-                ", currentLocation='" + currentLocation + '\'' +
                 ", estimatedDelivery=" + estimatedDeliveryDate +
                 '}';
     }

@@ -28,10 +28,10 @@ public class EmailStatusDto {
     private String emailType;
 
     // Timestamps
-    private LocalDateTime queuedAt;
-    private LocalDateTime sentAt;
-    private LocalDateTime deliveredAt;
-    private LocalDateTime failedAt;
+    private LocalDateTime queuedDate;
+    private LocalDateTime sentDate;
+    private LocalDateTime deliveredDate;
+    private LocalDateTime failedDate;
     private LocalDateTime lastStatusUpdate;
 
     // Delivery details
@@ -46,7 +46,7 @@ public class EmailStatusDto {
     private String complaintType;
 
     // Tracking (for v2.0)
-    // private LocalDateTime openedAt;
+    // private LocalDateTime openedDate;
     // private Integer openCount;
     // private List<ClickEvent> clicks;
     // private String userAgent;
@@ -59,7 +59,7 @@ public class EmailStatusDto {
 
     // Retry information
     private boolean canRetry;
-    private LocalDateTime nextRetryAt;
+    private LocalDateTime nextRetryDate;
     private Integer maxRetries;
 
     // Events history

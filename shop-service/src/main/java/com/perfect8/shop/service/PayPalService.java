@@ -25,6 +25,7 @@ import java.util.UUID;
  * In production, this would integrate with PayPal SDK.
  *
  * NO BACKWARD COMPATIBILITY - Using proper enums!
+ * FIXED: Uses createdDate/processedDate to match Payment entity (Magnum Opus)
  *
  * Version 2.0 will include:
  * - Full PayPal SDK integration
@@ -52,6 +53,7 @@ public class PayPalService {
 
     /**
      * Process payment through PayPal
+     * FIXED: Uses createdDate and processedDate
      */
     public PaymentResponseDTO processPayment(PaymentRequestDTO request) {
         log.info("Processing PayPal payment for amount: {}", request.getAmount());
@@ -76,7 +78,8 @@ public class PayPalService {
                         .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
                         .status("COMPLETED")
                         .message("Payment processed successfully")
-                        .processedAt(LocalDateTime.now())
+                        .createdDate(LocalDateTime.now())
+                        .processedDate(LocalDateTime.now())
                         .build();
             } else {
                 return PaymentResponseDTO.builder()
@@ -86,7 +89,7 @@ public class PayPalService {
                         .currency(request.getCurrency() != null ? request.getCurrency() : "USD")
                         .status("FAILED")
                         .message("Payment processing failed")
-                        .processedAt(LocalDateTime.now())
+                        .createdDate(LocalDateTime.now())
                         .build();
             }
 
@@ -98,7 +101,8 @@ public class PayPalService {
 
     /**
      * Create payment for an order
-     * FIXAT: Använder PaymentMethod och PaymentStatus enums!
+     * FIXED: Använder PaymentMethod och PaymentStatus enums!
+     * FIXED: Uses createdDate from Payment entity
      */
     public Payment createPayment(Order order, BigDecimal amount) {
         log.info("Creating PayPal payment for order: {}", order.getOrderNumber());
@@ -110,7 +114,7 @@ public class PayPalService {
             payment.setPaymentMethod(PaymentMethod.PAYPAL);  // ANVÄNDER ENUM!
             payment.setPaymentStatus(PaymentStatus.PENDING);  // RÄTT METODNAMN OCH ENUM!
             payment.setTransactionId(generateTransactionId());
-            payment.setCreatedAt(LocalDateTime.now());
+            payment.setCreatedDate(LocalDateTime.now());
 
             // In v1.0, we just return the payment object
             // In v2.0, this would create a PayPal order

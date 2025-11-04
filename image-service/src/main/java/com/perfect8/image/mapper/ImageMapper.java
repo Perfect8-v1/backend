@@ -1,6 +1,6 @@
 package com.perfect8.image.mapper;
 
-import com.perfect8.image.dto.ImageDto;
+import com.perfect8.image.dto.ImageDTO;
 import com.perfect8.image.enums.ImageSize;
 import com.perfect8.image.enums.ImageStatus;
 import com.perfect8.image.model.Image;
@@ -12,25 +12,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Mapper for converting between Image entity and ImageDto
+ * Mapper for converting between Image entity and ImageDTO
  * Version 1.0 - Simplified for core functionality
  *
  * Only maps fields that exist in both entity and DTO
  * Follows "Less Strings, More Objects" principle
+ * FIXED: createdAt/updatedAt → createdDate/updatedDate (matches Image entity)
  */
 @Component
 public class ImageMapper {
 
     /**
-     * Convert Image entity to ImageDto
+     * Convert Image entity to ImageDTO
      * Only maps fields that exist in the entity
      */
-    public ImageDto toDto(Image image) {
+    public ImageDTO toDto(Image image) {
         if (image == null) {
             return null;
         }
 
-        ImageDto dto = ImageDto.builder()
+        ImageDTO dto = ImageDTO.builder()
                 // Identification
                 .imageId(image.getImageId())
                 .originalFilename(image.getOriginalFilename())
@@ -73,9 +74,9 @@ public class ImageMapper {
                 .processingTimeMs(image.getProcessingTimeMs())
                 .errorMessage(image.getErrorMessage())
 
-                // Audit fields
-                .createdAt(image.getCreatedAt())
-                .updatedAt(image.getUpdatedAt())
+                // Audit fields - FIXED: Now uses correct field names from entity
+                .createdDate(image.getCreatedDate())  // FIXED: Was createdAt
+                .updatedDate(image.getUpdatedDate())  // FIXED: Was updatedAt
                 .build();
 
         // Set readable size (computed field)
@@ -85,16 +86,16 @@ public class ImageMapper {
     }
 
     /**
-     * Convert list of Image entities to list of ImageDto
+     * Convert list of Image entities to list of ImageDTO
      */
-    public List<ImageDto> toDtoList(List<Image> images) {
+    public List<ImageDTO> toDtoList(List<Image> images) {
         if (images == null) {
             return new ArrayList<>();
         }
 
-        List<ImageDto> dtos = new ArrayList<>();
+        List<ImageDTO> dtos = new ArrayList<>();
         for (Image image : images) {
-            ImageDto dto = toDto(image);
+            ImageDTO dto = toDto(image);
             if (dto != null) {
                 dtos.add(dto);
             }
@@ -103,10 +104,10 @@ public class ImageMapper {
     }
 
     /**
-     * Convert ImageDto to Image entity (for create/update operations)
+     * Convert ImageDTO to Image entity (for create/update operations)
      * Only sets fields that exist in the entity
      */
-    public Image toEntity(ImageDto dto) {
+    public Image toEntity(ImageDTO dto) {
         if (dto == null) {
             return null;
         }
@@ -145,9 +146,9 @@ public class ImageMapper {
                 .processingTimeMs(dto.getProcessingTimeMs())
                 .errorMessage(dto.getErrorMessage())
 
-                // Audit
-                .createdAt(dto.getCreatedAt())
-                .updatedAt(dto.getUpdatedAt())
+                // Audit - FIXED: Now uses correct field names from entity
+                .createdDate(dto.getCreatedDate())  // FIXED: Was createdAt
+                .updatedDate(dto.getUpdatedDate())  // FIXED: Was updatedAt
                 .build();
 
         return image;
@@ -156,12 +157,12 @@ public class ImageMapper {
     /**
      * Create a simplified DTO for list views
      */
-    public ImageDto toSimpleDto(Image image) {
+    public ImageDTO toSimpleDto(Image image) {
         if (image == null) {
             return null;
         }
 
-        return ImageDto.createSimple(
+        return ImageDTO.createSimple(
                 image.getImageId(),
                 image.getOriginalFilename(),
                 image.getBestAvailableUrl(),
@@ -172,12 +173,12 @@ public class ImageMapper {
     /**
      * Create thumbnail-only DTO
      */
-    public ImageDto toThumbnailDto(Image image) {
+    public ImageDTO toThumbnailDto(Image image) {
         if (image == null) {
             return null;
         }
 
-        return ImageDto.createThumbnail(
+        return ImageDTO.createThumbnail(
                 image.getImageId(),
                 image.getThumbnailUrl(),
                 image.getAltText()
@@ -211,7 +212,7 @@ public class ImageMapper {
      * Update existing entity with DTO values
      * Used for partial updates - only updates fields that exist in entity
      */
-    public void updateEntityFromDto(Image existingImage, ImageDto dto) {
+    public void updateEntityFromDto(Image existingImage, ImageDTO dto) {
         if (existingImage == null || dto == null) {
             return;
         }
@@ -237,8 +238,8 @@ public class ImageMapper {
     /**
      * Create DTO for error response
      */
-    public ImageDto createErrorDto(String errorMessage, String filename) {
-        return ImageDto.builder()
+    public ImageDTO createErrorDto(String errorMessage, String filename) {
+        return ImageDTO.builder()
                 .originalFilename(filename)
                 .imageStatus(ImageStatus.FAILED)
                 .errorMessage(errorMessage)
@@ -250,8 +251,8 @@ public class ImageMapper {
      * Create DTO with processing status
      * Used during upload/processing
      */
-    public ImageDto createProcessingDto(Long imageId, String filename) {
-        return ImageDto.builder()
+    public ImageDTO createProcessingDto(Long imageId, String filename) {
+        return ImageDTO.builder()
                 .imageId(imageId)
                 .originalFilename(filename)
                 .imageStatus(ImageStatus.PROCESSING)
@@ -264,7 +265,7 @@ public class ImageMapper {
      * Create DTO for successful upload
      * Simple version without computed fields
      */
-    public ImageDto createSuccessDto(Image image) {
+    public ImageDTO createSuccessDto(Image image) {
         // Just use the standard toDto method
         return toDto(image);
     }

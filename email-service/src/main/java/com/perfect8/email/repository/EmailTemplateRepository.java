@@ -1,6 +1,6 @@
 package com.perfect8.email.repository;
 
-import com.perfect8.email.entity.EmailTemplate;
+import com.perfect8.email.model.EmailTemplate;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,7 +20,8 @@ public interface EmailTemplateRepository extends JpaRepository<EmailTemplate, Lo
 
     List<EmailTemplate> findByActiveTrue();
 
-    List<EmailTemplate> findByTemplateName(String templateType);
+    // FIXED: Changed from findByTemplateName to findByName
+    List<EmailTemplate> findByName(String name);
 
     List<EmailTemplate> findByCategory(String category);
 

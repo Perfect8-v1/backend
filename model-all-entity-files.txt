@@ -1,0 +1,8 @@
+admin-service/src/main/java/com/perfect8/admin/model/AdminUser.java
+blog-service/src/main/java/com/perfect8/blog/model/ImageReference.java
+blog-service/src/main/java/com/perfect8/blog/model/Post.java
+blog-service/src/main/java/com/perfect8/blog/model/Role.java
+blog-service/src/main/java/com/perfect8/blog/model/User.java
+email-service/src/main/java/com/perfect8/email/model/EmailMessage.java
+email-service/src/main/java/com/perfect8/email/model/EmailTemplate.java
+image-service/src/main/java/com/perfect8/image/model/Image.java

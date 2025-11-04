@@ -17,6 +17,8 @@ import java.time.temporal.ChronoUnit;
  * Version 1.0 - Critical tracking and delivery information
  *
  * Accurate shipment tracking prevents customer anxiety and support calls!
+ * FIXED: Field names match Shipment.java entity exactly (Magnum Opus principle)
+ * FIXED: Changed timestamp field names to match entity convention (shippedDate, deliveredDate, lastUpdated)
  */
 @Data
 @Builder
@@ -28,8 +30,9 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Shipment ID - null for new shipments
+     * FIXED: Changed from 'id' to 'shipmentId' to match entity
      */
-    private Long id;
+    private Long shipmentId;
 
     /**
      * Associated order ID - Required
@@ -73,8 +76,9 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Ship date - When package left warehouse
+     * FIXED: Changed from 'shippedAt' to 'shippedDate' for consistency with entities (Magnum Opus principle)
      */
-    private LocalDateTime shippedAt;
+    private LocalDateTime shippedDate;
 
     /**
      * Estimated delivery date - Critical for customer expectations!
@@ -85,8 +89,9 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Actual delivery date
+     * FIXED: Changed from 'deliveredAt' to 'deliveredDate' for consistency with entities (Magnum Opus principle)
      */
-    private LocalDateTime deliveredAt;
+    private LocalDateTime deliveredDate;
 
     /**
      * Shipping cost
@@ -141,9 +146,23 @@ public class ShipmentDTO implements Serializable {
     private String shippingAddress;
 
     /**
-     * Structured shipping address ID (references AddressDTO)
+     * ADDED: Structured address fields matching Shipment.java entity
+     * Following Magnum Opus principle: SAME field names as entity
      */
-    private Long shippingAddressId;
+    @Size(max = 255, message = "Shipping street cannot exceed 255 characters")
+    private String shippingStreet;
+
+    @Size(max = 100, message = "Shipping city cannot exceed 100 characters")
+    private String shippingCity;
+
+    @Size(max = 50, message = "Shipping state cannot exceed 50 characters")
+    private String shippingState;
+
+    @Size(max = 20, message = "Shipping postal code cannot exceed 20 characters")
+    private String shippingPostalCode;
+
+    @Size(max = 50, message = "Shipping country cannot exceed 50 characters")
+    private String shippingCountry;
 
     /**
      * Current location/status from carrier
@@ -153,8 +172,9 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Last tracking update timestamp
+     * FIXED: Changed from 'lastTrackingUpdate' to 'lastUpdated' for consistency with entities (Magnum Opus principle)
      */
-    private LocalDateTime lastTrackingUpdate;
+    private LocalDateTime lastUpdated;
 
     /**
      * Delivery instructions - Important for successful delivery!
@@ -306,13 +326,14 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Get days in transit
+     * FIXED: Updated to use shippedDate and deliveredDate instead of shippedAt/deliveredAt
      */
     public Long getDaysInTransit() {
-        if (shippedAt == null) {
+        if (shippedDate == null) {
             return 0L;
         }
-        LocalDateTime endDate = deliveredAt != null ? deliveredAt : LocalDateTime.now();
-        return ChronoUnit.DAYS.between(shippedAt, endDate);
+        LocalDateTime endDate = deliveredDate != null ? deliveredDate : LocalDateTime.now();
+        return ChronoUnit.DAYS.between(shippedDate, endDate);
     }
 
     /**
@@ -405,13 +426,14 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Validate that delivered date is after shipped date
+     * FIXED: Updated to use shippedDate and deliveredDate instead of shippedAt/deliveredAt
      */
     @AssertTrue(message = "Delivered date must be after shipped date")
     private boolean isDeliveryDateValid() {
-        if (deliveredAt == null || shippedAt == null) {
+        if (deliveredDate == null || shippedDate == null) {
             return true;
         }
-        return deliveredAt.isAfter(shippedAt);
+        return deliveredDate.isAfter(shippedDate);
     }
 
     /**

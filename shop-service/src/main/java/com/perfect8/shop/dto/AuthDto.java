@@ -11,11 +11,18 @@ import lombok.NoArgsConstructor;
 /**
  * Authentication DTOs - Version 1.0
  * Contains all authentication-related data transfer objects
+ *
+ * PEDAGOGICAL NOTE for GitHub portfolio:
+ * Uses 'passwordHash' instead of 'password' to make it clear that passwords
+ * are ALREADY HASHED by the frontend before transmission.
+ * This demonstrates security awareness and prevents misconceptions about
+ * sending plaintext passwords over the network.
  */
 public class AuthDto {
 
     /**
      * Login Request DTO
+     * SECURITY: passwordHash is hashed on client-side before transmission
      */
     @Data
     @Builder
@@ -27,14 +34,15 @@ public class AuthDto {
         @Email(message = "Email should be valid")
         private String email;
 
-        @NotBlank(message = "Password is required")
-        private String password;
+        @NotBlank(message = "Password hash is required")
+        private String passwordHash;  // CHANGED: password → passwordHash (pedagogical clarity)
 
         private boolean rememberMe;
     }
 
     /**
      * Register Request DTO
+     * SECURITY: passwordHash is hashed on client-side before transmission
      */
     @Data
     @Builder
@@ -46,9 +54,9 @@ public class AuthDto {
         @Email(message = "Email should be valid")
         private String email;
 
-        @NotBlank(message = "Password is required")
+        @NotBlank(message = "Password hash is required")
         @Size(min = 8, message = "Password must be at least 8 characters")
-        private String password;
+        private String passwordHash;  // CHANGED: password → passwordHash (pedagogical clarity)
 
         @NotBlank(message = "First name is required")
         @Size(max = 50, message = "First name must not exceed 50 characters")
@@ -58,8 +66,8 @@ public class AuthDto {
         @Size(max = 50, message = "Last name must not exceed 50 characters")
         private String lastName;
 
-        @Size(max = 20, message = "Phone number must not exceed 20 characters")
-        private String phoneNumber;
+        @Size(max = 20, message = "Phone must not exceed 20 characters")
+        private String phone;  // FIXED: phoneNumber → phone (matches Customer.phone)
 
         private boolean newsletterSubscribed;
         private boolean acceptTerms;
@@ -87,6 +95,7 @@ public class AuthDto {
 
     /**
      * Change Password Request DTO
+     * SECURITY: All password fields are hashed on client-side
      */
     @Data
     @Builder
@@ -94,15 +103,15 @@ public class AuthDto {
     @AllArgsConstructor
     public static class ChangePasswordRequest {
 
-        @NotBlank(message = "Current password is required")
-        private String oldPassword;
+        @NotBlank(message = "Current password hash is required")
+        private String oldPasswordHash;  // CHANGED: oldPassword → oldPasswordHash
 
-        @NotBlank(message = "New password is required")
+        @NotBlank(message = "New password hash is required")
         @Size(min = 8, message = "Password must be at least 8 characters")
-        private String newPassword;
+        private String newPasswordHash;  // CHANGED: newPassword → newPasswordHash
 
-        @NotBlank(message = "Confirm password is required")
-        private String confirmPassword;
+        @NotBlank(message = "Confirm password hash is required")
+        private String confirmPasswordHash;  // CHANGED: confirmPassword → confirmPasswordHash
     }
 
     /**
@@ -121,6 +130,7 @@ public class AuthDto {
 
     /**
      * Reset Password Confirm DTO
+     * SECURITY: Password hashes sent from client
      */
     @Data
     @Builder
@@ -131,12 +141,12 @@ public class AuthDto {
         @NotBlank(message = "Token is required")
         private String token;
 
-        @NotBlank(message = "New password is required")
+        @NotBlank(message = "New password hash is required")
         @Size(min = 8, message = "Password must be at least 8 characters")
-        private String newPassword;
+        private String newPasswordHash;  // CHANGED: newPassword → newPasswordHash
 
-        @NotBlank(message = "Confirm password is required")
-        private String confirmPassword;
+        @NotBlank(message = "Confirm password hash is required")
+        private String confirmPasswordHash;  // CHANGED: confirmPassword → confirmPasswordHash
     }
 
     /**

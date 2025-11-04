@@ -2,7 +2,6 @@ package com.perfect8.blog.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,7 +12,7 @@ import java.util.Date;
 
 /**
  * JWT Token Provider for blog-service
- * Updated for JJWT 0.11.5 API compatibility
+ * Updated for JJWT 0.12.3 API compatibility
  */
 @Slf4j
 @Component
@@ -26,7 +25,7 @@ public class JwtTokenProvider {
     private long jwtExpirationInMs;
 
     private SecretKey getSigningKey() {
-        // For JJWT 0.11.5, we need at least 256-bit key for HS256
+        // For JJWT 0.12.3, we need at least 256-bit key for HS256
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
@@ -38,10 +37,10 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtExpirationInMs);
 
         return Jwts.builder()
-                .setSubject(username)  // FIXED: Changed from .subject() to .setSubject()
-                .setIssuedAt(now)
-                .setExpiration(expiryDate)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .subject(username)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -49,11 +48,11 @@ public class JwtTokenProvider {
      * Get username from JWT token
      */
     public String getUsernameFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()  // FIXED: Using parserBuilder() for 0.11.5
-                .setSigningKey(getSigningKey())   // FIXED: Changed from .verifyWith() to .setSigningKey()
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims.getSubject();
     }
@@ -63,10 +62,10 @@ public class JwtTokenProvider {
      */
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parserBuilder()  // FIXED: Using parserBuilder() for 0.11.5
-                    .setSigningKey(getSigningKey())  // FIXED: Changed from .verifyWith() to .setSigningKey()
+            Jwts.parser()
+                    .verifyWith(getSigningKey())
                     .build()
-                    .parseClaimsJws(authToken);
+                    .parseSignedClaims(authToken);
             return true;
         } catch (io.jsonwebtoken.security.SecurityException |
                  io.jsonwebtoken.MalformedJwtException ex) {
@@ -85,11 +84,11 @@ public class JwtTokenProvider {
      * Get token expiration date
      */
     public Date getExpirationDateFromToken(String token) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getSigningKey())
+        Claims claims = Jwts.parser()
+                .verifyWith(getSigningKey())
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims.getExpiration();
     }

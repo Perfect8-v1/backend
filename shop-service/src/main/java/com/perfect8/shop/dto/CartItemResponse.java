@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 /**
  * Response DTO for individual cart items.
  * Used in CartResponse to represent items in the shopping cart.
+ * FIXED: Changed 'id' to 'cartItemId' (Magnum Opus principle)
  */
 @Data
 @Builder
@@ -19,8 +20,9 @@ public class CartItemResponse {
 
     /**
      * Cart item ID
+     * FIXED: Changed from 'id' to 'cartItemId' for clarity (Magnum Opus principle)
      */
-    private Long id;
+    private Long cartItemId;
 
     /**
      * Product ID

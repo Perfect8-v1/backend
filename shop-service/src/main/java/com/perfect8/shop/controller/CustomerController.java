@@ -25,6 +25,8 @@ import java.util.List;
  * REST controller for customer management.
  * Version 1.0 - Core functionality only
  * FIXED: Returns DTOs not Entities!
+ * FIXED: All @PathVariable parameters use descriptive names (customerId instead of id) - Magnum Opus principle
+ * FIXED: Sort field names match entity convention (createdDate instead of createdAt) - Magnum Opus principle
  */
 @RestController
 @RequestMapping("/api/customers")
@@ -181,12 +183,13 @@ public class CustomerController {
     /**
      * Get customer by ID - Core functionality
      * FIXED: Returns CustomerDTO not Customer entity
+     * FIXED: Changed @PathVariable from 'id' to 'customerId' (Magnum Opus principle)
      */
-    @GetMapping("/{id}")
+    @GetMapping("/{customerId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CustomerDTO>> getCustomerById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CustomerDTO>> getCustomerById(@PathVariable Long customerId) {
         try {
-            CustomerDTO customer = customerService.getCustomerById(id);
+            CustomerDTO customer = customerService.getCustomerById(customerId);
 
             ApiResponse<CustomerDTO> response = new ApiResponse<>(
                     "Customer retrieved successfully",
@@ -208,13 +211,14 @@ public class CustomerController {
     /**
      * Get all customers with pagination - Core functionality
      * FIXED: Returns Page<CustomerDTO> not Page<Customer>
+     * FIXED: Changed default sortBy from 'createdAt' to 'createdDate' to match entity (Magnum Opus principle)
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<CustomerDTO>>> getAllCustomers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "createdDate") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             Sort sort = sortDir.equalsIgnoreCase("desc")
@@ -244,6 +248,7 @@ public class CustomerController {
     /**
      * Search customers - Core functionality
      * FIXED: Returns Page<CustomerDTO> not Page<Customer>
+     * FIXED: Changed default sortBy from 'createdAt' to 'createdDate' to match entity (Magnum Opus principle)
      */
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
@@ -253,7 +258,7 @@ public class CustomerController {
             @RequestParam(required = false) String phone,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "createdDate") String sortBy,
             @RequestParam(defaultValue = "desc") String sortDir) {
         try {
             Sort sort = sortDir.equalsIgnoreCase("desc")
@@ -283,14 +288,15 @@ public class CustomerController {
     /**
      * Update customer by ID - Core functionality
      * FIXED: Returns CustomerDTO not Customer entity
+     * FIXED: Changed @PathVariable from 'id' to 'customerId' (Magnum Opus principle)
      */
-    @PutMapping("/{id}")
+    @PutMapping("/{customerId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CustomerDTO>> updateCustomer(
-            @PathVariable Long id,
+            @PathVariable Long customerId,
             @Valid @RequestBody CustomerUpdateDTO updateDTO) {
         try {
-            CustomerDTO updatedCustomer = customerService.updateCustomer(id, updateDTO);
+            CustomerDTO updatedCustomer = customerService.updateCustomer(customerId, updateDTO);
 
             ApiResponse<CustomerDTO> response = new ApiResponse<>(
                     "Customer updated successfully",
@@ -312,12 +318,13 @@ public class CustomerController {
     /**
      * Activate/Deactivate customer - Core functionality
      * FIXED: Returns CustomerDTO not Customer entity
+     * FIXED: Changed @PathVariable from 'id' to 'customerId' (Magnum Opus principle)
      */
-    @PutMapping("/{id}/status")
+    @PutMapping("/{customerId}/status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CustomerDTO>> toggleCustomerStatus(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<CustomerDTO>> toggleCustomerStatus(@PathVariable Long customerId) {
         try {
-            CustomerDTO customer = customerService.toggleCustomerStatus(id);
+            CustomerDTO customer = customerService.toggleCustomerStatus(customerId);
             String status = customer.isActive() ? "activated" : "deactivated";
 
             ApiResponse<CustomerDTO> response = new ApiResponse<>(

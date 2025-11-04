@@ -1,6 +1,7 @@
 package com.perfect8.shop.security;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,11 +24,12 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * Security Configuration for Shop Service
- * Version 1.0 - Core security setup without metrics/analytics endpoints
+ * Version 1.0 - Core security setup with versioned API endpoints
+ * FIXED: Added @Qualifier for UserDetailsService (located in service package)
+ * FIXED: Public endpoints FIRST in chain to prevent 403
  */
 @Configuration
 @EnableWebSecurity
@@ -36,6 +38,8 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Qualifier("customerUserDetailsService")
     private final UserDetailsService userDetailsService;
 
     /**
@@ -57,7 +61,35 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(authorize -> authorize
-                        // Public endpoints - no authentication required
+                        // CRITICAL: Public endpoints MUST BE FIRST!
+                        // Order matters in Spring Security filter chain
+
+                        // Health check endpoints
+                        .requestMatchers(
+                                "/api/health",
+                                "/actuator/health",
+                                "/actuator/health/**"
+                        ).permitAll()
+
+                        // Public product endpoints - v1 API (GET only, specific paths)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/products",                          // List all products
+                                "/api/v1/products/{productId}",              // Get by ID
+                                "/api/v1/products/search",                   // Search products
+                                "/api/v1/products/category/{categoryId}",    // By category
+                                "/api/v1/products/featured",                 // Featured products
+                                "/api/v1/products/new"                       // New products
+                        ).permitAll()
+
+                        // Public category endpoints - v1 API (GET only, specific paths)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/v1/categories",                        // List all categories
+                                "/api/v1/categories/{categoryId}",           // Get by ID
+                                "/api/v1/categories/tree",                   // Category tree
+                                "/api/v1/categories/{categoryId}/products"   // Products in category
+                        ).permitAll()
+
+                        // Public auth endpoints - no authentication required
                         .requestMatchers(
                                 "/api/auth/login",
                                 "/api/auth/register",
@@ -66,57 +98,36 @@ public class SecurityConfig {
                                 "/api/auth/reset-password"
                         ).permitAll()
 
-                        // Public product endpoints
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/products",
-                                "/api/products/{productId}",
-                                "/api/products/search",
-                                "/api/products/category/**"
-                        ).permitAll()
+                        // Cart endpoints - v1 API - authenticated users only
+                        .requestMatchers("/api/v1/cart/**").authenticated()
 
-                        // Public category endpoints
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/categories",
-                                "/api/categories/{categoryId}",
-                                "/api/categories/tree"
-                        ).permitAll()
+                        // Customer endpoints - v1 API - authenticated users only
+                        .requestMatchers("/api/v1/customers/**").authenticated()
 
-                        // Health check endpoints
-                        .requestMatchers(
-                                "/api/health",
-                                "/actuator/health"
-                        ).permitAll()
+                        // Order endpoints - v1 API - authenticated users only
+                        .requestMatchers("/api/v1/orders/**").authenticated()
 
-                        // Cart endpoints - authenticated users only
-                        .requestMatchers("/api/cart/**").authenticated()
+                        // Payment endpoints - v1 API - authenticated users only
+                        .requestMatchers("/api/v1/payments/**").authenticated()
 
-                        // Customer endpoints - authenticated users only
-                        .requestMatchers("/api/customers/**").authenticated()
-
-                        // Order endpoints - authenticated users only
-                        .requestMatchers("/api/orders/**").authenticated()
-
-                        // Payment endpoints - authenticated users only
-                        .requestMatchers("/api/payments/**").authenticated()
-
-                        // Shipment endpoints - authenticated users only
-                        .requestMatchers("/api/shipments/**").authenticated()
+                        // Shipment endpoints - v1 API - authenticated users only
+                        .requestMatchers("/api/v1/shipments/**").authenticated()
 
                         // Admin endpoints - require ADMIN role
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                        // Product management - require ADMIN role
-                        .requestMatchers(HttpMethod.POST, "/api/products").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("ADMIN")
+                        // Product management - v1 API - require ADMIN role
+                        .requestMatchers(HttpMethod.POST, "/api/v1/products").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/products/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/products/**").hasRole("ADMIN")
 
-                        // Category management - require ADMIN role
-                        .requestMatchers(HttpMethod.POST, "/api/categories").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
+                        // Category management - v1 API - require ADMIN role
+                        .requestMatchers(HttpMethod.POST, "/api/v1/categories").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/categories/**").hasRole("ADMIN")
 
-                        // Inventory management - require ADMIN role
-                        .requestMatchers("/api/inventory/**").hasRole("ADMIN")
+                        // Inventory management - v1 API - require ADMIN role
+                        .requestMatchers("/api/v1/inventory/**").hasRole("ADMIN")
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
@@ -140,10 +151,12 @@ public class SecurityConfig {
 
         // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",  // React development
-                "http://localhost:4200",  // Angular development
-                "http://localhost:8080"   // Local testing
-                // Add production URLs here
+                "http://localhost:3000",      // React development
+                "http://localhost:4200",      // Angular development
+                "http://localhost:8080",      // Local testing
+                "http://localhost:5500",      // Flutter web dev
+                "http://cmagnusb.org",        // Production
+                "http://perfect8alpine.rantila.com"  // Production server
         ));
 
         // Allow methods
@@ -211,13 +224,13 @@ public class SecurityConfig {
     // Version 2.0 - Commented out for future implementation
     /*
     // Analytics endpoints - to be added in version 2.0
-    .requestMatchers("/api/analytics/**").hasRole("ADMIN")
-    .requestMatchers("/api/metrics/**").hasRole("ADMIN")
-    .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
-    .requestMatchers("/api/reports/**").hasRole("ADMIN")
+    .requestMatchers("/api/v1/analytics/**").hasRole("ADMIN")
+    .requestMatchers("/api/v1/metrics/**").hasRole("ADMIN")
+    .requestMatchers("/api/v1/dashboard/**").hasRole("ADMIN")
+    .requestMatchers("/api/v1/reports/**").hasRole("ADMIN")
 
     // Coupon endpoints - to be added in version 2.0
-    .requestMatchers("/api/coupons/**").authenticated()
+    .requestMatchers("/api/v1/coupons/**").authenticated()
 
     // Performance monitoring endpoints - to be added in version 2.0
     .requestMatchers("/actuator/**").hasRole("ADMIN")

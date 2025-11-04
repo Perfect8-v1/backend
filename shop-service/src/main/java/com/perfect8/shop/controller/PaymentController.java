@@ -33,6 +33,8 @@ import java.util.Map;
  * - Process refunds
  * - Retry failed payments
  * - Cancel pending payments
+ *
+ * FIXED: Helper method uses getCustomerIdFromToken() for consistency (Magnum Opus principle)
  */
 @Slf4j
 @RestController
@@ -388,10 +390,14 @@ public class PaymentController {
 
     // Helper methods
 
+    /**
+     * Get customer ID from JWT token
+     * FIXED: Changed from getUserIdFromToken() to getCustomerIdFromToken() for consistency (Magnum Opus principle)
+     */
     private Long getCurrentCustomerId(HttpServletRequest request) {
         String token = jwtTokenProvider.resolveToken(request);
         if (token != null && jwtTokenProvider.validateToken(token)) {
-            return jwtTokenProvider.getUserIdFromToken(token);
+            return jwtTokenProvider.getCustomerIdFromToken(token);
         }
         throw new RuntimeException("Unable to determine customer ID from token");
     }

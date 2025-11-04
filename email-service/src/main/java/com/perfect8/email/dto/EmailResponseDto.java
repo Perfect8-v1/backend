@@ -28,7 +28,7 @@ public class EmailResponseDto {
     // Status
     private EmailStatus status;  // SENT, FAILED, QUEUED
     private String statusMessage;
-    private LocalDateTime sentAt;
+    private LocalDateTime sentDate;
 
     // Felhantering (om något går fel)
     private String errorMessage;
@@ -46,7 +46,7 @@ public class EmailResponseDto {
                 .subject(subject)
                 .status(EmailStatus.SENT)
                 .statusMessage("Email sent successfully via Gmail")
-                .sentAt(LocalDateTime.now())
+                .sentDate(LocalDateTime.now())
                 .build();
     }
 
