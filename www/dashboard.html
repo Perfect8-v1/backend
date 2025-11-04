@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfect8 - Services Status & API Testing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-12 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-6xl font-bold mb-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                Perfect8
+            </h1>
+            <p class="text-2xl text-gray-400 mb-2">Microservices Architecture - Version 1.0</p>
+            <p class="text-sm text-gray-500">Spring Boot 3.4.1 • Java 21 • MariaDB 11 • Alpine Linux</p>
+            <div class="mt-6">
+                <button onclick="checkAllServices()" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition">
+                    🔄 Refresh All Status
+                </button>
+            </div>
+        </div>
+
+        <!-- System Status Overview -->
+        <div class="bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg p-6 mb-12 border border-blue-700">
+            <div class="grid md:grid-cols-3 gap-4 text-center">
+                <div>
+                    <div class="text-3xl font-bold text-green-400" id="services-up">0</div>
+                    <div class="text-sm text-gray-300">Services Online</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-yellow-400" id="services-checking">6</div>
+                    <div class="text-sm text-gray-300">Checking...</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-red-400" id="services-down">0</div>
+                    <div class="text-sm text-gray-300">Services Down</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid md:grid-cols-4 gap-4 mb-12">
+            <a href="#services" class="bg-blue-800 hover:bg-blue-700 p-6 rounded-lg text-center transition">
+                <div class="text-4xl mb-2">🚀</div>
+                <div class="font-semibold">Services</div>
+                <div class="text-sm text-gray-300">6 Microservices</div>
+            </a>
+            <a href="#api" class="bg-purple-800 hover:bg-purple-700 p-6 rounded-lg text-center transition">
+                <div class="text-4xl mb-2">📡</div>
+                <div class="font-semibold">API Testing</div>
+                <div class="text-sm text-gray-300">Live Endpoints</div>
+            </a>
+            <a href="#tech" class="bg-green-800 hover:bg-green-700 p-6 rounded-lg text-center transition">
+                <div class="text-4xl mb-2">⚙️</div>
+                <div class="font-semibold">Tech Stack</div>
+                <div class="text-sm text-gray-300">Technologies</div>
+            </a>
+            <a href="https://github.com/Perfect8-v1/backend" target="_blank" class="bg-gray-800 hover:bg-gray-700 p-6 rounded-lg text-center transition">
+                <div class="text-4xl mb-2">📚</div>
+                <div class="font-semibold">GitHub</div>
+                <div class="text-sm text-gray-300">Source Code</div>
+            </a>
+        </div>
+
+        <!-- Services Status -->
+        <div id="services" class="mb-12">
+            <h2 class="text-4xl font-bold mb-6 flex items-center">
+                <span class="mr-3">🔧</span>
+                Services Status
+            </h2>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- MySQL -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center flex-1">
+                            <span class="text-4xl mr-4">🗄️</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">MySQL Database</h3>
+                                <p class="text-sm text-gray-400">MySQL 8.0</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="mysql">
+                            <span class="status-dot bg-yellow-500 pulse"></span>
+                            <span class="text-sm status-text">Checking...</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 space-y-1">
+                        <div>📍 Port: 3306 (Internal)</div>
+                        <div>💾 Database: perfect8_shop, perfect8_blog, perfect8_admin</div>
+                        <div class="text-xs text-gray-500 mt-2">⚠️ Internal service - no direct health endpoint</div>
+                    </div>
+                </div>
+
+                <!-- Admin Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center flex-1">
+                            <span class="text-4xl mr-4">🔐</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Admin Service</h3>
+                                <p class="text-sm text-gray-400">Authentication & Authorization</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="admin">
+                            <span class="status-dot bg-yellow-500 pulse"></span>
+                            <span class="text-sm status-text">Checking...</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 space-y-1">
+                        <div>📍 Port: 8081</div>
+                        <div>🔗 Path: <code class="bg-gray-900 px-2 py-1 rounded text-xs">/admin/</code></div>
+                        <div>❤️ Health: <a href="/admin/actuator/health" class="text-blue-400 hover:underline">/admin/actuator/health</a></div>
+                    </div>
+                </div>
+
+                <!-- Blog Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center flex-1">
+                            <span class="text-4xl mr-4">📝</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Blog Service</h3>
+                                <p class="text-sm text-gray-400">Content Management System</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="blog">
+                            <span class="status-dot bg-yellow-500 pulse"></span>
+                            <span class="text-sm status-text">Checking...</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 space-y-1">
+                        <div>📍 Port: 8082</div>
+                        <div>🔗 Path: <code class="bg-gray-900 px-2 py-1 rounded text-xs">/blog/</code></div>
+                        <div>❤️ Health: <a href="/blog/actuator/health" class="text-blue-400 hover:underline">/blog/actuator/health</a></div>
+                    </div>
+                </div>
+
+                <!-- Email Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-purple-500 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center flex-1">
+                            <span class="text-4xl mr-4">📧</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Email Service</h3>
+                                <p class="text-sm text-gray-400">Notifications & Templates</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="email">
+                            <span class="status-dot bg-gray-500"></span>
+                            <span class="text-sm status-text">Internal</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 space-y-1">
+                        <div>📍 Port: 8083 (Internal Only)</div>
+                        <div class="text-xs text-gray-500 mt-2">⚠️ Not exposed via Nginx - internal microservice communication only</div>
+                        <div class="text-xs text-gray-500">Called by shop-service, blog-service via REST</div>
+                    </div>
+                </div>
+
+                <!-- Image Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center flex-1">
+                            <span class="text-4xl mr-4">🖼️</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Image Service</h3>
+                                <p class="text-sm text-gray-400">Media Processing & Storage</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="image">
+                            <span class="status-dot bg-yellow-500 pulse"></span>
+                            <span class="text-sm status-text">Checking...</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 space-y-1">
+                        <div>📍 Port: 8084</div>
+                        <div>🔗 Path: <code class="bg-gray-900 px-2 py-1 rounded text-xs">/images/</code></div>
+                        <div>❤️ Health: <a href="/images/actuator/health" class="text-blue-400 hover:underline">/images/actuator/health</a></div>
+                    </div>
+                </div>
+
+                <!-- Shop Service -->
+                <div class="bg-gray-800 rounded-lg p-6 border border-gray-700 hover:border-blue-500 transition">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center flex-1">
+                            <span class="text-4xl mr-4">🛒</span>
+                            <div>
+                                <h3 class="text-xl font-semibold">Shop Service</h3>
+                                <p class="text-sm text-gray-400">E-Commerce Core</p>
+                            </div>
+                        </div>
+                        <div class="status-indicator" data-service="shop">
+                            <span class="status-dot bg-yellow-500 pulse"></span>
+                            <span class="text-sm status-text">Checking...</span>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 space-y-1">
+                        <div>📍 Port: 8085</div>
+                        <div>🔗 Path: <code class="bg-gray-900 px-2 py-1 rounded text-xs">/api/v1/</code></div>
+                        <div>❤️ Health: <a href="/health/" class="text-blue-400 hover:underline">/health/</a></div>
+                        <div class="text-xs text-green-400 mt-2">⚡ 100+ REST endpoints</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Endpoint Testing -->
+        <div id="api" class="mb-12">
+            <h2 class="text-4xl font-bold mb-6 flex items-center">
+                <span class="mr-3">📡</span>
+                API Endpoint Testing
+            </h2>
+            
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <div class="mb-4 flex justify-between items-center">
+                    <p class="text-gray-300">Test individual endpoints or run all tests at once</p>
+                    <button onclick="testAllEndpoints()" 
+                            class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-semibold transition">
+                        🚀 Test All Endpoints
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Health Endpoints -->
+                    <div class="border-t border-gray-700 pt-4">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-400">🏥 Health Check Endpoints</h3>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Shop Service Health</div>
+                                        <code class="text-green-400 text-sm">GET /health/</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/health/', 'shop-health')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-shop-health" class="hidden mt-2 text-xs"></div>
+                            </div>
+
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Admin Service Health</div>
+                                        <code class="text-green-400 text-sm">GET /admin/actuator/health</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/admin/actuator/health', 'admin-health')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-admin-health" class="hidden mt-2 text-xs"></div>
+                            </div>
+
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Blog Service Health</div>
+                                        <code class="text-green-400 text-sm">GET /blog/actuator/health</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/blog/actuator/health', 'blog-health')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-blog-health" class="hidden mt-2 text-xs"></div>
+                            </div>
+
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Image Service Health</div>
+                                        <code class="text-green-400 text-sm">GET /images/actuator/health</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/images/actuator/health', 'image-health')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-image-health" class="hidden mt-2 text-xs"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shop Service Endpoints -->
+                    <div class="border-t border-gray-700 pt-4">
+                        <h3 class="text-xl font-semibold mb-3 text-purple-400">🛒 Shop Service - Public Endpoints</h3>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Get All Products</div>
+                                        <code class="text-blue-400 text-sm">GET /api/v1/products</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/api/v1/products', 'products')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-products" class="hidden mt-2 text-xs"></div>
+                            </div>
+
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Get All Categories</div>
+                                        <code class="text-blue-400 text-sm">GET /api/v1/categories</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/api/v1/categories', 'categories')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-categories" class="hidden mt-2 text-xs"></div>
+                            </div>
+
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Get Category Tree</div>
+                                        <code class="text-blue-400 text-sm">GET /api/v1/categories/tree</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/api/v1/categories/tree', 'categories-tree')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-categories-tree" class="hidden mt-2 text-xs"></div>
+                            </div>
+
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Search Products</div>
+                                        <code class="text-blue-400 text-sm">GET /api/v1/products/search?keyword=test</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/api/v1/products/search?keyword=test', 'products-search')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-products-search" class="hidden mt-2 text-xs"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Blog Service Endpoints -->
+                    <div class="border-t border-gray-700 pt-4">
+                        <h3 class="text-xl font-semibold mb-3 text-yellow-400">📝 Blog Service - Public Endpoints</h3>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-gray-900 rounded p-3">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div class="flex-1">
+                                        <div class="text-xs text-gray-500 mb-1">Get Published Blog Posts (Public)</div>
+                                        <code class="text-purple-400 text-sm">GET /blog/api/posts/public</code>
+                                    </div>
+                                    <button onclick="testEndpoint('/blog/api/posts/public', 'blog-posts')" 
+                                            class="bg-blue-600 hover:bg-blue-700 px-4 py-1 rounded text-sm transition">
+                                        Test
+                                    </button>
+                                </div>
+                                <div id="result-blog-posts" class="hidden mt-2 text-xs"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Service Endpoints -->
+                    <div class="border-t border-gray-700 pt-4">
+                        <h3 class="text-xl font-semibold mb-3 text-pink-400">🖼️ Image Service - Info</h3>
+                        
+                        <div class="bg-gray-900 rounded p-3">
+                            <div class="text-sm text-gray-300 mb-2">
+                                <strong>Upload Endpoint:</strong> <code class="text-pink-400">POST /images/upload</code>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ⚠️ Requires multipart/form-data with image file. Use Postman or curl for testing uploads.
+                            </div>
+                            <div class="mt-2 text-xs text-gray-400">
+                                Example curl command:<br>
+                                <code class="bg-gray-800 p-2 mt-1 block rounded">
+                                curl -X POST -F "file=@image.jpg" http://localhost/images/upload
+                                </code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tech Stack -->
+        <div id="tech" class="mb-12">
+            <h2 class="text-4xl font-bold mb-6 flex items-center">
+                <span class="mr-3">⚙️</span>
+                Technology Stack
+            </h2>
+            
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-orange-500 transition">
+                    <div class="text-4xl mb-3">☕</div>
+                    <div class="font-semibold text-lg">Java 21</div>
+                    <div class="text-xs text-gray-400">LTS Version</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-green-500 transition">
+                    <div class="text-4xl mb-3">🍃</div>
+                    <div class="font-semibold text-lg">Spring Boot</div>
+                    <div class="text-xs text-gray-400">3.4.1</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-blue-500 transition">
+                    <div class="text-4xl mb-3">🗄️</div>
+                    <div class="font-semibold text-lg">MySQL</div>
+                    <div class="text-xs text-gray-400">8.0</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-purple-500 transition">
+                    <div class="text-4xl mb-3">🐳</div>
+                    <div class="font-semibold text-lg">Docker</div>
+                    <div class="text-xs text-gray-400">Ubuntu Server</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-red-500 transition">
+                    <div class="text-4xl mb-3">📦</div>
+                    <div class="font-semibold text-lg">Maven</div>
+                    <div class="text-xs text-gray-400">Multi-module</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-yellow-500 transition">
+                    <div class="text-4xl mb-3">🔐</div>
+                    <div class="font-semibold text-lg">JWT</div>
+                    <div class="text-xs text-gray-400">0.12.3 API</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-blue-500 transition">
+                    <div class="text-4xl mb-3">🌐</div>
+                    <div class="font-semibold text-lg">Nginx</div>
+                    <div class="text-xs text-gray-400">Reverse Proxy</div>
+                </div>
+                <div class="bg-gray-800 rounded-lg p-6 text-center border border-gray-700 hover:border-cyan-500 transition">
+                    <div class="text-4xl mb-3">🦋</div>
+                    <div class="font-semibold text-lg">Flutter</div>
+                    <div class="text-xs text-gray-400">Coming Soon</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Architecture Diagram -->
+        <div class="mb-12">
+            <h2 class="text-4xl font-bold mb-6 flex items-center">
+                <span class="mr-3">🏗️</span>
+                Architecture Overview
+            </h2>
+            
+            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-blue-600 px-4 py-2 rounded font-semibold">Flutter Client</div>
+                        <span>→</span>
+                        <div class="bg-purple-600 px-4 py-2 rounded font-semibold">Nginx</div>
+                        <span>→</span>
+                        <div class="flex-1 space-y-2">
+                            <div class="bg-green-600 px-3 py-1 rounded text-sm">Admin Service (8081)</div>
+                            <div class="bg-green-600 px-3 py-1 rounded text-sm">Blog Service (8082)</div>
+                            <div class="bg-green-600 px-3 py-1 rounded text-sm">Shop Service (8085)</div>
+                            <div class="bg-green-600 px-3 py-1 rounded text-sm">Image Service (8084)</div>
+                        </div>
+                        <span>→</span>
+                        <div class="bg-orange-600 px-4 py-2 rounded font-semibold">MariaDB</div>
+                    </div>
+                    <div class="text-sm text-gray-400 mt-4">
+                        <strong>Internal Communication:</strong> Email Service (8083) is called by other services via REST
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-gray-500 text-sm border-t border-gray-700 pt-8">
+            <p class="mb-2">Perfect8 v1.0 • Built with Spring Boot • Deployed on Ubuntu Server</p>
+            <p>© 2025 C Magnus Berglund och Jonatan Håkansson • MIT License</p>
+            <p class="mt-4">
+                <a href="https://github.com/Perfect8-v1/backend" target="_blank" class="text-blue-400 hover:underline">
+                    View on GitHub →
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <!-- JavaScript for Status Checking and API Testing -->
+    <script>
+        // Endpoint configurations
+        const endpoints = {
+            health: [
+                { url: '/health/', id: 'shop-health', service: 'shop' },
+                { url: '/admin/actuator/health', id: 'admin-health', service: 'admin' },
+                { url: '/blog/actuator/health', id: 'blog-health', service: 'blog' },
+                { url: '/images/actuator/health', id: 'image-health', service: 'image' }
+            ],
+            api: [
+                { url: '/api/v1/products', id: 'products' },
+                { url: '/api/v1/categories', id: 'categories' },
+                { url: '/api/v1/categories/tree', id: 'categories-tree' },
+                { url: '/api/v1/products/search?keyword=test', id: 'products-search' },
+                { url: '/blog/api/posts/public', id: 'blog-posts' }
+            ]
+        };
+
+        // Test individual endpoint
+        async function testEndpoint(url, resultId) {
+            const resultDiv = document.getElementById(`result-${resultId}`);
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<span class="text-yellow-400">⏳ Testing...</span>';
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                const duration = Date.now() - startTime;
+                
+                let displayData;
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    const jsonData = await response.json();
+                    displayData = JSON.stringify(jsonData, null, 2);
+                } else {
+                    displayData = await response.text();
+                }
+                
+                if (response.ok) {
+                    // Truncate long responses
+                    const truncated = displayData.length > 1000 
+                        ? displayData.substring(0, 1000) + '\n... (truncated)'
+                        : displayData;
+                    
+                    resultDiv.innerHTML = `
+                        <div class="text-green-400 mb-2">✅ Success (${response.status}) - ${duration}ms</div>
+                        <pre class="bg-gray-950 p-3 rounded text-gray-300 overflow-x-auto whitespace-pre-wrap">${escapeHtml(truncated)}</pre>
+                    `;
+                } else {
+                    const truncated = displayData.substring(0, 500);
+                    resultDiv.innerHTML = `
+                        <div class="text-red-400 mb-2">❌ Error ${response.status} - ${duration}ms</div>
+                        <pre class="bg-gray-950 p-3 rounded text-gray-300 overflow-x-auto">${escapeHtml(truncated)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="text-red-400 mb-2">❌ Network Error</div>
+                    <pre class="bg-gray-950 p-3 rounded text-gray-300">${escapeHtml(error.message)}</pre>
+                `;
+            }
+        }
+
+        // Test all endpoints
+        async function testAllEndpoints() {
+            // Test health endpoints first
+            for (const endpoint of endpoints.health) {
+                await testEndpoint(endpoint.url, endpoint.id);
+                await sleep(300);
+            }
+            
+            // Then test API endpoints
+            for (const endpoint of endpoints.api) {
+                await testEndpoint(endpoint.url, endpoint.id);
+                await sleep(300);
+            }
+        }
+
+        // Check all services status
+        async function checkAllServices() {
+            let upCount = 0;
+            let downCount = 0;
+            let checkingCount = endpoints.health.length;
+
+            // Update checking status
+            document.getElementById('services-checking').textContent = checkingCount;
+            
+            for (const endpoint of endpoints.health) {
+                const indicator = document.querySelector(`.status-indicator[data-service="${endpoint.service}"]`);
+                const dot = indicator.querySelector('.status-dot');
+                const text = indicator.querySelector('.status-text');
+                
+                // Set to checking state
+                dot.className = 'status-dot bg-yellow-500 pulse';
+                text.textContent = 'Checking...';
+                
+                try {
+                    const response = await fetch(endpoint.url, { 
+                        method: 'GET',
+                        cache: 'no-cache'
+                    });
+                    
+                    if (response.ok) {
+                        dot.className = 'status-dot bg-green-500';
+                        text.textContent = 'Online';
+                        text.classList.add('text-green-400');
+                        upCount++;
+                    } else {
+                        dot.className = 'status-dot bg-red-500';
+                        text.textContent = `Error ${response.status}`;
+                        text.classList.add('text-red-400');
+                        downCount++;
+                    }
+                } catch (error) {
+                    dot.className = 'status-dot bg-red-500';
+                    text.textContent = 'Offline';
+                    text.classList.add('text-red-400');
+                    downCount++;
+                }
+                
+                checkingCount--;
+                document.getElementById('services-checking').textContent = checkingCount;
+            }
+
+            // Check MySQL status (inferred from shop service)
+            const mysqlIndicator = document.querySelector('.status-indicator[data-service="mysql"]');
+            const shopIndicator = document.querySelector('.status-indicator[data-service="shop"]');
+            const mysqlDot = mysqlIndicator.querySelector('.status-dot');
+            const mysqlText = mysqlIndicator.querySelector('.status-text');
+            
+            if (shopIndicator.querySelector('.status-dot').classList.contains('bg-green-500')) {
+                mysqlDot.className = 'status-dot bg-green-500';
+                mysqlText.textContent = 'Online';
+                mysqlText.classList.add('text-green-400');
+                upCount++;
+            } else {
+                mysqlDot.className = 'status-dot bg-red-500';
+                mysqlText.textContent = 'Unknown';
+                mysqlText.classList.add('text-red-400');
+                downCount++;
+            }
+
+            // Update summary
+            document.getElementById('services-up').textContent = upCount;
+            document.getElementById('services-down').textContent = downCount;
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Run on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkAllServices, 500);
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(checkAllServices, 30000);
+    </script>
+</body>
+</html>
