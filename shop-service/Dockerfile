@@ -15,8 +15,8 @@ RUN groupadd -r spring && useradd -r -g spring spring
 # Working directory
 WORKDIR /app
 
-# Copy JAR file - från root context
-COPY shop-service/target/shop-service-1.0.0.jar app.jar
+# Copy JAR file - från service-mappen (inte target)
+COPY shop-service-1.0.0.jar app.jar
 
 # Healthcheck - retry every 30s, wait 6 minutes for startup
 HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \

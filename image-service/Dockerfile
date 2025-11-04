@@ -15,8 +15,8 @@ RUN groupadd -r spring && useradd -r -g spring spring
 # Working directory
 WORKDIR /app
 
-# Copy JAR file - OBS: ingen version i namnet
-COPY image-service/target/image-service.jar app.jar
+# Copy JAR file - från service-mappen (inte target)
+COPY image-service-1.0.0.jar app.jar
 
 # Healthcheck - retry every 30s, wait 6 minutes for startup
 HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \
