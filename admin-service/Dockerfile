@@ -1,25 +1,22 @@
 # Admin Service Dockerfile with HEALTHCHECK
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:21-jre-jammy
 
 # Metadata
 LABEL maintainer="Perfect8"
 LABEL version="1.0"
 LABEL description="Perfect8 Admin Service"
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget
-
-#Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install wget and curl for healthcheck
+RUN apt-get update && apt-get install -y wget curl && rm -rf /var/lib/apt/lists/*
 
 # Create app user
-RUN addgroup -S spring && adduser -S spring -G spring
+RUN groupadd -r spring && useradd -r -g spring spring
 
 # Working directory
 WORKDIR /app
 
-# Copy JAR file
-COPY target/admin-service-1.0.0.jar app.jar
+# Copy JAR file - från root context
+COPY admin-service/target/admin-service-1.0.0.jar app.jar
 
 # Healthcheck - retry every 30s, wait 6 minutes for startup
 HEALTHCHECK --interval=30s --timeout=10s --start-period=360s --retries=10 \
