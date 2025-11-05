@@ -1,0 +1,323 @@
+services:
+  # ==========================================
+  # MySQL Databases (5 separate containers)
+  # ==========================================
+
+  adminDB:
+    image: mysql:8.0
+    container_name: adminDB
+    ports:
+      - "3307:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=adminDB
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - adminVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  blogDB:
+    image: mysql:8.0
+    container_name: blogDB
+    ports:
+      - "3308:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=blogDB
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - blogVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  emailDB:
+    image: mysql:8.0
+    container_name: emailDB
+    ports:
+      - "3309:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=emailDB
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - emailVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  imageDB:
+    image: mysql:8.0
+    container_name: imageDB
+    ports:
+      - "3310:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=imageDB
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - imageVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  shopDB:
+    image: mysql:8.0
+    container_name: shopDB
+    ports:
+      - "3311:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
+      - MYSQL_DATABASE=shopDB
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - shopVol:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  # ==========================================
+  # Email Service (Port 8083)
+  # ==========================================
+
+  email-service:
+    build: ./email-service
+    container_name: email-service
+    depends_on:
+      emailDB:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://emailDB:3306/emailDB
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_PROTOCOL=${MAIL_PROTOCOL:-smtp}
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "8083:8083"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  # ==========================================
+  # Image Service (Port 8084)
+  # ==========================================
+
+  image-service:
+    build: ./image-service
+    container_name: image-service
+    depends_on:
+      imageDB:
+        condition: service_healthy
+      email-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://imageDB:3306/imageDB
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - EMAIL_BASE_URL=http://email-service:8083
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "8084:8084"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  # ==========================================
+  # Admin Service (Port 8081)
+  # ==========================================
+
+  admin-service:
+    build: ./admin-service
+    container_name: admin-service
+    depends_on:
+      adminDB:
+        condition: service_healthy
+      email-service:
+        condition: service_started
+      image-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://adminDB:3306/adminDB
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - EMAIL_BASE_URL=http://email-service:8083
+      - IMAGE_BASE_URL=http://image-service:8084
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "8081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  # ==========================================
+  # Blog Service (Port 8082)
+  # ==========================================
+
+  blog-service:
+    build: ./blog-service
+    container_name: blog-service
+    depends_on:
+      blogDB:
+        condition: service_healthy
+      email-service:
+        condition: service_started
+      image-service:
+        condition: service_started
+      admin-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://blogDB:3306/blogDB
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - EMAIL_BASE_URL=http://email-service:8083
+      - IMAGE_BASE_URL=http://image-service:8084
+      - ADMIN_BASE_URL=http://admin-service:8081
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+  # ==========================================
+  # Shop Service (Port 8085)
+  # ==========================================
+
+  shop-service:
+    build: ./shop-service
+    container_name: shop-service
+    depends_on:
+      shopDB:
+        condition: service_healthy
+      email-service:
+        condition: service_started
+      image-service:
+        condition: service_started
+      admin-service:
+        condition: service_started
+      blog-service:
+        condition: service_started
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://shopDB:3306/shopDB
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${JPA_DDL_AUTO}
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED=true
+      - MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED=true
+      - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
+      - EMAIL_BASE_URL=http://email-service:8083
+      - IMAGE_BASE_URL=http://image-service:8084
+      - ADMIN_BASE_URL=http://admin-service:8081
+      - BLOG_BASE_URL=http://blog-service:8082
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "8085:8085"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8085/actuator/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
+# ==========================================
+# Networks
+# ==========================================
+networks:
+  perfect8-network:
+    driver: bridge
+
+# ==========================================
+# Volumes (5 separate volumes)
+# ==========================================
+volumes:
+  adminVol:
+    driver: local
+  blogVol:
+    driver: local
+  emailVol:
+    driver: local
+  imageVol:
+    driver: local
+  shopVol:
+    driver: local
