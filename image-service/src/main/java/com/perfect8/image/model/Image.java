@@ -88,7 +88,7 @@ public class Image {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedAt;
 
     @PrePersist

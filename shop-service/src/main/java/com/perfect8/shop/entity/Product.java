@@ -125,10 +125,10 @@ public class Product {
     @Builder.Default
     private List<CartItem> cartItems = new ArrayList<>();
 
-    @Column(name = "created_at")
+    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdDate;
 
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedDate;
 
     @PrePersist

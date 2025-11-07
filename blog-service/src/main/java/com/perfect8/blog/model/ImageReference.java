@@ -28,7 +28,7 @@ public class ImageReference {
     @JoinColumn(name = "post_id")
     private Post post;
 
-    @Column(name = "created_at")
+    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdAt;
 
     @PrePersist

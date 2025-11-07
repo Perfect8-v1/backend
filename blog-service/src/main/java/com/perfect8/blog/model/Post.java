@@ -28,13 +28,13 @@ public class Post {
     @Column(name = "published")
     private boolean published = false;
 
-    @Column(name = "created_at")
+    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedAt;
 
-    @Column(name = "published_at")
+    // FIXED: JPA handles publishedDate automatically
     private LocalDateTime publishedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)

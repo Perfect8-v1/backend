@@ -32,10 +32,10 @@ public class AdminUser {
     @Column(nullable = false)
     private Boolean active = true;
 
-    @Column(name = "created_at")
+    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedAt;
 
     @Column(name = "last_login")

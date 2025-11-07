@@ -23,10 +23,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(name = "created_at")
+    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)

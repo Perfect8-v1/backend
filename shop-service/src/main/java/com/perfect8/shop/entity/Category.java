@@ -71,10 +71,10 @@ public class Category {
     @Builder.Default
     private List<Product> products = new ArrayList<>();
 
-    @Column(name = "created_at")
+    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdDate;  // CHANGED: createdAt → createdDate (consistency with Product.java)
 
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedDate;  // CHANGED: updatedAt → updatedDate (consistency with Product.java)
 
     @PrePersist

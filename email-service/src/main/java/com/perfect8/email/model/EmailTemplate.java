@@ -1,4 +1,4 @@
-package com.perfect8.email.entity;
+package com.perfect8.email.model;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -66,7 +66,7 @@ public class EmailTemplate {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedAt;
 
     // Template variables tracking

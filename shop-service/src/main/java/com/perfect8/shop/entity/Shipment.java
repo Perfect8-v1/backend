@@ -123,7 +123,7 @@ public class Shipment {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "created_at")
+    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdDate;
 
     @Column(name = "last_updated")

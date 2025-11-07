@@ -101,7 +101,7 @@ public class CartItem {
     private LocalDateTime addedAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedAt;
 
     // ========================================
