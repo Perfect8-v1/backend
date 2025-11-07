@@ -39,7 +39,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PayPalService {
 
-    @Value("${paypal.client-id:test-client-id}")
+    @Value("${paypal.client-customerEmailDTOId:test-client-customerEmailDTOId}")
     private String clientId;
 
     @Value("${paypal.client-secret:test-secret}")

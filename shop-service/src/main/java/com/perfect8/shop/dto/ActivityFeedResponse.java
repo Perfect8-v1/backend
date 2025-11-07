@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ActivityFeedResponse {
 
-    private Long id;
+    private Long activityFeedResponseId;
     private String type;
     private String message;
     private String description;

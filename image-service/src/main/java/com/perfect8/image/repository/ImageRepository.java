@@ -27,7 +27,7 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     Optional<Image> findByStoredFilename(String storedFilename);
 
     // Find active images by reference
-    @Query("SELECT i FROM Image i WHERE i.referenceType = :type AND i.referenceId = :id " +
+    @Query("SELECT i FROM Image i WHERE i.referenceType = :type AND i.referenceId = :customerEmailDTOId " +
             "AND i.imageStatus = :status AND i.isDeleted = false")
     List<Image> findActiveImagesByReference(
             @Param("type") String referenceType,
@@ -43,7 +43,7 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
 
     // Find orphaned images (no reference)
     @Query("SELECT i FROM Image i WHERE i.referenceType IS NULL AND i.referenceId IS NULL " +
-            "AND i.createdAt < :before AND i.isDeleted = false")
+            "AND i.createdDate < :before AND i.isDeleted = false")
     List<Image> findOrphanedImages(@Param("before") LocalDateTime before);
 
     // Find by multiple categories

@@ -131,7 +131,7 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String internalNotes;
 
-    // FIXED: Changed from createdAt/updatedAt to createdDate/updatedDate for consistency
+    // FIXED: Changed from createdDate/updatedDate to createdDate/updatedDate for consistency
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
 

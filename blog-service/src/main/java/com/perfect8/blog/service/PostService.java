@@ -47,7 +47,7 @@ public class PostService {
         post.setPublished(postDto.isPublished());
 
         if (postDto.isPublished()) {
-            post.setPublishedAt(LocalDateTime.now());
+            post.setPublishedDate(LocalDateTime.now());
         }
 
         post.setAuthor(userRepository.findByUsername(username)
@@ -75,8 +75,8 @@ public class PostService {
         post.setExcerpt(postDto.getExcerpt());
         post.setPublished(postDto.isPublished());
 
-        if (postDto.isPublished() && post.getPublishedAt() == null) {
-            post.setPublishedAt(LocalDateTime.now());
+        if (postDto.isPublished() && post.getPublishedDate() == null) {
+            post.setPublishedDate(LocalDateTime.now());
         }
 
         if (postDto.getLinks() != null) {
@@ -101,15 +101,15 @@ public class PostService {
 
     private PostDto convertToDto(Post post) {
         PostDto dto = new PostDto();
-        dto.setId(post.getId());
+        dto.setPostDtoId(post.getPostId());
         dto.setTitle(post.getTitle());
         dto.setContent(post.getContent());
         dto.setSlug(post.getSlug());
         dto.setExcerpt(post.getExcerpt());
         dto.setPublished(post.isPublished());
-        dto.setCreatedAt(post.getCreatedAt());
-        dto.setUpdatedAt(post.getUpdatedAt());
-        dto.setPublishedAt(post.getPublishedAt());
+        dto.setCreatedDate(post.getCreatedDate());
+        dto.setUpdatedDate(post.getUpdatedDate());
+        dto.setPublishedDate(post.getPublishedDate());
         dto.setAuthorName(post.getAuthor().getUsername());
         dto.setLinks(post.getLinks());
 

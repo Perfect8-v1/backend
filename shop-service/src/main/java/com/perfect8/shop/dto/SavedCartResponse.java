@@ -22,8 +22,8 @@ public class SavedCartResponse {
     private String description;
     private Integer itemCount;
     private BigDecimal totalAmount;
-    private LocalDateTime savedAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime savedDate;
+    private LocalDateTime updatedDate;
     private Boolean isDefault;
 
     // Business methods

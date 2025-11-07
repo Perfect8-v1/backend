@@ -47,7 +47,7 @@ public class Customer {
     @Builder.Default
     private Boolean emailVerified = false;
 
-    private LocalDateTime emailVerifiedAt;
+    private LocalDateTime emailVerifiedDate;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
@@ -76,7 +76,7 @@ public class Customer {
 
     private String emailVerificationToken;
 
-    private LocalDateTime emailVerificationSentAt;
+    private LocalDateTime emailVerificationSentDate;
 
     @Builder.Default
     private Integer failedLoginAttempts = 0;
@@ -143,7 +143,7 @@ public class Customer {
 
     public void generateEmailVerificationToken() {
         this.emailVerificationToken = java.util.UUID.randomUUID().toString();
-        this.emailVerificationSentAt = LocalDateTime.now();
+        this.emailVerificationSentDate = LocalDateTime.now();
     }
 
     // ========== Address Management ==========

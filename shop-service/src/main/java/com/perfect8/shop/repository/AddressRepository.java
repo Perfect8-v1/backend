@@ -143,7 +143,7 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
     @Query("SELECT COUNT(a) FROM Address a WHERE a.country != :domesticCountry")
     long countInternationalAddresses(@Param("domesticCountry") String domesticCountry);
 
-    // Recent addresses - removed queries using createdAt/updatedAt as these fields don't exist in Address entity
+    // Recent addresses - removed queries using createdDate/updatedDate as these fields don't exist in Address entity
     @Query("SELECT a FROM Address a ORDER BY a.addressId DESC")
     List<Address> findRecentAddresses(Pageable pageable);
 

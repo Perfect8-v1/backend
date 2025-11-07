@@ -18,7 +18,7 @@ import java.util.Optional;
  * Repository for Order entity
  * Version 1.0 - Core order management
  * NO HELPERS, NO ALIASES, NO WRAPPERS - Built right from the start!
- * Follows Magnum Opus: orderId not id, customerId not id, createdDate not createdAt
+ * Follows Magnum Opus: orderId not customerEmailDTOId, customerId not customerEmailDTOId, createdDate not createdDate
  * FIXED: Payment queries now use EXISTS with o.payments (List<Payment>) instead of o.payment
  */
 @Repository

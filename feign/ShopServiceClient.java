@@ -19,7 +19,7 @@ public interface ShopServiceClient {
             @RequestParam(defaultValue = "20") int size
     );
 
-    @GetMapping("/api/products/{id}")
+    @GetMapping("/api/products/{customerEmailDTOId}")
     ResponseEntity<ProductDto> getProduct(@PathVariable Long id);
 
     @GetMapping("/api/categories")

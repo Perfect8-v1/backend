@@ -25,8 +25,8 @@ import java.util.List;
  * REST controller for customer management.
  * Version 1.0 - Core functionality only
  * FIXED: Returns DTOs not Entities!
- * FIXED: All @PathVariable parameters use descriptive names (customerId instead of id) - Magnum Opus principle
- * FIXED: Sort field names match entity convention (createdDate instead of createdAt) - Magnum Opus principle
+ * FIXED: All @PathVariable parameters use descriptive names (customerId instead of customerEmailDTOId) - Magnum Opus principle
+ * FIXED: Sort field names match entity convention (createdDate instead of createdDate) - Magnum Opus principle
  */
 @RestController
 @RequestMapping("/api/customers")
@@ -183,7 +183,7 @@ public class CustomerController {
     /**
      * Get customer by ID - Core functionality
      * FIXED: Returns CustomerDTO not Customer entity
-     * FIXED: Changed @PathVariable from 'id' to 'customerId' (Magnum Opus principle)
+     * FIXED: Changed @PathVariable from 'customerEmailDTOId' to 'customerId' (Magnum Opus principle)
      */
     @GetMapping("/{customerId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -211,7 +211,7 @@ public class CustomerController {
     /**
      * Get all customers with pagination - Core functionality
      * FIXED: Returns Page<CustomerDTO> not Page<Customer>
-     * FIXED: Changed default sortBy from 'createdAt' to 'createdDate' to match entity (Magnum Opus principle)
+     * FIXED: Changed default sortBy from 'createdDate' to 'createdDate' to match entity (Magnum Opus principle)
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -248,7 +248,7 @@ public class CustomerController {
     /**
      * Search customers - Core functionality
      * FIXED: Returns Page<CustomerDTO> not Page<Customer>
-     * FIXED: Changed default sortBy from 'createdAt' to 'createdDate' to match entity (Magnum Opus principle)
+     * FIXED: Changed default sortBy from 'createdDate' to 'createdDate' to match entity (Magnum Opus principle)
      */
     @GetMapping("/search")
     @PreAuthorize("hasRole('ADMIN')")
@@ -288,7 +288,7 @@ public class CustomerController {
     /**
      * Update customer by ID - Core functionality
      * FIXED: Returns CustomerDTO not Customer entity
-     * FIXED: Changed @PathVariable from 'id' to 'customerId' (Magnum Opus principle)
+     * FIXED: Changed @PathVariable from 'customerEmailDTOId' to 'customerId' (Magnum Opus principle)
      */
     @PutMapping("/{customerId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -318,7 +318,7 @@ public class CustomerController {
     /**
      * Activate/Deactivate customer - Core functionality
      * FIXED: Returns CustomerDTO not Customer entity
-     * FIXED: Changed @PathVariable from 'id' to 'customerId' (Magnum Opus principle)
+     * FIXED: Changed @PathVariable from 'customerEmailDTOId' to 'customerId' (Magnum Opus principle)
      */
     @PutMapping("/{customerId}/status")
     @PreAuthorize("hasRole('ADMIN')")

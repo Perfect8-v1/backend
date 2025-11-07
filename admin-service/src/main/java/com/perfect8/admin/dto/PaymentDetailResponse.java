@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class PaymentDetailResponse {
-    private Long id;
+    private Long paymentDetailId;
     private String paymentId;
     private String transactionId;
     private Long orderId;
@@ -12,15 +12,15 @@ public class PaymentDetailResponse {
     private String status;
     private BigDecimal amount;
     private String currency;
-    private LocalDateTime createdAt;
-    private LocalDateTime processedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime processedDate;
 
     // Constructors
     public PaymentDetailResponse() {}
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getPaymentDetailId() { return paymentDetailId; }
+    public void setPaymentDetailId(Long paymentDetailId) { this.paymentDetailId = paymentDetailId; }
 
     public String getPaymentId() { return paymentId; }
     public void setPaymentId(String paymentId) { this.paymentId = paymentId; }
@@ -43,9 +43,9 @@ public class PaymentDetailResponse {
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 
-    public LocalDateTime getProcessedAt() { return processedAt; }
-    public void setProcessedAt(LocalDateTime processedAt) { this.processedAt = processedAt; }
+    public LocalDateTime getProcessedDate() { return processedDate; }
+    public void setProcessedDate(LocalDateTime processedDate) { this.processedDate = processedDate; }
 }

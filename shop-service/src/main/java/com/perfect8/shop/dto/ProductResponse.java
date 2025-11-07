@@ -38,8 +38,8 @@ public class ProductResponse implements Serializable {
     private String category;  // Can be category name
     private String categoryName;  // Alternative field name
     private Long categoryId;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 
     // Additional fields for v1.0
     private BigDecimal weight;

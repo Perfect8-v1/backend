@@ -180,7 +180,7 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/products/{id}/toggle-status")
+    @PostMapping("/products/{customerEmailDTOId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<?> toggleProductStatus(@PathVariable Long id) {
         try {

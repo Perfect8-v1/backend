@@ -15,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CartHistoryResponse {
 
-    private Long id;
+    private Long cartHistoryResponseId;
     private Long customerId;
     private String customerEmail;
     private String sessionId;

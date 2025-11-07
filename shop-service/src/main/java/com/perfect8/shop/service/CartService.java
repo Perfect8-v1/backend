@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * Core shopping cart functionality
  *
  * Magnum Opus Principles:
- * - Readable variable names (customerId not id, not customerIdLong)
+ * - Readable variable names (customerId not customerEmailDTOId, not customerIdLong)
  * - NO backward compatibility - built right from start
  * - NO alias methods - one method, one name
  * - Clean variable names without redundant suffixes
@@ -47,7 +47,7 @@ public class CartService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -118,7 +118,7 @@ public class CartService {
         // Set final amounts
         response.setSubtotal(cart.getTotalAmount());
         response.setTotal(cart.getTotalAmount());
-        response.setValidatedAt(LocalDateTime.now());
+        response.setValidatedDate(LocalDateTime.now());
 
         return response;
     }
@@ -132,7 +132,7 @@ public class CartService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElse(createNewCart(customer));
@@ -149,10 +149,10 @@ public class CartService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException("Product not found with id: " + request.getProductId()));
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with customerEmailDTOId: " + request.getProductId()));
 
         if (product.getStockQuantity() < request.getQuantity()) {
             throw new InsufficientStockException("Insufficient stock for product: " + product.getName());
@@ -198,7 +198,7 @@ public class CartService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -234,7 +234,7 @@ public class CartService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -262,7 +262,7 @@ public class CartService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -284,7 +284,7 @@ public class CartService {
 
         try {
             Customer customer = customerRepository.findById(customerId)
-                    .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                    .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
             Cart cart = cartRepository.findByCustomer(customer)
                     .orElse(null);
@@ -307,7 +307,7 @@ public class CartService {
         }
 
         Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with id: " + customerId));
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
                 .orElseThrow(() -> new ResourceNotFoundException("Cart not found for customer"));
@@ -343,7 +343,7 @@ public class CartService {
                 .totalAmount(totalAmount)
                 .currency("USD")
                 .isValid(true)
-                .preparedAt(LocalDateTime.now())
+                .preparedDate(LocalDateTime.now())
                 .build();
 
         // Convert shipping address from request fields to AddressDTO

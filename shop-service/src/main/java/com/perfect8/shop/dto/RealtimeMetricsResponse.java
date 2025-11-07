@@ -47,7 +47,7 @@ public class RealtimeMetricsResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class RecentActivity {
-        private Long id;
+        private Long customerEmailDTOId;
         private String type;
         private String description;
         private LocalDateTime timestamp;

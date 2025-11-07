@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class BlogPostDto {
-    private Long id;
+    private Long blogPostId;
 
     @NotBlank(message = "Title is required")
     @Size(max = 255, message = "Title cannot exceed 255 characters")
@@ -20,8 +20,8 @@ public class BlogPostDto {
 
     private String author;
     private boolean published;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
     private String featuredImage;
     private List<String> tags;
     private String metaTitle;
@@ -31,8 +31,8 @@ public class BlogPostDto {
     public BlogPostDto() {}
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getBlogPostId() { return blogPostId; }
+    public void setBlogPostId(Long blogPostId) { this.blogPostId = blogPostId; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
     public String getContent() { return content; }
@@ -43,10 +43,10 @@ public class BlogPostDto {
     public void setAuthor(String author) { this.author = author; }
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+    public LocalDateTime getUpdatedDate() { return updatedDate; }
+    public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
     public String getFeaturedImage() { return featuredImage; }
     public void setFeaturedImage(String featuredImage) { this.featuredImage = featuredImage; }
     public List<String> getTags() { return tags; }

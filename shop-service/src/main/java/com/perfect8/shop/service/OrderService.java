@@ -529,8 +529,8 @@ public class OrderService {
         dto.setShippingAmount(order.getShippingAmount());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setCurrency(order.getCurrency());
-        dto.setCreatedAt(order.getCreatedDate());  // FIXED: getCreatedAt() -> getCreatedDate()
-        dto.setUpdatedAt(order.getUpdatedDate());  // FIXED: getUpdatedAt() -> getUpdatedDate()
+        dto.setCreatedDate(order.getCreatedDate());  // FIXED: getCreatedDate() -> getCreatedDate()
+        dto.setUpdatedDate(order.getUpdatedDate());  // FIXED: getUpdatedDate() -> getUpdatedDate()
 
         // Convert order items
         if (order.getOrderItems() != null) {

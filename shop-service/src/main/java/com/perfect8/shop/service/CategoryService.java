@@ -23,7 +23,7 @@ import java.util.Map;
  * Core category management functionality
  *
  * Magnum Opus Principles:
- * - Readable variable names (categoryId not id)
+ * - Readable variable names (categoryId not customerEmailDTOId)
  * - NO backward compatibility - built right from start
  * - Use createdDate/updatedDate (consistent with Customer entity)
  */

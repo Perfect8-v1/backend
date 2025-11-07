@@ -15,7 +15,7 @@ import java.util.List;
 
 /**
  * Cart Entity - Version 1.0
- * Magnum Opus Compliant: cartId not id, consistent naming
+ * Magnum Opus Compliant: cartId not customerEmailDTOId, consistent naming
  * FIXED: Removed @Column(name) annotations - let JPA do its job!
  */
 @Entity
@@ -30,7 +30,7 @@ public class Cart {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long cartId;  // CHANGED: id → cartId (Magnum Opus)
+    private Long cartId;  // CHANGED: customerEmailDTOId → cartId (Magnum Opus)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
@@ -69,7 +69,7 @@ public class Cart {
     // Lombok generates: getUpdatedDate() → JPA creates: updated_date
     private LocalDateTime updatedDate;
 
-    // FIXED: expiresAt → expirationDate for consistency
+    // FIXED: expiresDate → expirationDate for consistency
     // Lombok generates: getExpirationDate() → JPA creates: expiration_date
     private LocalDateTime expirationDate;
 
@@ -90,7 +90,7 @@ public class Cart {
             isSaved = false;
         }
         // Set cart expiration to 30 days from now if not saved
-        // FIXED: expiresAt → expirationDate
+        // FIXED: expiresDate → expirationDate
         if (!isSaved && expirationDate == null) {
             expirationDate = LocalDateTime.now().plusDays(30);
         }
@@ -175,7 +175,7 @@ public class Cart {
         }
         return items.stream()
                 .anyMatch(item -> item.getProduct() != null &&
-                        productId.equals(item.getProduct().getProductId()));  // CHANGED: getId() → getProductId()
+                        productId.equals(item.getProduct().getProductId()));  // CHANGED: getActivityFeedResponseId() → getProductId()
     }
 
     public CartItem findItemByProductId(Long productId) {
@@ -184,7 +184,7 @@ public class Cart {
         }
         return items.stream()
                 .filter(item -> item.getProduct() != null &&
-                        productId.equals(item.getProduct().getProductId()))  // CHANGED: getId() → getProductId()
+                        productId.equals(item.getProduct().getProductId()))  // CHANGED: getActivityFeedResponseId() → getProductId()
                 .findFirst()
                 .orElse(null);
     }
@@ -199,7 +199,7 @@ public class Cart {
         couponCode = null;
     }
 
-    // FIXED: expiresAt → expirationDate
+    // FIXED: expiresDate → expirationDate
     public boolean isExpired() {
         return expirationDate != null && LocalDateTime.now().isAfter(expirationDate);
     }

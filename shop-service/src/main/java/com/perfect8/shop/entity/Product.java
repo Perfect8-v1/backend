@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * Product Entity - Version 1.0
- * Magnum Opus Compliant: Descriptive field names (productId not id)
+ * Magnum Opus Compliant: Descriptive field names (productId not customerEmailDTOId)
  */
 @Entity
 @Table(name = "products")
@@ -30,7 +30,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productId;  // CHANGED: id → productId (Magnum Opus)
+    private Long productId;  // CHANGED: customerEmailDTOId → productId (Magnum Opus)
 
     @Column(name = "name", nullable = false, length = 200)
     private String name;

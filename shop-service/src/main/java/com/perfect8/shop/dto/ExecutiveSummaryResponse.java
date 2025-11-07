@@ -29,7 +29,7 @@ public class ExecutiveSummaryResponse {
     private List<RecommendedAction> recommendations;
 
     private ComparisonMetrics comparison;
-    private LocalDateTime generatedAt;
+    private LocalDateTime generatedDate;
 
     @Data
     @Builder

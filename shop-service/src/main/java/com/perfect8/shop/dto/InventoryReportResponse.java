@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class InventoryReportResponse {
     private String reportPeriod;
-    private LocalDateTime generatedAt;
+    private LocalDateTime generatedDate;
     private Integer totalProducts;
     private Integer lowStockProducts;
     private Integer outOfStockProducts;
@@ -22,8 +22,8 @@ public class InventoryReportResponse {
     public String getReportPeriod() { return reportPeriod; }
     public void setReportPeriod(String reportPeriod) { this.reportPeriod = reportPeriod; }
 
-    public LocalDateTime getGeneratedAt() { return generatedAt; }
-    public void setGeneratedAt(LocalDateTime generatedAt) { this.generatedAt = generatedAt; }
+    public LocalDateTime getGeneratedDate() { return generatedDate; }
+    public void setGeneratedDate(LocalDateTime generatedDate) { this.generatedDate = generatedDate; }
 
     public Integer getTotalProducts() { return totalProducts; }
     public void setTotalProducts(Integer totalProducts) { this.totalProducts = totalProducts; }
@@ -106,7 +106,7 @@ public class InventoryReportResponse {
         private String movementType;
         private Integer quantity;
         private String reason;
-        private LocalDateTime date;
+        private LocalDateTime movementDate;
 
         public MovementSummary() {}
 
@@ -120,7 +120,7 @@ public class InventoryReportResponse {
         public String getReason() { return reason; }
         public void setReason(String reason) { this.reason = reason; }
 
-        public LocalDateTime getDate() { return date; }
-        public void setDate(LocalDateTime date) { this.date = date; }
+        public LocalDateTime getMovementDate() { return movementDate; }
+        public void setMovementDate(LocalDateTime movementDate) { this.movementDate = movementDate; }
     }
 }

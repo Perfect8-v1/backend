@@ -7,7 +7,7 @@ import java.math.BigDecimal;
  * Data Transfer Object for Order Item
  * Version 1.0 - Core functionality only
  *
- * Uses descriptive field names (orderItemId instead of id) for clarity
+ * Uses descriptive field names (orderItemId instead of customerEmailDTOId) for clarity
  */
 @Data
 @Builder

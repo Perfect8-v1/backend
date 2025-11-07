@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 
 public class CategoryDto {
-    private Long id;
+    private Long categoryId;
 
     @NotBlank(message = "Category name is required")
     @Size(max = 255, message = "Category name cannot exceed 255 characters")
@@ -16,16 +16,16 @@ public class CategoryDto {
 
     private String image;
     private boolean active;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
     private Long parentId;
     private String parentName;
 
     public CategoryDto() {}
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getCategoryId() { return categoryId; }
+    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
@@ -34,10 +34,10 @@ public class CategoryDto {
     public void setImage(String image) { this.image = image; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+    public LocalDateTime getUpdatedDate() { return updatedDate; }
+    public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
     public Long getParentId() { return parentId; }
     public void setParentId(Long parentId) { this.parentId = parentId; }
     public String getParentName() { return parentName; }

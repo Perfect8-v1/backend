@@ -10,7 +10,7 @@ public class ImageReference {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long ImageReferenceId;
 
     @Column(name = "image_id", nullable = false)
     private String imageId;
@@ -29,16 +29,16 @@ public class ImageReference {
     private Post post;
 
     // FIXED: JPA handles createdDate automatically
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
     }
 
     // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getImageReferenceId() { return ImageReferenceId; }
+    public void setImageReferenceId(Long imageReferenceId) { this.ImageReferenceId = imageReferenceId; }
 
     public String getImageId() { return imageId; }
     public void setImageId(String imageId) { this.imageId = imageId; }
@@ -55,6 +55,6 @@ public class ImageReference {
     public Post getPost() { return post; }
     public void setPost(Post post) { this.post = post; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 }

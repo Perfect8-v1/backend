@@ -13,10 +13,10 @@ public interface ImageServiceClient {
     @PostMapping(value = "/api/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ImageResponse uploadImage(@RequestPart("file") MultipartFile file);
 
-    @GetMapping("/api/images/{id}")
+    @GetMapping("/api/images/{customerEmailDTOId}")
     ImageResponse getImage(@PathVariable String id);
 
-    @DeleteMapping("/api/images/{id}")
+    @DeleteMapping("/api/images/{customerEmailDTOId}")
     void deleteImage(@PathVariable String id);
 
     class ImageResponse {

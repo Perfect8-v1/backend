@@ -18,7 +18,7 @@ public interface BlogServiceClient {
             @RequestParam(defaultValue = "10") int size
     );
 
-    @GetMapping("/api/posts/{id}")
+    @GetMapping("/api/posts/{customerEmailDTOId}")
     ResponseEntity<BlogPostDto> getPost(@PathVariable Long id);
 
     @GetMapping("/api/posts/published")

@@ -4,7 +4,6 @@ import com.perfect8.shop.dto.*;
 import com.perfect8.shop.entity.Address;
 import com.perfect8.shop.entity.Customer;
 import com.perfect8.shop.entity.Order;
-import com.perfect8.common.enums.OrderStatus;
 import com.perfect8.shop.exception.CustomerNotFoundException;
 import com.perfect8.shop.exception.EmailAlreadyExistsException;
 import com.perfect8.shop.exception.ResourceNotFoundException;
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
  * Core customer management functionality
  *
  * Magnum Opus Principles:
- * - Readable variable names (customerId not id, not customerIdLong)
+ * - Readable variable names (customerId not customerEmailDTOId, not customerIdLong)
  * - NO backward compatibility - built right from start
  * - Use createdDate/updatedDate (consistent with Customer entity)
  * - Frontend handles passwordHash - NO passwordEncoder in this service
@@ -472,14 +471,14 @@ public class CustomerService {
         }
 
         // Check if token is expired (24 hours)
-        if (customer.getEmailVerificationSentAt() != null &&
-                customer.getEmailVerificationSentAt().isBefore(LocalDateTime.now().minusHours(24))) {
+        if (customer.getEmailVerificationSentDate() != null &&
+                customer.getEmailVerificationSentDate().isBefore(LocalDateTime.now().minusHours(24))) {
             throw new UnauthorizedAccessException("Verification token has expired");
         }
 
         customer.setEmailVerified(true);
         customer.setEmailVerificationToken(null);
-        customer.setEmailVerificationSentAt(null);
+        customer.setEmailVerificationSentDate(null);
         customerRepository.save(customer);
 
         log.info("Email verified successfully for customer: {}", email);
@@ -534,8 +533,8 @@ public class CustomerService {
                 .marketingConsent(customer.getMarketingConsent())
                 .preferredLanguage(customer.getPreferredLanguage())
                 .preferredCurrency(customer.getPreferredCurrency())
-                .createdAt(customer.getCreatedDate())
-                .updatedAt(customer.getUpdatedDate())
+                .createdDate(customer.getCreatedDate())
+                .updatedDate(customer.getUpdatedDate())
                 .lastLoginDate(customer.getLastLoginDate())
                 .build();
     }
@@ -599,8 +598,8 @@ public class CustomerService {
                 .customerId(order.getCustomer().getCustomerId())
                 .status(order.getOrderStatus().toString())
                 .totalAmount(totalAmount)
-                .createdAt(createdDate)
-                .updatedAt(updatedDate)
+                .createdDate(createdDate)
+                .updatedDate(updatedDate)
                 .build();
     }
 }

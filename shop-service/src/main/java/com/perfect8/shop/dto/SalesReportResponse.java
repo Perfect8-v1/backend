@@ -29,7 +29,7 @@ public class SalesReportResponse {
     private List<CustomerSales> topCustomers;
 
     private SalesStatistics statistics;
-    private LocalDateTime generatedAt;
+    private LocalDateTime generatedDate;
 
     @Data
     @Builder

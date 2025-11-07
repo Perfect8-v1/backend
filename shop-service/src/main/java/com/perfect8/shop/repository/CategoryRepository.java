@@ -11,7 +11,7 @@ import java.util.Optional;
 
 /**
  * Category Repository - Version 1.0
- * Magnum Opus Compliant: Uses createdDate/updatedDate (not createdAt/updatedAt)
+ * Magnum Opus Compliant: Uses createdDate/updatedDate (not createdDate/updatedDate)
  */
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {

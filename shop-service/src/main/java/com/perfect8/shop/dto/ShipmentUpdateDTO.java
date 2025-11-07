@@ -173,7 +173,7 @@ public class ShipmentUpdateDTO implements Serializable {
     /**
      * Last tracking update timestamp
      */
-    private LocalDateTime lastTrackingUpdate;
+    private LocalDateTime lastTrackingUpdateDate;
 
     /**
      * Delivery attempts count
@@ -197,7 +197,7 @@ public class ShipmentUpdateDTO implements Serializable {
     /**
      * Actual delivery date (when marking as delivered)
      */
-    private LocalDateTime deliveredAt;
+    private LocalDateTime deliveredDate;
 
     /**
      * Delivery signature URL
@@ -226,14 +226,14 @@ public class ShipmentUpdateDTO implements Serializable {
      * Check if this is a tracking update
      */
     public boolean isTrackingUpdate() {
-        return trackingNumber != null || currentLocation != null || lastTrackingUpdate != null;
+        return trackingNumber != null || currentLocation != null || lastTrackingUpdateDate != null;
     }
 
     /**
      * Check if this is marking as delivered
      */
     public boolean isDeliveryUpdate() {
-        return "DELIVERED".equals(status) || deliveredAt != null;
+        return "DELIVERED".equals(status) || deliveredDate != null;
     }
 
     /**
@@ -279,10 +279,10 @@ public class ShipmentUpdateDTO implements Serializable {
      */
     @AssertTrue(message = "Delivered date cannot be in the future when marking as delivered")
     private boolean isDeliveredDateValid() {
-        if (!"DELIVERED".equals(status) || deliveredAt == null) {
+        if (!"DELIVERED".equals(status) || deliveredDate == null) {
             return true;
         }
-        return !deliveredAt.isAfter(LocalDateTime.now());
+        return !deliveredDate.isAfter(LocalDateTime.now());
     }
 
     /**

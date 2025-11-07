@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Product DTO
  * Version 1.0 - Core product data transfer
- * FIXED: Changed 'id' to 'productId', 'createdAt/updatedAt' to 'createdDate/updatedDate' (Magnum Opus principle)
+ * FIXED: Changed 'customerEmailDTOId' to 'productId', 'createdDate/updatedDate' to 'createdDate/updatedDate' (Magnum Opus principle)
  */
 @Data
 @Builder
@@ -22,7 +22,7 @@ import java.util.List;
 public class ProductDTO {
 
     /**
-     * FIXED: Changed from 'id' to 'productId' for clarity (Magnum Opus principle)
+     * FIXED: Changed from 'customerEmailDTOId' to 'productId' for clarity (Magnum Opus principle)
      */
     private Long productId;
 
@@ -75,12 +75,12 @@ public class ProductDTO {
     private String status;
 
     /**
-     * FIXED: Changed from 'createdAt' to 'createdDate' for consistency with entities (Magnum Opus principle)
+     * FIXED: Changed from 'createdDate' to 'createdDate' for consistency with entities (Magnum Opus principle)
      */
     private LocalDateTime createdDate;
 
     /**
-     * FIXED: Changed from 'updatedAt' to 'updatedDate' for consistency with entities (Magnum Opus principle)
+     * FIXED: Changed from 'updatedDate' to 'updatedDate' for consistency with entities (Magnum Opus principle)
      */
     private LocalDateTime updatedDate;
 
@@ -177,7 +177,7 @@ public class ProductDTO {
 
     /**
      * Product Variant DTO
-     * FIXED: Changed 'id' to 'productVariantId' (Magnum Opus principle)
+     * FIXED: Changed 'customerEmailDTOId' to 'productVariantId' (Magnum Opus principle)
      */
     @Data
     @Builder
@@ -185,7 +185,7 @@ public class ProductDTO {
     @AllArgsConstructor
     public static class ProductVariantDTO {
         /**
-         * FIXED: Changed from 'id' to 'productVariantId' for clarity (Magnum Opus principle)
+         * FIXED: Changed from 'customerEmailDTOId' to 'productVariantId' for clarity (Magnum Opus principle)
          */
         private Long productVariantId;
         private String name;
@@ -200,7 +200,7 @@ public class ProductDTO {
 
     /**
      * Product Option DTO
-     * FIXED: Changed 'id' to 'productOptionId' (Magnum Opus principle)
+     * FIXED: Changed 'customerEmailDTOId' to 'productOptionId' (Magnum Opus principle)
      */
     @Data
     @Builder
@@ -208,7 +208,7 @@ public class ProductDTO {
     @AllArgsConstructor
     public static class ProductOptionDTO {
         /**
-         * FIXED: Changed from 'id' to 'productOptionId' for clarity (Magnum Opus principle)
+         * FIXED: Changed from 'customerEmailDTOId' to 'productOptionId' for clarity (Magnum Opus principle)
          */
         private Long productOptionId;
         private String name;

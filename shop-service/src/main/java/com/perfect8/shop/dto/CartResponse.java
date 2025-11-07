@@ -82,13 +82,13 @@ public class CartResponse {
 
     /**
      * When the cart was created
-     * FIXED: Changed from createdAt to createdDate (Magnum Opus - match Cart entity)
+     * FIXED: Changed from createdDate to createdDate (Magnum Opus - match Cart entity)
      */
     private LocalDateTime createdDate;
 
     /**
      * When the cart was last updated
-     * FIXED: Changed from updatedAt to updatedDate (Magnum Opus - match Cart entity)
+     * FIXED: Changed from updatedDate to updatedDate (Magnum Opus - match Cart entity)
      */
     private LocalDateTime updatedDate;
 

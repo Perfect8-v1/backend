@@ -54,8 +54,8 @@ public class CustomerDTO {
     /**
      * Timestamps
      */
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
     private LocalDateTime lastLoginDate;
 
     /**
@@ -111,16 +111,16 @@ public class CustomerDTO {
     }
 
     /**
-     * Get customer since date (alias for createdAt for UI)
+     * Get customer since date (alias for createdDate for UI)
      */
     public LocalDateTime getCustomerSince() {
-        return createdAt;
+        return createdDate;
     }
 
     /**
-     * Get registration date (alias for createdAt for UI)
+     * Get registration date (alias for createdDate for UI)
      */
     public LocalDateTime getRegistrationDate() {
-        return createdAt;
+        return createdDate;
     }
 }

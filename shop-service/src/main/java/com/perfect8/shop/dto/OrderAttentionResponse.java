@@ -28,7 +28,7 @@ public class OrderAttentionResponse {
     private BigDecimal totalAmount;
     private String currency;
     private LocalDateTime orderDate;
-    private LocalDateTime lastUpdated;
+    private LocalDateTime lastUpdatedDate;
     private LocalDateTime dueDate;
     private Integer daysPending;
     private Boolean isUrgent;

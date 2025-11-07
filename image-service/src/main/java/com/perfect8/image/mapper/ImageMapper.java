@@ -74,8 +74,8 @@ public class ImageMapper {
                 .errorMessage(image.getErrorMessage())
 
                 // Audit fields
-                .createdAt(image.getCreatedAt())
-                .updatedAt(image.getUpdatedAt())
+                .createdDate(image.getCreatedDate())
+                .updatedDate(image.getUpdatedDate())
                 .build();
 
         // Set readable size (computed field)
@@ -146,8 +146,8 @@ public class ImageMapper {
                 .errorMessage(dto.getErrorMessage())
 
                 // Audit
-                .createdAt(dto.getCreatedAt())
-                .updatedAt(dto.getUpdatedAt())
+                .createdDate(dto.getCreatedDate())
+                .updatedDate(dto.getUpdatedDate())
                 .build();
 
         return image;

@@ -48,7 +48,7 @@ public class AdminDashboardController {
                     .totalRevenue(java.math.BigDecimal.valueOf(50000)) // Placeholder
                     .totalOrders(100L) // Placeholder
                     .totalCustomers(customerService != null ? 250L : 0L) // Placeholder
-                    .generatedAt(LocalDateTime.now())
+                    .generatedDate(LocalDateTime.now())
                     .build();
 
             return ResponseEntity.ok(dashboard);
@@ -68,7 +68,7 @@ public class AdminDashboardController {
                     .totalRevenue(java.math.BigDecimal.valueOf(25000))
                     .totalCustomers(250L)
                     .totalProducts(150L)
-                    .generatedAt(LocalDateTime.now())
+                    .generatedDate(LocalDateTime.now())
                     .build();
 
             return ResponseEntity.ok(summary);
@@ -88,11 +88,11 @@ public class AdminDashboardController {
             // Return placeholder alerts for now
             List<SystemAlertResponse> alerts = List.of(
                     SystemAlertResponse.builder()
-                            .id(1L)
+                            .customerEmailDTOId(1L)
                             .type("LOW_STOCK")
                             .priority("HIGH")
                             .message("5 products are running low on stock")
-                            .createdAt(LocalDateTime.now())
+                            .createdDate(LocalDateTime.now())
                             .build()
             );
 
@@ -112,7 +112,7 @@ public class AdminDashboardController {
             // Return placeholder activities
             List<ActivityFeedResponse> activities = List.of(
                     ActivityFeedResponse.builder()
-                            .id(1L)
+                            .customerEmailDTOId(1L)
                             .type("ORDER_CREATED")
                             .description("New order #1001 created")
                             .timestamp(LocalDateTime.now())
@@ -312,7 +312,7 @@ public class AdminDashboardController {
                             .status("PENDING")
                             .customerName("John Doe")
                             .totalAmount(java.math.BigDecimal.valueOf(299.99))
-                            .createdAt(LocalDateTime.now())
+                            .createdDate(LocalDateTime.now())
                             .build()
             );
 
@@ -477,7 +477,7 @@ public class AdminDashboardController {
                     .totalCustomers(250L)
                     .activeCustomers(200L)
                     .newCustomers(25L)
-                    .generatedAt(LocalDateTime.now())
+                    .generatedDate(LocalDateTime.now())
                     .build();
 
             return ResponseEntity.ok(report);

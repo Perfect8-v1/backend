@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 /**
  * Payment Response DTO
  * Version 1.0 - Core payment response structure
- * FIXED: Changed createdAt/processedAt to createdDate/processedDate for consistency with entity naming
+ * FIXED: Changed createdDate/processedAt to createdDate/processedDate for consistency with entity naming
  */
 @Data
 @Builder
@@ -28,7 +28,7 @@ public class PaymentResponseDTO {
     private String paymentMethod;
 
     /**
-     * FIXED: Changed from createdAt to createdDate (Magnum Opus principle - consistency with entities)
+     * FIXED: Changed from createdDate to createdDate (Magnum Opus principle - consistency with entities)
      */
     private LocalDateTime createdDate;
 
@@ -90,7 +90,7 @@ public class PaymentResponseDTO {
     }
 
     /**
-     * FIXED: Updated to use createdDate instead of createdAt
+     * FIXED: Updated to use createdDate instead of createdDate
      */
     public LocalDateTime getExpiryTime() {
         if (expiresInMinutes != null && createdDate != null) {

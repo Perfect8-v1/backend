@@ -82,7 +82,7 @@ public class PaymentMetricsResponse {
         private BigDecimal amount;
         private String paymentMethod;
         private String failureReason;
-        private LocalDateTime failedAt;
+        private LocalDateTime failedDate;
 
         public FailedPayment() {}
 
@@ -102,8 +102,10 @@ public class PaymentMetricsResponse {
         public String getFailureReason() { return failureReason; }
         public void setFailureReason(String failureReason) { this.failureReason = failureReason; }
 
-        public LocalDateTime getFailedAt() { return failedAt; }
-        public void setFailedAt(LocalDateTime failedAt) { this.failedAt = failedAt; }
+        ***NOTE THAT REFACTORING IS NOT ASSURED WHEN LOMBOK ISN'T USED***
+
+        public LocalDateTime getFailedAt() { return failedDate; }
+        public void setFailedAt(LocalDateTime failedDate) { this.failedDate = failedDate; }
     }
 }
 

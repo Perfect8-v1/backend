@@ -24,7 +24,7 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getAllUsers(pageable));
     }
 
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/users/{customerEmailDTOId}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         adminService.deleteUser(id);
         return ResponseEntity.noContent().build();

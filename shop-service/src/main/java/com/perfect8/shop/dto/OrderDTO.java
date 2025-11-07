@@ -85,8 +85,8 @@ public class OrderDTO {
     private String shippingCountry = "";
 
     // Timestamps (v1.0)
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 
     /* ========== VERSION 2.0 FEATURES - COMMENTED OUT ==========
      * These fields will be uncommented and implemented in version 2.0
@@ -122,7 +122,7 @@ public class OrderDTO {
     // Extended timestamps (v2.0)
     // private LocalDateTime confirmedAt;
     // private LocalDateTime shippedAt;
-    // private LocalDateTime deliveredAt;
+    // private LocalDateTime deliveredDate;
     // private LocalDateTime cancelledAt;
 
     // Computed fields (v2.0)

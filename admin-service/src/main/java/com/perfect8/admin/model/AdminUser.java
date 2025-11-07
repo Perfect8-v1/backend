@@ -9,7 +9,7 @@ public class AdminUser {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long adminUserId;
 
     @Column(unique = true, nullable = false)
     private String username;
@@ -33,10 +33,10 @@ public class AdminUser {
     private Boolean active = true;
 
     // FIXED: JPA handles createdDate automatically
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     // FIXED: JPA handles updatedDate automatically
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
@@ -60,8 +60,8 @@ public class AdminUser {
     }
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getAdminUserId() { return adminUserId; }
+    public void setAdminUserId(Long adminUserId) { this.adminUserId = adminUserId; }
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
@@ -84,23 +84,23 @@ public class AdminUser {
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getUpdatedDate() { return updatedDate; }
+    public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
 
     public LocalDateTime getLastLogin() { return lastLogin; }
     public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 }

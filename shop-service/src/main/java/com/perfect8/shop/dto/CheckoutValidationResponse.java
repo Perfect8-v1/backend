@@ -98,7 +98,7 @@ public class CheckoutValidationResponse implements Serializable {
      * Timestamp of validation
      */
     @Builder.Default
-    private LocalDateTime validatedAt = LocalDateTime.now();
+    private LocalDateTime validatedDate = LocalDateTime.now();
 
     /**
      * Helper method to add an issue

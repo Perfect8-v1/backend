@@ -26,7 +26,7 @@ public class EmailTemplate {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long emailTemplateId;
 
     @Column(name = "name", unique = true, nullable = false, length = 100)
     private String name;
@@ -64,10 +64,10 @@ public class EmailTemplate {
     private String updatedBy;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     // FIXED: JPA handles updatedDate automatically
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     // Template variables tracking
     @Column(name = "required_variables", length = 1000)
@@ -81,8 +81,8 @@ public class EmailTemplate {
     @lombok.Builder.Default
     private Long usageCount = 0L;
 
-    @Column(name = "last_used_at")
-    private LocalDateTime lastUsedAt;
+    @Column(name = "last_used_date")
+    private LocalDateTime lastUsedDate;
 
     // Version 2.0 features - commented out
     // @Column(name = "language", length = 10)
@@ -96,8 +96,8 @@ public class EmailTemplate {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
         if (usageCount == null) {
             usageCount = 0L;
         }
@@ -105,7 +105,7 @@ public class EmailTemplate {
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     // Helper methods
@@ -127,7 +127,7 @@ public class EmailTemplate {
 
     public void incrementUsageCount() {
         this.usageCount = (this.usageCount == null ? 0 : this.usageCount) + 1;
-        this.lastUsedAt = LocalDateTime.now();
+        this.lastUsedDate = LocalDateTime.now();
     }
 
     public String[] getRequiredVariablesArray() {

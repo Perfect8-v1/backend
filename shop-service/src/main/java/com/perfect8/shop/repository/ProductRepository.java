@@ -14,7 +14,7 @@ import java.util.Optional;
 
 /**
  * Repository for Product entity - Version 1.0
- * Follows Magnum Opus: productId not id, categoryId not id
+ * Follows Magnum Opus: productId not customerEmailDTOId, categoryId not customerEmailDTOId
  * FIXED: All category references use explicit queries with p.category.categoryId
  */
 @Repository

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class CategoryResponse {
-    private Long id;
+    private Long categoryResponseId;
     private String name;
     private String description;
     private String slug;
@@ -14,15 +14,15 @@ public class CategoryResponse {
     private Long parentCategoryId;
     private String parentCategoryName;
     private List<CategoryResponse> subCategories;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 
     // Constructors
     public CategoryResponse() {}
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getCategoryResponseId() { return categoryResponseId; }
+    public void setCategoryResponseId(Long categoryResponseId) { this.categoryResponseId = categoryResponseId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -51,9 +51,9 @@ public class CategoryResponse {
     public List<CategoryResponse> getSubCategories() { return subCategories; }
     public void setSubCategories(List<CategoryResponse> subCategories) { this.subCategories = subCategories; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getUpdatedDate() { return updatedDate; }
+    public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
 }

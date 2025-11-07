@@ -93,14 +93,14 @@ public class ImageDto {
      */
     private Long uploadedBy;
     private String uploadedByUsername;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 
     /**
      * Usage statistics (for v2.0, but structure ready)
      */
     private Long viewCount;
-    private LocalDateTime lastViewedAt;
+    private LocalDateTime lastViewedDate;
 
     /**
      * Nested DTO for image dimensions

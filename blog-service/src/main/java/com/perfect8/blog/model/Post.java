@@ -11,7 +11,7 @@ public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long postId;
 
     @Column(nullable = false)
     private String title;
@@ -29,13 +29,13 @@ public class Post {
     private boolean published = false;
 
     // FIXED: JPA handles createdDate automatically
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
 
     // FIXED: JPA handles updatedDate automatically
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     // FIXED: JPA handles publishedDate automatically
-    private LocalDateTime publishedAt;
+    private LocalDateTime publishedDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "author_id", nullable = false)
@@ -51,18 +51,18 @@ public class Post {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getPostId() { return postId; }
+    public void setPostId(Long postId) { this.postId = postId; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -79,14 +79,14 @@ public class Post {
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getUpdatedDate() { return updatedDate; }
+    public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
 
-    public LocalDateTime getPublishedAt() { return publishedAt; }
-    public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
+    public LocalDateTime getPublishedDate() { return publishedDate; }
+    public void setPublishedDate(LocalDateTime publishedDate) { this.publishedDate = publishedDate; }
 
     public User getAuthor() { return author; }
     public void setAuthor(User author) { this.author = author; }

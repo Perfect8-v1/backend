@@ -24,7 +24,7 @@ public class AddressDTO implements Serializable {
     /**
      * Address ID - Using readable name!
      */
-    private Long addressId;  // FIXED: Was 'id', now 'addressId' for clarity
+    private Long addressId;  // FIXED: Was 'customerEmailDTOId', now 'addressId' for clarity
 
     /**
      * Address type: BILLING, SHIPPING, or BOTH
@@ -152,7 +152,7 @@ public class AddressDTO implements Serializable {
     /**
      * Verification date/time
      */
-    private String verifiedAt;
+    private String verifiedDate;
 
     /**
      * Address verification method (e.g., "MANUAL", "API", "GOOGLE")

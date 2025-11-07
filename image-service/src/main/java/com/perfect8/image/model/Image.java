@@ -85,21 +85,21 @@ public class Image {
     @Builder.Default  // FIXAT: Lagt till @Builder.Default
     private Boolean isDeleted = false;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_date", updatable = false)
+    private LocalDateTime createdDate;
 
     // FIXED: JPA handles updatedDate automatically
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
     // Business logic methods

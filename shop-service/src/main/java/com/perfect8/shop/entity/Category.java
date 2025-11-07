@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * Category Entity - Version 1.0
- * Magnum Opus Compliant: Descriptive field names (categoryId not id)
+ * Magnum Opus Compliant: Descriptive field names (categoryId not customerEmailDTOId)
  */
 @Entity
 @Table(name = "categories")
@@ -28,7 +28,7 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long categoryId;  // CHANGED: id → categoryId (Magnum Opus)
+    private Long categoryId;  // CHANGED: customerEmailDTOId → categoryId (Magnum Opus)
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
@@ -72,10 +72,10 @@ public class Category {
     private List<Product> products = new ArrayList<>();
 
     // FIXED: JPA handles createdDate automatically
-    private LocalDateTime createdDate;  // CHANGED: createdAt → createdDate (consistency with Product.java)
+    private LocalDateTime createdDate;  // CHANGED: createdDate → createdDate (consistency with Product.java)
 
     // FIXED: JPA handles updatedDate automatically
-    private LocalDateTime updatedDate;  // CHANGED: updatedAt → updatedDate (consistency with Product.java)
+    private LocalDateTime updatedDate;  // CHANGED: updatedDate → updatedDate (consistency with Product.java)
 
     @PrePersist
     protected void onCreate() {

@@ -60,7 +60,7 @@ public class CategoryController {
     /**
      * Get category by ID (Public endpoint)
      */
-    @GetMapping("/{id}")
+    @GetMapping("/{customerEmailDTOId}")
     public ResponseEntity<ApiResponse<Category>> getCategoryById(@PathVariable Long id) {
         try {
             Category category = categoryService.getCategoryById(id);
@@ -132,7 +132,7 @@ public class CategoryController {
     /**
      * Get products by category with pagination (Public endpoint)
      */
-    @GetMapping("/{id}/products")
+    @GetMapping("/{customerEmailDTOId}/products")
     public ResponseEntity<ApiResponse<Page<Product>>> getProductsByCategory(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
@@ -172,7 +172,7 @@ public class CategoryController {
     /**
      * Update category (Admin only)
      */
-    @PutMapping("/{id}")
+    @PutMapping("/{customerEmailDTOId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Category>> updateCategory(
             @PathVariable Long id,
@@ -189,7 +189,7 @@ public class CategoryController {
     /**
      * Delete category (Admin only) - Soft delete
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{customerEmailDTOId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteCategory(@PathVariable Long id) {
         try {
@@ -204,7 +204,7 @@ public class CategoryController {
     /**
      * Restore deleted category (Admin only)
      */
-    @PutMapping("/{id}/restore")
+    @PutMapping("/{customerEmailDTOId}/restore")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Category>> restoreCategory(@PathVariable Long id) {
         try {
@@ -219,7 +219,7 @@ public class CategoryController {
     /**
      * Toggle category active status (Admin only)
      */
-    @PutMapping("/{id}/toggle-status")
+    @PutMapping("/{customerEmailDTOId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Category>> toggleCategoryStatus(@PathVariable Long id) {
         try {
@@ -297,7 +297,7 @@ public class CategoryController {
     /**
      * Move category to different parent (Admin only)
      */
-    @PutMapping("/{id}/move")
+    @PutMapping("/{customerEmailDTOId}/move")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Category>> moveCategory(
             @PathVariable Long id,
@@ -314,7 +314,7 @@ public class CategoryController {
     /**
      * Get category breadcrumb (Public endpoint)
      */
-    @GetMapping("/{id}/breadcrumb")
+    @GetMapping("/{customerEmailDTOId}/breadcrumb")
     public ResponseEntity<ApiResponse<List<Category>>> getCategoryBreadcrumb(@PathVariable Long id) {
         try {
             List<Category> breadcrumb = categoryService.getCategoryBreadcrumb(id);

@@ -23,7 +23,7 @@ import java.util.List;
  * Version 1.0 - Core authentication functionality
  *
  * Magnum Opus Principles:
- * - Readable variable names (customerEmail not email, customerId not id)
+ * - Readable variable names (customerEmail not email, customerId not customerEmailDTOId)
  * - Uses passwordHash (NEVER password)
  * - NO backward compatibility - built right from start
  * - NO alias methods - uses exact Lombok-generated method names

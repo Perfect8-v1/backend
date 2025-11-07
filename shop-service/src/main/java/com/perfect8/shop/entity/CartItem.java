@@ -82,8 +82,8 @@ public class CartItem {
     private String giftMessage;
 
     // Stock validation
-    @Column(name = "stock_checked_at")
-    private LocalDateTime stockCheckedAt;
+    @Column(name = "stock_checked_date")
+    private LocalDateTime stockCheckedDate;
 
     @Column(name = "stock_available")
     private Boolean stockAvailable;
@@ -97,12 +97,12 @@ public class CartItem {
 
     // Timestamps
     @CreationTimestamp
-    @Column(name = "added_at", nullable = false, updatable = false)
-    private LocalDateTime addedAt;
+    @Column(name = "added_date", nullable = false, updatable = false)
+    private LocalDateTime addedDate;
 
     @UpdateTimestamp
     // FIXED: JPA handles updatedDate automatically
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedDate;
 
     // ========================================
     // Business methods
@@ -239,7 +239,7 @@ public class CartItem {
      * Validate stock
      */
     public void validateStock() {
-        this.stockCheckedAt = LocalDateTime.now();
+        this.stockCheckedDate = LocalDateTime.now();
         if (product != null) {
             this.stockAvailable = product.hasEnoughStock(quantity);
             if (!stockAvailable) {
@@ -259,8 +259,8 @@ public class CartItem {
      * Check if stock validation is needed (older than 30 minutes)
      */
     public boolean needsStockValidation() {
-        return stockCheckedAt == null ||
-                stockCheckedAt.isBefore(LocalDateTime.now().minusMinutes(30));
+        return stockCheckedDate == null ||
+                stockCheckedDate.isBefore(LocalDateTime.now().minusMinutes(30));
     }
 
     /**

@@ -50,7 +50,7 @@ public class JwtResponse {
     private String customerEmail;
 
     // Additional metadata
-    private LocalDateTime issuedAt;
+    private LocalDateTime issuedDate;
     private String issuer;
 
     // Session information
@@ -72,7 +72,7 @@ public class JwtResponse {
                 .tokenType("Bearer")
                 .success(true)
                 .message("Authentication successful")
-                .issuedAt(LocalDateTime.now())
+                .issuedDate(LocalDateTime.now())
                 .build();
     }
 
@@ -89,7 +89,7 @@ public class JwtResponse {
                 .role(role)
                 .success(true)
                 .message("Authentication successful")
-                .issuedAt(LocalDateTime.now())
+                .issuedDate(LocalDateTime.now())
                 .build();
     }
 
@@ -113,7 +113,7 @@ public class JwtResponse {
                 .role(role)
                 .success(true)
                 .message("Authentication successful")
-                .issuedAt(LocalDateTime.now())
+                .issuedDate(LocalDateTime.now())
                 .build();
     }
 
@@ -135,7 +135,7 @@ public class JwtResponse {
                 .expirationDate(now.plusSeconds(expiresIn))
                 .success(true)
                 .message("Authentication successful")
-                .issuedAt(now)
+                .issuedDate(now)
                 .build();
     }
 
@@ -163,7 +163,7 @@ public class JwtResponse {
                 .expirationDate(now.plusSeconds(expiresIn))
                 .success(true)
                 .message("Authentication successful")
-                .issuedAt(now)
+                .issuedDate(now)
                 .build();
     }
 
@@ -174,7 +174,7 @@ public class JwtResponse {
         return JwtResponse.builder()
                 .success(false)
                 .message(message)
-                .issuedAt(LocalDateTime.now())
+                .issuedDate(LocalDateTime.now())
                 .build();
     }
 

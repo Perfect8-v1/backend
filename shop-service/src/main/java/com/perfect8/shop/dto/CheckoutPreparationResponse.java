@@ -47,8 +47,8 @@ public class CheckoutPreparationResponse {
     private List<String> warnings;
 
     // Timestamps
-    private LocalDateTime preparedAt;
-    private LocalDateTime expiresAt;
+    private LocalDateTime preparedDate;
+    private LocalDateTime expiresDate;
 
     // Additional information
     private String notes;

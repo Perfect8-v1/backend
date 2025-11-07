@@ -45,8 +45,8 @@ public class ProductRecommendationResponse {
     private Boolean isOnSale;
     private Boolean isNew;
     private Boolean isBestseller;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
     private String size;
     private String color;
     private List<String> availableSizes;

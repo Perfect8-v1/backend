@@ -26,7 +26,7 @@ public class DashboardSummaryResponse {
     private List<TrendData> trends;
     private List<TopPerformer> topPerformers;
 
-    private LocalDateTime generatedAt;
+    private LocalDateTime generatedDate;
 
     @Data
     @Builder

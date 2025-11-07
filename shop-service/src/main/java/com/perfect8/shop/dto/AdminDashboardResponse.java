@@ -8,7 +8,7 @@ public class AdminDashboardResponse {
     private DashboardSummaryResponse summary;
     private SalesMetricsResponse salesMetrics;
     private CustomerMetricsResponse customerMetrics;
-    private LocalDateTime lastUpdated;
+    private LocalDateTime lastUpdatedDate;
     private String generatedBy;
     private String version;
 
@@ -23,8 +23,8 @@ public class AdminDashboardResponse {
     public CustomerMetricsResponse getCustomerMetrics() { return customerMetrics; }
     public void setCustomerMetrics(CustomerMetricsResponse customerMetrics) { this.customerMetrics = customerMetrics; }
 
-    public LocalDateTime getLastUpdated() { return lastUpdated; }
-    public void setLastUpdated(LocalDateTime lastUpdated) { this.lastUpdated = lastUpdated; }
+    public LocalDateTime getLastUpdatedDate() { return lastUpdatedDate; }
+    public void setLastUpdatedDate(LocalDateTime lastUpdatedDate) { this.lastUpdatedDate = lastUpdatedDate; }
 
     public String getGeneratedBy() { return generatedBy; }
     public void setGeneratedBy(String generatedBy) { this.generatedBy = generatedBy; }

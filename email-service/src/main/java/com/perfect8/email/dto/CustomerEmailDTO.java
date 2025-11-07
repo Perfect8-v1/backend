@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CustomerEmailDTO {
 
-    private Long id;
+    private Long customerEmailDTOId;
     private String email;
     private String firstName;
     private String lastName;

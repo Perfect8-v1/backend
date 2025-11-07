@@ -87,7 +87,7 @@ public class OrderItem {
     @Builder.Default
     private Integer refundedQuantity = 0;
 
-    // CHANGED: createdAt/updatedAt → createdDate/updatedDate (consistency)
+    // CHANGED: createdDate/updatedDate → createdDate/updatedDate (consistency)
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdDate;
 

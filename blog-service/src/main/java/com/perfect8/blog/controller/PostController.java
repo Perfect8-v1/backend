@@ -40,14 +40,14 @@ public class PostController {
                 .body(postService.createPost(postDto, userDetails.getUsername()));
     }
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/update/{customerEmailDTOId}")
     public ResponseEntity<PostDto> updatePost(@PathVariable Long id,
                                               @Valid @RequestBody PostDto postDto,
                                               @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(postService.updatePost(id, postDto, userDetails.getUsername()));
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/delete/{customerEmailDTOId}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id,
                                            @AuthenticationPrincipal UserDetails userDetails) {
         postService.deletePost(id, userDetails.getUsername());

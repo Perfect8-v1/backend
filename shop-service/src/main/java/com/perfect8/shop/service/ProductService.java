@@ -31,7 +31,7 @@ public class ProductService {
 
     /**
      * Find product by ID
-     * FIXED: Changed parameter from 'id' to 'productId' (Magnum Opus principle)
+     * FIXED: Changed parameter from 'customerEmailDTOId' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public Product findById(Long productId) {
@@ -98,7 +98,7 @@ public class ProductService {
 
     /**
      * Find related products
-     * FIXED: Changed .getId() to .getProductId() and .getCategoryId() (Magnum Opus principle)
+     * FIXED: Changed .getActivityFeedResponseId() to .getProductId() and .getCategoryId() (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public List<Product> findRelatedProducts(Long productId, int limit) {
@@ -127,7 +127,7 @@ public class ProductService {
 
     /**
      * Create new product
-     * FIXED: Changed createdAt -> createdDate (Magnum Opus principle)
+     * FIXED: Changed createdDate -> createdDate (Magnum Opus principle)
      */
     public Product createProduct(ProductDTO productDTO) {
         log.info("Creating new product: {}", productDTO.getName());
@@ -169,7 +169,7 @@ public class ProductService {
 
     /**
      * Update existing product
-     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
+     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public Product updateProduct(ProductDTO productDTO) {
         log.info("Updating product with ID: {}", productDTO.getProductId());
@@ -212,7 +212,7 @@ public class ProductService {
 
     /**
      * Delete product (soft delete)
-     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
+     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public void deleteProduct(Long productId) {
         log.info("Deleting product with ID: {}", productId);
@@ -226,7 +226,7 @@ public class ProductService {
 
     /**
      * Toggle product active status
-     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
+     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public Product toggleActiveStatus(Long productId) {
         log.info("Toggling active status for product ID: {}", productId);
@@ -242,7 +242,7 @@ public class ProductService {
 
     /**
      * Update stock quantity
-     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
+     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public Product updateStock(Long productId, Integer quantity) {
         log.info("Updating stock for product ID: {} to quantity: {}", productId, quantity);
@@ -258,7 +258,7 @@ public class ProductService {
 
     /**
      * Adjust stock quantity (increase or decrease)
-     * FIXED: Changed setUpdatedAt -> setUpdatedDate (Magnum Opus principle)
+     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public Product adjustStock(Long productId, Integer adjustment) {
         log.info("Adjusting stock for product ID: {} by: {}", productId, adjustment);
@@ -280,7 +280,7 @@ public class ProductService {
 
     /**
      * Check if product is in stock
-     * FIXED: Changed parameter from 'id' to 'productId' (Magnum Opus principle)
+     * FIXED: Changed parameter from 'customerEmailDTOId' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public boolean isInStock(Long productId) {
@@ -290,7 +290,7 @@ public class ProductService {
 
     /**
      * Check if sufficient stock is available
-     * FIXED: Changed parameter from 'id' to 'productId' (Magnum Opus principle)
+     * FIXED: Changed parameter from 'customerEmailDTOId' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public boolean hasStock(Long productId, Integer requiredQuantity) {

@@ -18,7 +18,7 @@ import java.time.temporal.ChronoUnit;
  *
  * Accurate shipment tracking prevents customer anxiety and support calls!
  * FIXED: Field names match Shipment.java entity exactly (Magnum Opus principle)
- * FIXED: Changed timestamp field names to match entity convention (shippedDate, deliveredDate, lastUpdated)
+ * FIXED: Changed timestamp field names to match entity convention (shippedDate, deliveredDate, lastUpdatedDate)
  */
 @Data
 @Builder
@@ -30,7 +30,7 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Shipment ID - null for new shipments
-     * FIXED: Changed from 'id' to 'shipmentId' to match entity
+     * FIXED: Changed from 'customerEmailDTOId' to 'shipmentId' to match entity
      */
     private Long shipmentId;
 
@@ -89,7 +89,7 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Actual delivery date
-     * FIXED: Changed from 'deliveredAt' to 'deliveredDate' for consistency with entities (Magnum Opus principle)
+     * FIXED: Changed from 'deliveredDate' to 'deliveredDate' for consistency with entities (Magnum Opus principle)
      */
     private LocalDateTime deliveredDate;
 
@@ -172,9 +172,9 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Last tracking update timestamp
-     * FIXED: Changed from 'lastTrackingUpdate' to 'lastUpdated' for consistency with entities (Magnum Opus principle)
+     * FIXED: Changed from 'lastTrackingUpdateDate' to 'lastUpdatedDate' for consistency with entities (Magnum Opus principle)
      */
-    private LocalDateTime lastUpdated;
+    private LocalDateTime lastUpdatedDate;
 
     /**
      * Delivery instructions - Important for successful delivery!
@@ -326,7 +326,7 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Get days in transit
-     * FIXED: Updated to use shippedDate and deliveredDate instead of shippedAt/deliveredAt
+     * FIXED: Updated to use shippedDate and deliveredDate instead of shippedAt/deliveredDate
      */
     public Long getDaysInTransit() {
         if (shippedDate == null) {
@@ -426,7 +426,7 @@ public class ShipmentDTO implements Serializable {
 
     /**
      * Validate that delivered date is after shipped date
-     * FIXED: Updated to use shippedDate and deliveredDate instead of shippedAt/deliveredAt
+     * FIXED: Updated to use shippedDate and deliveredDate instead of shippedAt/deliveredDate
      */
     @AssertTrue(message = "Delivered date must be after shipped date")
     private boolean isDeliveryDateValid() {

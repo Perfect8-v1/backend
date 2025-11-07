@@ -9,7 +9,7 @@ import java.util.List;
 
 public class PostDto {
 
-    private Long id;
+    private Long postDtoId;
 
     @NotBlank(message = "Title is required")
     @Size(max = 255, message = "Title must be less than 255 characters")
@@ -21,16 +21,16 @@ public class PostDto {
     private String slug;
     private String excerpt;
     private boolean published;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime publishedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
+    private LocalDateTime publishedDate;
     private String authorName;
     private List<ImageReferenceDto> images;
     private List<String> links;
 
     // Getters and setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getPostDtoId() { return postDtoId; }
+    public void setPostDtoId(Long postDtoId) { this.postDtoId = postDtoId; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -47,14 +47,14 @@ public class PostDto {
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getUpdatedDate() { return updatedDate; }
+    public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
 
-    public LocalDateTime getPublishedAt() { return publishedAt; }
-    public void setPublishedAt(LocalDateTime publishedAt) { this.publishedAt = publishedAt; }
+    public LocalDateTime getPublishedDate() { return publishedDate; }
+    public void setPublishedDate(LocalDateTime publishedDate) { this.publishedDate = publishedDate; }
 
     public String getAuthorName() { return authorName; }
     public void setAuthorName(String authorName) { this.authorName = authorName; }

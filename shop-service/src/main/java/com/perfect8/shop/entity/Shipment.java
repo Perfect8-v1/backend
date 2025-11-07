@@ -219,7 +219,7 @@ public class Shipment {
     // Lombok generates: getCreatedDate() / setCreatedDate()
     // Lombok generates: getUpdatedDate() / setUpdatedDate()
     // REMOVED: getStatus() / setStatus() - alias methods
-    // REMOVED: getUpdatedAt() / setUpdatedAt() - alias methods
+    // REMOVED: getUpdatedDate() / setUpdatedDate() - alias methods
 
     // ========== BUSINESS METHODS ==========
 

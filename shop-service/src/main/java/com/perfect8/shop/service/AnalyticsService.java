@@ -548,7 +548,7 @@ public class AnalyticsService {
                     .totalRevenue(totalRevenue)
                     .totalOrders(totalOrders)
                     .salesData(salesData)
-                    .generatedAt(LocalDateTime.now())
+                    .generatedDate(LocalDateTime.now())
                     .build();
 
         } catch (Exception e) {
@@ -560,7 +560,7 @@ public class AnalyticsService {
                     .totalRevenue(BigDecimal.ZERO)
                     .totalOrders(0L)
                     .salesData(new ArrayList<>())
-                    .generatedAt(LocalDateTime.now())
+                    .generatedDate(LocalDateTime.now())
                     .build();
         }
     }

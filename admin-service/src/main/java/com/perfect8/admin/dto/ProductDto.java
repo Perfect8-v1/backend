@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class ProductDto {
-    private Long id;
+    private Long productDtoId;
 
     @NotBlank(message = "Product name is required")
     @Size(max = 255, message = "Product name cannot exceed 255 characters")
@@ -31,8 +31,8 @@ public class ProductDto {
     private List<String> images;
     private String mainImage;
     private boolean active;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
     private String metaTitle;
     private String metaDescription;
     private List<String> tags;
@@ -42,8 +42,8 @@ public class ProductDto {
     public ProductDto() {}
 
     // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getProductDtoId() { return productDtoId; }
+    public void setProductDtoId(Long productDtoId) { this.productDtoId = productDtoId; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
@@ -64,10 +64,10 @@ public class ProductDto {
     public void setMainImage(String mainImage) { this.mainImage = mainImage; }
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getCreatedDate() { return createdDate; }
+    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+    public LocalDateTime getUpdatedDate() { return updatedDate; }
+    public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
     public String getMetaTitle() { return metaTitle; }
     public void setMetaTitle(String metaTitle) { this.metaTitle = metaTitle; }
     public String getMetaDescription() { return metaDescription; }

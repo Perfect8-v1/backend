@@ -13,16 +13,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class SystemAlertResponse {
 
-    private Long id;
+    private Long systemAlertResponseId;
     private String type;
     private String severity;
     private String message;
     private String description;
 
-    private LocalDateTime createdAt;
+    private LocalDateTime createdDate;
     private Boolean isRead;
     private Boolean isResolved;
-    private LocalDateTime resolvedAt;
+    private LocalDateTime resolvedDate;
 
     private String source;
     private String category;

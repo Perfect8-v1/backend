@@ -17,7 +17,7 @@ import java.util.Optional;
 /**
  * Repository for Payment entity - Version 1.0
  * FIXED: All references changed from 'status' to 'paymentStatus' to match Payment entity
- * Follows Magnum Opus: paymentId not id, orderId not id, customerId not id
+ * Follows Magnum Opus: paymentId not customerEmailDTOId, orderId not customerEmailDTOId, customerId not customerEmailDTOId
  * MAGNUM OPUS COMPLIANT: SAMMA namn överallt
  */
 @Repository

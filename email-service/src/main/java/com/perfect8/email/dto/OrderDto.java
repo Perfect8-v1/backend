@@ -19,7 +19,7 @@ import java.util.List;
 @AllArgsConstructor
 public class OrderDto {
 
-    private Long id;
+    private Long orderDtoId;
     private String orderReference;
     private String status; // PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
 

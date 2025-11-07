@@ -18,7 +18,7 @@ public class CustomerReportResponse {
 
     private String reportType;
     private String reportPeriod;
-    private LocalDateTime generatedAt;
+    private LocalDateTime generatedDate;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private Integer totalCustomers;

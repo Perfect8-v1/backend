@@ -168,7 +168,7 @@ public class ShipmentController {
 
                 // Tracking
                 .currentLocation(shipment.getCurrentLocation())
-                .lastUpdated(shipment.getUpdatedDate())
+                .lastUpdatedDate(shipment.getUpdatedDate())
 
                 // Label and notes
                 .labelUrl(shipment.getLabelUrl())

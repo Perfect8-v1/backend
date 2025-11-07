@@ -108,7 +108,7 @@ public class Payment {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
-    // FIXED: Changed from createdAt/updatedAt to createdDate/updatedDate for consistency
+    // FIXED: Changed from createdDate/updatedDate to createdDate/updatedDate for consistency
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdDate;
 

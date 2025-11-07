@@ -25,7 +25,7 @@ import java.util.UUID;
  * - NO passwordEncoder in this service - Frontend handles hashing
  *
  * Magnum Opus Principles:
- * - Readable variable names (customerId not id)
+ * - Readable variable names (customerId not customerEmailDTOId)
  * - NO backward compatibility - built right from start
  * - NO alias methods - one method, one name
  * - Use passwordHash ONLY - never password
@@ -240,16 +240,16 @@ public class AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid verification token"));
 
         // Check token expiry (24 hours)
-        if (customer.getEmailVerificationSentAt() != null &&
-                customer.getEmailVerificationSentAt().isBefore(LocalDateTime.now().minusHours(24))) {
+        if (customer.getEmailVerificationSentDate() != null &&
+                customer.getEmailVerificationSentDate().isBefore(LocalDateTime.now().minusHours(24))) {
             throw new BadCredentialsException("Verification token has expired");
         }
 
         // Mark email as verified
         customer.setEmailVerified(true);
         customer.setEmailVerificationToken(null);
-        customer.setEmailVerificationSentAt(null);
-        customer.setEmailVerifiedAt(LocalDateTime.now());
+        customer.setEmailVerificationSentDate(null);
+        customer.setEmailVerifiedDate(LocalDateTime.now());
         customerRepository.save(customer);
 
         log.info("Email verified for customer: {}", customer.getEmail());
@@ -270,7 +270,7 @@ public class AuthService {
         // Generate new verification token
         String verificationToken = generateVerificationToken();
         customer.setEmailVerificationToken(verificationToken);
-        customer.setEmailVerificationSentAt(LocalDateTime.now());
+        customer.setEmailVerificationSentDate(LocalDateTime.now());
         customerRepository.save(customer);
 
         // Send verification email

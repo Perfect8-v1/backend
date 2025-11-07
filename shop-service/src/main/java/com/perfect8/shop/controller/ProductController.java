@@ -14,8 +14,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.security.Principal;
-import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -58,7 +56,7 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{customerEmailDTOId}")
     public ResponseEntity<ApiResponse<ProductResponse>> getProductById(@PathVariable Long id) {
         try {
             Product product = productService.findById(id);
@@ -152,7 +150,7 @@ public class ProductController {
         }
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{customerEmailDTOId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
             @PathVariable Long id,
@@ -169,7 +167,7 @@ public class ProductController {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{customerEmailDTOId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
         try {
@@ -181,7 +179,7 @@ public class ProductController {
         }
     }
 
-    @PatchMapping("/{id}/toggle-status")
+    @PatchMapping("/{customerEmailDTOId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> toggleProductStatus(@PathVariable Long id) {
         try {
@@ -195,7 +193,7 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/{id}/stock")
+    @GetMapping("/{customerEmailDTOId}/stock")
     public ResponseEntity<ApiResponse<Integer>> getStockLevel(@PathVariable Long id) {
         try {
             Product product = productService.findById(id);
@@ -206,7 +204,7 @@ public class ProductController {
         }
     }
 
-    @PostMapping("/{id}/check-availability")
+    @PostMapping("/{customerEmailDTOId}/check-availability")
     public ResponseEntity<ApiResponse<Boolean>> checkAvailability(
             @PathVariable Long id,
             @RequestParam Integer quantity) {
@@ -222,7 +220,7 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/{id}/related")
+    @GetMapping("/{customerEmailDTOId}/related")
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getRelatedProducts(
             @PathVariable Long id,
             @RequestParam(defaultValue = "5") int limit) {
@@ -240,10 +238,10 @@ public class ProductController {
     }
 
     // Helper conversion methods
-    // FIXED: Changed getId() -> getProductId(), getCreatedAt() -> getCreatedDate(), getUpdatedAt() -> getUpdatedDate()
+    // FIXED: Changed getActivityFeedResponseId() -> getProductId(), getCreatedDate() -> getCreatedDate(), getUpdatedDate() -> getUpdatedDate()
     private ProductResponse convertToProductResponse(Product product) {
         return ProductResponse.builder()
-                .id(product.getProductId())  // FIXED: getId() -> getProductId()
+                .id(product.getProductId())  // FIXED: getActivityFeedResponseId() -> getProductId()
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
@@ -257,8 +255,8 @@ public class ProductController {
                 .weight(product.getWeight())
                 .dimensions(product.getDimensions())
                 .tags(product.getTags())
-                .createdAt(product.getCreatedDate())  // FIXED: getCreatedAt() -> getCreatedDate()
-                .updatedAt(product.getUpdatedDate())  // FIXED: getUpdatedAt() -> getUpdatedDate()
+                .createdDate(product.getCreatedDate())  // FIXED: getCreatedDate() -> getCreatedDate()
+                .updatedDate(product.getUpdatedDate())  // FIXED: getUpdatedDate() -> getUpdatedDate()
                 .inStock(product.getStockQuantity() != null && product.getStockQuantity() > 0)
                 .build();
     }
@@ -283,7 +281,7 @@ public class ProductController {
 
     private ProductDTO convertToProductDTO(ProductUpdateRequest request, Long id) {
         return ProductDTO.builder()
-                .productId(id)  // FIXED: id() -> productId()
+                .productId(id)  // FIXED: customerEmailDTOId() -> productId()
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
