@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * Cart Entity - Version 1.0
  * Magnum Opus Compliant: cartId not id, consistent naming
- * FIXED: expiresAt → expirationDate for consistency with other date fields
+ * FIXED: Removed @Column(name) annotations - let JPA do its job!
  */
 @Entity
 @Table(name = "carts")
@@ -62,14 +62,15 @@ public class Cart {
     @Column(name = "saved_name", length = 100)
     private String savedName;
 
-    @Column(name = "created_at")
+    // MAGNUM OPUS: No @Column(name) needed!
+    // Lombok generates: getCreatedDate() → JPA creates: created_date
     private LocalDateTime createdDate;
 
-    @Column(name = "updated_at")
+    // Lombok generates: getUpdatedDate() → JPA creates: updated_date
     private LocalDateTime updatedDate;
 
     // FIXED: expiresAt → expirationDate for consistency
-    @Column(name = "expires_at")
+    // Lombok generates: getExpirationDate() → JPA creates: expiration_date
     private LocalDateTime expirationDate;
 
     @PrePersist
@@ -102,6 +103,8 @@ public class Cart {
 
     // ========== MAGNUM OPUS COMPLIANT ==========
     // Lombok generates: getCartId() / setCartId()
+    // Lombok generates: getCreatedDate() / setCreatedDate()
+    // Lombok generates: getUpdatedDate() / setUpdatedDate()
     // Lombok generates: getExpirationDate() / setExpirationDate()
     // No alias methods - one method, one name
 
