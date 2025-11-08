@@ -18,7 +18,7 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
 
     // Basic customer address queries
     @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId ORDER BY a.isDefault DESC, a.addressId DESC")
-    List<Address> findByCustomerIdOrderByDefaultAddressDescCreatedAtDesc(@Param("customerId") Long customerId);
+    List<Address> findByCustomerIdOrderByDefaultAddressDescCreatedDateDesc(@Param("customerId") Long customerId);
 
     @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId")
     List<Address> findByCustomerId(@Param("customerId") Long customerId);

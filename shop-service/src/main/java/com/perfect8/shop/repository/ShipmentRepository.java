@@ -14,7 +14,7 @@ import java.util.Optional;
 
 /**
  * Shipment Repository - Version 1.0
- * FIXED: updatedDate not lastUpdatedDate, createdDate not createdDate
+ * FIXED: updatedDate not lastUpdatedDate, createdDate not createdAt
  */
 @Repository
 public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
@@ -89,7 +89,7 @@ public interface ShipmentRepository extends JpaRepository<Shipment, Long> {
 
     // ========== Basic queries ==========
 
-    // FIXED: createdDate not createdDate
+    // FIXED: createdDate not createdAt
     List<Shipment> findTop10ByOrderByCreatedDateDesc();
 
     // ========== Address queries ==========

@@ -21,7 +21,7 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
     Optional<Cart> findByCustomerId(@Param("customerId") Long customerId);
 
     @Query("SELECT c FROM Cart c WHERE c.customer.customerId = :customerId AND c.createdDate BETWEEN :start AND :end")
-    List<Cart> findByCustomerIdAndCreatedAtBetween(@Param("customerId") Long customerId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    List<Cart> findByCustomerIdAndCreatedDateBetween(@Param("customerId") Long customerId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT c FROM Cart c WHERE c.customer.customerId = :customerId AND c.updatedDate > :since")
     List<Cart> findRecentCartsByCustomer(@Param("customerId") Long customerId, @Param("since") LocalDateTime since);

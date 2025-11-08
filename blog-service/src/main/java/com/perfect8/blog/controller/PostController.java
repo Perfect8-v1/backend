@@ -1,10 +1,11 @@
-// blog-service/src/main/java/com/perfect8/blog/controller/PostController.java
-
-        package com.perfect8.blog.controller;
+package com.perfect8.blog.controller;
 
 import com.perfect8.blog.dto.PostDto;
+import com.perfect8.blog.model.ImageReference;
+import com.perfect8.blog.model.Post;
+import com.perfect8.blog.repository.UserRepository;
 import com.perfect8.blog.service.PostService;
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -13,44 +14,79 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.stream.Collectors;
+
 @RestController
-@RequestMapping("/api/posts")
+@RequestMapping("/api/v1/posts")
+@RequiredArgsConstructor
 public class PostController {
 
     private final PostService postService;
+    private final UserRepository userRepository;
 
-    public PostController(PostService postService) {
-        this.postService = postService;
+    @GetMapping
+    public Page<PostDto> listPublished(Pageable pageable) {
+        return postService.listPublished(pageable).map(this::toDto);
     }
 
-    @GetMapping("/public")
-    public ResponseEntity<Page<PostDto>> getAllPublishedPosts(Pageable pageable) {
-        return ResponseEntity.ok(postService.getAllPublishedPosts(pageable));
+    @GetMapping("/{slug}")
+    public ResponseEntity<PostDto> getBySlug(@PathVariable String slug) {
+        Post post = postService.getBySlug(slug);
+        return ResponseEntity.ok(toDto(post));
     }
 
-    @GetMapping("/public/{slug}")
-    public ResponseEntity<PostDto> getPostBySlug(@PathVariable String slug) {
-        return ResponseEntity.ok(postService.getPostBySlug(slug));
-    }
-
-    @PostMapping("/create")
-    public ResponseEntity<PostDto> createPost(@Valid @RequestBody PostDto postDto,
+    @PostMapping
+    public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto,
                                               @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(postService.createPost(postDto, userDetails.getUsername()));
+        Long userId = null;
+        if (userDetails != null) {
+            userId = userRepository.findByUsername(userDetails.getUsername())
+                    .map(u -> u.getUserId())
+                    .orElse(null);
+        }
+        Post created = postService.create(postDto, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toDto(created));
     }
 
-    @PutMapping("/update/{customerEmailDTOId}")
+    @PutMapping("/{id}")
     public ResponseEntity<PostDto> updatePost(@PathVariable Long id,
-                                              @Valid @RequestBody PostDto postDto,
-                                              @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(postService.updatePost(id, postDto, userDetails.getUsername()));
+                                              @RequestBody PostDto postDto) {
+        Post updated = postService.update(id, postDto);
+        return ResponseEntity.ok(toDto(updated));
     }
 
-    @DeleteMapping("/delete/{customerEmailDTOId}")
-    public ResponseEntity<Void> deletePost(@PathVariable Long id,
-                                           @AuthenticationPrincipal UserDetails userDetails) {
-        postService.deletePost(id, userDetails.getUsername());
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deletePost(@PathVariable Long id) {
+        postService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // --- Mapping helpers ---
+
+    private PostDto toDto(Post post) {
+        return PostDto.builder()
+                .postDtoId(post.getPostId())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .slug(post.getSlug())
+                .excerpt(post.getExcerpt())
+                .published(post.isPublished())
+                .createdDate(post.getCreatedDate())
+                .updatedDate(post.getUpdatedDate())
+                .publishedDate(post.getPublishedDate())
+                .links(post.getLinks())
+                .images(post.getImages() == null ? null : post.getImages().stream()
+                        .map(this::toImageDto)
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    private PostDto.ImageDto toImageDto(ImageReference img) {
+        return PostDto.ImageDto.builder()
+                .imageId(img.getImageId())
+                .imageUrl(img.getUrl())
+                .altText(img.getAlt())
+                .caption(img.getCaption())
+                .build();
     }
 }

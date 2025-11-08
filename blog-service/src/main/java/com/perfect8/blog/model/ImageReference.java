@@ -1,60 +1,52 @@
-// blog-service/src/main/java/com/perfect8/blog/model/ImageReference.java
 package com.perfect8.blog.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "image_references")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ImageReference {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long ImageReferenceId;
+    private Long imageReferenceId;
 
-    @Column(name = "image_id", nullable = false)
-    private String imageId;
+    @Column(name = "image_id")
+    private String imageId; // optional client-side id/reference
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(nullable = false)
+    private String url;
 
-    @Column(name = "alt_text")
-    private String altText;
+    @Column
+    private String alt;
 
-    @Column(name = "caption")
+    @Column
     private String caption;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post post;
 
-    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 
     @PrePersist
     protected void onCreate() {
         createdDate = LocalDateTime.now();
+        updatedDate = LocalDateTime.now();
     }
 
-    // Getters and setters
-    public Long getImageReferenceId() { return ImageReferenceId; }
-    public void setImageReferenceId(Long imageReferenceId) { this.ImageReferenceId = imageReferenceId; }
-
-    public String getImageId() { return imageId; }
-    public void setImageId(String imageId) { this.imageId = imageId; }
-
-    public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-
-    public String getAltText() { return altText; }
-    public void setAltText(String altText) { this.altText = altText; }
-
-    public String getCaption() { return caption; }
-    public void setCaption(String caption) { this.caption = caption; }
-
-    public Post getPost() { return post; }
-    public void setPost(Post post) { this.post = post; }
-
-    public LocalDateTime getCreatedDate() { return createdDate; }
-    public void setCreatedDate(LocalDateTime createdDate) { this.createdDate = createdDate; }
+    @PreUpdate
+    protected void onUpdate() {
+        updatedDate = LocalDateTime.now();
+    }
 }
