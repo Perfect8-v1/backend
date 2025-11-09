@@ -2,11 +2,13 @@ package com.perfect8.shop.entity;
 
 import lombok.*;
 import jakarta.persistence.*;
+import lombok.Builder.Default;
 
+@Builder
 @Entity
 @Table(name = "addresses")
 @Data
-@Builder
+@Default
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = "customer")
