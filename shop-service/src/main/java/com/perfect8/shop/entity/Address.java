@@ -8,7 +8,6 @@ import lombok.Builder.Default;
 @Entity
 @Table(name = "addresses")
 @Data
-@Default
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(exclude = "customer")

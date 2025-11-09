@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder.default
+@Builder
 public class Post {
 
     @Id
