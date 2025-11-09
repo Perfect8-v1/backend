@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpecificationExecutor<Address> {
 
     // Basic customer address queries
-    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId ORDER BY a.isDefault DESC, a.addressId DESC")
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId ORDER BY a.defaultAddress DESC, a.addressId DESC")
     List<Address> findByCustomerIdOrderByDefaultAddressDescCreatedDateDesc(@Param("customerId") Long customerId);
 
     @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId")
@@ -30,25 +30,25 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
     long countByCustomerId(@Param("customerId") Long customerId);
 
     // Default address management
-    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.isDefault = true")
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.defaultAddress = true")
     Optional<Address> findByCustomerIdAndDefaultAddressTrue(@Param("customerId") Long customerId);
 
-    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Address a WHERE a.customer.customerId = :customerId AND a.isDefault = true")
+    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Address a WHERE a.customer.customerId = :customerId AND a.defaultAddress = true")
     boolean existsByCustomerIdAndDefaultAddressTrue(@Param("customerId") Long customerId);
 
     @Modifying
-    @Query("UPDATE Address a SET a.isDefault = :isDefault WHERE a.customer.customerId = :customerId")
-    void updateDefaultAddressForCustomer(@Param("customerId") Long customerId, @Param("isDefault") boolean isDefault);
+    @Query("UPDATE Address a SET a.defaultAddress = :defaultAddress WHERE a.customer.customerId = :customerId")
+    void updateDefaultAddressForCustomer(@Param("customerId") Long customerId, @Param("defaultAddress") boolean isDefault);
 
     @Modifying
-    @Query("UPDATE Address a SET a.isDefault = false WHERE a.customer.customerId = :customerId AND a.addressId != :excludeAddressId")
+    @Query("UPDATE Address a SET a.defaultAddress = false WHERE a.customer.customerId = :customerId AND a.addressId != :excludeAddressId")
     void clearOtherDefaultAddresses(@Param("customerId") Long customerId, @Param("excludeAddressId") Long excludeAddressId);
 
     // Address type queries
     @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType = :addressType")
     List<Address> findByCustomerIdAndAddressType(@Param("customerId") Long customerId, @Param("addressType") String addressType);
 
-    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType = :addressType AND a.isDefault = true")
+    @Query("SELECT a FROM Address a WHERE a.customer.customerId = :customerId AND a.addressType = :addressType AND a.defaultAddress = true")
     Optional<Address> findByCustomerIdAndAddressTypeAndDefaultAddressTrue(@Param("customerId") Long customerId, @Param("addressType") String addressType);
 
     List<Address> findByAddressType(String addressType);
@@ -160,7 +160,7 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
             "(:state IS NULL OR LOWER(a.state) = LOWER(:state)) AND " +
             "(:city IS NULL OR LOWER(a.city) LIKE LOWER(CONCAT('%', :city, '%'))) AND " +
             "(:postalCode IS NULL OR a.postalCode LIKE CONCAT(:postalCode, '%')) AND " +
-            "(:isDefault IS NULL OR a.isDefault = :isDefault)")
+            "(:defaultAddress IS NULL OR a.defaultAddress = :defaultAddress)")
     Page<Address> findAddressesWithFilters(
             @Param("customerId") Long customerId,
             @Param("addressType") String addressType,
@@ -168,7 +168,7 @@ public interface AddressRepository extends JpaRepository<Address, Long>, JpaSpec
             @Param("state") String state,
             @Param("city") String city,
             @Param("postalCode") String postalCode,
-            @Param("isDefault") Boolean isDefault,
+            @Param("defaultAddress") Boolean isDefault,
             Pageable pageable
     );
 

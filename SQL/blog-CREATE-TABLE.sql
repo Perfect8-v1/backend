@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS posts (
     published_date DATETIME(6),
     created_date DATETIME(6),
     updated_date DATETIME(6),
-    is_published BOOLEAN NOT NULL DEFAULT FALSE,
+    published BOOLEAN NOT NULL DEFAULT FALSE,
     view_count INT NOT NULL DEFAULT 0,
     
     FOREIGN KEY (author_id) REFERENCES users(user_id),

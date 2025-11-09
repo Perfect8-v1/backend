@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role VARCHAR(50) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    active BOOLEAN NOT NULL DEFAULT TRUE,
     created_date DATETIME(6),
     updated_date DATETIME(6),
     last_login_date DATETIME(6),

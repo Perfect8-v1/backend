@@ -9,7 +9,7 @@
 -- ==============================================
 
 CREATE TABLE IF NOT EXISTS email_templates (
-    template_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email_template_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
     subject VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,

@@ -9,6 +9,8 @@ import java.util.List;
 /**
  * Customer Entity - Version 1.0
  * Magnum Opus Compliant: No alias methods, Lombok generates all getters/setters
+ * 
+ * FIXED: getDefaultAddress() → isDefaultAddress() (Lombok boolean naming)
  */
 @Entity
 @Table(name = "customers")
@@ -159,8 +161,9 @@ public class Customer {
     }
 
     public Address getDefaultShippingAddress() {
+        // FIXED: getDefaultAddress() → isDefaultAddress() (Lombok boolean naming)
         return addresses.stream()
-                .filter(a -> "SHIPPING".equals(a.getAddressType()) && a.getIsDefault())
+                .filter(a -> "SHIPPING".equals(a.getAddressType()) && a.isDefaultAddress())
                 .findFirst()
                 .orElse(addresses.stream()
                         .filter(a -> "SHIPPING".equals(a.getAddressType()))

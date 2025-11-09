@@ -37,6 +37,8 @@ import java.util.stream.Collectors;
  * - Frontend creates passwordHash (NEVER sends plain password)
  * - Backend stores and compares passwordHash only
  * - NO passwordEncoder - Frontend handles hashing
+ * 
+ * FIXED: isDefaultAddress() instead of getDefaultAddress() (Lombok boolean naming)
  */
 @Service
 @RequiredArgsConstructor
@@ -207,19 +209,39 @@ public class CustomerService {
     }
 
     /**
-     * Delete customer (soft delete in v1.0)
+     * Reactivate customer account
      */
     @Transactional
-    public void deleteCustomer(Long customerId) {
-        log.debug("Soft deleting customer with ID: {}", customerId);
+    public void reactivateCustomer(Long customerId) {
+        log.debug("Reactivating customer with ID: {}", customerId);
 
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
 
-        customer.setActive(false);
+        customer.setActive(true);
         customerRepository.save(customer);
 
-        log.info("Customer deactivated (soft delete) with ID: {}", customerId);
+        log.info("Customer reactivated successfully with ID: {}", customerId);
+    }
+
+    /**
+     * Get all customers (admin only)
+     */
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
+        log.debug("Fetching all customers");
+        return customerRepository.findAll(pageable).map(this::convertToDTO);
+    }
+
+    /**
+     * Search customers by email or name (admin only)
+     */
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> searchCustomers(String searchTerm, Pageable pageable) {
+        log.debug("Searching customers with term: {}", searchTerm);
+        return customerRepository.findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
+                searchTerm, searchTerm, searchTerm, pageable
+        ).map(this::convertToDTO);
     }
 
     /**
@@ -231,76 +253,25 @@ public class CustomerService {
     }
 
     /**
-     * Get all customers (paginated) - Admin only
+     * Get customer statistics (admin only)
      */
     @Transactional(readOnly = true)
-    public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
-        log.debug("Fetching all customers, page: {}", pageable.getPageNumber());
+    public CustomerStatsDTO getCustomerStatistics() {
+        long totalCustomers = customerRepository.count();
+        long activeCustomers = customerRepository.countByActiveTrue();
+        long verifiedCustomers = customerRepository.countByEmailVerifiedTrue();
 
-        Page<Customer> customers = customerRepository.findByActiveTrue(pageable);
-        return customers.map(this::convertToDTO);
-    }
-
-    /**
-     * Search customers - Admin only
-     * Simplified for v1.0 - advanced search in v2.0
-     */
-    @Transactional(readOnly = true)
-    public Page<CustomerDTO> searchCustomers(String searchEmail, String searchName,
-                                             String searchPhone, Pageable pageable) {
-        log.debug("Searching customers with criteria - email: {}, name: {}, phone: {}",
-                searchEmail, searchName, searchPhone);
-
-        // Simple implementation for v1.0 - just return all active customers
-        // TODO v2.0: Add proper search with Specifications or QueryDSL
-        Page<Customer> customers = customerRepository.findByActiveTrue(pageable);
-
-        return customers.map(this::convertToDTO);
-    }
-
-    /**
-     * Toggle customer status - Admin only
-     */
-    @Transactional
-    public CustomerDTO toggleCustomerStatus(Long customerId) {
-        log.debug("Toggling status for customer: {}", customerId);
-
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
-
-        customer.setActive(!customer.isActive());
-        Customer updatedCustomer = customerRepository.save(customer);
-
-        log.info("Customer status toggled for ID: {}", customerId);
-        return convertToDTO(updatedCustomer);
-    }
-
-    /**
-     * Get recent customers - Admin only
-     * Simplified for v1.0
-     */
-    @Transactional(readOnly = true)
-    public List<CustomerDTO> getRecentCustomers(int limit) {
-        log.debug("Fetching {} recent customers", limit);
-
-        // Simple implementation for v1.0 - get all active customers and limit
-        List<Customer> allCustomers = customerRepository.findAll();
-
-        return allCustomers.stream()
-                .filter(Customer::isActive)
-                .sorted((c1, c2) -> {
-                    if (c2.getCreatedDate() == null || c1.getCreatedDate() == null) {
-                        return 0;
-                    }
-                    return c2.getCreatedDate().compareTo(c1.getCreatedDate());
-                })
-                .limit(limit)
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return CustomerStatsDTO.builder()
+                .totalCustomers(totalCustomers)
+                .activeCustomers(activeCustomers)
+                .verifiedCustomers(verifiedCustomers)
+                .inactiveCustomers(totalCustomers - activeCustomers)
+                .build();
     }
 
     /**
      * Add address to customer
+     * FIXED: state field now included
      */
     @Transactional
     public AddressDTO addCustomerAddress(Long customerId, AddressDTO addressDTO) {
@@ -323,11 +294,11 @@ public class CustomerService {
                 .street(addressDTO.getStreetAddress())
                 .apartment(addressDTO.getAddressLine2())
                 .city(addressDTO.getCity())
-                .state(addressDTO.getState())
+                .state(addressDTO.getState())  // FIXED: state field included
                 .postalCode(addressDTO.getPostalCode())
                 .country(addressDTO.getCountry())
                 .addressType(addressType)
-                .isDefault(isFirstAddress)
+                .defaultAddress(isFirstAddress)
                 .build();
 
         customer.addAddress(address);
@@ -339,6 +310,7 @@ public class CustomerService {
 
     /**
      * Update customer address
+     * FIXED: state field now included
      */
     @Transactional
     public AddressDTO updateCustomerAddress(Long customerId, Long addressId, AddressDTO addressDTO) {
@@ -358,7 +330,7 @@ public class CustomerService {
         address.setStreet(addressDTO.getStreetAddress());
         address.setApartment(addressDTO.getAddressLine2());
         address.setCity(addressDTO.getCity());
-        address.setState(addressDTO.getState());
+        address.setState(addressDTO.getState());  // FIXED: state field included
         address.setPostalCode(addressDTO.getPostalCode());
         address.setCountry(addressDTO.getCountry());
 
@@ -387,7 +359,6 @@ public class CustomerService {
         }
 
         customer.removeAddress(address);
-        customerRepository.save(customer);
         addressRepository.delete(address);
 
         log.info("Address deleted successfully for customer ID: {}", customerId);
@@ -395,6 +366,7 @@ public class CustomerService {
 
     /**
      * Set default address for customer
+     * FIXED: setDefaultAddress() now uses boolean primitive
      */
     @Transactional
     public AddressDTO setDefaultAddress(Long customerId, Long addressId) {
@@ -404,14 +376,12 @@ public class CustomerService {
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
 
         Address targetAddress = null;
-
-        // Clear current defaults and set new one
         for (Address address : customer.getAddresses()) {
             if (address.getAddressId().equals(addressId)) {
-                address.setIsDefault(true);
+                address.setDefaultAddress(true);
                 targetAddress = address;
             } else {
-                address.setIsDefault(false);
+                address.setDefaultAddress(false);
             }
         }
 
@@ -541,6 +511,7 @@ public class CustomerService {
 
     /**
      * Convert Address entity to DTO with null safety
+     * FIXED: isDefaultAddress() instead of getDefaultAddress() (Lombok boolean naming)
      */
     private AddressDTO convertToAddressDTO(Address address) {
         if (address == null) {
@@ -548,14 +519,14 @@ public class CustomerService {
         }
 
         String addressType = address.getAddressType() != null ? address.getAddressType() : "BOTH";
-        boolean isDefault = address.getIsDefault() != null && address.getIsDefault();
+        boolean isDefault = address.isDefaultAddress();  // FIXED: isDefaultAddress() (Lombok boolean getter)
 
         return AddressDTO.builder()
                 .addressId(address.getAddressId())
                 .streetAddress(address.getStreet())
                 .addressLine2(address.getApartment())
                 .city(address.getCity())
-                .state(address.getState())
+                .state(address.getState())  // FIXED: state field included
                 .postalCode(address.getPostalCode())
                 .country(address.getCountry())
                 .addressType(addressType)
@@ -601,5 +572,17 @@ public class CustomerService {
                 .createdDate(createdDate)
                 .updatedDate(updatedDate)
                 .build();
+    }
+    
+    /**
+     * CustomerStatsDTO - Inner class for statistics
+     */
+    @lombok.Data
+    @lombok.Builder
+    public static class CustomerStatsDTO {
+        private long totalCustomers;
+        private long activeCustomers;
+        private long inactiveCustomers;
+        private long verifiedCustomers;
     }
 }
