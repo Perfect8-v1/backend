@@ -234,14 +234,82 @@ public class CustomerService {
     }
 
     /**
-     * Search customers by email or name (admin only)
+     * Search customers by email, name, or phone (admin only)
+     * FIXED: Accepts multiple optional search criteria
      */
     @Transactional(readOnly = true)
-    public Page<CustomerDTO> searchCustomers(String searchTerm, Pageable pageable) {
-        log.debug("Searching customers with term: {}", searchTerm);
-        return customerRepository.findByEmailContainingIgnoreCaseOrFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCase(
-                searchTerm, searchTerm, searchTerm, pageable
-        ).map(this::convertToDTO);
+    public Page<CustomerDTO> searchCustomers(String email, String name, String phone, Pageable pageable) {
+        log.debug("Searching customers - email: {}, name: {}, phone: {}", email, name, phone);
+        
+        // Build search term from provided parameters
+        StringBuilder searchTermBuilder = new StringBuilder();
+        if (email != null && !email.isEmpty()) {
+            searchTermBuilder.append(email);
+        }
+        if (name != null && !name.isEmpty()) {
+            if (searchTermBuilder.length() > 0) searchTermBuilder.append(" ");
+            searchTermBuilder.append(name);
+        }
+        if (phone != null && !phone.isEmpty()) {
+            if (searchTermBuilder.length() > 0) searchTermBuilder.append(" ");
+            searchTermBuilder.append(phone);
+        }
+        
+        String searchTerm = searchTermBuilder.toString().trim();
+        if (searchTerm.isEmpty()) {
+            // If no search criteria provided, return all customers
+            return getAllCustomers(pageable);
+        }
+        
+        return customerRepository.searchCustomers(searchTerm, pageable).map(this::convertToDTO);
+    }
+    
+    /**
+     * Delete customer permanently (admin only)
+     * WARNING: This permanently deletes the customer and all associated data
+     */
+    @Transactional
+    public void deleteCustomer(Long customerId) {
+        log.debug("Permanently deleting customer with ID: {}", customerId);
+        
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        
+        customerRepository.delete(customer);
+        log.warn("Customer permanently deleted with ID: {}", customerId);
+    }
+    
+    /**
+     * Toggle customer active status (admin only)
+     */
+    @Transactional
+    public CustomerDTO toggleCustomerStatus(Long customerId) {
+        log.debug("Toggling status for customer ID: {}", customerId);
+        
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
+        
+        customer.setActive(!customer.isActive());
+        Customer updatedCustomer = customerRepository.save(customer);
+        
+        log.info("Customer status toggled for ID: {} - New status: {}", customerId, updatedCustomer.isActive());
+        return convertToDTO(updatedCustomer);
+    }
+    
+    /**
+     * Get recent customers (admin only)
+     * Returns a simple list of recent customers (not paginated)
+     */
+    @Transactional(readOnly = true)
+    public List<CustomerDTO> getRecentCustomers(int limit) {
+        log.debug("Fetching {} recent customers", limit);
+        Pageable pageable = org.springframework.data.domain.PageRequest.of(0, limit, 
+            org.springframework.data.domain.Sort.by("createdDate").descending());
+        return customerRepository.findAllByOrderByCreatedDateDesc(pageable)
+                .getContent()
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     /**

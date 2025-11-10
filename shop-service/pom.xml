@@ -70,11 +70,9 @@
 
         <!-- MySQL -->
         <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <scope>runtime</scope>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
         </dependency>
-
         <!-- Spring Cloud OpenFeign (för kommunikation med andra services) -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

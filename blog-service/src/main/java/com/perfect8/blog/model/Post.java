@@ -6,6 +6,14 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Post entity for blog posts
+ *
+ * FIXED:
+ * - @JoinColumn(name = "user_id") already correct - matches SQL
+ * - boolean published field (Hibernate maps to "published" column)
+ * - Removed explicit column names where Hibernate defaults are correct
+ */
 @Entity
 @Table(name = "posts")
 @Data
@@ -24,22 +32,25 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "slug", unique = true)
+    @Column(unique = true)
     private String slug;
 
-    @Column(name = "excerpt")
     private String excerpt;
 
-    @Column(name = "published")
-    private boolean published = false;
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean published = false;  // Hibernate maps: published → published column
 
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
     private LocalDateTime publishedDate;
 
+    @Builder.Default
+    private Integer viewCount = 0;
+
     // Relationer
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id")  // CORRECT: Matches SQL column user_id
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)

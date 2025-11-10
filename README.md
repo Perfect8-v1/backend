@@ -6,7 +6,7 @@ This project implements a secure, containerized blog application with image hand
 - Spring Boot 3.4+
 - Spring Security (JWT)
 - Docker & Docker Compose
-- MySQL (MariaDB)
+- MySQL 
 - RESTful communication between services
 
 ## 📁 Project Structure

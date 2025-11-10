@@ -2,7 +2,6 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <annotationProcessing>
-      <profile default="true" name="Default" enabled="true" />
       <profile name="Maven default annotation processors profile" enabled="true">
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
@@ -23,20 +22,16 @@
         <module name="image-service" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="mail-service" target="17" />
-    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="P8" options="" />
-      <module name="admin-service" options="-parameters" />
-      <module name="blog-service" options="-parameters" />
-      <module name="common" options="-parameters" />
-      <module name="email-service" options="-parameters" />
-      <module name="image-service" options="-parameters" />
-      <module name="perfect8.com" options="" />
-      <module name="shop-service" options="-parameters" />
+      <module name="admin-service" options="-parameters -Xlint:-options" />
+      <module name="blog-service" options="-parameters -Xlint:-options" />
+      <module name="common" options="-parameters -Xlint:-options" />
+      <module name="email-service" options="-parameters -Xlint:-options" />
+      <module name="image-service" options="-parameters -Xlint:-options" />
+      <module name="perfect8-parent" options="-parameters -Xlint:-options" />
+      <module name="shop-service" options="-parameters -Xlint:-options" />
     </option>
   </component>
 </project>

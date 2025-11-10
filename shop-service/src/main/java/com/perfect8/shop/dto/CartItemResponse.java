@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Response DTO for individual cart items.
@@ -188,7 +189,7 @@ public class CartItemResponse {
                     .divide(BigDecimal.valueOf(100));
             effective = effective.subtract(discount);
         } else if (discountAmount != null && quantity != null && quantity > 0) {
-            BigDecimal unitDiscount = discountAmount.divide(BigDecimal.valueOf(quantity), 2, BigDecimal.ROUND_HALF_UP);
+            BigDecimal unitDiscount = discountAmount.divide(BigDecimal.valueOf(quantity), 2, RoundingMode.HALF_UP);
             effective = effective.subtract(unitDiscount);
         }
 

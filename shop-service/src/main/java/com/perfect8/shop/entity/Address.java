@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 
 /**
  * Address entity for customer billing and shipping addresses
- * 
+ *
  * Design decisions:
  * - boolean defaultAddress (not Boolean isDefault) - primitiv för Magnum Opus
  * - Hibernate maps: defaultAddress → default_address (undviker MySQL reserverat ord "default")
@@ -50,6 +50,7 @@ public class Address {
     private String country;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean defaultAddress = false;  // Primitiv boolean - Lombok genererar isDefaultAddress()
 
     @Column(nullable = false, length = 50)

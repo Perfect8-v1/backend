@@ -10,6 +10,13 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * User entity for blog authors and administrators
+ * 
+ * FIXED:
+ * - password → passwordHash (shows it's hashed, Magnum Opus principle)
+ * - referencedColumnName = "id" → "roleId" (matches Role entity field)
+ */
 @Entity
 @Table(name = "users")
 @Data
@@ -29,7 +36,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
-    private String password;
+    private String passwordHash;  // FIXED: password → passwordHash (shows it's hashed)
 
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
@@ -38,7 +45,7 @@ public class User {
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id", referencedColumnName = "userId"),
-            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "id")
+            inverseJoinColumns = @JoinColumn(name = "role_id", referencedColumnName = "roleId")  // FIXED: id → roleId
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();

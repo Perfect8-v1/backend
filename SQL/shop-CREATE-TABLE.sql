@@ -1,7 +1,7 @@
 -- ================================================
 -- shop-CREATE-TABLE.sql
 -- Database: shopDB
--- Created: 2025-11-09
+-- Created: 2025-11-09 (FIXED: 2025-11-10)
 -- Purpose: Create tables for shop-service (e-commerce core)
 -- 
 -- IMPORTANT NOTES:
@@ -9,6 +9,7 @@
 -- - Boolean fields: Java defaultAddress → MySQL default_address (clean, no reserved words)
 -- - ID fields: [entityName]Id → Hibernate maps to [entity_name]_id
 -- - Date fields: *Date not *At (Magnum Opus compliance)
+-- - state field: Required for USA (90% of Perfect8 customers)
 -- ================================================
 
 -- ================================================
@@ -93,7 +94,8 @@ CREATE TABLE IF NOT EXISTS customers (
 -- ================================================
 -- Table: addresses
 -- Purpose: Customer addresses for billing and shipping
--- Notes: Java defaultAddress → MySQL default_address (clean, no reserved words!)
+-- Notes: state field required for USA (90% of customers)
+--        Java defaultAddress → MySQL default_address (clean, no reserved words!)
 -- ================================================
 
 CREATE TABLE IF NOT EXISTS addresses (
@@ -102,6 +104,7 @@ CREATE TABLE IF NOT EXISTS addresses (
     street VARCHAR(255) NOT NULL,
     apartment VARCHAR(100),
     city VARCHAR(100) NOT NULL,
+    state VARCHAR(100),  -- Required for USA (90% of Perfect8 customers)
     postal_code VARCHAR(20) NOT NULL,
     country VARCHAR(100) NOT NULL,
     default_address BOOLEAN NOT NULL DEFAULT FALSE,  -- Java: defaultAddress → MySQL: default_address
@@ -314,4 +317,5 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
 -- - Boolean fields follow Hibernate naming (remove "is" prefix)
 -- - Date fields use *Date suffix (Magnum Opus compliance)
 -- - NO reserved words used - clean and portable SQL
+-- - state field included for USA customers (90% of Perfect8 base)
 -- ================================================
