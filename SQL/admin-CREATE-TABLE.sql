@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS admin_users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
     role VARCHAR(50) NOT NULL,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_date DATETIME(6),
@@ -22,7 +24,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
     INDEX idx_username (username),
     INDEX idx_email (email),
     INDEX idx_role (role),
-    INDEX idx_is_active (is_active)
+    INDEX idx_active (active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- End of admin-CREATE-TABLE.sql
