@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -151,7 +152,7 @@ public class ProductDTO {
             return BigDecimal.ZERO;
         }
         BigDecimal discount = price.subtract(discountPrice);
-        return discount.divide(price, 2, BigDecimal.ROUND_HALF_UP)
+        return discount.divide(price, 2, RoundingMode.HALF_UP)
                 .multiply(BigDecimal.valueOf(100));
     }
 
