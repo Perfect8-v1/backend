@@ -147,6 +147,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
     product_id BIGINT NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     price_at_add DECIMAL(10, 2) NOT NULL,  -- Price snapshot when added
+    custom_message VARCHAR(500),  -- Optional custom message for item (gift message, special instructions)
     added_date DATETIME(6),
     updated_date DATETIME(6),
     stock_checked_date DATETIME(6),  -- Last time stock was verified
