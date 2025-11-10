@@ -55,7 +55,7 @@ public class AuthController {
 
             // Update last login time
             AdminUser adminUser = adminUserService.findByUsername(authRequest.getUsername());
-            adminUser.setLastLogin(LocalDateTime.now());
+            adminUser.setLastLoginDate(LocalDateTime.now());
             adminUserService.save(adminUser);
 
             // Create response using your existing AuthResponse DTO

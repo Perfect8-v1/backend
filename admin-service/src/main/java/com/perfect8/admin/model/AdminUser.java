@@ -38,8 +38,8 @@ public class AdminUser {
     // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedDate;
 
-    @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+    @Column(name = "last_login_date")
+    private LocalDateTime lastLoginDate;
 
     public enum Role {
         SUPER_ADMIN, SHOP_ADMIN, CONTENT_ADMIN
@@ -90,8 +90,8 @@ public class AdminUser {
     public LocalDateTime getUpdatedDate() { return updatedDate; }
     public void setUpdatedDate(LocalDateTime updatedDate) { this.updatedDate = updatedDate; }
 
-    public LocalDateTime getLastLogin() { return lastLogin; }
-    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
+    public LocalDateTime getLastLoginDate() { return lastLoginDate; }
+    public void setLastLoginDate(LocalDateTime lastLoginDate) { this.lastLoginDate = lastLoginDate; }
 
     @PrePersist
     protected void onCreate() {
