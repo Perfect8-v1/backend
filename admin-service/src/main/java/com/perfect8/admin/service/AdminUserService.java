@@ -37,8 +37,8 @@ public class AdminUserService {
 
     public AdminUser save(AdminUser adminUser) {
         // Encrypt password if it's being set/changed
-        if (adminUser.getPassword() != null && !adminUser.getPassword().startsWith("$2a$")) {
-            adminUser.setPassword(passwordEncoder.encode(adminUser.getPassword()));
+        if (adminUser.getPasswordHash() != null && !adminUser.getPasswordHash().startsWith("$2a$")) {
+            adminUser.setPasswordHash(passwordEncoder.encode(adminUser.getPasswordHash()));
         }
         return adminUserRepository.save(adminUser);
     }

@@ -23,7 +23,7 @@ public class DataInitializer implements CommandLineRunner {
             AdminUser superAdmin = new AdminUser();
             superAdmin.setUsername("admin");
             superAdmin.setEmail("admin@perfect8.com");
-            superAdmin.setPassword("password123"); // Will be encrypted by service
+            superAdmin.setPasswordHash("password123"); // Will be encrypted by service
             superAdmin.setFirstName("Perfect8");
             superAdmin.setLastName("Admin");
             superAdmin.setRole(AdminUser.Role.SUPER_ADMIN);
@@ -38,7 +38,7 @@ public class DataInitializer implements CommandLineRunner {
             AdminUser shopManager = new AdminUser();
             shopManager.setUsername("shop_manager");
             shopManager.setEmail("manager@perfect8.com");
-            shopManager.setPassword("password123");
+            shopManager.setPasswordHash("password123");
             shopManager.setFirstName("Shop");
             shopManager.setLastName("Manager");
             shopManager.setRole(AdminUser.Role.SHOP_ADMIN);
@@ -53,7 +53,7 @@ public class DataInitializer implements CommandLineRunner {
             AdminUser contentEditor = new AdminUser();
             contentEditor.setUsername("content_editor");
             contentEditor.setEmail("editor@perfect8.com");
-            contentEditor.setPassword("password123");
+            contentEditor.setPasswordHash("password123");
             contentEditor.setFirstName("Content");
             contentEditor.setLastName("Editor");
             contentEditor.setRole(AdminUser.Role.CONTENT_ADMIN);
