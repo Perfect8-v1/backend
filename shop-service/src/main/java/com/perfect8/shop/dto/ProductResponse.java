@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -57,7 +58,7 @@ public class ProductResponse implements Serializable {
     public BigDecimal getDiscountPercentage() {
         if (price != null && discountPrice != null && price.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal discount = price.subtract(discountPrice);
-            return discount.divide(price, 2, BigDecimal.ROUND_HALF_UP)
+            return discount.divide(price, 2, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100));
         }
         return BigDecimal.ZERO;
