@@ -4,8 +4,10 @@ pom.xml.releaseBackup
 pom.xml.versionsBackup
 pom.xml.next
 release.properties
+
 # Build
 target/
+
 # IDE
 .idea/
 *.iml
@@ -13,17 +15,22 @@ target/
 .classpath
 .project
 .settings/
+
 # OS
 .DS_Store
 Thumbs.db
+
 # Logs
 *.log
+
 # Git
 .git/
 .gitignore
+
 # Environment
 .env
 *.env
+
 # Documentation
 *.md
 *.docx
