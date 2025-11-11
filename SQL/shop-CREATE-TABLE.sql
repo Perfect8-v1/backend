@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS payments (
     INDEX idx_transaction_id (transaction_id),
     INDEX idx_payment_status (payment_status),
     INDEX idx_payment_method (payment_method),
-    INDEX idx_created_at (created_at)
+    INDEX idx_created_at (created_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ================================================
@@ -406,11 +406,8 @@ CREATE TABLE IF NOT EXISTS shipments (
     shipping_address TEXT,
     shipping_street VARCHAR(255),
     shipping_city VARCHAR(100),
-    state VARCHAR(50),
     shipping_state VARCHAR(50),
-    postal_code VARCHAR(20),
     shipping_postal_code VARCHAR(20),
-    country VARCHAR(50) DEFAULT 'SE',
     shipping_country VARCHAR(50) DEFAULT 'SE',
     shipping_method VARCHAR(50) DEFAULT 'STANDARD',
     weight DECIMAL(8, 3),
