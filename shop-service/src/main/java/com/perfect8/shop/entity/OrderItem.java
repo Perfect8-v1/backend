@@ -56,7 +56,7 @@ public class OrderItem {
 
     // CHANGED: subtotal → price (Magnum Opus: descriptive names)
     // Column name stays "subtotal" in database for backwards compatibility
-    @Column(name = "subtotal", precision = 19, scale = 2)
+    @Column(name = "price", precision = 19, scale = 2)
     private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
@@ -88,7 +88,7 @@ public class OrderItem {
     private Integer refundedQuantity = 0;
 
     // CHANGED: createdDate/updatedDate → createdDate/updatedDate (consistency)
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
     // FIXED: JPA handles updatedDate automatically

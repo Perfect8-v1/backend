@@ -109,7 +109,7 @@ public class Payment {
     private String notes;
 
     // FIXED: Changed from createdDate/updatedDate to createdDate/updatedDate for consistency
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
     // FIXED: JPA handles updatedDate automatically
