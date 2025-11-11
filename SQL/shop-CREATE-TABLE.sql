@@ -1,7 +1,7 @@
 -- ================================================
 -- shop-CREATE-TABLE.sql
 -- Database: shopDB
--- Created: 2025-11-09 (FIXED: 2025-11-10)
+-- Created: 2025-11-09 (FIXED: 2025-11-10, UPDATED: 2025-11-11)
 -- Purpose: Create tables for shop-service (e-commerce core)
 -- 
 -- IMPORTANT NOTES:
@@ -10,6 +10,9 @@
 -- - ID fields: [entityName]Id → Hibernate maps to [entity_name]_id
 -- - Date fields: *Date not *At (Magnum Opus compliance)
 -- - state field: Required for USA (90% of Perfect8 customers)
+-- 
+-- CHANGELOG:
+-- 2025-11-11: Added discount_price column to cart_items (for v2.0 coupon support)
 -- ================================================
 
 -- ================================================
@@ -139,6 +142,7 @@ CREATE TABLE IF NOT EXISTS carts (
 -- Table: cart_items
 -- Purpose: Items in shopping cart
 -- Notes: price_at_add is snapshot to handle price changes
+--        discount_price for promotional pricing (v2.0 coupon feature)
 -- ================================================
 
 CREATE TABLE IF NOT EXISTS cart_items (
@@ -147,6 +151,7 @@ CREATE TABLE IF NOT EXISTS cart_items (
     product_id BIGINT NOT NULL,
     quantity INT NOT NULL DEFAULT 1,
     price_at_add DECIMAL(10, 2) NOT NULL,  -- Price snapshot when added
+    discount_price DECIMAL(10, 2) DEFAULT 0.00,  -- Discount amount (v2.0: coupons/campaigns)
     custom_message VARCHAR(500),  -- Optional custom message for item (gift message, special instructions)
     added_date DATETIME(6),
     updated_date DATETIME(6),
@@ -319,4 +324,5 @@ CREATE TABLE IF NOT EXISTS inventory_transactions (
 -- - Date fields use *Date suffix (Magnum Opus compliance)
 -- - NO reserved words used - clean and portable SQL
 -- - state field included for USA customers (90% of Perfect8 base)
+-- - discount_price in cart_items for v2.0 coupon support
 -- ================================================
