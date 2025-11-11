@@ -41,7 +41,7 @@ public class CategoryService {
     }
 
     public List<Category> getActiveCategories() {
-        return categoryRepository.findByIsActiveTrue();
+        return categoryRepository.findByActiveTrue();
     }
 
     public Category getCategoryById(Long categoryId) {
@@ -71,7 +71,7 @@ public class CategoryService {
     }
 
     public Page<Product> getProductsByCategory(Long categoryId, Pageable pageable) {
-        return productRepository.findByCategoryIdAndIsActiveTrue(categoryId, pageable);
+        return productRepository.findByCategoryIdAndActiveTrue(categoryId, pageable);
     }
 
     public Category createCategory(CategoryDTO categoryDTO) {
@@ -79,7 +79,7 @@ public class CategoryService {
                 .name(categoryDTO.getName())
                 .description(categoryDTO.getDescription())
                 .slug(categoryDTO.getSlug())
-                .isActive(true)
+                .active(true)
                 .createdDate(LocalDateTime.now())
                 .build();
 
@@ -109,21 +109,21 @@ public class CategoryService {
 
     public void deleteCategory(Long categoryId) {
         Category category = getCategoryById(categoryId);
-        category.setIsActive(false);
+        category.setActive(false);
         category.setUpdatedDate(LocalDateTime.now());
         categoryRepository.save(category);
     }
 
     public Category restoreCategory(Long categoryId) {
         Category category = getCategoryById(categoryId);
-        category.setIsActive(true);
+        category.setActive(true);
         category.setUpdatedDate(LocalDateTime.now());
         return categoryRepository.save(category);
     }
 
     public Category toggleCategoryStatus(Long categoryId) {
         Category category = getCategoryById(categoryId);
-        category.setIsActive(!category.getIsActive());
+        category.setActive(!category.getActive());
         category.setUpdatedDate(LocalDateTime.now());
         return categoryRepository.save(category);
     }
@@ -142,7 +142,7 @@ public class CategoryService {
 
     public Object getCategoryStatistics() {
         long totalCategories = categoryRepository.count();
-        long activeCategories = categoryRepository.countByIsActiveTrue();
+        long activeCategories = categoryRepository.countByActiveTrue();
 
         return new CategoryStatistics(totalCategories, activeCategories);
     }
@@ -197,7 +197,7 @@ public class CategoryService {
     }
 
     public List<CategoryDropdownItem> getCategoriesForDropdown() {
-        List<Category> categories = categoryRepository.findByIsActiveTrueOrderByName();
+        List<Category> categories = categoryRepository.findByActiveTrueOrderByName();
         List<CategoryDropdownItem> dropdown = new ArrayList<>();
 
         for (Category category : categories) {
@@ -252,7 +252,7 @@ public class CategoryService {
             map.put("categoryName", category.getName());
             map.put("categorySlug", category.getSlug());
             map.put("productCount", productCount);
-            map.put("isActive", category.getIsActive());
+            map.put("active", category.getActive());
             return map;
         }
     }

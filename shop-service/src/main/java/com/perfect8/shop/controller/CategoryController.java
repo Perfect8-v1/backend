@@ -224,7 +224,7 @@ public class CategoryController {
     public ResponseEntity<ApiResponse<Category>> toggleCategoryStatus(@PathVariable Long id) {
         try {
             Category category = categoryService.toggleCategoryStatus(id);
-            String status = category.getIsActive() ? "activated" : "deactivated";
+            String status = category.getActive() ? "activated" : "deactivated";
             return ResponseEntity.ok(ApiResponse.success("Category " + status + " successfully", category));
         } catch (Exception e) {
             log.error("Error toggling category {} status: {}", id, e.getMessage());

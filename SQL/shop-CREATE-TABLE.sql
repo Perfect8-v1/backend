@@ -377,7 +377,7 @@ CREATE TABLE IF NOT EXISTS payments (
     INDEX idx_transaction_id (transaction_id),
     INDEX idx_payment_status (payment_status),
     INDEX idx_payment_method (payment_method),
-    INDEX idx_created_at (created_date)
+    INDEX idx_created_date (created_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ================================================

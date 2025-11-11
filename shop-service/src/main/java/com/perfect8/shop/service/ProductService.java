@@ -50,7 +50,7 @@ public class ProductService {
         // If no filters, return all active products
         if (categoryId == null && minPrice == null && maxPrice == null &&
                 featured == null && inStock == null) {
-            return productRepository.findByIsActiveTrue(pageable);
+            return productRepository.findByActiveTrue(pageable);
         }
 
         // Build query based on filters
@@ -65,7 +65,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public Page<Product> searchProducts(String query, Pageable pageable) {
         if (query == null || query.trim().isEmpty()) {
-            return productRepository.findByIsActiveTrue(pageable);
+            return productRepository.findByActiveTrue(pageable);
         }
 
         return productRepository.searchByNameOrDescription(query, pageable);
@@ -76,7 +76,7 @@ public class ProductService {
      */
     @Transactional(readOnly = true)
     public Page<Product> findByCategory(Long categoryId, Pageable pageable) {
-        return productRepository.findByCategoryIdAndIsActiveTrue(categoryId, pageable);
+        return productRepository.findByCategoryIdAndActiveTrue(categoryId, pageable);
     }
 
     /**
@@ -85,7 +85,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<Product> findFeaturedProducts(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit);
-        return productRepository.findByIsFeaturedTrueAndIsActiveTrue(pageRequest).getContent();
+        return productRepository.findByIsFeaturedTrueAndActiveTrue(pageRequest).getContent();
     }
 
     /**
@@ -93,7 +93,7 @@ public class ProductService {
      */
     @Transactional(readOnly = true)
     public List<Product> findLowStockProducts(int threshold) {
-        return productRepository.findByStockQuantityLessThanAndIsActiveTrue(threshold);
+        return productRepository.findByStockQuantityLessThanAndActiveTrue(threshold);
     }
 
     /**
@@ -107,7 +107,7 @@ public class ProductService {
         if (product.getCategory() == null) {
             // If no category, return random active products
             PageRequest pageRequest = PageRequest.of(0, limit);
-            return productRepository.findByIsActiveTrue(pageRequest)
+            return productRepository.findByActiveTrue(pageRequest)
                     .stream()
                     .filter(p -> !p.getProductId().equals(productId))
                     .collect(Collectors.toList());
@@ -116,7 +116,7 @@ public class ProductService {
         // Find products in same category
         PageRequest pageRequest = PageRequest.of(0, limit + 1); // +1 to exclude current
         List<Product> related = productRepository
-                .findByCategoryIdAndIsActiveTrue(product.getCategory().getCategoryId(), pageRequest)
+                .findByCategoryIdAndActiveTrue(product.getCategory().getCategoryId(), pageRequest)
                 .stream()
                 .filter(p -> !p.getProductId().equals(productId))
                 .limit(limit)

@@ -42,9 +42,9 @@ public class Category {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "active", nullable = false)
     @Builder.Default
-    private Boolean isActive = true;
+    private Boolean active = true;
 
     @Column(name = "sort_order")
     @Builder.Default
@@ -81,8 +81,8 @@ public class Category {
     protected void onCreate() {
         createdDate = LocalDateTime.now();
         updatedDate = LocalDateTime.now();
-        if (isActive == null) {
-            isActive = true;
+        if (active == null) {
+            active = true;
         }
         if (sortOrder == null) {
             sortOrder = 0;

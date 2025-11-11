@@ -20,13 +20,13 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     Optional<Category> findBySlug(String slug);
 
     // Find all active categories
-    List<Category> findByIsActiveTrue();
+    List<Category> findByActiveTrue();
 
     // Find all active categories ordered by name
-    List<Category> findByIsActiveTrueOrderByName();
+    List<Category> findByActiveTrueOrderByName();
 
     // Find all active categories ordered by sort order
-    List<Category> findByIsActiveTrueOrderBySortOrder();
+    List<Category> findByActiveTrueOrderBySortOrder();
 
     // Find by parent category
     @Query("SELECT c FROM Category c WHERE c.parent = :parent")
@@ -40,7 +40,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findByParentIsNull();
 
     // Find active categories without parent
-    List<Category> findByParentIsNullAndIsActiveTrue();
+    List<Category> findByParentIsNullAndActiveTrue();
 
     // Search categories by name
     List<Category> findByNameContainingIgnoreCase(String name);
@@ -53,19 +53,19 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     boolean existsBySlugAndCategoryIdNot(@Param("slug") String slug, @Param("categoryId") Long categoryId);
 
     // Count active categories
-    long countByIsActiveTrue();
+    long countByActiveTrue();
 
     // Find categories with product count - FIXED: createdDate, updatedDate
     @Query("SELECT c, COUNT(p) FROM Category c LEFT JOIN Product p ON p.category = c " +
-            "WHERE c.isActive = true " +
+            "WHERE c.active = true " +
             "GROUP BY c.categoryId, c.name, c.description, c.slug, c.parent, c.sortOrder, " +
-            "c.isActive, c.imageUrl, c.metaTitle, c.metaDescription, c.metaKeywords, " +
+            "c.active, c.imageUrl, c.metaTitle, c.metaDescription, c.metaKeywords, " +
             "c.createdDate, c.updatedDate " +
             "ORDER BY c.sortOrder, c.name")
     List<Object[]> findCategoriesWithProductCount();
 
     // Find active subcategories by parent
-    @Query("SELECT c FROM Category c WHERE c.parent.categoryId = :parentId AND c.isActive = true ORDER BY c.sortOrder, c.name")
+    @Query("SELECT c FROM Category c WHERE c.parent.categoryId = :parentId AND c.active = true ORDER BY c.sortOrder, c.name")
     List<Category> findActiveSubcategories(@Param("parentId") Long parentId);
 
     // Find category hierarchy (parent and all children)
@@ -93,7 +93,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     List<Category> findDescendants(@Param("categoryId") Long categoryId);
 
     // Count products in category
-    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId AND p.isActive = true")
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId AND p.active = true")
     Long countProductsInCategory(@Param("categoryId") Long categoryId);
 
     // Count products in category and its subcategories
@@ -103,18 +103,18 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
             "  SELECT c.category_id FROM categories c " +
             "  INNER JOIN category_tree ct ON c.parent_id = ct.category_id" +
             ") SELECT COUNT(DISTINCT p.product_id) FROM products p " +
-            "WHERE p.category_id IN (SELECT category_id FROM category_tree) AND p.is_active = true",
+            "WHERE p.category_id IN (SELECT category_id FROM category_tree) AND p.active = true",
             nativeQuery = true)
     Long countProductsInCategoryTree(@Param("categoryId") Long categoryId);
 
     // Find categories with at least one product
     @Query("SELECT DISTINCT c FROM Category c INNER JOIN Product p ON p.category = c " +
-            "WHERE c.isActive = true AND p.isActive = true " +
+            "WHERE c.active = true AND p.active = true " +
             "ORDER BY c.sortOrder, c.name")
     List<Category> findCategoriesWithProducts();
 
     // Find empty categories (no products)
-    @Query("SELECT c FROM Category c WHERE c.isActive = true AND " +
+    @Query("SELECT c FROM Category c WHERE c.active = true AND " +
             "NOT EXISTS (SELECT p FROM Product p WHERE p.category = c) " +
             "ORDER BY c.sortOrder, c.name")
     List<Category> findEmptyCategories();
@@ -124,7 +124,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     void updateSortOrder(@Param("categoryId") Long categoryId, @Param("sortOrder") Integer sortOrder);
 
     // Find featured categories (you might add an isFeatured field later)
-    @Query("SELECT c FROM Category c WHERE c.isActive = true " +
+    @Query("SELECT c FROM Category c WHERE c.active = true " +
             "AND EXISTS (SELECT p FROM Product p WHERE p.category = c AND p.isFeatured = true) " +
             "ORDER BY c.sortOrder, c.name")
     List<Category> findFeaturedCategories();
@@ -132,19 +132,19 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     // Get category statistics
     @Query("SELECT new map(" +
             "COUNT(DISTINCT c.categoryId) as totalCategories, " +
-            "COUNT(DISTINCT CASE WHEN c.isActive = true THEN c.categoryId END) as activeCategories, " +
+            "COUNT(DISTINCT CASE WHEN c.active = true THEN c.categoryId END) as activeCategories, " +
             "COUNT(DISTINCT CASE WHEN c.parent IS NULL THEN c.categoryId END) as parentCategories, " +
             "COUNT(DISTINCT CASE WHEN c.parent IS NOT NULL THEN c.categoryId END) as subCategories) " +
             "FROM Category c")
     Object getCategoryStatistics();
 
     // Find categories by multiple IDs
-    @Query("SELECT c FROM Category c WHERE c.categoryId IN :categoryIds AND c.isActive = true")
-    List<Category> findByCategoryIdInAndIsActiveTrue(@Param("categoryIds") List<Long> categoryIds);
+    @Query("SELECT c FROM Category c WHERE c.categoryId IN :categoryIds AND c.active = true")
+    List<Category> findByCategoryIdInAndActiveTrue(@Param("categoryIds") List<Long> categoryIds);
 
     // Find recently added categories - FIXED: createdDate
-    List<Category> findTop10ByIsActiveTrueOrderByCreatedDateDesc();
+    List<Category> findTop10ByActiveTrueOrderByCreatedDateDesc();
 
     // Find recently updated categories - FIXED: updatedDate
-    List<Category> findTop10ByIsActiveTrueOrderByUpdatedDateDesc();
+    List<Category> findTop10ByActiveTrueOrderByUpdatedDateDesc();
 }
