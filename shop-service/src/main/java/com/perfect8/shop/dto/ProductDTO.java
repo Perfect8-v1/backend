@@ -57,8 +57,8 @@ public class ProductDTO {
     @NotNull(message = "Category is required")
     private Long categoryId;
 
-    private boolean featured;
-    private boolean active;
+    private boolean isFeatured;
+    private boolean isActive;
 
     @DecimalMin(value = "0.00", inclusive = true, message = "Weight cannot be negative")
     private BigDecimal weight;
@@ -196,7 +196,7 @@ public class ProductDTO {
         private String color;
         private String size;
         private String imageUrl;
-        private boolean active;
+        private boolean isActive;
     }
 
     /**

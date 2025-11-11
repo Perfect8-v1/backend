@@ -154,8 +154,8 @@ public class ProductService {
                 .stockQuantity(productDTO.getStockQuantity())
                 .imageUrl(productDTO.getImageUrl())
                 .category(category)
-                .isFeatured(productDTO.isFeatured())
-                .isActive(productDTO.isActive())
+                .featured(productDTO.isFeatured())
+                .active(productDTO.isActive())
                 .weight(productDTO.getWeight())
                 .dimensions(convertDimensionsToString(productDTO.getDimensions()))  // FIXED: Convert List<String> to String
                 .tags(productDTO.getTags())

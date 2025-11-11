@@ -72,13 +72,13 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @Column(name = "is_featured", nullable = false)
+    @Column(name = "featured", nullable = false)
     @Builder.Default
-    private boolean isFeatured = false;
+    private boolean featured = false;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "active", nullable = false)
     @Builder.Default
-    private boolean isActive = true;
+    private boolean active = true;
 
     @Column(name = "weight", precision = 8, scale = 2)
     private BigDecimal weight;
@@ -250,7 +250,7 @@ public class Product {
     }
 
     public boolean needsReorder() {
-        return isLowStock() && isActive;
+        return isLowStock() && active;
     }
 
     public void addTag(String tag) {
@@ -322,7 +322,7 @@ public class Product {
     }
 
     public String getAvailabilityStatus() {
-        if (!isActive) {
+        if (!active) {
             return "Unavailable";
         }
         if (isOutOfStock()) {
@@ -335,10 +335,10 @@ public class Product {
     }
 
     public boolean canBePurchased() {
-        return isActive && isInStock();
+        return active && isInStock();
     }
 
     public boolean canBePurchased(int quantity) {
-        return isActive && hasEnoughStock(quantity);
+        return active && hasEnoughStock(quantity);
     }
 }
