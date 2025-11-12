@@ -14,7 +14,10 @@ import java.util.List;
 
 /**
  * Category Entity - Version 1.0
- * Magnum Opus Compliant: Descriptive field names (categoryId not customerEmailDTOId)
+ * Magnum Opus Compliant: Descriptive field names (categoryId not id)
+ * 
+ * FIXED (2025-11-12):
+ * - @JoinColumn(name = "parent_id") → "parent_category_id" (matches SQL)
  */
 @Entity
 @Table(name = "categories")
@@ -28,7 +31,7 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long categoryId;  // CHANGED: customerEmailDTOId → categoryId (Magnum Opus)
+    private Long categoryId;
 
     @Column(name = "name", nullable = false, length = 100)
     private String name;
@@ -60,7 +63,7 @@ public class Category {
     private String metaKeywords;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_id")
+    @JoinColumn(name = "parent_category_id")  // FIXED: parent_id → parent_category_id (matches SQL)
     private Category parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -71,11 +74,8 @@ public class Category {
     @Builder.Default
     private List<Product> products = new ArrayList<>();
 
-    // FIXED: JPA handles createdDate automatically
-    private LocalDateTime createdDate;  // CHANGED: createdDate → createdDate (consistency with Product.java)
-
-    // FIXED: JPA handles updatedDate automatically
-    private LocalDateTime updatedDate;  // CHANGED: updatedDate → updatedDate (consistency with Product.java)
+    private LocalDateTime createdDate;
+    private LocalDateTime updatedDate;
 
     @PrePersist
     protected void onCreate() {
@@ -93,10 +93,6 @@ public class Category {
     protected void onUpdate() {
         updatedDate = LocalDateTime.now();
     }
-
-    // ========== MAGNUM OPUS COMPLIANT ==========
-    // Lombok generates: getCategoryId() / setCategoryId()
-    // No alias methods - one method, one name
 
     // ========== Business methods ==========
 
