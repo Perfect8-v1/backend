@@ -125,7 +125,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     // Find featured categories (you might add an isFeatured field later)
     @Query("SELECT c FROM Category c WHERE c.active = true " +
-            "AND EXISTS (SELECT p FROM Product p WHERE p.category = c AND p.isFeatured = true) " +
+            "AND EXISTS (SELECT p FROM Product p WHERE p.category = c AND p.featured = true) " +
             "ORDER BY c.sortOrder, c.name")
     List<Category> findFeaturedCategories();
 
