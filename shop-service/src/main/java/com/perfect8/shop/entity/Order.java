@@ -20,6 +20,10 @@ import java.util.stream.Collectors;
 /**
  * Order Entity - Version 1.0
  * Magnum Opus Compliant: No alias methods, consistent naming
+ * 
+ * FIXED (2025-11-12):
+ * - Shipment relation: @ManyToOne + @JoinColumn → @OneToOne(mappedBy)
+ * - Shipment owns the FK (order_id), not Order!
  */
 @Entity
 @Table(name = "orders")
@@ -120,8 +124,7 @@ public class Order {
     @Builder.Default
     private List<Payment> payments = new ArrayList<>();
 
-    @ManyToOne
-    @JoinColumn(name = "shipment_id")
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY)  // FIXED: Shipment owns FK (order_id)
     private Shipment shipment;
 
     // Tracking fields
@@ -131,7 +134,6 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String internalNotes;
 
-    // FIXED: Changed from createdDate/updatedDate to createdDate/updatedDate for consistency
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
@@ -203,10 +205,6 @@ public class Order {
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
-
-    // ========== REMOVED ALIAS METHOD ==========
-    // MAGNUM OPUS: Removed getPrice() alias method
-    // Use getTotalAmount() directly instead
 
     // ========== Business logic methods using OrderStatusHelper ==========
 
