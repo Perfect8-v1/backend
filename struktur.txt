@@ -1,0 +1,1224 @@
+Folder PATH listing
+Volume serial number is FE0A-2804
+C:.
+¦   .gitignore
+¦   copy-jars.sh
+¦   docker-compose - Backup.yml
+¦   docker-compose.yml
+¦   find-package-errors.sh
+¦   first-time-build.sh
+¦   init-databases.sql
+¦   list-at-fields.sh
+¦   pom.xml
+¦   README.md
+¦   start-backend.sh
+¦   stop-backend.sh
+¦   struktur.txt
+¦   __TreeLister_fallback.bat
+¦   
++---.idea
+¦       $PROJECT_FILE$
+¦       compiler.xml
+¦       encodings.xml
+¦       jarRepositories.xml
+¦       misc.xml
+¦       qaplug_profiles.xml
+¦       vcs.xml
+¦       workspace.xml
+¦       
++---admin-service
+¦   ¦   .dockerignore
+¦   ¦   Dockerfile
+¦   ¦   pom.xml
+¦   ¦   
+¦   +---src
+¦   ¦   +---main
+¦   ¦       +---java
+¦   ¦       ¦   +---com
+¦   ¦       ¦       +---perfect8
+¦   ¦       ¦           +---admin
+¦   ¦       ¦               ¦   AdminServiceApplication.java
+¦   ¦       ¦               ¦   
+¦   ¦       ¦               +---config
+¦   ¦       ¦               ¦       DataInitializer.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---controller
+¦   ¦       ¦               ¦       AdminController.java
+¦   ¦       ¦               ¦       AuthController.java
+¦   ¦       ¦               ¦       HealthController.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---dto
+¦   ¦       ¦               ¦       AdminDashboardResponse.java
+¦   ¦       ¦               ¦       ApiPerformanceResponse.java
+¦   ¦       ¦               ¦       AuthRequest.java
+¦   ¦       ¦               ¦       AuthResponse.java
+¦   ¦       ¦               ¦       BlogPostDto.java
+¦   ¦       ¦               ¦       CategoryDto.java
+¦   ¦       ¦               ¦       CohortAnalysisResponse.java
+¦   ¦       ¦               ¦       CustomerMetricsResponse.java
+¦   ¦       ¦               ¦       CustomerReportResponse.java
+¦   ¦       ¦               ¦       DashboardSummaryResponse.java
+¦   ¦       ¦               ¦       DatabasePerformanceResponse.java
+¦   ¦       ¦               ¦       ExecutiveSummaryResponse.java
+¦   ¦       ¦               ¦       GeographicAnalyticsResponse.java
+¦   ¦       ¦               ¦       InventoryMetricsResponse.java
+¦   ¦       ¦               ¦       InventoryReportResponse.java
+¦   ¦       ¦               ¦       LoginRequest.java
+¦   ¦       ¦               ¦       LoginResponse.java
+¦   ¦       ¦               ¦       LowStockAlertResponse.java
+¦   ¦       ¦               ¦       NewCustomerResponse.java
+¦   ¦       ¦               ¦       OrderAttentionResponse.java
+¦   ¦       ¦               ¦       PaymentDetailResponse.java
+¦   ¦       ¦               ¦       PaymentInitiationRequest.java
+¦   ¦       ¦               ¦       PaymentInitiationResponse.java
+¦   ¦       ¦               ¦       PaymentIssueResponse.java
+¦   ¦       ¦               ¦       PaymentMetricsResponse.java
+¦   ¦       ¦               ¦       PaymentProcessingRequest.java
+¦   ¦       ¦               ¦       PaymentProcessingResponse.java
+¦   ¦       ¦               ¦       PaymentSummaryResponse.java
+¦   ¦       ¦               ¦       ProductAnalyticsResponse.java
+¦   ¦       ¦               ¦       ProductDto.java
+¦   ¦       ¦               ¦       RegisterRequest.java
+¦   ¦       ¦               ¦       RevenueAnalyticsResponse.java
+¦   ¦       ¦               ¦       SalesMetricsResponse.java
+¦   ¦       ¦               ¦       SalesReportResponse.java
+¦   ¦       ¦               ¦       SystemPerformanceResponse.java
+¦   ¦       ¦               ¦       TrendAnalysisResponse.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---model
+¦   ¦       ¦               ¦       AdminUser.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---repository
+¦   ¦       ¦               ¦       AdminUserRepository.java
+¦   ¦       ¦               ¦       ProductRepository.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---security
+¦   ¦       ¦               ¦       JwtAuthenticationEntryPoint.java
+¦   ¦       ¦               ¦       JwtAuthenticationFilter.java
+¦   ¦       ¦               ¦       SecurityConfig.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---service
+¦   ¦       ¦               ¦       AdminUserService.java
+¦   ¦       ¦               ¦       AnalyticsService.java
+¦   ¦       ¦               ¦       CustomerService.java
+¦   ¦       ¦               ¦       CustomUserDetailsService.java
+¦   ¦       ¦               ¦       DashboardService.java
+¦   ¦       ¦               ¦       ImageService.java
+¦   ¦       ¦               ¦       InventoryService.java
+¦   ¦       ¦               ¦       NotificationService.java
+¦   ¦       ¦               ¦       OrderService.java
+¦   ¦       ¦               ¦       PaymentService.java
+¦   ¦       ¦               ¦       PayPalService.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---util
+¦   ¦       ¦                       JwtUtil.java
+¦   ¦       ¦                       
+¦   ¦       +---resources
+¦   ¦               application.properties
+¦   ¦               
+¦   +---target
+¦       +---classes
+¦       ¦   ¦   application.properties
+¦       ¦   ¦   
+¦       ¦   +---com
+¦       ¦       +---perfect8
+¦       ¦           +---admin
+¦       ¦               ¦   AdminServiceApplication.class
+¦       ¦               ¦   
+¦       ¦               +---config
+¦       ¦               ¦       DataInitializer.class
+¦       ¦               ¦       
+¦       ¦               +---controller
+¦       ¦               ¦       AdminController.class
+¦       ¦               ¦       AuthController.class
+¦       ¦               ¦       HealthController.class
+¦       ¦               ¦       
+¦       ¦               +---dto
+¦       ¦               ¦       AdminDashboardResponse.class
+¦       ¦               ¦       ApiPerformanceResponse.class
+¦       ¦               ¦       AuthRequest.class
+¦       ¦               ¦       AuthResponse.class
+¦       ¦               ¦       BlogPostDto.class
+¦       ¦               ¦       CategoryDto.class
+¦       ¦               ¦       CohortAnalysisResponse.class
+¦       ¦               ¦       CustomerMetricsResponse.class
+¦       ¦               ¦       CustomerReportResponse.class
+¦       ¦               ¦       DashboardSummaryResponse.class
+¦       ¦               ¦       DatabasePerformanceResponse.class
+¦       ¦               ¦       ExecutiveSummaryResponse.class
+¦       ¦               ¦       GeographicAnalyticsResponse.class
+¦       ¦               ¦       InventoryMetricsResponse.class
+¦       ¦               ¦       InventoryReportResponse.class
+¦       ¦               ¦       LoginRequest.class
+¦       ¦               ¦       LoginResponse.class
+¦       ¦               ¦       LowStockAlertResponse.class
+¦       ¦               ¦       NewCustomerResponse.class
+¦       ¦               ¦       OrderAttentionResponse.class
+¦       ¦               ¦       PaymentDetailResponse.class
+¦       ¦               ¦       PaymentInitiationRequest.class
+¦       ¦               ¦       PaymentInitiationResponse.class
+¦       ¦               ¦       PaymentIssueResponse.class
+¦       ¦               ¦       PaymentMetricsResponse.class
+¦       ¦               ¦       PaymentProcessingRequest.class
+¦       ¦               ¦       PaymentProcessingResponse.class
+¦       ¦               ¦       PaymentSummaryResponse.class
+¦       ¦               ¦       ProductAnalyticsResponse.class
+¦       ¦               ¦       ProductDto.class
+¦       ¦               ¦       RegisterRequest.class
+¦       ¦               ¦       RevenueAnalyticsResponse.class
+¦       ¦               ¦       SalesMetricsResponse.class
+¦       ¦               ¦       SalesReportResponse.class
+¦       ¦               ¦       SystemPerformanceResponse.class
+¦       ¦               ¦       TrendAnalysisResponse.class
+¦       ¦               ¦       
+¦       ¦               +---model
+¦       ¦               ¦       AdminUser$AdminUserBuilder.class
+¦       ¦               ¦       AdminUser$Role.class
+¦       ¦               ¦       AdminUser.class
+¦       ¦               ¦       
+¦       ¦               +---repository
+¦       ¦               ¦       AdminUserRepository.class
+¦       ¦               ¦       ProductRepository.class
+¦       ¦               ¦       
+¦       ¦               +---security
+¦       ¦               ¦       JwtAuthenticationEntryPoint.class
+¦       ¦               ¦       JwtAuthenticationFilter.class
+¦       ¦               ¦       SecurityConfig.class
+¦       ¦               ¦       
+¦       ¦               +---service
+¦       ¦               ¦       AdminUserService.class
+¦       ¦               ¦       AnalyticsService.class
+¦       ¦               ¦       CustomerService.class
+¦       ¦               ¦       CustomUserDetailsService.class
+¦       ¦               ¦       DashboardService.class
+¦       ¦               ¦       ImageService.class
+¦       ¦               ¦       InventoryService.class
+¦       ¦               ¦       NotificationService.class
+¦       ¦               ¦       OrderService.class
+¦       ¦               ¦       PaymentService.class
+¦       ¦               ¦       PayPalService.class
+¦       ¦               ¦       
+¦       ¦               +---util
+¦       ¦                       JwtUtil.class
+¦       ¦                       
+¦       +---generated-sources
+¦       ¦   +---annotations
+¦       +---maven-status
+¦           +---maven-compiler-plugin
+¦               +---compile
+¦                   +---default-compile
+¦                           createdFiles.lst
+¦                           inputFiles.lst
+¦                           
++---blog-service
+¦   ¦   .dockerignore
+¦   ¦   Dockerfile
+¦   ¦   pom.xml
+¦   ¦   
+¦   +---src
+¦   ¦   +---main
+¦   ¦   ¦   +---java
+¦   ¦   ¦   ¦   +---com
+¦   ¦   ¦   ¦       +---perfect8
+¦   ¦   ¦   ¦           +---blog
+¦   ¦   ¦   ¦               ¦   BlogServiceApplication.java
+¦   ¦   ¦   ¦               ¦   
+¦   ¦   ¦   ¦               +---client
+¦   ¦   ¦   ¦               ¦       ImageServiceClient.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---config
+¦   ¦   ¦   ¦               ¦       DataInitializer.java
+¦   ¦   ¦   ¦               ¦       FeignConfig.java
+¦   ¦   ¦   ¦               ¦       JwtConfig.java
+¦   ¦   ¦   ¦               ¦       SecurityConfig.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---controller
+¦   ¦   ¦   ¦               ¦       AdminController.java
+¦   ¦   ¦   ¦               ¦       AuthController.java
+¦   ¦   ¦   ¦               ¦       HealthController.java
+¦   ¦   ¦   ¦               ¦       PostController.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---dto
+¦   ¦   ¦   ¦               ¦       AuthDto.java
+¦   ¦   ¦   ¦               ¦       PostDto.java
+¦   ¦   ¦   ¦               ¦       UserDto.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---exception
+¦   ¦   ¦   ¦               ¦       GlobalExceptionHandler.java
+¦   ¦   ¦   ¦               ¦       ResourceNotFoundException.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---model
+¦   ¦   ¦   ¦               ¦       ImageReference.java
+¦   ¦   ¦   ¦               ¦       Post.java
+¦   ¦   ¦   ¦               ¦       Role.java
+¦   ¦   ¦   ¦               ¦       User.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---repository
+¦   ¦   ¦   ¦               ¦       ImageReferenceRepository.java
+¦   ¦   ¦   ¦               ¦       PostRepository.java
+¦   ¦   ¦   ¦               ¦       RoleRepository.java
+¦   ¦   ¦   ¦               ¦       UserRepository.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---security
+¦   ¦   ¦   ¦               ¦       JwtAuthenticationFilter.java
+¦   ¦   ¦   ¦               ¦       JwtTokenProvider.java
+¦   ¦   ¦   ¦               ¦       UserDetailsServiceImpl.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---service
+¦   ¦   ¦   ¦                       AdminService.java
+¦   ¦   ¦   ¦                       AuthService.java
+¦   ¦   ¦   ¦                       PostService.java
+¦   ¦   ¦   ¦                       UserService.java
+¦   ¦   ¦   ¦                       
+¦   ¦   ¦   +---resources
+¦   ¦   ¦           application.properties
+¦   ¦   ¦           
+¦   ¦   +---test
+¦   ¦       +---java
+¦   ¦           +---com
+¦   ¦               +---perfect8
+¦   ¦                   +---blog
+¦   ¦                       +---model
+¦   +---target
+¦       +---classes
+¦       ¦   ¦   application.properties
+¦       ¦   ¦   
+¦       ¦   +---com
+¦       ¦       +---perfect8
+¦       ¦           +---blog
+¦       ¦               ¦   BlogServiceApplication.class
+¦       ¦               ¦   
+¦       ¦               +---client
+¦       ¦               ¦       ImageServiceClient$ImageResponse.class
+¦       ¦               ¦       ImageServiceClient.class
+¦       ¦               ¦       
+¦       ¦               +---config
+¦       ¦               ¦       DataInitializer.class
+¦       ¦               ¦       FeignConfig.class
+¦       ¦               ¦       JwtConfig.class
+¦       ¦               ¦       SecurityConfig.class
+¦       ¦               ¦       
+¦       ¦               +---controller
+¦       ¦               ¦       AdminController.class
+¦       ¦               ¦       AuthController.class
+¦       ¦               ¦       HealthController.class
+¦       ¦               ¦       PostController.class
+¦       ¦               ¦       
+¦       ¦               +---dto
+¦       ¦               ¦       AuthDto$JwtResponse.class
+¦       ¦               ¦       AuthDto$LoginRequest.class
+¦       ¦               ¦       AuthDto$RegisterRequest.class
+¦       ¦               ¦       AuthDto.class
+¦       ¦               ¦       PostDto$ImageDto$ImageDtoBuilder.class
+¦       ¦               ¦       PostDto$ImageDto.class
+¦       ¦               ¦       PostDto$PostDtoBuilder.class
+¦       ¦               ¦       PostDto.class
+¦       ¦               ¦       UserDto.class
+¦       ¦               ¦       
+¦       ¦               +---exception
+¦       ¦               ¦       GlobalExceptionHandler$ErrorResponse.class
+¦       ¦               ¦       GlobalExceptionHandler.class
+¦       ¦               ¦       ResourceNotFoundException.class
+¦       ¦               ¦       
+¦       ¦               +---model
+¦       ¦               ¦       ImageReference$ImageReferenceBuilder.class
+¦       ¦               ¦       ImageReference.class
+¦       ¦               ¦       Post$PostBuilder.class
+¦       ¦               ¦       Post.class
+¦       ¦               ¦       Role$RoleBuilder.class
+¦       ¦               ¦       Role.class
+¦       ¦               ¦       User$UserBuilder.class
+¦       ¦               ¦       User.class
+¦       ¦               ¦       
+¦       ¦               +---repository
+¦       ¦               ¦       ImageReferenceRepository.class
+¦       ¦               ¦       PostRepository.class
+¦       ¦               ¦       RoleRepository.class
+¦       ¦               ¦       UserRepository.class
+¦       ¦               ¦       
+¦       ¦               +---security
+¦       ¦               ¦       JwtAuthenticationFilter.class
+¦       ¦               ¦       JwtTokenProvider.class
+¦       ¦               ¦       UserDetailsServiceImpl.class
+¦       ¦               ¦       
+¦       ¦               +---service
+¦       ¦                       AdminService.class
+¦       ¦                       AuthService.class
+¦       ¦                       PostService.class
+¦       ¦                       UserService.class
+¦       ¦                       
+¦       +---generated-sources
+¦       ¦   +---annotations
+¦       +---maven-status
+¦           +---maven-compiler-plugin
+¦               +---compile
+¦                   +---default-compile
+¦                           createdFiles.lst
+¦                           inputFiles.lst
+¦                           
++---Bootstrap Addendum
+¦       2025-11-11.md
+¦       
++---common
+¦   ¦   pom.xml
+¦   ¦   
+¦   +---src
+¦   ¦   +---main
+¦   ¦       +---java
+¦   ¦       ¦   +---com
+¦   ¦       ¦       +---perfect8
+¦   ¦       ¦           +---common
+¦   ¦       ¦               +---enums
+¦   ¦       ¦               ¦       ItemStatus.java
+¦   ¦       ¦               ¦       OrderStatus.java
+¦   ¦       ¦               ¦       Role.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---utils
+¦   ¦       ¦                       OrderStatusHelper.java
+¦   ¦       ¦                       
+¦   ¦       +---resources
+¦   +---target
+¦       +---classes
+¦       ¦   +---com
+¦       ¦       +---perfect8
+¦       ¦           +---common
+¦       ¦               +---enums
+¦       ¦               ¦       ItemStatus.class
+¦       ¦               ¦       OrderStatus.class
+¦       ¦               ¦       Role.class
+¦       ¦               ¦       
+¦       ¦               +---utils
+¦       ¦                       OrderStatusHelper$1.class
+¦       ¦                       OrderStatusHelper.class
+¦       ¦                       
+¦       +---generated-sources
+¦       ¦   +---annotations
+¦       +---maven-status
+¦           +---maven-compiler-plugin
+¦               +---compile
+¦                   +---default-compile
+¦                           createdFiles.lst
+¦                           inputFiles.lst
+¦                           
++---docs
+¦       api-versioning-doc.md
+¦       universal-bootstrap.md
+¦       
++---email-service
+¦   ¦   .dockerignore
+¦   ¦   Dockerfile
+¦   ¦   pom.xml
+¦   ¦   
+¦   +---src
+¦   ¦   ¦   .env.example
+¦   ¦   ¦   
+¦   ¦   +---main
+¦   ¦       +---java
+¦   ¦       ¦   +---com
+¦   ¦       ¦       +---perfect8
+¦   ¦       ¦           +---email
+¦   ¦       ¦               ¦   EmailServiceApplication.java
+¦   ¦       ¦               ¦   
+¦   ¦       ¦               +---client
+¦   ¦       ¦               ¦       ShopServiceClient.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---config
+¦   ¦       ¦               ¦       AsyncConfig.java
+¦   ¦       ¦               ¦       EmailConfig.java
+¦   ¦       ¦               ¦       RestTemplateConfig.java
+¦   ¦       ¦               ¦       SecurityConfig.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---controller
+¦   ¦       ¦               ¦       EmailController.java
+¦   ¦       ¦               ¦       HealthController.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---dto
+¦   ¦       ¦               ¦       AttachmentDto.java
+¦   ¦       ¦               ¦       BulkEmailRequestDto.java
+¦   ¦       ¦               ¦       CustomerEmailDTO.java
+¦   ¦       ¦               ¦       EmailRequest.java
+¦   ¦       ¦               ¦       EmailResponseDto.java
+¦   ¦       ¦               ¦       EmailStatusDto.java
+¦   ¦       ¦               ¦       NewsletterRequestDto.java
+¦   ¦       ¦               ¦       OrderDto.java
+¦   ¦       ¦               ¦       OrderEmailDTO.java
+¦   ¦       ¦               ¦       OrderItemDto.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---enums
+¦   ¦       ¦               ¦       EmailStatus.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---exception
+¦   ¦       ¦               ¦       EmailException.java
+¦   ¦       ¦               ¦       GlobalExceptionHandler.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---model
+¦   ¦       ¦               ¦       EmailMessage.java
+¦   ¦       ¦               ¦       EmailTemplate.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---repository
+¦   ¦       ¦               ¦       EmailRepository.java
+¦   ¦       ¦               ¦       EmailTemplateRepository.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---service
+¦   ¦       ¦                       EmailFormatter.java
+¦   ¦       ¦                       EmailService.java
+¦   ¦       ¦                       NewsletterService.java
+¦   ¦       ¦                       OrderEmailService.java
+¦   ¦       ¦                       TemplateService.java
+¦   ¦       ¦                       
+¦   ¦       +---resources
+¦   ¦           ¦   application.properties
+¦   ¦           ¦   
+¦   ¦           +---templates
+¦   ¦                   new-post-notification.html
+¦   ¦                   newsletter.html
+¦   ¦                   order-cancelled.html
+¦   ¦                   order-confirmation.html
+¦   ¦                   order-shipped.html
+¦   ¦                   password-reset.html
+¦   ¦                   welcome.html
+¦   ¦                   
+¦   +---target
+¦       +---classes
+¦       ¦   ¦   application.properties
+¦       ¦   ¦   
+¦       ¦   +---com
+¦       ¦   ¦   +---perfect8
+¦       ¦   ¦       +---email
+¦       ¦   ¦           ¦   EmailServiceApplication.class
+¦       ¦   ¦           ¦   
+¦       ¦   ¦           +---client
+¦       ¦   ¦           ¦       ShopServiceClient$1.class
+¦       ¦   ¦           ¦       ShopServiceClient$2.class
+¦       ¦   ¦           ¦       ShopServiceClient$3.class
+¦       ¦   ¦           ¦       ShopServiceClient.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---config
+¦       ¦   ¦           ¦       AsyncConfig.class
+¦       ¦   ¦           ¦       EmailConfig$EmailServiceConfig$EmailServiceConfigBuilder.class
+¦       ¦   ¦           ¦       EmailConfig$EmailServiceConfig.class
+¦       ¦   ¦           ¦       EmailConfig$EmailTemplateConfig$EmailTemplateConfigBuilder.class
+¦       ¦   ¦           ¦       EmailConfig$EmailTemplateConfig.class
+¦       ¦   ¦           ¦       EmailConfig.class
+¦       ¦   ¦           ¦       RestTemplateConfig.class
+¦       ¦   ¦           ¦       SecurityConfig.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---controller
+¦       ¦   ¦           ¦       EmailController.class
+¦       ¦   ¦           ¦       HealthController.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---dto
+¦       ¦   ¦           ¦       AttachmentDto$AttachmentDtoBuilder.class
+¦       ¦   ¦           ¦       AttachmentDto.class
+¦       ¦   ¦           ¦       BulkEmailRequestDto$BulkEmailRequestDtoBuilder.class
+¦       ¦   ¦           ¦       BulkEmailRequestDto$RecipientVariable$RecipientVariableBuilder.class
+¦       ¦   ¦           ¦       BulkEmailRequestDto$RecipientVariable.class
+¦       ¦   ¦           ¦       BulkEmailRequestDto.class
+¦       ¦   ¦           ¦       CustomerEmailDTO$CustomerEmailDTOBuilder.class
+¦       ¦   ¦           ¦       CustomerEmailDTO.class
+¦       ¦   ¦           ¦       EmailRequest$EmailRequestBuilder.class
+¦       ¦   ¦           ¦       EmailRequest.class
+¦       ¦   ¦           ¦       EmailResponseDto$EmailResponseDtoBuilder.class
+¦       ¦   ¦           ¦       EmailResponseDto.class
+¦       ¦   ¦           ¦       EmailStatusDto$EmailEvent$EmailEventBuilder.class
+¦       ¦   ¦           ¦       EmailStatusDto$EmailEvent.class
+¦       ¦   ¦           ¦       EmailStatusDto$EmailStatusDtoBuilder.class
+¦       ¦   ¦           ¦       EmailStatusDto.class
+¦       ¦   ¦           ¦       NewsletterRequestDto$NewsletterRequestDtoBuilder.class
+¦       ¦   ¦           ¦       NewsletterRequestDto.class
+¦       ¦   ¦           ¦       OrderDto$BillingAddress$BillingAddressBuilder.class
+¦       ¦   ¦           ¦       OrderDto$BillingAddress.class
+¦       ¦   ¦           ¦       OrderDto$OrderDtoBuilder.class
+¦       ¦   ¦           ¦       OrderDto$PaymentStatus$PaymentStatusBuilder.class
+¦       ¦   ¦           ¦       OrderDto$PaymentStatus.class
+¦       ¦   ¦           ¦       OrderDto$ShippingInfo$ShippingInfoBuilder.class
+¦       ¦   ¦           ¦       OrderDto$ShippingInfo.class
+¦       ¦   ¦           ¦       OrderDto.class
+¦       ¦   ¦           ¦       OrderEmailDTO$OrderEmailDTOBuilder.class
+¦       ¦   ¦           ¦       OrderEmailDTO.class
+¦       ¦   ¦           ¦       OrderItemDto$OrderItemDtoBuilder.class
+¦       ¦   ¦           ¦       OrderItemDto.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---enums
+¦       ¦   ¦           ¦       EmailStatus.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---exception
+¦       ¦   ¦           ¦       EmailException$ErrorCode.class
+¦       ¦   ¦           ¦       EmailException.class
+¦       ¦   ¦           ¦       GlobalExceptionHandler$ErrorResponse$ErrorResponseBuilder.class
+¦       ¦   ¦           ¦       GlobalExceptionHandler$ErrorResponse.class
+¦       ¦   ¦           ¦       GlobalExceptionHandler.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---model
+¦       ¦   ¦           ¦       EmailMessage$EmailAttachment$EmailAttachmentBuilder.class
+¦       ¦   ¦           ¦       EmailMessage$EmailAttachment.class
+¦       ¦   ¦           ¦       EmailMessage$EmailMessageBuilder.class
+¦       ¦   ¦           ¦       EmailMessage.class
+¦       ¦   ¦           ¦       EmailTemplate$EmailTemplateBuilder.class
+¦       ¦   ¦           ¦       EmailTemplate.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---repository
+¦       ¦   ¦           ¦       EmailTemplateRepository.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---service
+¦       ¦   ¦                   EmailFormatter$FormattedEmail.class
+¦       ¦   ¦                   EmailFormatter$SimpleEmailFormatter.class
+¦       ¦   ¦                   EmailFormatter.class
+¦       ¦   ¦                   EmailService.class
+¦       ¦   ¦                   NewsletterService.class
+¦       ¦   ¦                   OrderEmailService$1.class
+¦       ¦   ¦                   OrderEmailService.class
+¦       ¦   ¦                   TemplateService.class
+¦       ¦   ¦                   
+¦       ¦   +---templates
+¦       ¦           new-post-notification.html
+¦       ¦           newsletter.html
+¦       ¦           order-cancelled.html
+¦       ¦           order-confirmation.html
+¦       ¦           order-shipped.html
+¦       ¦           password-reset.html
+¦       ¦           welcome.html
+¦       ¦           
+¦       +---generated-sources
+¦       ¦   +---annotations
+¦       +---maven-status
+¦           +---maven-compiler-plugin
+¦               +---compile
+¦                   +---default-compile
+¦                           createdFiles.lst
+¦                           inputFiles.lst
+¦                           
++---feign
+¦       BlogServiceClient.java
+¦       ImageServiceClient.java
+¦       ShopServiceClient.java
+¦       
++---image-service
+¦   ¦   .dockerignore
+¦   ¦   Dockerfile
+¦   ¦   pom.xml
+¦   ¦   
+¦   +---src
+¦   ¦   +---main
+¦   ¦       +---java
+¦   ¦       ¦   +---com
+¦   ¦       ¦       +---perfect8
+¦   ¦       ¦           +---image
+¦   ¦       ¦               ¦   ImageServiceApplication.java
+¦   ¦       ¦               ¦   
+¦   ¦       ¦               +---config
+¦   ¦       ¦               ¦       SecurityConfig.java
+¦   ¦       ¦               ¦       StorageConfig.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---controller
+¦   ¦       ¦               ¦       HealthController.java
+¦   ¦       ¦               ¦       ImageController.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---dto
+¦   ¦       ¦               ¦       ImageDto.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---enums
+¦   ¦       ¦               ¦       ImageSize.java
+¦   ¦       ¦               ¦       ImageStatus.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---exception
+¦   ¦       ¦               ¦       GlobalExceptionHandler.java
+¦   ¦       ¦               ¦       ImageNotFoundException.java
+¦   ¦       ¦               ¦       ImageProcessingException.java
+¦   ¦       ¦               ¦       InvalidImageException.java
+¦   ¦       ¦               ¦       StorageException.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---mapper
+¦   ¦       ¦               ¦       ImageMapper.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---model
+¦   ¦       ¦               ¦       Image.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---repository
+¦   ¦       ¦               ¦       ImageRepository.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---service
+¦   ¦       ¦                       ImageProcessingService.java
+¦   ¦       ¦                       ImageService.java
+¦   ¦       ¦                       
+¦   ¦       +---resources
+¦   ¦               application.properties
+¦   ¦               
+¦   +---target
+¦       +---classes
+¦       ¦   ¦   application.properties
+¦       ¦   ¦   
+¦       ¦   +---com
+¦       ¦       +---perfect8
+¦       ¦           +---image
+¦       ¦               ¦   ImageServiceApplication.class
+¦       ¦               ¦   
+¦       ¦               +---config
+¦       ¦               ¦       SecurityConfig.class
+¦       ¦               ¦       StorageConfig.class
+¦       ¦               ¦       
+¦       ¦               +---controller
+¦       ¦               ¦       HealthController.class
+¦       ¦               ¦       ImageController.class
+¦       ¦               ¦       
+¦       ¦               +---dto
+¦       ¦               ¦       ImageDto$DimensionDto$DimensionDtoBuilder.class
+¦       ¦               ¦       ImageDto$DimensionDto.class
+¦       ¦               ¦       ImageDto$ImageDtoBuilder.class
+¦       ¦               ¦       ImageDto$ProcessingStatusDto$ProcessingStatusDtoBuilder.class
+¦       ¦               ¦       ImageDto$ProcessingStatusDto.class
+¦       ¦               ¦       ImageDto.class
+¦       ¦               ¦       
+¦       ¦               +---enums
+¦       ¦               ¦       ImageSize.class
+¦       ¦               ¦       ImageStatus.class
+¦       ¦               ¦       
+¦       ¦               +---exception
+¦       ¦               ¦       GlobalExceptionHandler$ErrorResponse$ErrorResponseBuilder.class
+¦       ¦               ¦       GlobalExceptionHandler$ErrorResponse.class
+¦       ¦               ¦       GlobalExceptionHandler.class
+¦       ¦               ¦       ImageNotFoundException.class
+¦       ¦               ¦       ImageProcessingException$ProcessingError.class
+¦       ¦               ¦       ImageProcessingException.class
+¦       ¦               ¦       InvalidImageException$ValidationError.class
+¦       ¦               ¦       InvalidImageException.class
+¦       ¦               ¦       StorageException$StorageError.class
+¦       ¦               ¦       StorageException.class
+¦       ¦               ¦       
+¦       ¦               +---mapper
+¦       ¦               ¦       ImageMapper.class
+¦       ¦               ¦       
+¦       ¦               +---model
+¦       ¦               ¦       Image$ImageBuilder.class
+¦       ¦               ¦       Image.class
+¦       ¦               ¦       
+¦       ¦               +---repository
+¦       ¦               ¦       ImageRepository.class
+¦       ¦               ¦       
+¦       ¦               +---service
+¦       ¦                       ImageProcessingService$1.class
+¦       ¦                       ImageProcessingService.class
+¦       ¦                       ImageService.class
+¦       ¦                       
+¦       +---generated-sources
+¦       ¦   +---annotations
+¦       +---maven-status
+¦           +---maven-compiler-plugin
+¦               +---compile
+¦                   +---default-compile
+¦                           createdFiles.lst
+¦                           inputFiles.lst
+¦                           
++---nginx
+¦   ¦   nginx.conf
+¦   ¦   
+¦   +---conf.d
+¦           perfect8.conf
+¦           
++---shop-service
+¦   ¦   .dockerignore
+¦   ¦   Dockerfile
+¦   ¦   pom.xml
+¦   ¦   shop.iml
+¦   ¦   
+¦   +---src
+¦   ¦   +---main
+¦   ¦   ¦   +---java
+¦   ¦   ¦   ¦   +---com
+¦   ¦   ¦   ¦       +---perfect8
+¦   ¦   ¦   ¦           +---shop
+¦   ¦   ¦   ¦               ¦   ShopServiceApplication.java
+¦   ¦   ¦   ¦               ¦   
+¦   ¦   ¦   ¦               +---controller
+¦   ¦   ¦   ¦               ¦       AdminDashboardController.java
+¦   ¦   ¦   ¦               ¦       CartController.java
+¦   ¦   ¦   ¦               ¦       CategoryController.java
+¦   ¦   ¦   ¦               ¦       CustomerController.java
+¦   ¦   ¦   ¦               ¦       HealthController.java
+¦   ¦   ¦   ¦               ¦       OrderController.java
+¦   ¦   ¦   ¦               ¦       PaymentController.java
+¦   ¦   ¦   ¦               ¦       ProductController.java
+¦   ¦   ¦   ¦               ¦       ShipmentController.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---dto
+¦   ¦   ¦   ¦               ¦       ActivityFeedResponse.java
+¦   ¦   ¦   ¦               ¦       AddressDTO.java
+¦   ¦   ¦   ¦               ¦       AddToCartRequest.java
+¦   ¦   ¦   ¦               ¦       AdminDashboardResponse.java
+¦   ¦   ¦   ¦               ¦       ApiPerformanceResponse.java
+¦   ¦   ¦   ¦               ¦       ApiResponse.java
+¦   ¦   ¦   ¦               ¦       ApplyCouponRequest.java
+¦   ¦   ¦   ¦               ¦       AuthDto.java
+¦   ¦   ¦   ¦               ¦       CartCalculationResponse.java
+¦   ¦   ¦   ¦               ¦       CartHistoryResponse.java
+¦   ¦   ¦   ¦               ¦       CartItemResponse.java
+¦   ¦   ¦   ¦               ¦       CartResponse.java
+¦   ¦   ¦   ¦               ¦       CartSummaryResponse.java
+¦   ¦   ¦   ¦               ¦       CategoryCreateRequest.java
+¦   ¦   ¦   ¦               ¦       CategoryDTO.java
+¦   ¦   ¦   ¦               ¦       CategoryResponse.java
+¦   ¦   ¦   ¦               ¦       CategoryTreeResponse.java
+¦   ¦   ¦   ¦               ¦       CategoryUpdateRequest.java
+¦   ¦   ¦   ¦               ¦       CheckoutPreparationRequest.java
+¦   ¦   ¦   ¦               ¦       CheckoutPreparationResponse.java
+¦   ¦   ¦   ¦               ¦       CheckoutValidationResponse.java
+¦   ¦   ¦   ¦               ¦       CohortAnalysisResponse.java
+¦   ¦   ¦   ¦               ¦       CouponValidationResponse.java
+¦   ¦   ¦   ¦               ¦       CreateCustomerRequest.java
+¦   ¦   ¦   ¦               ¦       CreateOrderRequest.java
+¦   ¦   ¦   ¦               ¦       CustomerDTO.java
+¦   ¦   ¦   ¦               ¦       CustomerMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       CustomerRegistrationDTO.java
+¦   ¦   ¦   ¦               ¦       CustomerReportResponse.java
+¦   ¦   ¦   ¦               ¦       CustomerUpdateDTO.java
+¦   ¦   ¦   ¦               ¦       DashboardSummaryResponse.java
+¦   ¦   ¦   ¦               ¦       DatabasePerformanceResponse.java
+¦   ¦   ¦   ¦               ¦       ExecutiveSummaryResponse.java
+¦   ¦   ¦   ¦               ¦       GeographicAnalyticsResponse.java
+¦   ¦   ¦   ¦               ¦       InventoryMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       InventoryReportResponse.java
+¦   ¦   ¦   ¦               ¦       InventoryUpdateDTO.java
+¦   ¦   ¦   ¦               ¦       JwtResponse.java
+¦   ¦   ¦   ¦               ¦       LowStockAlertResponse.java
+¦   ¦   ¦   ¦               ¦       NewCustomerResponse.java
+¦   ¦   ¦   ¦               ¦       OrderAttentionResponse.java
+¦   ¦   ¦   ¦               ¦       OrderDTO.java
+¦   ¦   ¦   ¦               ¦       OrderItemDTO.java
+¦   ¦   ¦   ¦               ¦       OrderRequestDTO.java
+¦   ¦   ¦   ¦               ¦       OrderStatusUpdateDTO.java
+¦   ¦   ¦   ¦               ¦       PaymentIssueResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentRequestDTO.java
+¦   ¦   ¦   ¦               ¦       PaymentResponseDTO.java
+¦   ¦   ¦   ¦               ¦       ProductAnalyticsResponse.java
+¦   ¦   ¦   ¦               ¦       ProductCreateRequest.java
+¦   ¦   ¦   ¦               ¦       ProductDTO.java
+¦   ¦   ¦   ¦               ¦       ProductRecommendationResponse.java
+¦   ¦   ¦   ¦               ¦       ProductResponse.java
+¦   ¦   ¦   ¦               ¦       ProductUpdateRequest.java
+¦   ¦   ¦   ¦               ¦       RealtimeMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       RefundRequestDTO.java
+¦   ¦   ¦   ¦               ¦       RevenueAnalyticsResponse.java
+¦   ¦   ¦   ¦               ¦       SalesMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       SalesReportResponse.java
+¦   ¦   ¦   ¦               ¦       SaveCartRequest.java
+¦   ¦   ¦   ¦               ¦       SavedCartResponse.java
+¦   ¦   ¦   ¦               ¦       ShipmentDTO.java
+¦   ¦   ¦   ¦               ¦       ShipmentUpdateDTO.java
+¦   ¦   ¦   ¦               ¦       ShippingCalculationRequest.java
+¦   ¦   ¦   ¦               ¦       ShippingOptionDTO.java
+¦   ¦   ¦   ¦               ¦       ShippingOptionResponse.java
+¦   ¦   ¦   ¦               ¦       StockAdjustmentDTO.java
+¦   ¦   ¦   ¦               ¦       SystemAlertResponse.java
+¦   ¦   ¦   ¦               ¦       SystemPerformanceResponse.java
+¦   ¦   ¦   ¦               ¦       TaxCalculationRequest.java
+¦   ¦   ¦   ¦               ¦       TaxCalculationResponse.java
+¦   ¦   ¦   ¦               ¦       TaxEstimationResponse.java
+¦   ¦   ¦   ¦               ¦       TrackingUpdateDTO.java
+¦   ¦   ¦   ¦               ¦       TrendAnalysisResponse.java
+¦   ¦   ¦   ¦               ¦       UpdateCartItemRequest.java
+¦   ¦   ¦   ¦               ¦       UpdateCustomerRequest.java
+¦   ¦   ¦   ¦               ¦       UpdateOrderStatusRequest.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---entity
+¦   ¦   ¦   ¦               ¦       Address.java
+¦   ¦   ¦   ¦               ¦       Cart.java
+¦   ¦   ¦   ¦               ¦       CartItem.java
+¦   ¦   ¦   ¦               ¦       Category.java
+¦   ¦   ¦   ¦               ¦       Customer.java
+¦   ¦   ¦   ¦               ¦       InventoryTransaction.java
+¦   ¦   ¦   ¦               ¦       Order.java
+¦   ¦   ¦   ¦               ¦       OrderItem.java
+¦   ¦   ¦   ¦               ¦       Payment.java
+¦   ¦   ¦   ¦               ¦       Product.java
+¦   ¦   ¦   ¦               ¦       Shipment.java
+¦   ¦   ¦   ¦               ¦       ShipmentTracking.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---enums
+¦   ¦   ¦   ¦               ¦       PaymentMethod.java
+¦   ¦   ¦   ¦               ¦       PaymentStatus.java
+¦   ¦   ¦   ¦               ¦       TransactionType.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---exception
+¦   ¦   ¦   ¦               ¦       CategoryNotFoundException.java
+¦   ¦   ¦   ¦               ¦       CustomerNotFoundException.java
+¦   ¦   ¦   ¦               ¦       DuplicateSkuException.java
+¦   ¦   ¦   ¦               ¦       EmailAlreadyExistsException.java
+¦   ¦   ¦   ¦               ¦       InsufficientStockException.java
+¦   ¦   ¦   ¦               ¦       InvalidOrderStatusException.java
+¦   ¦   ¦   ¦               ¦       OrderNotFoundException.java
+¦   ¦   ¦   ¦               ¦       PaymentException.java
+¦   ¦   ¦   ¦               ¦       PaymentProcessingException.java
+¦   ¦   ¦   ¦               ¦       ProductNotFoundException.java
+¦   ¦   ¦   ¦               ¦       ResourceNotFoundException.java
+¦   ¦   ¦   ¦               ¦       ShippingException.java
+¦   ¦   ¦   ¦               ¦       UnauthorizedAccessException.java
+¦   ¦   ¦   ¦               ¦       ValidationException.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---repository
+¦   ¦   ¦   ¦               ¦       AddressRepository.java
+¦   ¦   ¦   ¦               ¦       CartItemRepository.java
+¦   ¦   ¦   ¦               ¦       CartRepository.java
+¦   ¦   ¦   ¦               ¦       CategoryRepository.java
+¦   ¦   ¦   ¦               ¦       CustomerRepository.java
+¦   ¦   ¦   ¦               ¦       InventoryTransactionRepository.java
+¦   ¦   ¦   ¦               ¦       OrderItemRepository.java
+¦   ¦   ¦   ¦               ¦       OrderRepository.java
+¦   ¦   ¦   ¦               ¦       PaymentRepository.java
+¦   ¦   ¦   ¦               ¦       ProductRepository.java
+¦   ¦   ¦   ¦               ¦       ShipmentRepository.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---security
+¦   ¦   ¦   ¦               ¦       JwtAuthenticationFilter.java
+¦   ¦   ¦   ¦               ¦       JwtTokenProvider.java
+¦   ¦   ¦   ¦               ¦       SecurityConfig.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---service
+¦   ¦   ¦   ¦                       AnalyticsService.java
+¦   ¦   ¦   ¦                       AuthService.java
+¦   ¦   ¦   ¦                       CartService.java
+¦   ¦   ¦   ¦                       CategoryService.java
+¦   ¦   ¦   ¦                       CustomerService.java
+¦   ¦   ¦   ¦                       CustomerUserDetailsService.java
+¦   ¦   ¦   ¦                       EmailService.java
+¦   ¦   ¦   ¦                       InventoryService.java
+¦   ¦   ¦   ¦                       OrderService.java
+¦   ¦   ¦   ¦                       PaymentService.java
+¦   ¦   ¦   ¦                       PayPalService.java
+¦   ¦   ¦   ¦                       ProductService.java
+¦   ¦   ¦   ¦                       ShipmentService.java
+¦   ¦   ¦   ¦                       ShippingService.java
+¦   ¦   ¦   ¦                       
+¦   ¦   ¦   +---resources
+¦   ¦   ¦           application.properties
+¦   ¦   ¦           
+¦   ¦   +---test
+¦   ¦       +---java
+¦   ¦           +---com
+¦   ¦               +---perfect8
+¦   ¦                   +---shop
+¦   ¦                       +---entity
+¦   +---target
+¦       +---classes
+¦       ¦   ¦   application.properties
+¦       ¦   ¦   
+¦       ¦   +---com
+¦       ¦       +---perfect8
+¦       ¦           +---shop
+¦       ¦               ¦   ShopServiceApplication.class
+¦       ¦               ¦   
+¦       ¦               +---controller
+¦       ¦               ¦       CartController.class
+¦       ¦               ¦       CategoryController.class
+¦       ¦               ¦       CustomerController.class
+¦       ¦               ¦       HealthController.class
+¦       ¦               ¦       OrderController.class
+¦       ¦               ¦       PaymentController.class
+¦       ¦               ¦       ProductController.class
+¦       ¦               ¦       ShipmentController.class
+¦       ¦               ¦       
+¦       ¦               +---dto
+¦       ¦               ¦       ActivityFeedResponse$ActivityFeedResponseBuilder.class
+¦       ¦               ¦       ActivityFeedResponse.class
+¦       ¦               ¦       AddressDTO$AddressDTOBuilder.class
+¦       ¦               ¦       AddressDTO.class
+¦       ¦               ¦       AddToCartRequest$AddToCartRequestBuilder.class
+¦       ¦               ¦       AddToCartRequest.class
+¦       ¦               ¦       ApiResponse$ApiResponseBuilder.class
+¦       ¦               ¦       ApiResponse$PaginationInfo$PaginationInfoBuilder.class
+¦       ¦               ¦       ApiResponse$PaginationInfo.class
+¦       ¦               ¦       ApiResponse.class
+¦       ¦               ¦       ApplyCouponRequest$ApplyCouponRequestBuilder.class
+¦       ¦               ¦       ApplyCouponRequest.class
+¦       ¦               ¦       AuthDto$AuthErrorResponse$AuthErrorResponseBuilder.class
+¦       ¦               ¦       AuthDto$AuthErrorResponse.class
+¦       ¦               ¦       AuthDto$ChangePasswordRequest$ChangePasswordRequestBuilder.class
+¦       ¦               ¦       AuthDto$ChangePasswordRequest.class
+¦       ¦               ¦       AuthDto$EmailVerificationRequest$EmailVerificationRequestBuilder.class
+¦       ¦               ¦       AuthDto$EmailVerificationRequest.class
+¦       ¦               ¦       AuthDto$JwtResponse$JwtResponseBuilder.class
+¦       ¦               ¦       AuthDto$JwtResponse.class
+¦       ¦               ¦       AuthDto$LoginRequest$LoginRequestBuilder.class
+¦       ¦               ¦       AuthDto$LoginRequest.class
+¦       ¦               ¦       AuthDto$LogoutRequest$LogoutRequestBuilder.class
+¦       ¦               ¦       AuthDto$LogoutRequest.class
+¦       ¦               ¦       AuthDto$RegisterRequest$RegisterRequestBuilder.class
+¦       ¦               ¦       AuthDto$RegisterRequest.class
+¦       ¦               ¦       AuthDto$ResendVerificationRequest$ResendVerificationRequestBuilder.class
+¦       ¦               ¦       AuthDto$ResendVerificationRequest.class
+¦       ¦               ¦       AuthDto$ResetPasswordConfirm$ResetPasswordConfirmBuilder.class
+¦       ¦               ¦       AuthDto$ResetPasswordConfirm.class
+¦       ¦               ¦       AuthDto$ResetPasswordRequest$ResetPasswordRequestBuilder.class
+¦       ¦               ¦       AuthDto$ResetPasswordRequest.class
+¦       ¦               ¦       AuthDto$SessionInfo$SessionInfoBuilder.class
+¦       ¦               ¦       AuthDto$SessionInfo.class
+¦       ¦               ¦       AuthDto$TokenValidationResponse$TokenValidationResponseBuilder.class
+¦       ¦               ¦       AuthDto$TokenValidationResponse.class
+¦       ¦               ¦       AuthDto.class
+¦       ¦               ¦       CartCalculationResponse$CartCalculationResponseBuilder.class
+¦       ¦               ¦       CartCalculationResponse$DiscountBreakdown$DiscountBreakdownBuilder.class
+¦       ¦               ¦       CartCalculationResponse$DiscountBreakdown.class
+¦       ¦               ¦       CartCalculationResponse$ShippingBreakdown$ShippingBreakdownBuilder.class
+¦       ¦               ¦       CartCalculationResponse$ShippingBreakdown.class
+¦       ¦               ¦       CartCalculationResponse$TaxBreakdown$TaxBreakdownBuilder.class
+¦       ¦               ¦       CartCalculationResponse$TaxBreakdown.class
+¦       ¦               ¦       CartCalculationResponse$TaxLineItem$TaxLineItemBuilder.class
+¦       ¦               ¦       CartCalculationResponse$TaxLineItem.class
+¦       ¦               ¦       CartCalculationResponse.class
+¦       ¦               ¦       CartHistoryResponse$CartHistoryResponseBuilder.class
+¦       ¦               ¦       CartHistoryResponse$CartItemSnapshot$CartItemSnapshotBuilder.class
+¦       ¦               ¦       CartHistoryResponse$CartItemSnapshot.class
+¦       ¦               ¦       CartHistoryResponse.class
+¦       ¦               ¦       CartItemResponse$CartItemResponseBuilder.class
+¦       ¦               ¦       CartItemResponse.class
+¦       ¦               ¦       CartResponse$CartResponseBuilder.class
+¦       ¦               ¦       CartResponse.class
+¦       ¦               ¦       CartSummaryResponse$CartSummaryResponseBuilder.class
+¦       ¦               ¦       CartSummaryResponse$ValidationError$ValidationErrorBuilder.class
+¦       ¦               ¦       CartSummaryResponse$ValidationError.class
+¦       ¦               ¦       CartSummaryResponse$Warning$WarningBuilder.class
+¦       ¦               ¦       CartSummaryResponse$Warning.class
+¦       ¦               ¦       CartSummaryResponse.class
+¦       ¦               ¦       CategoryCreateRequest.class
+¦       ¦               ¦       CategoryDTO.class
+¦       ¦               ¦       CategoryResponse.class
+¦       ¦               ¦       CategoryTreeResponse.class
+¦       ¦               ¦       CategoryUpdateRequest.class
+¦       ¦               ¦       CheckoutPreparationRequest$CheckoutPreparationRequestBuilder.class
+¦       ¦               ¦       CheckoutPreparationRequest.class
+¦       ¦               ¦       CheckoutPreparationResponse$CheckoutPreparationResponseBuilder.class
+¦       ¦               ¦       CheckoutPreparationResponse.class
+¦       ¦               ¦       CheckoutValidationResponse$CheckoutValidationResponseBuilder.class
+¦       ¦               ¦       CheckoutValidationResponse$InventoryValidation$InventoryValidationBuilder.class
+¦       ¦               ¦       CheckoutValidationResponse$InventoryValidation.class
+¦       ¦               ¦       CheckoutValidationResponse$LowStockItem$LowStockItemBuilder.class
+¦       ¦               ¦       CheckoutValidationResponse$LowStockItem.class
+¦       ¦               ¦       CheckoutValidationResponse$OutOfStockItem$OutOfStockItemBuilder.class
+¦       ¦               ¦       CheckoutValidationResponse$OutOfStockItem.class
+¦       ¦               ¦       CheckoutValidationResponse$PaymentValidation$PaymentValidationBuilder.class
+¦       ¦               ¦       CheckoutValidationResponse$PaymentValidation.class
+¦       ¦               ¦       CheckoutValidationResponse$ShippingValidation$ShippingValidationBuilder.class
+¦       ¦               ¦       CheckoutValidationResponse$ShippingValidation.class
+¦       ¦               ¦       CheckoutValidationResponse.class
+¦       ¦               ¦       CouponValidationResponse$CouponValidationResponseBuilder.class
+¦       ¦               ¦       CouponValidationResponse.class
+¦       ¦               ¦       CreateCustomerRequest$CreateCustomerRequestBuilder.class
+¦       ¦               ¦       CreateCustomerRequest.class
+¦       ¦               ¦       CreateOrderRequest$CreateOrderRequestBuilder.class
+¦       ¦               ¦       CreateOrderRequest$OrderItemRequest$OrderItemRequestBuilder.class
+¦       ¦               ¦       CreateOrderRequest$OrderItemRequest.class
+¦       ¦               ¦       CreateOrderRequest.class
+¦       ¦               ¦       CustomerDTO$CustomerDTOBuilder.class
+¦       ¦               ¦       CustomerDTO.class
+¦       ¦               ¦       CustomerRegistrationDTO$CustomerRegistrationDTOBuilder.class
+¦       ¦               ¦       CustomerRegistrationDTO.class
+¦       ¦               ¦       CustomerReportResponse$AcquisitionChannel$AcquisitionChannelBuilder.class
+¦       ¦               ¦       CustomerReportResponse$AcquisitionChannel.class
+¦       ¦               ¦       CustomerReportResponse$AgeGroup$AgeGroupBuilder.class
+¦       ¦               ¦       CustomerReportResponse$AgeGroup.class
+¦       ¦               ¦       CustomerReportResponse$CustomerReportResponseBuilder.class
+¦       ¦               ¦       CustomerReportResponse$CustomerSegment$CustomerSegmentBuilder.class
+¦       ¦               ¦       CustomerReportResponse$CustomerSegment.class
+¦       ¦               ¦       CustomerReportResponse$GeographicData$GeographicDataBuilder.class
+¦       ¦               ¦       CustomerReportResponse$GeographicData.class
+¦       ¦               ¦       CustomerReportResponse$Recommendation$RecommendationBuilder.class
+¦       ¦               ¦       CustomerReportResponse$Recommendation.class
+¦       ¦               ¦       CustomerReportResponse$TopCustomer$TopCustomerBuilder.class
+¦       ¦               ¦       CustomerReportResponse$TopCustomer.class
+¦       ¦               ¦       CustomerReportResponse.class
+¦       ¦               ¦       CustomerUpdateDTO$CustomerUpdateDTOBuilder.class
+¦       ¦               ¦       CustomerUpdateDTO.class
+¦       ¦               ¦       InventoryReportResponse$InventoryItem.class
+¦       ¦               ¦       InventoryReportResponse$LowStockItem.class
+¦       ¦               ¦       InventoryReportResponse$MovementSummary.class
+¦       ¦               ¦       InventoryReportResponse.class
+¦       ¦               ¦       InventoryUpdateDTO.class
+¦       ¦               ¦       JwtResponse$JwtResponseBuilder.class
+¦       ¦               ¦       JwtResponse.class
+¦       ¦               ¦       LowStockAlertResponse.class
+¦       ¦               ¦       NewCustomerResponse$NewCustomerResponseBuilder.class
+¦       ¦               ¦       NewCustomerResponse.class
+¦       ¦               ¦       OrderAttentionResponse$ActionItem$ActionItemBuilder.class
+¦       ¦               ¦       OrderAttentionResponse$ActionItem.class
+¦       ¦               ¦       OrderAttentionResponse$OrderAttentionResponseBuilder.class
+¦       ¦               ¦       OrderAttentionResponse.class
+¦       ¦               ¦       OrderDTO$OrderDTOBuilder.class
+¦       ¦               ¦       OrderDTO.class
+¦       ¦               ¦       OrderItemDTO$OrderItemDTOBuilder.class
+¦       ¦               ¦       OrderItemDTO.class
+¦       ¦               ¦       OrderRequestDTO$OrderRequestDTOBuilder.class
+¦       ¦               ¦       OrderRequestDTO.class
+¦       ¦               ¦       OrderStatusUpdateDTO$OrderStatusUpdateDTOBuilder.class
+¦       ¦               ¦       OrderStatusUpdateDTO.class
+¦       ¦               ¦       PaymentIssueResponse$PaymentIssueResponseBuilder.class
+¦       ¦               ¦       PaymentIssueResponse.class
+¦       ¦               ¦       PaymentRequestDTO$PaymentRequestDTOBuilder.class
+¦       ¦               ¦       PaymentRequestDTO.class
+¦       ¦               ¦       PaymentResponseDTO$PaymentResponseDTOBuilder.class
+¦       ¦               ¦       PaymentResponseDTO.class
+¦       ¦               ¦       ProductCreateRequest$ProductCreateRequestBuilder.class
+¦       ¦               ¦       ProductCreateRequest.class
+¦       ¦               ¦       ProductDTO$ProductDTOBuilder.class
+¦       ¦               ¦       ProductDTO$ProductOptionDTO$ProductOptionDTOBuilder.class
+¦       ¦               ¦       ProductDTO$ProductOptionDTO.class
+¦       ¦               ¦       ProductDTO$ProductVariantDTO$ProductVariantDTOBuilder.class
+¦       ¦               ¦       ProductDTO$ProductVariantDTO.class
+¦       ¦               ¦       ProductDTO.class
+¦       ¦               ¦       ProductRecommendationResponse$ProductRecommendationResponseBuilder.class
+¦       ¦               ¦       ProductRecommendationResponse.class
+¦       ¦               ¦       ProductResponse$ProductResponseBuilder.class
+¦       ¦               ¦       ProductResponse.class
+¦       ¦               ¦       ProductUpdateRequest$ProductUpdateRequestBuilder.class
+¦       ¦               ¦       ProductUpdateRequest.class
+¦       ¦               ¦       RefundRequestDTO$RefundRequestDTOBuilder.class
+¦       ¦               ¦       RefundRequestDTO.class
+¦       ¦               ¦       SaveCartRequest$SaveCartRequestBuilder.class
+¦       ¦               ¦       SaveCartRequest.class
+¦       ¦               ¦       SavedCartResponse$SavedCartResponseBuilder.class
+¦       ¦               ¦       SavedCartResponse.class
+¦       ¦               ¦       ShipmentDTO$ShipmentDTOBuilder.class
+¦       ¦               ¦       ShipmentDTO.class
+¦       ¦               ¦       ShipmentUpdateDTO$ShipmentUpdateDTOBuilder.class
+¦       ¦               ¦       ShipmentUpdateDTO.class
+¦       ¦               ¦       ShippingCalculationRequest$PackageDimensions$PackageDimensionsBuilder.class
+¦       ¦               ¦       ShippingCalculationRequest$PackageDimensions.class
+¦       ¦               ¦       ShippingCalculationRequest$ShippingCalculationRequestBuilder.class
+¦       ¦               ¦       ShippingCalculationRequest.class
+¦       ¦               ¦       ShippingOptionDTO$ShippingOptionDTOBuilder.class
+¦       ¦               ¦       ShippingOptionDTO.class
+¦       ¦               ¦       ShippingOptionResponse$ShippingOptionResponseBuilder.class
+¦       ¦               ¦       ShippingOptionResponse.class
+¦       ¦               ¦       StockAdjustmentDTO.class
+¦       ¦               ¦       SystemAlertResponse$SystemAlertResponseBuilder.class
+¦       ¦               ¦       SystemAlertResponse.class
+¦       ¦               ¦       TaxCalculationRequest$TaxCalculationRequestBuilder.class
+¦       ¦               ¦       TaxCalculationRequest.class
+¦       ¦               ¦       TaxCalculationResponse$TaxCalculationResponseBuilder.class
+¦       ¦               ¦       TaxCalculationResponse.class
+¦       ¦               ¦       TaxEstimationResponse$TaxBreakdown$TaxBreakdownBuilder.class
+¦       ¦               ¦       TaxEstimationResponse$TaxBreakdown.class
+¦       ¦               ¦       TaxEstimationResponse$TaxEstimationResponseBuilder.class
+¦       ¦               ¦       TaxEstimationResponse.class
+¦       ¦               ¦       TrackingUpdateDTO$TrackingUpdateDTOBuilder.class
+¦       ¦               ¦       TrackingUpdateDTO.class
+¦       ¦               ¦       UpdateCartItemRequest$UpdateCartItemRequestBuilder.class
+¦       ¦               ¦       UpdateCartItemRequest.class
+¦       ¦               ¦       UpdateCustomerRequest$UpdateCustomerRequestBuilder.class
+¦       ¦               ¦       UpdateCustomerRequest.class
+¦       ¦               ¦       UpdateOrderStatusRequest$UpdateOrderStatusRequestBuilder.class
+¦       ¦               ¦       UpdateOrderStatusRequest.class
+¦       ¦               ¦       
+¦       ¦               +---entity
+¦       ¦               ¦       Address$AddressBuilder.class
+¦       ¦               ¦       Address.class
+¦       ¦               ¦       Cart$CartBuilder.class
+¦       ¦               ¦       Cart.class
+¦       ¦               ¦       CartItem$CartItemBuilder.class
+¦       ¦               ¦       CartItem.class
+¦       ¦               ¦       Category$CategoryBuilder.class
+¦       ¦               ¦       Category.class
+¦       ¦               ¦       Customer$CustomerBuilder.class
+¦       ¦               ¦       Customer.class
+¦       ¦               ¦       InventoryTransaction$InventoryTransactionBuilder.class
+¦       ¦               ¦       InventoryTransaction.class
+¦       ¦               ¦       Order$OrderBuilder.class
+¦       ¦               ¦       Order.class
+¦       ¦               ¦       OrderItem$OrderItemBuilder.class
+¦       ¦               ¦       OrderItem.class
+¦       ¦               ¦       Payment$PaymentBuilder.class
+¦       ¦               ¦       Payment.class
+¦       ¦               ¦       Product$ProductBuilder.class
+¦       ¦               ¦       Product.class
+¦       ¦               ¦       Shipment$ShipmentBuilder.class
+¦       ¦               ¦       Shipment.class
+¦       ¦               ¦       ShipmentTracking$ShipmentTrackingBuilder.class
+¦       ¦               ¦       ShipmentTracking.class
+¦       ¦               ¦       
+¦       ¦               +---enums
+¦       ¦               ¦       PaymentMethod.class
+¦       ¦               ¦       PaymentStatus.class
+¦       ¦               ¦       TransactionType.class
+¦       ¦               ¦       
+¦       ¦               +---exception
+¦       ¦               ¦       CategoryNotFoundException.class
+¦       ¦               ¦       CustomerNotFoundException.class
+¦       ¦               ¦       DuplicateSkuException.class
+¦       ¦               ¦       EmailAlreadyExistsException.class
+¦       ¦               ¦       InsufficientStockException.class
+¦       ¦               ¦       InvalidOrderStatusException.class
+¦       ¦               ¦       OrderNotFoundException.class
+¦       ¦               ¦       PaymentException.class
+¦       ¦               ¦       PaymentProcessingException$PaymentErrorType.class
+¦       ¦               ¦       PaymentProcessingException.class
+¦       ¦               ¦       ProductNotFoundException.class
+¦       ¦               ¦       ResourceNotFoundException.class
+¦       ¦               ¦       ShippingException$ShippingErrorType.class
+¦       ¦               ¦       ShippingException.class
+¦       ¦               ¦       UnauthorizedAccessException.class
+¦       ¦               ¦       ValidationException.class
+¦       ¦               ¦       
+¦       ¦               +---repository
+¦       ¦               ¦       AddressRepository.class
+¦       ¦               ¦       CartItemRepository.class
+¦       ¦               ¦       CartRepository.class
+¦       ¦               ¦       CategoryRepository.class
+¦       ¦               ¦       CustomerRepository.class
+¦       ¦               ¦       InventoryTransactionRepository.class
+¦       ¦               ¦       OrderItemRepository.class
+¦       ¦               ¦       OrderRepository.class
+¦       ¦               ¦       PaymentRepository.class
+¦       ¦               ¦       ProductRepository.class
+¦       ¦               ¦       ShipmentRepository.class
+¦       ¦               ¦       
+¦       ¦               +---security
+¦       ¦               ¦       JwtAuthenticationFilter.class
+¦       ¦               ¦       JwtTokenProvider.class
+¦       ¦               ¦       SecurityConfig.class
+¦       ¦               ¦       
+¦       ¦               +---service
+¦       ¦                       AnalyticsService.class
+¦       ¦                       AuthService.class
+¦       ¦                       CartService.class
+¦       ¦                       CategoryService$CategoryDropdownItem.class
+¦       ¦                       CategoryService$CategoryStatistics.class
+¦       ¦                       CategoryService$CategoryWithProductCount.class
+¦       ¦                       CategoryService.class
+¦       ¦                       CustomerService$CustomerStatsDTO$CustomerStatsDTOBuilder.class
+¦       ¦                       CustomerService$CustomerStatsDTO.class
+¦       ¦                       CustomerService.class
+¦       ¦                       CustomerUserDetailsService$CustomerUserPrincipal.class
+¦       ¦                       CustomerUserDetailsService.class
+¦       ¦                       EmailService.class
+¦       ¦                       InventoryService.class
+¦       ¦                       OrderService$1.class
+¦       ¦                       OrderService.class
+¦       ¦                       PaymentService.class
+¦       ¦                       PayPalService.class
+¦       ¦                       ProductService.class
+¦       ¦                       ShipmentService.class
+¦       ¦                       ShippingService.class
+¦       ¦                       
+¦       +---generated-sources
+¦       ¦   +---annotations
+¦       +---maven-status
+¦           +---maven-compiler-plugin
+¦               +---compile
+¦                   +---default-compile
+¦                           createdFiles.lst
+¦                           inputFiles.lst
+¦                           
++---SQL
+¦       admin-CREATE-TABLE.sql
+¦       admin-MOCK-DATA.sql
+¦       blog-CREATE-TABLE.sql
+¦       email-CREATE-TABLE.sql
+¦       image-CREATE-TABLE.sql
+¦       Normal omstart.txt
+¦       run-create-tables.sh
+¦       run-drop-tables.sh
+¦       shop-CREATE-TABLE.sql
+¦       SQL-SCRIPTS-README.md
+¦       
++---www
+        dashboard.html
+        
