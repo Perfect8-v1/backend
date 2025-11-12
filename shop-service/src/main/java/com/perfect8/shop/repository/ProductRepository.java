@@ -14,8 +14,11 @@ import java.util.Optional;
 
 /**
  * Repository for Product entity - Version 1.0
- * Follows Magnum Opus: productId not customerEmailDTOId, categoryId not customerEmailDTOId
- * FIXED: All category references use explicit queries with p.category.categoryId
+ * Follows Magnum Opus: productId not id, categoryId not id
+ * 
+ * FIXED (2025-11-12):
+ * - findByIsFeaturedTrue → findByFeaturedTrue (Product har 'featured', inte 'isFeatured')
+ * - WHERE p.a → WHERE p.active (typo i findAveragePrice)
  */
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -29,12 +32,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find all active products
     Page<Product> findByActiveTrue(Pageable pageable);
 
-    // Find by category and active - FIXED: Use explicit query
+    // Find by category and active
     @Query("SELECT p FROM Product p WHERE p.category.categoryId = :categoryId AND p.active = true")
     Page<Product> findByCategoryIdAndActiveTrue(@Param("categoryId") Long categoryId, Pageable pageable);
 
-    // Find featured and active products
-    Page<Product> findByIsFeaturedTrueAndActiveTrue(Pageable pageable);
+    // Find featured and active products - FIXED: IsFeatured → Featured
+    Page<Product> findByFeaturedTrueAndActiveTrue(Pageable pageable);
 
     // Find low stock products
     List<Product> findByStockQuantityLessThanAndActiveTrue(Integer threshold);
@@ -50,7 +53,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "AND (:categoryId IS NULL OR p.category.categoryId = :categoryId) " +
             "AND (:minPrice IS NULL OR p.price >= :minPrice) " +
             "AND (:maxPrice IS NULL OR p.price <= :maxPrice) " +
-            "AND (:featured IS NULL OR p.isFeatured = :featured) " +
+            "AND (:featured IS NULL OR p.featured = :featured) " +
             "AND (:inStock IS NULL OR ((:inStock = true AND p.stockQuantity > 0) OR (:inStock = false AND p.stockQuantity = 0)))")
     Page<Product> findProductsWithFilters(
             @Param("categoryId") Long categoryId,
@@ -67,11 +70,11 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // Find out of stock products
     Page<Product> findByStockQuantityAndActiveTrue(Integer stockQuantity, Pageable pageable);
 
-    // Find by multiple categories - FIXED: Use explicit query
+    // Find by multiple categories
     @Query("SELECT p FROM Product p WHERE p.category.categoryId IN :categoryIds AND p.active = true")
     Page<Product> findByCategoryIdInAndActiveTrue(@Param("categoryIds") List<Long> categoryIds, Pageable pageable);
 
-    // Count by category - FIXED: Use explicit query
+    // Count by category
     @Query("SELECT COUNT(p) FROM Product p WHERE p.category.categoryId = :categoryId AND p.active = true")
     long countByCategoryIdAndActiveTrue(@Param("categoryId") Long categoryId);
 
@@ -80,10 +83,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findProductsNeedingReorder();
 
     // Find best sellers (placeholder - would need order data)
-    @Query("SELECT p FROM Product p WHERE p.active = true AND p.isFeatured = true")
+    @Query("SELECT p FROM Product p WHERE p.active = true AND p.featured = true")
     Page<Product> findBestSellers(Pageable pageable);
 
-    // Find new arrivals - FIXED: createdDate
+    // Find new arrivals
     @Query("SELECT p FROM Product p WHERE p.active = true ORDER BY p.createdDate DESC")
     Page<Product> findNewArrivals(Pageable pageable);
 
@@ -138,7 +141,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Page<Product> findByWeightBetweenAndActiveTrue(BigDecimal minWeight, BigDecimal maxWeight, Pageable pageable);
 
     // Statistics queries
-    @Query("SELECT AVG(p.price) FROM Product p WHERE p.a = true")
+    @Query("SELECT AVG(p.price) FROM Product p WHERE p.active = true")  // FIXED: p.a → p.active
     BigDecimal findAveragePrice();
 
     @Query("SELECT COUNT(p) FROM Product p WHERE p.active = true AND p.stockQuantity = 0")

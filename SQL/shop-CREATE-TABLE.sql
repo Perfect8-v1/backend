@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS products (
     reorder_quantity INT DEFAULT 50,
     category_id BIGINT,
     image_url VARCHAR(500),
-    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+    featured BOOLEAN NOT NULL DEFAULT FALSE,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     weight DECIMAL(8, 2),
     dimensions VARCHAR(100),
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS products (
     INDEX idx_category_id (category_id),
     INDEX idx_active (active),
     INDEX idx_name (name),
-    INDEX idx_is_featured (is_featured),
+    INDEX idx_featured (featured),
     INDEX idx_rating (rating),
     INDEX idx_sales_count (sales_count)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
