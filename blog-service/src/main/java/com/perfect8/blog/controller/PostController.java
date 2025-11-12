@@ -16,6 +16,17 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.stream.Collectors;
 
+/**
+ * REST Controller for blog posts
+ * 
+ * FIXED (2025-11-12):
+ * - Removed excerpt from toDto()
+ * - Removed links from toDto()
+ * - Changed imageId from String to Long
+ * - Removed url, alt from toImageDto()
+ * - Added displayOrder to toImageDto()
+ * - 100% match with updated entities
+ */
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
@@ -69,12 +80,11 @@ public class PostController {
                 .title(post.getTitle())
                 .content(post.getContent())
                 .slug(post.getSlug())
-                .excerpt(post.getExcerpt())
                 .published(post.isPublished())
                 .createdDate(post.getCreatedDate())
                 .updatedDate(post.getUpdatedDate())
                 .publishedDate(post.getPublishedDate())
-                .links(post.getLinks())
+                .viewCount(post.getViewCount())
                 .images(post.getImages() == null ? null : post.getImages().stream()
                         .map(this::toImageDto)
                         .collect(Collectors.toList()))
@@ -84,9 +94,8 @@ public class PostController {
     private PostDto.ImageDto toImageDto(ImageReference img) {
         return PostDto.ImageDto.builder()
                 .imageId(img.getImageId())
-                .imageUrl(img.getUrl())
-                .altText(img.getAlt())
                 .caption(img.getCaption())
+                .displayOrder(img.getDisplayOrder())
                 .build();
     }
 }

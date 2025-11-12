@@ -1,13 +1,14 @@
 -- ================================================
 -- blog-CREATE-TABLE.sql
 -- Database: blogDB
--- Created: 2025-11-09 (FIXED: 2025-11-10)
+-- Created: 2025-11-09
+-- Updated: 2025-11-12 (FIXED: 100% Entity Match)
 -- Purpose: Create tables for blog-service (CMS)
 -- 
--- FIXES APPLIED:
--- - author_id → user_id (User är User, inte Author)
--- - is_published → published (Hibernate boolean naming)
--- - Boolean fields: Java isPublished → MySQL published
+-- FIXES APPLIED (2025-11-12):
+-- - Removed unnecessary fields (v1.0 focus)
+-- - 100% match with Java entities
+-- - Magnum Opus compliance
 -- ================================================
 
 -- ================================================
@@ -58,8 +59,7 @@ CREATE TABLE IF NOT EXISTS user_roles (
 -- ================================================
 -- Table: posts
 -- Purpose: Blog posts
--- Notes: user_id references User (not "author_id")
---        published field (Java: isPublished → MySQL: published)
+-- Notes: Removed excerpt (v1.0 - not needed)
 -- ================================================
 
 CREATE TABLE IF NOT EXISTS posts (
@@ -67,23 +67,24 @@ CREATE TABLE IF NOT EXISTS posts (
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     slug VARCHAR(255) NOT NULL UNIQUE,
-    user_id BIGINT NOT NULL,  -- FIXED: author_id → user_id
+    user_id BIGINT NOT NULL,
     published_date DATETIME(6),
     created_date DATETIME(6),
     updated_date DATETIME(6),
-    published BOOLEAN NOT NULL DEFAULT FALSE,  -- FIXED: Java isPublished → MySQL published
+    published BOOLEAN NOT NULL DEFAULT FALSE,
     view_count INT NOT NULL DEFAULT 0,
     
-    FOREIGN KEY (user_id) REFERENCES users(user_id),  -- FIXED: author_id → user_id
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
     INDEX idx_slug (slug),
-    INDEX idx_user_id (user_id),  -- FIXED: idx_author_id → idx_user_id
-    INDEX idx_published (published),  -- FIXED: idx_is_published → idx_published
+    INDEX idx_user_id (user_id),
+    INDEX idx_published (published),
     INDEX idx_published_date (published_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ================================================
 -- Table: image_references
 -- Purpose: Links between posts and images
+-- Notes: Simplified for v1.0 (no url, alt fields)
 -- ================================================
 
 CREATE TABLE IF NOT EXISTS image_references (
@@ -104,7 +105,7 @@ CREATE TABLE IF NOT EXISTS image_references (
 -- End of blog-CREATE-TABLE.sql
 -- 
 -- KEY PRINCIPLES:
--- - User är User (inte Author) - renare och mer logiskt
--- - Boolean fields: remove "is" prefix (Hibernate standard)
--- - ID fields: [entityName]Id (Magnum Opus compliance)
+-- - Version 1.0 focus: Core functionality only
+-- - 100% match with Java entities
+-- - Magnum Opus compliance: [entityName]Id, no "is" prefix
 -- ================================================

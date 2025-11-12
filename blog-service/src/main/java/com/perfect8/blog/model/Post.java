@@ -9,10 +9,11 @@ import java.util.List;
 /**
  * Post entity for blog posts
  *
- * FIXED:
- * - @JoinColumn(name = "user_id") already correct - matches SQL
- * - boolean published field (Hibernate maps to "published" column)
- * - Removed explicit column names where Hibernate defaults are correct
+ * FIXED (2025-11-12):
+ * - Removed excerpt (v1.0 - not needed)
+ * - Removed links collection (v1.0 - not needed)
+ * - 100% match with blog-CREATE-TABLE.sql
+ * - Magnum Opus compliance
  */
 @Entity
 @Table(name = "posts")
@@ -35,8 +36,6 @@ public class Post {
     @Column(unique = true)
     private String slug;
 
-    private String excerpt;
-
     @Column(nullable = false)
     @Builder.Default
     private boolean published = false;  // Hibernate maps: published → published column
@@ -48,20 +47,14 @@ public class Post {
     @Builder.Default
     private Integer viewCount = 0;
 
-    // Relationer
+    // Relations
     @ManyToOne
-    @JoinColumn(name = "user_id")  // CORRECT: Matches SQL column user_id
+    @JoinColumn(name = "user_id")
     private User user;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ImageReference> images = new ArrayList<>();
-
-    @ElementCollection
-    @CollectionTable(name = "post_links", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "url")
-    @Builder.Default
-    private List<String> links = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

@@ -12,9 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Lombok-clean DTO for Post.
- * If some fields don't exist in your original DTO, feel free to remove them;
- * this version is designed to match the current service methods.
+ * DTO for Post entity
+ * 
+ * FIXED (2025-11-12):
+ * - Removed excerpt (field removed from Post.java)
+ * - Removed links (field removed from Post.java)
+ * - Updated ImageDto to match ImageReference.java:
+ *   - imageId: String → Long
+ *   - Removed imageUrl
+ *   - Removed altText
+ *   - Added displayOrder
+ * - 100% match with updated entities
  */
 @Data
 @NoArgsConstructor
@@ -34,8 +42,6 @@ public class PostDto {
     /** Optional slug; will be generated from title if null/blank */
     private String slug;
 
-    private String excerpt;
-
     /** Nullable to allow tri-state in updates (leave unchanged when null) */
     private Boolean published;
 
@@ -43,22 +49,23 @@ public class PostDto {
     private LocalDateTime updatedDate;
     private LocalDateTime publishedDate;
 
-    /** Optional simple link list */
-    @Builder.Default
-    private List<String> links = new ArrayList<>();
+    private Integer viewCount;
 
     /** Optional images */
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
 
+    /**
+     * ImageDto matching ImageReference.java structure
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
     public static class ImageDto {
-        private String imageId;   // client-side id if any
-        private String imageUrl;  // actual URL used to render
-        private String altText;
+        private Long imageId;       // FK to image-service
         private String caption;
+        @Builder.Default
+        private Integer displayOrder = 0;
     }
 }

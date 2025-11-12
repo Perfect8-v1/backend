@@ -19,7 +19,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Service-layer for Post entities. Written for clarity.
+ * Service-layer for Post entities
+ * 
+ * FIXED (2025-11-12):
+ * - Removed excerpt references (field removed from Post.java)
+ * - Removed links references (field removed from Post.java)
+ * - Removed url, alt references (fields removed from ImageReference.java)
+ * - 100% match with updated entities
  */
 @Service
 @RequiredArgsConstructor
@@ -46,12 +52,10 @@ public class PostService {
                 .title(dto.getTitle())
                 .content(dto.getContent())
                 .slug(slug)
-                .excerpt(dto.getExcerpt())
                 .published(Boolean.TRUE.equals(dto.getPublished()))
                 .createdDate(LocalDateTime.now())
                 .updatedDate(LocalDateTime.now())
                 .images(new ArrayList<>())
-                .links(dto.getLinks() == null ? new ArrayList<>() : new ArrayList<>(dto.getLinks()))
                 .build();
 
         if (userId != null) {
@@ -64,9 +68,9 @@ public class PostService {
         if (dto.getImages() != null) {
             List<ImageReference> imgs = dto.getImages().stream()
                     .map(imgDto -> ImageReference.builder()
-                            .url(imgDto.getImageUrl())
-                            .alt(imgDto.getAltText())
+                            .imageId(imgDto.getImageId())
                             .caption(imgDto.getCaption())
+                            .displayOrder(imgDto.getDisplayOrder() != null ? imgDto.getDisplayOrder() : 0)
                             .post(post)
                             .build())
                     .collect(Collectors.toList());
@@ -114,9 +118,7 @@ public class PostService {
         if (dto.getContent() != null) {
             post.setContent(dto.getContent());
         }
-        if (dto.getExcerpt() != null) {
-            post.setExcerpt(dto.getExcerpt());
-        }
+
         if (dto.getPublished() != null) {
             boolean nowPublished = dto.getPublished();
             post.setPublished(nowPublished);
@@ -132,19 +134,13 @@ public class PostService {
             post.getImages().clear();
             List<ImageReference> imgs = dto.getImages().stream()
                     .map(imgDto -> ImageReference.builder()
-                            .url(imgDto.getImageUrl())
-                            .alt(imgDto.getAltText())
+                            .imageId(imgDto.getImageId())
                             .caption(imgDto.getCaption())
+                            .displayOrder(imgDto.getDisplayOrder() != null ? imgDto.getDisplayOrder() : 0)
                             .post(post)
                             .build())
                     .collect(Collectors.toList());
             post.getImages().addAll(imgs);
-        }
-
-        // Replace links if provided
-        if (dto.getLinks() != null) {
-            post.getLinks().clear();
-            post.getLinks().addAll(dto.getLinks());
         }
 
         return postRepository.save(post);

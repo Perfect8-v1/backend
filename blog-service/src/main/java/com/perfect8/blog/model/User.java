@@ -38,6 +38,9 @@ public class User {
     @Column(nullable = false)
     private String passwordHash;  // FIXED: password → passwordHash (shows it's hashed)
 
+    private String firstName;
+    private String lastname;
+
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
