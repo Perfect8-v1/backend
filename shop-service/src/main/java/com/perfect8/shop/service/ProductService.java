@@ -85,7 +85,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<Product> findFeaturedProducts(int limit) {
         PageRequest pageRequest = PageRequest.of(0, limit);
-        return productRepository.findByIsFeaturedTrueAndActiveTrue(pageRequest).getContent();
+        return productRepository.findByFeaturedTrueAndActiveTrue(pageRequest).getContent();
     }
 
     /**
