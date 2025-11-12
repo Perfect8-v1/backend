@@ -12,7 +12,7 @@ import java.util.Optional;
 
 /**
  * CartItemRepository - Version 1.0
- * FIXED: Changed expiresDate to expirationDate to match Cart entity field name
+ * FIXED (2025-11-12): Changed addedAt to addedDate in findOldCartItems query
  * Magnum Opus Compliant: SAMMA namn överallt
  */
 @Repository
@@ -57,7 +57,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query("SELECT ci FROM CartItem ci WHERE ci.isGift = true AND ci.cart.customer.customerId = :customerId")
     List<CartItem> findGiftItemsByCustomerId(@Param("customerId") Long customerId);
 
-    @Query("SELECT ci FROM CartItem ci WHERE ci.addedAt < :cutoffDate AND ci.isSavedForLater = false")
+    @Query("SELECT ci FROM CartItem ci WHERE ci.addedDate < :cutoffDate AND ci.isSavedForLater = false")
     List<CartItem> findOldCartItems(@Param("cutoffDate") LocalDateTime cutoffDate);
 
     @Query("SELECT DISTINCT ci.product.category.name FROM CartItem ci WHERE ci.cart.customer.customerId = :customerId")
@@ -74,7 +74,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query("DELETE FROM CartItem ci WHERE ci.product.productId = :productId")
     void deleteByProductId(@Param("productId") Long productId);
 
-    // FIXED: Changed c.expiresDate to c.expirationDate to match Cart entity field name
     @Query("DELETE FROM CartItem ci WHERE ci.cart.cartId IN (SELECT c.cartId FROM Cart c WHERE c.expirationDate < :expiryDate)")
     void deleteByExpiredCart(@Param("expiryDate") LocalDateTime expiryDate);
 }
