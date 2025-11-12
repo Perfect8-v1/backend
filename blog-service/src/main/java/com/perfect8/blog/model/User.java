@@ -39,7 +39,7 @@ public class User {
     private String passwordHash;  // FIXED: password → passwordHash (shows it's hashed)
 
     private String firstName;
-    private String lastname;
+    private String lastName;
 
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
