@@ -57,13 +57,13 @@ public class Image {
 
     @Column(name = "image_status")
     @Enumerated(EnumType.STRING)
-    @Builder.Default  // FIXAT: Lagt till @Builder.Default
+    @Builder.Default
     private ImageStatus imageStatus = ImageStatus.PENDING;
 
     @Column(name = "processing_time_ms")
     private Long processingTimeMs;
 
-    @Column(name = "error_message")
+    @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
     @Column(name = "alt_text")
@@ -82,13 +82,13 @@ public class Image {
     private Long referenceId;
 
     @Column(name = "is_deleted")
-    @Builder.Default  // FIXAT: Lagt till @Builder.Default
+    @Builder.Default
     private Boolean isDeleted = false;
 
     @Column(name = "created_date", updatable = false)
     private LocalDateTime createdDate;
 
-    // FIXED: JPA handles updatedDate automatically
+    @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
     @PrePersist
