@@ -1,9 +1,8 @@
 package com.perfect8.email.service;
 
-import com.perfect8.email.model.EmailMessage;
+import com.perfect8.email.dto.EmailMessage;
 import com.perfect8.email.dto.OrderEmailDTO;
 import com.perfect8.email.dto.CustomerEmailDTO;
-import com.perfect8.common.enums.OrderStatus;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package com.perfect8.email.model;
+package com.perfect8.email.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,6 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * EmailMessage - DTO for transient email data
+ * NOT an @Entity - emails are sent via SMTP, not persisted to database
+ * Version 1.0
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -51,7 +56,7 @@ public class EmailMessage {
 
     // Status
     private String status;
-    private LocalDateTime sentAt;
+    private LocalDateTime sentDate;  // FIXED: sentAt → sentDate (Magnum Opus principle)
     private Integer retryCount;
 
     // Attachments (for future use)

@@ -63,10 +63,10 @@ public class EmailTemplate {
     @Column(name = "updated_by", length = 100)
     private String updatedBy;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
-    // FIXED: JPA handles updatedDate automatically
+    @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
     // Template variables tracking
