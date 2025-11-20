@@ -3,7 +3,6 @@ package com.perfect8.blog.controller;
 import com.perfect8.blog.dto.PostDto;
 import com.perfect8.blog.model.ImageReference;
 import com.perfect8.blog.model.Post;
-import com.perfect8.blog.repository.UserRepository;
 import com.perfect8.blog.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

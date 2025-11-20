@@ -1,7 +1,5 @@
 package com.perfect8.blog.security;
 
-import com.perfect8.blog.model.User;
-import com.perfect8.blog.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

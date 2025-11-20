@@ -5,7 +5,6 @@ import com.perfect8.blog.exception.ResourceNotFoundException;
 import com.perfect8.blog.model.ImageReference;
 import com.perfect8.blog.model.Post;
 import com.perfect8.blog.repository.PostRepository;
-import com.perfect8.blog.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

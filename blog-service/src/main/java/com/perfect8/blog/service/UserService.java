@@ -5,8 +5,6 @@
 
 import com.perfect8.blog.dto.UserDto;
 import com.perfect8.blog.exception.ResourceNotFoundException;
-import com.perfect8.blog.model.User;
-import com.perfect8.blog.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.stream.Collectors;

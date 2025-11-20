@@ -21,21 +21,10 @@ package com.perfect8.blog.service;
  * - Follows Magnum Opus principle: Version 1.0 fokus - kärnfunktionalitet först
  */
 
-import com.perfect8.blog.dto.AuthDto;
-import com.perfect8.blog.model.Role;
-import com.perfect8.blog.model.User;
-import com.perfect8.blog.repository.UserRepository;
-import com.perfect8.blog.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Authentication Service for blog-service

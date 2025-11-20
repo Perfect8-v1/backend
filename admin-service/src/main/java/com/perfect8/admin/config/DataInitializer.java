@@ -1,66 +1,86 @@
 package com.perfect8.admin.config;
 
-import com.perfect8.admin.model.AdminUser;
-import com.perfect8.admin.service.AdminUserService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.perfect8.admin.model.User;
+import com.perfect8.admin.repository.UserRepository;
+import com.perfect8.common.enums.Role;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class DataInitializer implements CommandLineRunner {
 
-    @Autowired
-    private AdminUserService adminUserService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
-    public void run(String... args) throws Exception {
-        createDefaultAdminUsers();
-    }
+    public void run(String... args) {
+        // Only initialize if no users exist
+        if (userRepository.count() == 0) {
+            log.info("Initializing default users...");
 
-    private void createDefaultAdminUsers() {
-        // Create Super Admin if not exists
-        if (!adminUserService.existsByUsername("admin")) {
-            AdminUser superAdmin = new AdminUser();
-            superAdmin.setUsername("admin");
-            superAdmin.setEmail("admin@perfect8.com");
-            superAdmin.setPasswordHash("password123"); // Will be encrypted by service
-            superAdmin.setFirstName("Perfect8");
-            superAdmin.setLastName("Admin");
-            superAdmin.setRole(AdminUser.Role.SUPER_ADMIN);
-            superAdmin.setActive(true);
+            // Super Admin
+            User superAdmin = User.builder()
+                    .email("admin@perfect8.com")
+                    .passwordHash(passwordEncoder.encode("admin123"))
+                    .firstName("System")
+                    .lastName("Admin")
+                    .roles(new HashSet<>(Set.of(Role.SUPER_ADMIN, Role.ADMIN)))
+                    .isActive(true)
+                    .isEmailVerified(true)
+                    .build();
+            userRepository.save(superAdmin);
+            log.info("Created super admin: {}", superAdmin.getEmail());
 
-            adminUserService.save(superAdmin);
-            System.out.println("✅ Super Admin user created: admin / password123");
-        }
+            // Shop Manager (Staff)
+            User shopManager = User.builder()
+                    .email("shop@perfect8.com")
+                    .passwordHash(passwordEncoder.encode("shop123"))
+                    .firstName("Shop")
+                    .lastName("Manager")
+                    .roles(new HashSet<>(Set.of(Role.STAFF)))
+                    .isActive(true)
+                    .isEmailVerified(true)
+                    .build();
+            userRepository.save(shopManager);
+            log.info("Created shop manager: {}", shopManager.getEmail());
 
-        // Create Shop Manager if not exists
-        if (!adminUserService.existsByUsername("shop_manager")) {
-            AdminUser shopManager = new AdminUser();
-            shopManager.setUsername("shop_manager");
-            shopManager.setEmail("manager@perfect8.com");
-            shopManager.setPasswordHash("password123");
-            shopManager.setFirstName("Shop");
-            shopManager.setLastName("Manager");
-            shopManager.setRole(AdminUser.Role.SHOP_ADMIN);
-            shopManager.setActive(true);
+            // Content Editor (Writer)
+            User contentEditor = User.builder()
+                    .email("writer@perfect8.com")
+                    .passwordHash(passwordEncoder.encode("writer123"))
+                    .firstName("Content")
+                    .lastName("Writer")
+                    .roles(new HashSet<>(Set.of(Role.WRITER)))
+                    .isActive(true)
+                    .isEmailVerified(true)
+                    .build();
+            userRepository.save(contentEditor);
+            log.info("Created content editor: {}", contentEditor.getEmail());
 
-            adminUserService.save(shopManager);
-            System.out.println("✅ Shop Manager user created: shop_manager / password123");
-        }
+            // Test Customer
+            User customer = User.builder()
+                    .email("customer@test.com")
+                    .passwordHash(passwordEncoder.encode("customer123"))
+                    .firstName("Test")
+                    .lastName("Customer")
+                    .roles(new HashSet<>(Set.of(Role.USER)))
+                    .isActive(true)
+                    .isEmailVerified(true)
+                    .build();
+            userRepository.save(customer);
+            log.info("Created test customer: {}", customer.getEmail());
 
-        // Create Content Editor if not exists
-        if (!adminUserService.existsByUsername("content_editor")) {
-            AdminUser contentEditor = new AdminUser();
-            contentEditor.setUsername("content_editor");
-            contentEditor.setEmail("editor@perfect8.com");
-            contentEditor.setPasswordHash("password123");
-            contentEditor.setFirstName("Content");
-            contentEditor.setLastName("Editor");
-            contentEditor.setRole(AdminUser.Role.CONTENT_ADMIN);
-            contentEditor.setActive(true);
-
-            adminUserService.save(contentEditor);
-            System.out.println("✅ Content Editor user created: content_editor / password123");
+            log.info("Default users initialized successfully!");
+        } else {
+            log.info("Users already exist, skipping initialization.");
         }
     }
 }

@@ -1,0 +1,5 @@
+Restart shopDB
+
+DROP DATABASE shopDB;
+CREATE DATABASE shopDB;
+USE shopDB;

@@ -1,9 +1,5 @@
 package com.perfect8.blog.config;
 
-import com.perfect8.blog.model.Role;
-import com.perfect8.blog.model.User;
-import com.perfect8.blog.repository.RoleRepository;
-import com.perfect8.blog.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;

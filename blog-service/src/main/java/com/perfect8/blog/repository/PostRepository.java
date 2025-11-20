@@ -1,7 +1,6 @@
 package com.perfect8.blog.repository;
 
 import com.perfect8.blog.model.Post;
-import com.perfect8.blog.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

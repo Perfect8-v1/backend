@@ -1,191 +1,142 @@
+-- ================================================
 -- admin-MOCK-DATA.sql
 -- Database: adminDB
--- Created: 2025-11-11
--- Purpose: Insert mock data for testing admin-service
+-- Created: 2025-11-16
+-- Purpose: Mock data for admin-service testing
+-- 
+-- IMPORTANT NOTES:
+-- - Password hash: BCrypt hash for "password123"
+-- - Roles: ROLE_USER, ROLE_ADMIN, ROLE_SUPER_ADMIN (from common/enums/Role.java)
+-- - Swedish/European names and data
+-- ================================================
 
--- ==============================================
--- Mock data for admin_users table
--- NOTE: All passwords are hashed using BCrypt
--- Plain password for all users: "Password123!"
--- ==============================================
+-- ================================================
+-- TRUNCATE TABLE (Safe reload without duplicates)
+-- ================================================
 
--- Clear existing data (optional - uncomment if needed)
--- DELETE FROM admin_users;
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE admin_users;
+SET FOREIGN_KEY_CHECKS = 1;
 
--- Super Admin Users
+-- ================================================
+-- INSERT MOCK DATA: admin_users
+-- ================================================
+
 INSERT INTO admin_users (
-    username, 
-    email, 
-    password_hash, 
-    first_name, 
-    last_name, 
-    role, 
-    active, 
-    created_date, 
-    updated_date, 
+    username,
+    email,
+    password_hash,
+    first_name,
+    last_name,
+    role,
+    active,
+    created_date,
+    updated_date,
     last_login_date
 ) VALUES
+-- Super Admin Account (full access)
 (
     'superadmin',
-    'superadmin@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    'Super',
-    'Administrator',
-    'ROLE_SUPER_ADMIN',
-    TRUE,
-    '2025-01-01 10:00:00.000000',
-    '2025-01-01 10:00:00.000000',
-    '2025-11-11 08:30:00.000000'
-),
-(
-    'magnus',
-    'magnus@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    'super@perfect8.se',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- password123
     'Magnus',
     'Berglund',
     'ROLE_SUPER_ADMIN',
     TRUE,
-    '2025-01-01 10:00:00.000000',
-    '2025-01-01 10:00:00.000000',
-    '2025-11-11 09:15:00.000000'
-);
-
--- Regular Admin Users
-INSERT INTO admin_users (
-    username, 
-    email, 
-    password_hash, 
-    first_name, 
-    last_name, 
-    role, 
-    active, 
-    created_date, 
-    updated_date, 
-    last_login_date
-) VALUES
-(
-    'admin1',
-    'admin1@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    'John',
-    'Anderson',
-    'ROLE_ADMIN',
-    TRUE,
-    '2025-02-01 10:00:00.000000',
-    '2025-02-01 10:00:00.000000',
-    '2025-11-10 14:22:00.000000'
+    '2025-01-01 08:00:00.000000',
+    '2025-11-16 09:30:00.000000',
+    '2025-11-16 09:30:00.000000'
 ),
+
+-- Admin Accounts (management access)
 (
-    'admin2',
-    'admin2@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    'Sarah',
-    'Johnson',
+    'admin.erik',
+    'erik.andersson@perfect8.se',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- password123
+    'Erik',
+    'Andersson',
     'ROLE_ADMIN',
     TRUE,
     '2025-02-15 10:00:00.000000',
-    '2025-02-15 10:00:00.000000',
-    '2025-11-11 07:45:00.000000'
+    '2025-11-15 14:20:00.000000',
+    '2025-11-15 16:45:00.000000'
 ),
 (
-    'admin3',
-    'admin3@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    'Michael',
-    'Chen',
+    'admin.anna',
+    'anna.karlsson@perfect8.se',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- password123
+    'Anna',
+    'Karlsson',
     'ROLE_ADMIN',
     TRUE,
-    '2025-03-01 10:00:00.000000',
-    '2025-03-01 10:00:00.000000',
-    '2025-11-09 16:30:00.000000'
-);
+    '2025-03-10 11:30:00.000000',
+    '2025-11-16 08:15:00.000000',
+    '2025-11-16 08:15:00.000000'
+),
 
--- Regular User (for testing user-level access)
-INSERT INTO admin_users (
-    username, 
-    email, 
-    password_hash, 
-    first_name, 
-    last_name, 
-    role, 
-    active, 
-    created_date, 
-    updated_date, 
-    last_login_date
-) VALUES
+-- Regular User Accounts (limited access)
 (
-    'user1',
-    'user1@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    'Emma',
-    'Wilson',
+    'user.lars',
+    'lars.johansson@perfect8.se',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- password123
+    'Lars',
+    'Johansson',
     'ROLE_USER',
     TRUE,
-    '2025-03-15 10:00:00.000000',
-    '2025-03-15 10:00:00.000000',
-    '2025-11-11 10:00:00.000000'
+    '2025-05-20 09:00:00.000000',
+    '2025-11-10 12:30:00.000000',
+    '2025-11-14 10:00:00.000000'
 ),
 (
-    'testuser',
-    'testuser@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+    'user.maria',
+    'maria.nilsson@perfect8.se',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- password123
+    'Maria',
+    'Nilsson',
+    'ROLE_USER',
+    TRUE,
+    '2025-06-12 14:00:00.000000',
+    '2025-11-12 15:45:00.000000',
+    '2025-11-13 09:20:00.000000'
+),
+
+-- Inactive Account (for testing deactivation)
+(
+    'inactive.test',
+    'inactive@perfect8.se',
+    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', -- password123
     'Test',
-    'User',
+    'Inaktiv',
     'ROLE_USER',
-    TRUE,
+    FALSE, -- INACTIVE
     '2025-04-01 10:00:00.000000',
-    '2025-04-01 10:00:00.000000',
-    '2025-11-10 12:00:00.000000'
+    '2025-08-15 16:00:00.000000',
+    '2025-08-14 12:00:00.000000'
 );
 
--- Inactive User (for testing deactivation)
-INSERT INTO admin_users (
-    username, 
-    email, 
-    password_hash, 
-    first_name, 
-    last_name, 
-    role, 
-    active, 
-    created_date, 
-    updated_date, 
-    last_login_date
-) VALUES
-(
-    'inactive_admin',
-    'inactive@perfect8.com',
-    '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-    'Inactive',
-    'Admin',
-    'ROLE_ADMIN',
-    FALSE,
-    '2025-01-15 10:00:00.000000',
-    '2025-05-01 10:00:00.000000',
-    '2025-04-30 15:00:00.000000'
-);
+-- ================================================
+-- VERIFICATION QUERY (uncomment to test)
+-- ================================================
 
--- ==============================================
--- Verification Query
--- Use this to verify the data was inserted:
--- SELECT username, email, role, active, last_login_date 
--- FROM admin_users 
--- ORDER BY created_date;
--- ==============================================
+ SELECT 
+     admin_user_id,
+     username,
+     email,
+     CONCAT(first_name, ' ', last_name) AS full_name,
+     role,
+     active,admin_users
+     DATE_FORMAT(created_date, '%Y-%m-%d') AS created,
+     DATE_FORMAT(last_login_date, '%Y-%m-%d %H:%i') AS last_login
+ FROM admin_users
+ ORDER BY role DESC, created_date ASC;
 
--- ==============================================
--- Login Test Information
--- ==============================================
--- All users have the same password: "Password123!"
--- 
--- Test Accounts:
--- SUPER_ADMIN: superadmin / Password123!
--- SUPER_ADMIN: magnus / Password123!
--- ADMIN:       admin1 / Password123!
--- ADMIN:       admin2 / Password123!
--- ADMIN:       admin3 / Password123!
--- USER:        user1 / Password123!
--- USER:        testuser / Password123!
--- INACTIVE:    inactive_admin / Password123! (should fail login)
--- ==============================================
-
+-- ================================================
 -- End of admin-MOCK-DATA.sql
+-- 
+-- SUMMARY:
+-- - 6 admin users (1 SUPER_ADMIN, 2 ADMIN, 3 USER)
+-- - 1 inactive account for testing
+-- - All passwords: "password123" (BCrypt hashed)
+-- - Swedish names and domains
+-- - Ready for frontend testing
+-- ================================================

@@ -32,11 +32,6 @@ public enum Role {
     WRITER("ROLE_WRITER", "Blog Writer", 40),
 
     /**
-     * Reader role - can access premium blog content
-     */
-    READER("ROLE_READER", "Premium Reader", 20),
-
-    /**
      * User role - standard registered user (customer)
      */
     USER("ROLE_USER", "User", 10),
@@ -160,18 +155,20 @@ public enum Role {
     }
 
     /**
-     * Check if this role can moderate comments
-     */
+     * Check if this role can moderate comments Version 2.0
+     *
     public boolean canModerateComments() {
         return this == WRITER || isStaffOrHigher();
     }
-
+    */
     /**
      * Check if this role can read premium content
-     */
+     *
     public boolean canReadPremiumContent() {
         return this == READER || this == WRITER || isStaffOrHigher();
     }
+    */
+
 
     /**
      * Check if this role can comment on blog posts
