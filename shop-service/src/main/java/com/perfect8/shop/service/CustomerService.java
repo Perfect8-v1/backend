@@ -348,14 +348,14 @@ public class CustomerService {
                 .postalCode(addressDTO.getPostalCode())
                 .country(addressDTO.getCountry())
                 .addressType(addressDTO.getAddressType())
-                .isDefault(addressDTO.isDefaultShipping() || addressDTO.isDefaultBilling())
+                .defaultAddress(addressDTO.isDefaultShipping() || addressDTO.isDefaultBilling())
                 .build();
 
         // If this is set as default, unset other defaults
-        if (address.isDefault()) {
+        if (address.isDefaultAddress()) {
             customer.getAddresses().forEach(a -> {
                 if (a.getAddressType().equals(address.getAddressType())) {
-                    a.setDefault(false);
+                    a.setDefaultAddress(false);
                 }
             });
         }
@@ -453,13 +453,13 @@ public class CustomerService {
         // Unset other defaults of same type
         customer.getAddresses().forEach(a -> {
             if (a.getAddressType().equals(addressType)) {
-                a.setDefault(false);
+                a.setDefaultAddress(false);
                 addressRepository.save(a);
             }
         });
 
         // Set this address as default
-        targetAddress.setDefault(true);
+        targetAddress.setDefaultAddress(true);
         targetAddress.setAddressType(addressType);
         addressRepository.save(targetAddress);
 
@@ -564,7 +564,7 @@ public class CustomerService {
         }
 
         String addressType = address.getAddressType() != null ? address.getAddressType() : "BOTH";
-        boolean isDefault = address.isDefault();
+        boolean isDefault = address.isDefaultAddress();
 
         return AddressDTO.builder()
                 .addressId(address.getAddressId())

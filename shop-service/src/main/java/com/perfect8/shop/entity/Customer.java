@@ -149,7 +149,7 @@ public class Customer {
 
     public Address getDefaultShippingAddress() {
         return addresses.stream()
-                .filter(a -> "SHIPPING".equals(a.getAddressType()) && a.isDefault())
+                .filter(a -> "SHIPPING".equals(a.getAddressType()) && a.isDefaultAddress())
                 .findFirst()
                 .orElse(addresses.stream()
                         .filter(a -> "SHIPPING".equals(a.getAddressType()))
@@ -159,7 +159,7 @@ public class Customer {
 
     public Address getDefaultBillingAddress() {
         return addresses.stream()
-                .filter(a -> "BILLING".equals(a.getAddressType()) && a.isDefault())
+                .filter(a -> "BILLING".equals(a.getAddressType()) && a.isDefaultAddress())
                 .findFirst()
                 .orElse(addresses.stream()
                         .filter(a -> "BILLING".equals(a.getAddressType()))

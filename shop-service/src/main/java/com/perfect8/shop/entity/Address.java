@@ -6,15 +6,12 @@ import jakarta.persistence.*;
 /**
  * Address entity for customer billing and shipping addresses
  *
- * UPDATED (2025-11-20):
- * - Changed defaultAddress to isDefault (Magnum Opus naming)
- * - Lombok generates: isDefault() getter, isDefault() builder method
- * 
- * Design decisions:
- * - boolean isDefault (not Boolean) - primitive for Magnum Opus
- * - addressType: BILLING eller SHIPPING
+ * Magnum Opus Design:
+ * - boolean defaultAddress (läsbart: "default address")
+ * - Lombok generates: isDefaultAddress() getter, setDefaultAddress() setter
+ * - Builder uses: .defaultAddress(boolean) 
+ * - addressType: BILLING, SHIPPING, BOTH
  * - state: Required for USA customers (90% of Perfect8 customers)
- * - ManyToOne with Customer for address history
  */
 @Entity
 @Table(name = "addresses")
@@ -54,11 +51,16 @@ public class Address {
 
     /**
      * Is this the default address for the customer?
-     * Lombok generates: isDefault() getter, isDefault(boolean) builder method
+     * Magnum Opus: Readable name "defaultAddress" answers "what is default?"
+     * 
+     * Lombok generates:
+     * - Getter: isDefaultAddress()
+     * - Setter: setDefaultAddress(boolean)
+     * - Builder: .defaultAddress(boolean)
      */
-    @Column(name = "is_default", nullable = false)
+    @Column(name = "default_address", nullable = false)
     @Builder.Default
-    private boolean isDefault = false;
+    private boolean defaultAddress = false;
 
     @Column(name = "address_type", nullable = false, length = 50)
     private String addressType;  // BILLING, SHIPPING, BOTH
