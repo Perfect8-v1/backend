@@ -6,9 +6,12 @@ import jakarta.persistence.*;
 /**
  * Address entity for customer billing and shipping addresses
  *
+ * UPDATED (2025-11-20):
+ * - Changed defaultAddress to isDefault (Magnum Opus naming)
+ * - Lombok generates: isDefault() getter, isDefault() builder method
+ * 
  * Design decisions:
- * - boolean defaultAddress (not Boolean isDefault) - primitiv för Magnum Opus
- * - Hibernate maps: defaultAddress → default_address (undviker MySQL reserverat ord "default")
+ * - boolean isDefault (not Boolean) - primitive for Magnum Opus
  * - addressType: BILLING eller SHIPPING
  * - state: Required for USA customers (90% of Perfect8 customers)
  * - ManyToOne with Customer for address history
@@ -49,10 +52,14 @@ public class Address {
     @Column(nullable = false, length = 100)
     private String country;
 
-    @Column(nullable = false)
+    /**
+     * Is this the default address for the customer?
+     * Lombok generates: isDefault() getter, isDefault(boolean) builder method
+     */
+    @Column(name = "is_default", nullable = false)
     @Builder.Default
-    private boolean defaultAddress = false;  // Primitiv boolean - Lombok genererar isDefaultAddress()
+    private boolean isDefault = false;
 
-    @Column(nullable = false, length = 50)
-    private String addressType;  // BILLING, SHIPPING
+    @Column(name = "address_type", nullable = false, length = 50)
+    private String addressType;  // BILLING, SHIPPING, BOTH
 }

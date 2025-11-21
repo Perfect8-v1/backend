@@ -3,16 +3,23 @@ package com.perfect8.blog.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
 
 /**
  * JWT Token Provider for blog-service
- * Updated for JJWT 0.12.3 API compatibility
+ * 
+ * UPDATED (2025-11-20):
+ * - Added resolveToken() for extracting token from request
+ * - Added getUserIdFromToken() for central auth support
+ * - Compatible with admin-service JWT tokens
+ * - JJWT 0.12.3 API
  */
 @Slf4j
 @Component
@@ -27,6 +34,17 @@ public class JwtTokenProvider {
     private SecretKey getSigningKey() {
         // For JJWT 0.12.3, we need at least 256-bit key for HS256
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+    }
+
+    /**
+     * Extract JWT token from HTTP request Authorization header
+     */
+    public String resolveToken(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 
     /**
@@ -55,6 +73,32 @@ public class JwtTokenProvider {
                 .getPayload();
 
         return claims.getSubject();
+    }
+
+    /**
+     * Get userId from JWT token
+     * Returns null if userId claim is not present
+     */
+    public Long getUserIdFromToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Object userIdClaim = claims.get("userId");
+            if (userIdClaim != null) {
+                if (userIdClaim instanceof Number) {
+                    return ((Number) userIdClaim).longValue();
+                }
+                return Long.parseLong(userIdClaim.toString());
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting userId from token: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**

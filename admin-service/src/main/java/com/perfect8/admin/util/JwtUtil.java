@@ -18,6 +18,14 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * JWT Utility for admin-service (Central Auth)
+ * 
+ * UPDATED (2025-11-20):
+ * - Added userId to JWT claims for cross-service identification
+ * - Added extractUserId() method
+ * - All services can now get userId from token
+ */
 @Component
 @Slf4j
 public class JwtUtil {
@@ -43,7 +51,26 @@ public class JwtUtil {
     }
 
     /**
-     * Generate token for user with email and roles
+     * Generate token for user with userId, email and roles
+     * PRIMARY METHOD - Use this for central auth
+     */
+    public String generateToken(Long userId, String email, Set<Role> roles) {
+        Map<String, Object> claims = new HashMap<>();
+        
+        // Add userId to claims
+        claims.put("userId", userId);
+        
+        // Add roles to claims
+        claims.put("roles", roles.stream()
+                .map(Role::getAuthority)
+                .collect(Collectors.toList()));
+
+        return createToken(claims, email);
+    }
+
+    /**
+     * Generate token for user with email and roles (backward compatibility)
+     * Note: userId will be null in token
      */
     public String generateToken(String email, Set<Role> roles) {
         Map<String, Object> claims = new HashMap<>();
@@ -58,6 +85,7 @@ public class JwtUtil {
 
     /**
      * Generate token from UserDetails (backward compatibility)
+     * Note: userId will be null in token
      */
     public String generateToken(UserDetails userDetails) {
         Map<String, Object> claims = new HashMap<>();
@@ -81,6 +109,26 @@ public class JwtUtil {
                 .expiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    /**
+     * Extract userId from token
+     */
+    public Long extractUserId(String token) {
+        try {
+            Claims claims = extractAllClaims(token);
+            Object userIdClaim = claims.get("userId");
+            if (userIdClaim != null) {
+                if (userIdClaim instanceof Number) {
+                    return ((Number) userIdClaim).longValue();
+                }
+                return Long.parseLong(userIdClaim.toString());
+            }
+            return null;
+        } catch (Exception e) {
+            log.error("Error extracting userId from token: {}", e.getMessage());
+            return null;
+        }
     }
 
     /**

@@ -15,6 +15,9 @@ import java.util.Optional;
 /**
  * CustomerRepository - Version 1.0
  * 
+ * UPDATED (2025-11-20):
+ * - Added findByUserId() for admin-service integration
+ * 
  * Core customer data access with:
  * - Authentication & Security queries
  * - Customer status queries
@@ -34,6 +37,12 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
      * Find customer by email (used for login)
      */
     Optional<Customer> findByEmail(String email);
+
+    /**
+     * Find customer by userId (admin-service integration)
+     * Links shop customer to authenticated user
+     */
+    Optional<Customer> findByUserId(Long userId);
 
     /**
      * Check if email already exists (registration validation)

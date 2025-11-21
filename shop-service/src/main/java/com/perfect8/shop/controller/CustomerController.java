@@ -2,10 +2,10 @@ package com.perfect8.shop.controller;
 
 import com.perfect8.shop.service.CustomerService;
 import com.perfect8.shop.dto.CustomerDTO;
-import com.perfect8.shop.dto.CustomerRegistrationDTO;
 import com.perfect8.shop.dto.CustomerUpdateDTO;
 import com.perfect8.shop.dto.AddressDTO;
 import com.perfect8.shop.dto.ApiResponse;
+import com.perfect8.shop.dto.OrderDTO;
 import com.perfect8.shop.security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,11 +22,24 @@ import jakarta.validation.Valid;
 import java.util.List;
 
 /**
- * REST controller for customer management.
- * Version 1.0 - Core functionality only
- * FIXED: Returns DTOs not Entities!
- * FIXED: All @PathVariable parameters use descriptive names (customerId instead of customerEmailDTOId) - Magnum Opus principle
- * FIXED: Sort field names match entity convention (createdDate instead of createdDate) - Magnum Opus principle
+ * REST controller for customer management - Version 1.0
+ * 
+ * UPDATED (2025-11-20):
+ * - Removed auth endpoints (moved to admin-service)
+ * - Removed registerCustomer, deleteCustomer, emailExists
+ * - Removed searchCustomers, toggleCustomerStatus, getRecentCustomers
+ * - Fixed setDefaultAddress signature (3 parameters)
+ * 
+ * Remaining endpoints:
+ * - Customer profile management
+ * - Address management
+ * - Order history viewing
+ * - Admin customer queries
+ * 
+ * Magnum Opus Principles:
+ * - Returns DTOs not Entities
+ * - Descriptive variable names (customerId not id)
+ * - Sort field names match entity (createdDate)
  */
 @RestController
 @RequestMapping("/api/customers")
@@ -39,36 +52,10 @@ public class CustomerController {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    /**
-     * Register new customer - Core functionality
-     * Public endpoint for customer signup
-     */
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<CustomerDTO>> registerCustomer(
-            @Valid @RequestBody CustomerRegistrationDTO registrationDTO) {
-        try {
-            CustomerDTO newCustomer = customerService.registerCustomer(registrationDTO);
-
-            ApiResponse<CustomerDTO> response = new ApiResponse<>(
-                    "Customer registered successfully",
-                    newCustomer,
-                    true
-            );
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-
-        } catch (Exception e) {
-            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
-                    "Failed to register customer: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
+    // ========== CUSTOMER PROFILE ENDPOINTS ==========
 
     /**
-     * Get current customer profile - Core functionality
-     * FIXED: Returns CustomerDTO not Customer entity
+     * Get current customer profile
      */
     @GetMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -95,8 +82,7 @@ public class CustomerController {
     }
 
     /**
-     * Update current customer profile - Core functionality
-     * FIXED: Returns CustomerDTO not Customer entity
+     * Update current customer profile
      */
     @PutMapping("/profile")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -125,41 +111,13 @@ public class CustomerController {
     }
 
     /**
-     * Delete current customer account - Core functionality
-     * Soft delete for GDPR compliance
-     */
-    @DeleteMapping("/profile")
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
-    public ResponseEntity<ApiResponse<String>> deleteAccount(HttpServletRequest request) {
-        try {
-            Long customerId = getCurrentCustomerId(request);
-            customerService.deleteCustomer(customerId);
-
-            ApiResponse<String> response = new ApiResponse<>(
-                    "Customer account deleted successfully",
-                    "Account has been deactivated",
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<String> errorResponse = new ApiResponse<>(
-                    "Failed to delete customer account: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    /**
-     * Check if email exists - Core functionality
-     * Public endpoint for registration validation
+     * Check if email exists (for validation)
+     * Uses customerExistsByEmail from CustomerService
      */
     @GetMapping("/check-email")
     public ResponseEntity<ApiResponse<Boolean>> checkEmailExists(@RequestParam String email) {
         try {
-            boolean exists = customerService.emailExists(email);
+            boolean exists = customerService.customerExistsByEmail(email);
 
             ApiResponse<Boolean> response = new ApiResponse<>(
                     "Email check completed",
@@ -178,12 +136,10 @@ public class CustomerController {
         }
     }
 
-    // ========== ADMIN ENDPOINTS - Core functionality for customer management ==========
+    // ========== ADMIN ENDPOINTS ==========
 
     /**
-     * Get customer by ID - Core functionality
-     * FIXED: Returns CustomerDTO not Customer entity
-     * FIXED: Changed @PathVariable from 'customerEmailDTOId' to 'customerId' (Magnum Opus principle)
+     * Get customer by ID (admin only)
      */
     @GetMapping("/{customerId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -209,22 +165,46 @@ public class CustomerController {
     }
 
     /**
-     * Get all customers with pagination - Core functionality
-     * FIXED: Returns Page<CustomerDTO> not Page<Customer>
-     * FIXED: Changed default sortBy from 'createdDate' to 'createdDate' to match entity (Magnum Opus principle)
+     * Get customer by email (admin only)
+     */
+    @GetMapping("/email/{email}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CustomerDTO>> getCustomerByEmail(@PathVariable String email) {
+        try {
+            CustomerDTO customer = customerService.getCustomerDTOByEmail(email);
+
+            ApiResponse<CustomerDTO> response = new ApiResponse<>(
+                    "Customer retrieved successfully",
+                    customer,
+                    true
+            );
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
+                    "Failed to retrieve customer: " + e.getMessage(),
+                    null,
+                    false
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    /**
+     * Get all customers (admin only, paginated)
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<CustomerDTO>>> getAllCustomers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdDate") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
+            @RequestParam(defaultValue = "desc") String sortDirection) {
         try {
-            Sort sort = sortDir.equalsIgnoreCase("desc")
-                    ? Sort.by(sortBy).descending()
-                    : Sort.by(sortBy).ascending();
-
+            Sort sort = sortDirection.equalsIgnoreCase("asc") 
+                ? Sort.by(sortBy).ascending() 
+                : Sort.by(sortBy).descending();
+            
             Pageable pageable = PageRequest.of(page, size, sort);
             Page<CustomerDTO> customers = customerService.getAllCustomers(pageable);
 
@@ -245,138 +225,10 @@ public class CustomerController {
         }
     }
 
-    /**
-     * Search customers - Core functionality
-     * FIXED: Returns Page<CustomerDTO> not Page<Customer>
-     * FIXED: Changed default sortBy from 'createdDate' to 'createdDate' to match entity (Magnum Opus principle)
-     */
-    @GetMapping("/search")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Page<CustomerDTO>>> searchCustomers(
-            @RequestParam(required = false) String email,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String phone,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdDate") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
-        try {
-            Sort sort = sortDir.equalsIgnoreCase("desc")
-                    ? Sort.by(sortBy).descending()
-                    : Sort.by(sortBy).ascending();
-
-            Pageable pageable = PageRequest.of(page, size, sort);
-            Page<CustomerDTO> customers = customerService.searchCustomers(email, name, phone, pageable);
-
-            ApiResponse<Page<CustomerDTO>> response = new ApiResponse<>(
-                    "Customer search completed successfully",
-                    customers,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<Page<CustomerDTO>> errorResponse = new ApiResponse<>(
-                    "Failed to search customers: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
+    // ========== ADDRESS MANAGEMENT ==========
 
     /**
-     * Update customer by ID - Core functionality
-     * FIXED: Returns CustomerDTO not Customer entity
-     * FIXED: Changed @PathVariable from 'customerEmailDTOId' to 'customerId' (Magnum Opus principle)
-     */
-    @PutMapping("/{customerId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CustomerDTO>> updateCustomer(
-            @PathVariable Long customerId,
-            @Valid @RequestBody CustomerUpdateDTO updateDTO) {
-        try {
-            CustomerDTO updatedCustomer = customerService.updateCustomer(customerId, updateDTO);
-
-            ApiResponse<CustomerDTO> response = new ApiResponse<>(
-                    "Customer updated successfully",
-                    updatedCustomer,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
-                    "Failed to update customer: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    /**
-     * Activate/Deactivate customer - Core functionality
-     * FIXED: Returns CustomerDTO not Customer entity
-     * FIXED: Changed @PathVariable from 'customerEmailDTOId' to 'customerId' (Magnum Opus principle)
-     */
-    @PutMapping("/{customerId}/status")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CustomerDTO>> toggleCustomerStatus(@PathVariable Long customerId) {
-        try {
-            CustomerDTO customer = customerService.toggleCustomerStatus(customerId);
-            String status = customer.isActive() ? "activated" : "deactivated";
-
-            ApiResponse<CustomerDTO> response = new ApiResponse<>(
-                    "Customer " + status + " successfully",
-                    customer,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
-                    "Failed to toggle customer status: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    /**
-     * Get recent customers - Core functionality
-     * FIXED: Returns List<CustomerDTO> not List<Customer>
-     */
-    @GetMapping("/recent")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<CustomerDTO>>> getRecentCustomers(
-            @RequestParam(defaultValue = "10") int limit) {
-        try {
-            List<CustomerDTO> recentCustomers = customerService.getRecentCustomers(limit);
-
-            ApiResponse<List<CustomerDTO>> response = new ApiResponse<>(
-                    "Recent customers retrieved successfully",
-                    recentCustomers,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<List<CustomerDTO>> errorResponse = new ApiResponse<>(
-                    "Failed to retrieve recent customers: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    // ========== ADDRESS MANAGEMENT - Critical for shipping ==========
-
-    /**
-     * Get customer addresses - Core functionality
-     * Critical for order placement
+     * Get customer addresses
      */
     @GetMapping("/addresses")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -403,8 +255,7 @@ public class CustomerController {
     }
 
     /**
-     * Add new address - Core functionality
-     * Critical for shipping
+     * Add new address
      */
     @PostMapping("/addresses")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -433,8 +284,7 @@ public class CustomerController {
     }
 
     /**
-     * Update customer address - Core functionality
-     * Critical for correct deliveries
+     * Update customer address
      */
     @PutMapping("/addresses/{addressId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -464,7 +314,7 @@ public class CustomerController {
     }
 
     /**
-     * Delete customer address - Core functionality
+     * Delete customer address
      */
     @DeleteMapping("/addresses/{addressId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -493,17 +343,18 @@ public class CustomerController {
     }
 
     /**
-     * Set default address - Core functionality
-     * Simplifies checkout process
+     * Set default address
+     * FIXED: Now includes addressType parameter as required by CustomerService
      */
     @PutMapping("/addresses/{addressId}/default")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
     public ResponseEntity<ApiResponse<AddressDTO>> setDefaultAddress(
             @PathVariable Long addressId,
+            @RequestParam String addressType,
             HttpServletRequest request) {
         try {
             Long customerId = getCurrentCustomerId(request);
-            AddressDTO defaultAddress = customerService.setDefaultAddress(customerId, addressId);
+            AddressDTO defaultAddress = customerService.setDefaultAddress(customerId, addressId, addressType);
 
             ApiResponse<AddressDTO> response = new ApiResponse<>(
                     "Default address set successfully",
@@ -522,7 +373,40 @@ public class CustomerController {
         }
     }
 
-    // ========== Helper methods ==========
+    // ========== ORDER HISTORY ==========
+
+    /**
+     * Get customer order history
+     */
+    @GetMapping("/orders")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
+    public ResponseEntity<ApiResponse<Page<OrderDTO>>> getCustomerOrders(
+            HttpServletRequest request,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            Long customerId = getCurrentCustomerId(request);
+            Pageable pageable = PageRequest.of(page, size);
+            Page<OrderDTO> orders = customerService.getCustomerOrders(customerId, pageable);
+
+            ApiResponse<Page<OrderDTO>> response = new ApiResponse<>(
+                    "Customer orders retrieved successfully",
+                    orders,
+                    true
+            );
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            ApiResponse<Page<OrderDTO>> errorResponse = new ApiResponse<>(
+                    "Failed to retrieve customer orders: " + e.getMessage(),
+                    null,
+                    false
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // ========== HELPER METHODS ==========
 
     /**
      * Get customer ID from JWT token

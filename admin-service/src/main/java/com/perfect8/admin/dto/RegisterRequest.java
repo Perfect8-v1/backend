@@ -8,6 +8,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Registration Request DTO
+ * Used for new user registration
+ * 
+ * Updated: 2025-11-20
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,6 +32,10 @@ public class RegisterRequest {
 
     private String lastName;
 
-    // Optional: default to USER if not specified
+    /**
+     * Role name (optional)
+     * If null or empty, defaults to USER
+     * Valid values: USER, CUSTOMER, WRITER, STAFF, ADMIN
+     */
     private String role;
 }

@@ -2,7 +2,6 @@ package com.perfect8.blog.service;
 
 import com.perfect8.blog.dto.PostDto;
 import com.perfect8.blog.exception.ResourceNotFoundException;
-import com.perfect8.blog.model.ImageReference;
 import com.perfect8.blog.model.Post;
 import com.perfect8.blog.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -12,166 +11,232 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
-/**
- * Service-layer for Post entities
- * 
- * FIXED (2025-11-12):
- * - Removed excerpt references (field removed from Post.java)
- * - Removed links references (field removed from Post.java)
- * - Removed url, alt references (fields removed from ImageReference.java)
- * - 100% match with updated entities
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class PostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+
+    // ==================== Public Methods (Read) ====================
 
     /**
-     * Create a Post from a DTO. If userId is given, attach the User.
+     * Get all published posts (paginated)
      */
-    @Transactional
-    public Post create(PostDto dto, Long userId) {
-        // Resolve slug (use from DTO if provided and not blank; otherwise generate from title)
-        String slug;
-        if (dto.getSlug() == null || dto.getSlug().isBlank()) {
-            slug = generateSlug(dto.getTitle());
-        } else {
-            slug = dto.getSlug();
-        }
+    public Page<Post> getPublishedPosts(Pageable pageable) {
+        return postRepository.findByIsPublishedTrue(pageable);
+    }
+
+    /**
+     * Get published posts by author
+     */
+    public Page<Post> getPublishedPostsByAuthor(Long authorId, Pageable pageable) {
+        return postRepository.findByAuthorIdAndIsPublishedTrue(authorId, pageable);
+    }
+
+    /**
+     * Get post by ID
+     */
+    public Post getPostById(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with id: " + postId));
+    }
+
+    /**
+     * Get post by slug
+     */
+    public Post getPostBySlug(String slug) {
+        return postRepository.findBySlug(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Post not found with slug: " + slug));
+    }
+
+    /**
+     * Get published post by slug (increments view count)
+     */
+    public Post getPublishedPostBySlug(String slug) {
+        Post post = postRepository.findBySlugAndIsPublishedTrue(slug)
+                .orElseThrow(() -> new ResourceNotFoundException("Published post not found with slug: " + slug));
+        
+        // Increment view count
+        post.incrementViewCount();
+        postRepository.save(post);
+        
+        return post;
+    }
+
+    /**
+     * Search posts by keyword
+     */
+    public Page<Post> searchPosts(String keyword, Pageable pageable) {
+        return postRepository.searchByTitleOrContent(keyword, pageable);
+    }
+
+    // ==================== Admin Methods (CRUD) ====================
+
+    /**
+     * Get all posts (including drafts) - Admin only
+     */
+    public Page<Post> getAllPosts(Pageable pageable) {
+        return postRepository.findAll(pageable);
+    }
+
+    /**
+     * Get all posts by author (including drafts) - Admin only
+     */
+    public Page<Post> getPostsByAuthor(Long authorId, Pageable pageable) {
+        return postRepository.findByAuthorId(authorId, pageable);
+    }
+
+    /**
+     * Get all drafts - Admin only
+     */
+    public Page<Post> getDrafts(Pageable pageable) {
+        return postRepository.findByIsPublishedFalse(pageable);
+    }
+
+    /**
+     * Get drafts by author - Admin only
+     */
+    public List<Post> getDraftsByAuthor(Long authorId) {
+        return postRepository.findByAuthorIdAndIsPublishedFalse(authorId);
+    }
+
+    /**
+     * Create new post
+     */
+    public Post createPost(String title, String content, Long authorId) {
+        log.info("Creating new post: {} by author: {}", title, authorId);
+
+        // Generate unique slug
+        String slug = generateUniqueSlug(title);
 
         Post post = Post.builder()
-                .title(dto.getTitle())
-                .content(dto.getContent())
+                .title(title)
+                .content(content)
                 .slug(slug)
-                .published(Boolean.TRUE.equals(dto.getPublished()))
-                .createdDate(LocalDateTime.now())
-                .updatedDate(LocalDateTime.now())
-                .images(new ArrayList<>())
+                .authorId(authorId)
+                .isPublished(false)
+                .viewCount(0)
                 .build();
 
-        if (userId != null) {
-            var user = userRepository.findById(userId).orElseThrow(
-                    () -> new ResourceNotFoundException("User not found: id=" + userId)
-            );
-            post.setUser(user);
-        }
+        Post savedPost = postRepository.save(post);
+        log.info("Post created with id: {}", savedPost.getPostId());
 
-        if (dto.getImages() != null) {
-            List<ImageReference> imgs = dto.getImages().stream()
-                    .map(imgDto -> ImageReference.builder()
-                            .imageId(imgDto.getImageId())
-                            .caption(imgDto.getCaption())
-                            .displayOrder(imgDto.getDisplayOrder() != null ? imgDto.getDisplayOrder() : 0)
-                            .post(post)
-                            .build())
-                    .collect(Collectors.toList());
-            post.setImages(imgs);
-        }
-
-        var saved = postRepository.save(post);
-        log.debug("Created Post id={} slug={}", saved.getPostId(), saved.getSlug());
-        return saved;
-    }
-
-    @Transactional(readOnly = true)
-    public Page<Post> listPublished(Pageable pageable) {
-        return postRepository.findByPublishedTrue(pageable);
-    }
-
-    @Transactional(readOnly = true)
-    public Post getBySlug(String slug) {
-        return postRepository.findBySlug(slug).orElseThrow(
-                () -> new ResourceNotFoundException("Post not found for slug: " + slug)
-        );
+        return savedPost;
     }
 
     /**
-     * Update the Post with fields present in the DTO.
+     * Create post from DTO
      */
-    @Transactional
-    public Post update(Long id, PostDto dto) {
-        Post post = postRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("Post not found for id: " + id)
-        );
-
-        // Title + slug handling
-        if (dto.getTitle() != null && !dto.getTitle().equals(post.getTitle())) {
-            post.setTitle(dto.getTitle());
-            String newSlug;
-            if (dto.getSlug() == null || dto.getSlug().isBlank()) {
-                newSlug = generateSlug(dto.getTitle());
-            } else {
-                newSlug = dto.getSlug();
-            }
-            post.setSlug(newSlug);
-        }
-
-        if (dto.getContent() != null) {
-            post.setContent(dto.getContent());
-        }
-
-        if (dto.getPublished() != null) {
-            boolean nowPublished = dto.getPublished();
-            post.setPublished(nowPublished);
-            if (nowPublished && post.getPublishedDate() == null) {
-                post.setPublishedDate(LocalDateTime.now());
-            }
-        }
-
-        post.setUpdatedDate(LocalDateTime.now());
-
-        // Replace images if provided
-        if (dto.getImages() != null) {
-            post.getImages().clear();
-            List<ImageReference> imgs = dto.getImages().stream()
-                    .map(imgDto -> ImageReference.builder()
-                            .imageId(imgDto.getImageId())
-                            .caption(imgDto.getCaption())
-                            .displayOrder(imgDto.getDisplayOrder() != null ? imgDto.getDisplayOrder() : 0)
-                            .post(post)
-                            .build())
-                    .collect(Collectors.toList());
-            post.getImages().addAll(imgs);
-        }
-
-        return postRepository.save(post);
-    }
-
-    @Transactional
-    public void delete(Long id) {
-        if (!postRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Post not found: id=" + id);
-        }
-        postRepository.deleteById(id);
+    public Post createPost(PostDto postDto, Long authorId) {
+        return createPost(postDto.getTitle(), postDto.getContent(), authorId);
     }
 
     /**
-     * Create a URL-friendly slug from a title and ensure uniqueness.
+     * Update post
      */
-    @Transactional(readOnly = true)
-    public String generateSlug(String title) {
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("title must not be blank");
+    public Post updatePost(Long postId, String title, String content) {
+        Post post = getPostById(postId);
+
+        if (title != null && !title.equals(post.getTitle())) {
+            post.setTitle(title);
+            // Update slug if title changed
+            post.setSlug(generateUniqueSlug(title));
         }
-        String slug = title.toLowerCase()
-                .replaceAll("[^a-z0-9\s-]", "")
-                .replaceAll("\s+", "-")
+
+        if (content != null) {
+            post.setContent(content);
+        }
+
+        Post updatedPost = postRepository.save(post);
+        log.info("Post updated: {}", postId);
+
+        return updatedPost;
+    }
+
+    /**
+     * Update post from DTO
+     */
+    public Post updatePost(Long postId, PostDto postDto) {
+        return updatePost(postId, postDto.getTitle(), postDto.getContent());
+    }
+
+    /**
+     * Delete post
+     */
+    public void deletePost(Long postId) {
+        Post post = getPostById(postId);
+        postRepository.delete(post);
+        log.info("Post deleted: {}", postId);
+    }
+
+    /**
+     * Publish post
+     */
+    public Post publishPost(Long postId) {
+        Post post = getPostById(postId);
+        post.publish();
+        Post publishedPost = postRepository.save(post);
+        log.info("Post published: {}", postId);
+        return publishedPost;
+    }
+
+    /**
+     * Unpublish post
+     */
+    public Post unpublishPost(Long postId) {
+        Post post = getPostById(postId);
+        post.unpublish();
+        Post unpublishedPost = postRepository.save(post);
+        log.info("Post unpublished: {}", postId);
+        return unpublishedPost;
+    }
+
+    // ==================== Helper Methods ====================
+
+    /**
+     * Generate unique slug from title
+     */
+    private String generateUniqueSlug(String title) {
+        String baseSlug = title.toLowerCase()
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
                 .replaceAll("-+", "-")
                 .trim();
 
-        String base = slug;
+        String slug = baseSlug;
         int counter = 1;
+
         while (postRepository.existsBySlug(slug)) {
-            slug = base + "-" + counter++;
+            slug = baseSlug + "-" + counter;
+            counter++;
         }
+
         return slug;
+    }
+
+    /**
+     * Check if user is author of post
+     */
+    public boolean isAuthor(Long postId, Long userId) {
+        Post post = getPostById(postId);
+        return post.getAuthorId() != null && post.getAuthorId().equals(userId);
+    }
+
+    /**
+     * Count posts by author
+     */
+    public long countPostsByAuthor(Long authorId) {
+        return postRepository.countByAuthorId(authorId);
+    }
+
+    /**
+     * Count all published posts
+     */
+    public long countPublishedPosts() {
+        return postRepository.countByIsPublishedTrue();
     }
 }

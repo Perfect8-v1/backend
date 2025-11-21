@@ -8,9 +8,11 @@ import java.util.List;
 
 /**
  * Customer Entity - Version 1.0
- * Magnum Opus Compliant: No alias methods, Lombok generates all getters/setters
  * 
- * FIXED: getDefaultAddress() → isDefaultAddress() (Lombok boolean naming)
+ * UPDATED (2025-11-20):
+ * - Removed auth fields (handled by admin-service)
+ * - Added userId reference to User in admin-service
+ * - Simplified to customer profile data only
  */
 @Entity
 @Table(name = "customers")
@@ -24,66 +26,61 @@ public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "customer_id")
     private Long customerId;
 
-    @Column(nullable = false, length = 100)
+    /**
+     * Reference to User in admin-service (central auth)
+     * Can be null for guest checkout
+     */
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(nullable = false)
-    private String passwordHash;
-
     @Column(length = 20)
     private String phone;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean active = true;
+    private boolean isActive = true;
 
-    @Column(nullable = false)
+    @Column(name = "is_email_verified", nullable = false)
     @Builder.Default
-    private Boolean emailVerified = false;
+    private boolean isEmailVerified = false;
 
+    @Column(name = "email_verified_date")
     private LocalDateTime emailVerifiedDate;
 
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_date", nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
+    @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
+    @Column(name = "last_login_date")
     private LocalDateTime lastLoginDate;
 
-    private String resetPasswordToken;
-
-    private LocalDateTime resetPasswordTokenExpiry;
-
-    @Column(length = 50)
+    @Column(name = "newsletter_subscribed", nullable = false)
     @Builder.Default
-    private String role = "CUSTOMER";
+    private boolean newsletterSubscribed = false;
 
+    @Column(name = "marketing_consent", nullable = false)
     @Builder.Default
-    private Boolean newsletterSubscribed = false;
+    private boolean marketingConsent = false;
 
-    @Builder.Default
-    private Boolean marketingConsent = false;
-
+    @Column(name = "preferred_language", length = 10)
     private String preferredLanguage;
 
+    @Column(name = "preferred_currency", length = 3)
     private String preferredCurrency;
-
-    private String emailVerificationToken;
-
-    private LocalDateTime emailVerificationSentDate;
-
-    @Builder.Default
-    private Integer failedLoginAttempts = 0;
-
-    private LocalDateTime accountLockedUntil;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
@@ -109,43 +106,33 @@ public class Customer {
         updatedDate = LocalDateTime.now();
     }
 
-    // ========== Business Logic Helper Methods (NOT Aliases) ==========
+    // ========== Business Logic Helper Methods ==========
 
     public String getFullName() {
         return firstName + " " + lastName;
-    }
-
-    public boolean isActive() {
-        return Boolean.TRUE.equals(active);
-    }
-
-    public boolean isEmailVerified() {
-        return Boolean.TRUE.equals(emailVerified);
-    }
-
-    public boolean isAccountLocked() {
-        return accountLockedUntil != null && accountLockedUntil.isAfter(LocalDateTime.now());
-    }
-
-    public void incrementFailedLoginAttempts() {
-        this.failedLoginAttempts = (this.failedLoginAttempts == null ? 0 : this.failedLoginAttempts) + 1;
-        if (this.failedLoginAttempts >= 5) {
-            this.accountLockedUntil = LocalDateTime.now().plusMinutes(30);
-        }
-    }
-
-    public void resetFailedLoginAttempts() {
-        this.failedLoginAttempts = 0;
-        this.accountLockedUntil = null;
     }
 
     public void updateLastLoginTime() {
         this.lastLoginDate = LocalDateTime.now();
     }
 
-    public void generateEmailVerificationToken() {
-        this.emailVerificationToken = java.util.UUID.randomUUID().toString();
-        this.emailVerificationSentDate = LocalDateTime.now();
+    public void verifyEmail() {
+        this.isEmailVerified = true;
+        this.emailVerifiedDate = LocalDateTime.now();
+    }
+
+    /**
+     * Check if this is a guest customer (no user account)
+     */
+    public boolean isGuest() {
+        return userId == null;
+    }
+
+    /**
+     * Check if customer has a linked user account
+     */
+    public boolean hasUserAccount() {
+        return userId != null;
     }
 
     // ========== Address Management ==========
@@ -161,12 +148,21 @@ public class Customer {
     }
 
     public Address getDefaultShippingAddress() {
-        // FIXED: getDefaultAddress() → isDefaultAddress() (Lombok boolean naming)
         return addresses.stream()
-                .filter(a -> "SHIPPING".equals(a.getAddressType()) && a.isDefaultAddress())
+                .filter(a -> "SHIPPING".equals(a.getAddressType()) && a.isDefault())
                 .findFirst()
                 .orElse(addresses.stream()
                         .filter(a -> "SHIPPING".equals(a.getAddressType()))
+                        .findFirst()
+                        .orElse(null));
+    }
+
+    public Address getDefaultBillingAddress() {
+        return addresses.stream()
+                .filter(a -> "BILLING".equals(a.getAddressType()) && a.isDefault())
+                .findFirst()
+                .orElse(addresses.stream()
+                        .filter(a -> "BILLING".equals(a.getAddressType()))
                         .findFirst()
                         .orElse(null));
     }

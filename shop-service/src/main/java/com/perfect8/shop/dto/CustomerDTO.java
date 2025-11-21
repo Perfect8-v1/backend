@@ -11,7 +11,11 @@ import java.util.List;
 /**
  * Customer DTO for Shop Service
  * Version 1.0 - Core customer data transfer
- * FIXED: Correct field types and names matching CustomerService
+ * 
+ * UPDATED (2025-11-20):
+ * - Added userId field for admin-service integration
+ * - Links shop customer to authenticated user in admin-service
+ * - userId can be null for guest checkout
  */
 @Data
 @NoArgsConstructor
@@ -20,9 +24,15 @@ import java.util.List;
 public class CustomerDTO {
 
     /**
-     * Customer ID - FIXED: Using Long, not String!
+     * Customer ID in shop-service
      */
     private Long customerId;
+
+    /**
+     * User ID from admin-service (central auth)
+     * Null for guest customers
+     */
+    private Long userId;
 
     /**
      * Basic information
@@ -82,6 +92,20 @@ public class CustomerDTO {
             sb.append(lastName);
         }
         return sb.toString();
+    }
+
+    /**
+     * Check if this is a guest customer
+     */
+    public boolean isGuest() {
+        return userId == null;
+    }
+
+    /**
+     * Check if customer has linked user account
+     */
+    public boolean hasUserAccount() {
+        return userId != null;
     }
 
     /**

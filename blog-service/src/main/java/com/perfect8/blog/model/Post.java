@@ -6,64 +6,114 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Post entity for blog posts
- *
- * FIXED (2025-11-12):
- * - Removed excerpt (v1.0 - not needed)
- * - Removed links collection (v1.0 - not needed)
- * - 100% match with blog-CREATE-TABLE.sql
- * - Magnum Opus compliance
- */
 @Entity
 @Table(name = "posts")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_id")
     private Long postId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String title;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String content;
 
-    @Column(unique = true)
+    @Column(unique = true, length = 255)
     private String slug;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private boolean published = false;  // Hibernate maps: published → published column
+    // Reference to User in admin-service (not a JPA relation)
+    @Column(name = "author_id")
+    private Long authorId;
 
-    private LocalDateTime createdDate;
-    private LocalDateTime updatedDate;
+    @Column(name = "published_date")
     private LocalDateTime publishedDate;
 
-    @Builder.Default
-    private Integer viewCount = 0;
+    @Column(name = "created_date", nullable = false, updatable = false)
+    private LocalDateTime createdDate;
 
-    // Relations
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    @Column(name = "updated_date")
+    private LocalDateTime updatedDate;
+
+    @Column(name = "is_published", nullable = false)
+    @Builder.Default
+    private boolean isPublished = false;
+
+    @Column(name = "view_count", nullable = false)
+    @Builder.Default
+    private int viewCount = 0;
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ImageReference> images = new ArrayList<>();
+    private List<ImageReference> imageReferences = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
         createdDate = LocalDateTime.now();
-        updatedDate = LocalDateTime.now();
+        if (slug == null || slug.isEmpty()) {
+            slug = generateSlug(title);
+        }
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedDate = LocalDateTime.now();
+    }
+
+    /**
+     * Generate URL-friendly slug from title
+     */
+    private String generateSlug(String title) {
+        if (title == null) return null;
+        return title.toLowerCase()
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-+", "-")
+                .trim();
+    }
+
+    /**
+     * Publish the post
+     */
+    public void publish() {
+        this.isPublished = true;
+        this.publishedDate = LocalDateTime.now();
+    }
+
+    /**
+     * Unpublish the post
+     */
+    public void unpublish() {
+        this.isPublished = false;
+        this.publishedDate = null;
+    }
+
+    /**
+     * Increment view count
+     */
+    public void incrementViewCount() {
+        this.viewCount++;
+    }
+
+    /**
+     * Add image reference
+     */
+    public void addImageReference(ImageReference imageReference) {
+        imageReferences.add(imageReference);
+        imageReference.setPost(this);
+    }
+
+    /**
+     * Remove image reference
+     */
+    public void removeImageReference(ImageReference imageReference) {
+        imageReferences.remove(imageReference);
+        imageReference.setPost(null);
     }
 }
