@@ -50,8 +50,8 @@ public class CustomerDTO {
     /**
      * Account status
      */
-    private boolean isActive;
-    private boolean isEmailVerified;
+    private boolean active;
+    private boolean emailVerified;
 
     /**
      * Customer preferences (v1.0)

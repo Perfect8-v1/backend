@@ -15,10 +15,9 @@ import java.util.Optional;
 /**
  * CustomerRepository - Version 1.0
  *
- * FIXED (2025-11-22):
- * - Changed all EmailVerified queries to IsEmailVerified (matches Customer.isEmailVerified field)
- * - Changed all Active queries to IsActive (matches Customer.isActive field)
- * - Fixed @Query emailVerified to isEmailVerified
+ * MAGNUM OPUS (2025-11-22):
+ * - Matches Customer.active field (NOT isActive)
+ * - Matches Customer.emailVerified field (NOT isEmailVerified)
  */
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
@@ -40,21 +39,19 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByPhone(String phone);
 
     // ==============================================
-    // CUSTOMER STATUS QUERIES (v1.0) - FIXED
+    // CUSTOMER STATUS QUERIES (v1.0)
     // ==============================================
 
-    // FIXED: Active â†' IsActive (matches Customer.isActive field)
-    Page<Customer> findByIsActiveTrue(Pageable pageable);
-    Page<Customer> findByIsActiveFalse(Pageable pageable);
-    long countByIsActiveTrue();
-    long countByIsActiveFalse();
-    List<Customer> findByIsActive(Boolean isActive);
+    Page<Customer> findByActiveTrue(Pageable pageable);
+    Page<Customer> findByActiveFalse(Pageable pageable);
+    long countByActiveTrue();
+    long countByActiveFalse();
+    List<Customer> findByActive(Boolean active);
 
-    // FIXED: EmailVerified â†' IsEmailVerified (matches Customer.isEmailVerified field)
-    long countByIsEmailVerifiedTrue();
-    long countByIsEmailVerifiedFalse();
-    List<Customer> findByIsEmailVerifiedTrue();
-    List<Customer> findByIsEmailVerifiedFalse();
+    long countByEmailVerifiedTrue();
+    long countByEmailVerifiedFalse();
+    List<Customer> findByEmailVerifiedTrue();
+    List<Customer> findByEmailVerifiedFalse();
 
     // ==============================================
     // SEARCH QUERIES (v1.0)
@@ -91,7 +88,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
     @Query("SELECT c FROM Customer c WHERE c.orders IS EMPTY")
     List<Customer> findCustomersWithoutOrders();
 
-    // FIXED: emailVerified â†' isEmailVerified, active â†' isActive
-    @Query("SELECT c FROM Customer c WHERE c.isEmailVerified = false AND c.isActive = true")
+    @Query("SELECT c FROM Customer c WHERE c.emailVerified = false AND c.active = true")
     List<Customer> findCustomersNeedingEmailVerification();
 }
