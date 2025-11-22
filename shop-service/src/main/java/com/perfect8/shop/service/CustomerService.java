@@ -146,8 +146,8 @@ public class CustomerService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
-                .isActive(true)
-                .isEmailVerified(false)
+                .active(true)
+                .emailVerified(false)
                 .newsletterSubscribed(false)
                 .marketingConsent(false)
                 .build();
@@ -187,8 +187,8 @@ public class CustomerService {
                 .lastName(lastName)
                 .email(email)
                 .phone(phone)
-                .isActive(true)
-                .isEmailVerified(false)
+                .active(true)
+                .emailVerified(false)
                 .newsletterSubscribed(false)
                 .marketingConsent(false)
                 .build();
@@ -515,8 +515,8 @@ public class CustomerService {
     @Transactional(readOnly = true)
     public CustomerStatsDTO getCustomerStats() {
         long total = customerRepository.count();
-        long active = customerRepository.countByActiveTrue();
-        long verified = customerRepository.countByEmailVerifiedTrue();
+        long active = customerRepository.countByIsActiveTrue();        // FIXED
+        long verified = customerRepository.countByIsEmailVerifiedTrue(); // FIXED
 
         return CustomerStatsDTO.builder()
                 .totalCustomers(total)

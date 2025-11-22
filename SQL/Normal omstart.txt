@@ -8,7 +8,7 @@ mvn clean package -DskipTests
 bash copy-jars.sh
 
 # 4. Bygg nya Docker images (utan cache!)
-docker compose build --no-cache shop-service
+docker compose build --no-cache 
 
 # 5. Starta om
 docker compose up -d

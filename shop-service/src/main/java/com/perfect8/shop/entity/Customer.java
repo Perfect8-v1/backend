@@ -48,13 +48,13 @@ public class Customer {
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "is_active", nullable = false)
+    @Column(name = "active", nullable = false)
     @Builder.Default
-    private boolean isActive = true;
+    private boolean active = true;
 
-    @Column(name = "is_email_verified", nullable = false)
+    @Column(name = "email_verified", nullable = false)
     @Builder.Default
-    private boolean isEmailVerified = false;
+    private boolean emailVerified = false;
 
     @Column(name = "email_verified_date")
     private LocalDateTime emailVerifiedDate;
@@ -117,7 +117,7 @@ public class Customer {
     }
 
     public void verifyEmail() {
-        this.isEmailVerified = true;
+        this.emailVerified = true;
         this.emailVerifiedDate = LocalDateTime.now();
     }
 
