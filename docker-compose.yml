@@ -300,6 +300,39 @@ services:
     networks:
       - perfect8-network
 
+  # ==========================================
+  # Nginx Reverse Proxy (Port 80)
+  # ADDED (2025-11-23): API Gateway for frontend
+  # ==========================================
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-gateway
+    depends_on:
+      admin-service:
+        condition: service_healthy
+      blog-service:
+        condition: service_healthy
+      email-service:
+        condition: service_healthy
+      image-service:
+        condition: service_healthy
+      shop-service:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - perfect8-network
+
 # ==========================================
 # Networks
 # ==========================================
