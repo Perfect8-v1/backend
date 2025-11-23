@@ -24,6 +24,8 @@ import java.util.Arrays;
 /**
  * Security Configuration for Admin Service
  * Version 1.0 - Core security setup for admin authentication and authorization
+ * 
+ * UPDATED (2025-11-23): Added CORS support for Flutter frontend (localhost:8000)
  */
 @Configuration
 @EnableWebSecurity
@@ -81,6 +83,7 @@ public class SecurityConfig {
 
     /**
      * Configure CORS settings
+     * UPDATED (2025-11-23): Added localhost:8000 for Flutter frontend
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
@@ -88,11 +91,13 @@ public class SecurityConfig {
 
         // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
+                "http://localhost:8000",  // Flutter development (ADDED 2025-11-23)
                 "http://localhost:3000",  // React development
                 "http://localhost:4200",  // Angular development
                 "http://localhost:8080",  // Local testing
-                "http://localhost:8081"   // Admin service port
-                // Add production URLs here
+                "http://localhost:8081",  // Admin service port
+                "http://p8.rantila.com",  // Production server
+                "http://perfect8alpine.rantila.com"  // Production domain
         ));
 
         // Allow methods
