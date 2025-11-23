@@ -15,9 +15,10 @@ import java.util.Optional;
 /**
  * CustomerRepository - Version 1.0
  *
- * MAGNUM OPUS (2025-11-22):
+ * MAGNUM OPUS (2025-11-23):
  * - Matches Customer.active field (NOT isActive)
  * - Matches Customer.emailVerified field (NOT isEmailVerified)
+ * - Auth fields removed (handled by admin-service)
  */
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
@@ -34,8 +35,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
             "WHERE c.email = :email AND c.customerId != :customerId")
     boolean existsByEmailAndCustomerIdNot(@Param("email") String email, @Param("customerId") Long customerId);
 
-    Optional<Customer> findByResetPasswordToken(String resetPasswordToken);
-    Optional<Customer> findByEmailVerificationToken(String emailVerificationToken);
     Optional<Customer> findByPhone(String phone);
 
     // ==============================================
