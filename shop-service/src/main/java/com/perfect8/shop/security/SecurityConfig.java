@@ -5,15 +5,12 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -26,7 +23,12 @@ import java.util.Arrays;
 
 /**
  * Security Configuration for Shop Service
- * Version 1.0 - Core security setup without metrics/analytics endpoints
+ * Version 1.0 - JWT-only authentication (auth handled by admin-service)
+ * 
+ * UPDATED (2025-11-23):
+ * - Removed UserDetailsService (no local auth)
+ * - JWT validation only via JwtAuthenticationFilter
+ * - All authentication happens in admin-service
  */
 @Configuration
 @EnableWebSecurity
@@ -35,7 +37,6 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsService userDetailsService;
 
     /**
      * Configure Security Filter Chain
@@ -123,10 +124,7 @@ public class SecurityConfig {
                 )
 
                 // Add JWT filter before UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-
-                // Configure authentication provider
-                .authenticationProvider(authenticationProvider());
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -182,6 +180,7 @@ public class SecurityConfig {
 
     /**
      * Password encoder bean
+     * Used for password validation when needed
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -195,17 +194,6 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    /**
-     * Authentication provider bean
-     */
-    @Bean
-    public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
     }
 
     // Version 2.0 - Commented out for future implementation
