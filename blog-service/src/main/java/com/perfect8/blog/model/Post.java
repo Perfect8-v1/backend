@@ -1,3 +1,5 @@
+// blog-service/src/main/java/com/perfect8/blog/model/Post.java
+
 package com.perfect8.blog.model;
 
 import jakarta.persistence.*;
@@ -27,10 +29,6 @@ public class Post {
 
     @Column(unique = true, length = 255)
     private String slug;
-
-    // Reference to User in admin-service (not a JPA relation)
-    @Column(name = "author_id")
-    private Long authorId;
 
     @Column(name = "published_date")
     private LocalDateTime publishedDate;

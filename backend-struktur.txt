@@ -1,8 +1,11 @@
 Folder PATH listing
 Volume serial number is FE0A-2804
 C:.
+¦   .env
 ¦   .gitignore
+¦   backend_struktur.txt
 ¦   copy-jars.sh
+¦   docker
 ¦   docker-compose - Backup.yml
 ¦   docker-compose.yml
 ¦   find-package-errors.sh
@@ -11,6 +14,7 @@ C:.
 ¦   list-at-fields.sh
 ¦   pom.xml
 ¦   README.md
+¦   Restart shopDB.txt
 ¦   start-backend.sh
 ¦   stop-backend.sh
 ¦   struktur.txt
@@ -33,89 +37,102 @@ C:.
 ¦   ¦   
 ¦   +---src
 ¦   ¦   +---main
+¦   ¦   ¦   +---java
+¦   ¦   ¦   ¦   +---com
+¦   ¦   ¦   ¦       +---perfect8
+¦   ¦   ¦   ¦           +---admin
+¦   ¦   ¦   ¦               ¦   AdminServiceApplication.java
+¦   ¦   ¦   ¦               ¦   
+¦   ¦   ¦   ¦               +---config
+¦   ¦   ¦   ¦               ¦       DataInitializer.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---controller
+¦   ¦   ¦   ¦               ¦       AdminController.java
+¦   ¦   ¦   ¦               ¦       AuthController.java
+¦   ¦   ¦   ¦               ¦       HealthController.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---dto
+¦   ¦   ¦   ¦               ¦       AdminDashboardResponse.java
+¦   ¦   ¦   ¦               ¦       ApiPerformanceResponse.java
+¦   ¦   ¦   ¦               ¦       AuthRequest.java
+¦   ¦   ¦   ¦               ¦       AuthResponse.java
+¦   ¦   ¦   ¦               ¦       BlogPostDto.java
+¦   ¦   ¦   ¦               ¦       CategoryDto.java
+¦   ¦   ¦   ¦               ¦       CohortAnalysisResponse.java
+¦   ¦   ¦   ¦               ¦       CustomerMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       CustomerReportResponse.java
+¦   ¦   ¦   ¦               ¦       DashboardSummaryResponse.java
+¦   ¦   ¦   ¦               ¦       DatabasePerformanceResponse.java
+¦   ¦   ¦   ¦               ¦       ExecutiveSummaryResponse.java
+¦   ¦   ¦   ¦               ¦       GeographicAnalyticsResponse.java
+¦   ¦   ¦   ¦               ¦       InventoryMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       InventoryReportResponse.java
+¦   ¦   ¦   ¦               ¦       LoginRequest.java
+¦   ¦   ¦   ¦               ¦       LoginResponse.java
+¦   ¦   ¦   ¦               ¦       LowStockAlertResponse.java
+¦   ¦   ¦   ¦               ¦       NewCustomerResponse.java
+¦   ¦   ¦   ¦               ¦       OrderAttentionResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentDetailResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentInitiationRequest.java
+¦   ¦   ¦   ¦               ¦       PaymentInitiationResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentIssueResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentProcessingRequest.java
+¦   ¦   ¦   ¦               ¦       PaymentProcessingResponse.java
+¦   ¦   ¦   ¦               ¦       PaymentSummaryResponse.java
+¦   ¦   ¦   ¦               ¦       ProductAnalyticsResponse.java
+¦   ¦   ¦   ¦               ¦       ProductDto.java
+¦   ¦   ¦   ¦               ¦       RegisterRequest.java
+¦   ¦   ¦   ¦               ¦       RevenueAnalyticsResponse.java
+¦   ¦   ¦   ¦               ¦       SalesMetricsResponse.java
+¦   ¦   ¦   ¦               ¦       SalesReportResponse.java
+¦   ¦   ¦   ¦               ¦       SystemPerformanceResponse.java
+¦   ¦   ¦   ¦               ¦       TrendAnalysisResponse.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---model
+¦   ¦   ¦   ¦               ¦       RefreshToken.java
+¦   ¦   ¦   ¦               ¦       User.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---repository
+¦   ¦   ¦   ¦               ¦       ProductRepository.java
+¦   ¦   ¦   ¦               ¦       RefreshTokenRepository.java
+¦   ¦   ¦   ¦               ¦       UserRepository.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---security
+¦   ¦   ¦   ¦               ¦       JwtAuthenticationEntryPoint.java
+¦   ¦   ¦   ¦               ¦       JwtAuthenticationFilter.java
+¦   ¦   ¦   ¦               ¦       SecurityConfig.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---service
+¦   ¦   ¦   ¦               ¦       AnalyticsService.java
+¦   ¦   ¦   ¦               ¦       AuthService.java
+¦   ¦   ¦   ¦               ¦       CustomerService.java
+¦   ¦   ¦   ¦               ¦       CustomUserDetailsService.java
+¦   ¦   ¦   ¦               ¦       DashboardService.java
+¦   ¦   ¦   ¦               ¦       ImageService.java
+¦   ¦   ¦   ¦               ¦       InventoryService.java
+¦   ¦   ¦   ¦               ¦       NotificationService.java
+¦   ¦   ¦   ¦               ¦       OrderService.java
+¦   ¦   ¦   ¦               ¦       PaymentService.java
+¦   ¦   ¦   ¦               ¦       PayPalService.java
+¦   ¦   ¦   ¦               ¦       UserService.java
+¦   ¦   ¦   ¦               ¦       
+¦   ¦   ¦   ¦               +---util
+¦   ¦   ¦   ¦                       JwtUtil.java
+¦   ¦   ¦   ¦                       
+¦   ¦   ¦   +---resources
+¦   ¦   ¦           application.properties
+¦   ¦   ¦           
+¦   ¦   +---test
 ¦   ¦       +---java
-¦   ¦       ¦   +---com
-¦   ¦       ¦       +---perfect8
-¦   ¦       ¦           +---admin
-¦   ¦       ¦               ¦   AdminServiceApplication.java
-¦   ¦       ¦               ¦   
-¦   ¦       ¦               +---config
-¦   ¦       ¦               ¦       DataInitializer.java
-¦   ¦       ¦               ¦       
-¦   ¦       ¦               +---controller
-¦   ¦       ¦               ¦       AdminController.java
-¦   ¦       ¦               ¦       AuthController.java
-¦   ¦       ¦               ¦       HealthController.java
-¦   ¦       ¦               ¦       
-¦   ¦       ¦               +---dto
-¦   ¦       ¦               ¦       AdminDashboardResponse.java
-¦   ¦       ¦               ¦       ApiPerformanceResponse.java
-¦   ¦       ¦               ¦       AuthRequest.java
-¦   ¦       ¦               ¦       AuthResponse.java
-¦   ¦       ¦               ¦       BlogPostDto.java
-¦   ¦       ¦               ¦       CategoryDto.java
-¦   ¦       ¦               ¦       CohortAnalysisResponse.java
-¦   ¦       ¦               ¦       CustomerMetricsResponse.java
-¦   ¦       ¦               ¦       CustomerReportResponse.java
-¦   ¦       ¦               ¦       DashboardSummaryResponse.java
-¦   ¦       ¦               ¦       DatabasePerformanceResponse.java
-¦   ¦       ¦               ¦       ExecutiveSummaryResponse.java
-¦   ¦       ¦               ¦       GeographicAnalyticsResponse.java
-¦   ¦       ¦               ¦       InventoryMetricsResponse.java
-¦   ¦       ¦               ¦       InventoryReportResponse.java
-¦   ¦       ¦               ¦       LoginRequest.java
-¦   ¦       ¦               ¦       LoginResponse.java
-¦   ¦       ¦               ¦       LowStockAlertResponse.java
-¦   ¦       ¦               ¦       NewCustomerResponse.java
-¦   ¦       ¦               ¦       OrderAttentionResponse.java
-¦   ¦       ¦               ¦       PaymentDetailResponse.java
-¦   ¦       ¦               ¦       PaymentInitiationRequest.java
-¦   ¦       ¦               ¦       PaymentInitiationResponse.java
-¦   ¦       ¦               ¦       PaymentIssueResponse.java
-¦   ¦       ¦               ¦       PaymentMetricsResponse.java
-¦   ¦       ¦               ¦       PaymentProcessingRequest.java
-¦   ¦       ¦               ¦       PaymentProcessingResponse.java
-¦   ¦       ¦               ¦       PaymentSummaryResponse.java
-¦   ¦       ¦               ¦       ProductAnalyticsResponse.java
-¦   ¦       ¦               ¦       ProductDto.java
-¦   ¦       ¦               ¦       RegisterRequest.java
-¦   ¦       ¦               ¦       RevenueAnalyticsResponse.java
-¦   ¦       ¦               ¦       SalesMetricsResponse.java
-¦   ¦       ¦               ¦       SalesReportResponse.java
-¦   ¦       ¦               ¦       SystemPerformanceResponse.java
-¦   ¦       ¦               ¦       TrendAnalysisResponse.java
-¦   ¦       ¦               ¦       
-¦   ¦       ¦               +---model
-¦   ¦       ¦               ¦       AdminUser.java
-¦   ¦       ¦               ¦       
-¦   ¦       ¦               +---repository
-¦   ¦       ¦               ¦       AdminUserRepository.java
-¦   ¦       ¦               ¦       ProductRepository.java
-¦   ¦       ¦               ¦       
-¦   ¦       ¦               +---security
-¦   ¦       ¦               ¦       JwtAuthenticationEntryPoint.java
-¦   ¦       ¦               ¦       JwtAuthenticationFilter.java
-¦   ¦       ¦               ¦       SecurityConfig.java
-¦   ¦       ¦               ¦       
-¦   ¦       ¦               +---service
-¦   ¦       ¦               ¦       AdminUserService.java
-¦   ¦       ¦               ¦       AnalyticsService.java
-¦   ¦       ¦               ¦       CustomerService.java
-¦   ¦       ¦               ¦       CustomUserDetailsService.java
-¦   ¦       ¦               ¦       DashboardService.java
-¦   ¦       ¦               ¦       ImageService.java
-¦   ¦       ¦               ¦       InventoryService.java
-¦   ¦       ¦               ¦       NotificationService.java
-¦   ¦       ¦               ¦       OrderService.java
-¦   ¦       ¦               ¦       PaymentService.java
-¦   ¦       ¦               ¦       PayPalService.java
-¦   ¦       ¦               ¦       
-¦   ¦       ¦               +---util
-¦   ¦       ¦                       JwtUtil.java
-¦   ¦       ¦                       
-¦   ¦       +---resources
-¦   ¦               application.properties
-¦   ¦               
+¦   ¦           +---com
+¦   ¦               +---perfect8
+¦   ¦                   +---admin
+¦   ¦                       +---integration
+¦   ¦                               AuthControllerTest.java
+¦   ¦                               BaseTest.java
+¦   ¦                               HealthCheckTest.java
+¦   ¦                               
 ¦   +---target
 ¦       +---classes
 ¦       ¦   ¦   application.properties
@@ -136,7 +153,9 @@ C:.
 ¦       ¦               +---dto
 ¦       ¦               ¦       AdminDashboardResponse.class
 ¦       ¦               ¦       ApiPerformanceResponse.class
+¦       ¦               ¦       AuthRequest$AuthRequestBuilder.class
 ¦       ¦               ¦       AuthRequest.class
+¦       ¦               ¦       AuthResponse$AuthResponseBuilder.class
 ¦       ¦               ¦       AuthResponse.class
 ¦       ¦               ¦       BlogPostDto.class
 ¦       ¦               ¦       CategoryDto.class
@@ -149,7 +168,9 @@ C:.
 ¦       ¦               ¦       GeographicAnalyticsResponse.class
 ¦       ¦               ¦       InventoryMetricsResponse.class
 ¦       ¦               ¦       InventoryReportResponse.class
+¦       ¦               ¦       LoginRequest$LoginRequestBuilder.class
 ¦       ¦               ¦       LoginRequest.class
+¦       ¦               ¦       LoginResponse$LoginResponseBuilder.class
 ¦       ¦               ¦       LoginResponse.class
 ¦       ¦               ¦       LowStockAlertResponse.class
 ¦       ¦               ¦       NewCustomerResponse.class
@@ -164,6 +185,7 @@ C:.
 ¦       ¦               ¦       PaymentSummaryResponse.class
 ¦       ¦               ¦       ProductAnalyticsResponse.class
 ¦       ¦               ¦       ProductDto.class
+¦       ¦               ¦       RegisterRequest$RegisterRequestBuilder.class
 ¦       ¦               ¦       RegisterRequest.class
 ¦       ¦               ¦       RevenueAnalyticsResponse.class
 ¦       ¦               ¦       SalesMetricsResponse.class
@@ -172,13 +194,15 @@ C:.
 ¦       ¦               ¦       TrendAnalysisResponse.class
 ¦       ¦               ¦       
 ¦       ¦               +---model
-¦       ¦               ¦       AdminUser$AdminUserBuilder.class
-¦       ¦               ¦       AdminUser$Role.class
-¦       ¦               ¦       AdminUser.class
+¦       ¦               ¦       RefreshToken$RefreshTokenBuilder.class
+¦       ¦               ¦       RefreshToken.class
+¦       ¦               ¦       User$UserBuilder.class
+¦       ¦               ¦       User.class
 ¦       ¦               ¦       
 ¦       ¦               +---repository
-¦       ¦               ¦       AdminUserRepository.class
 ¦       ¦               ¦       ProductRepository.class
+¦       ¦               ¦       RefreshTokenRepository.class
+¦       ¦               ¦       UserRepository.class
 ¦       ¦               ¦       
 ¦       ¦               +---security
 ¦       ¦               ¦       JwtAuthenticationEntryPoint.class
@@ -186,8 +210,8 @@ C:.
 ¦       ¦               ¦       SecurityConfig.class
 ¦       ¦               ¦       
 ¦       ¦               +---service
-¦       ¦               ¦       AdminUserService.class
 ¦       ¦               ¦       AnalyticsService.class
+¦       ¦               ¦       AuthService.class
 ¦       ¦               ¦       CustomerService.class
 ¦       ¦               ¦       CustomUserDetailsService.class
 ¦       ¦               ¦       DashboardService.class
@@ -197,19 +221,31 @@ C:.
 ¦       ¦               ¦       OrderService.class
 ¦       ¦               ¦       PaymentService.class
 ¦       ¦               ¦       PayPalService.class
+¦       ¦               ¦       UserService.class
 ¦       ¦               ¦       
 ¦       ¦               +---util
 ¦       ¦                       JwtUtil.class
 ¦       ¦                       
 ¦       +---generated-sources
 ¦       ¦   +---annotations
+¦       +---generated-test-sources
+¦       ¦   +---test-annotations
 ¦       +---maven-status
-¦           +---maven-compiler-plugin
-¦               +---compile
-¦                   +---default-compile
-¦                           createdFiles.lst
-¦                           inputFiles.lst
-¦                           
+¦       ¦   +---maven-compiler-plugin
+¦       ¦       +---compile
+¦       ¦           +---default-compile
+¦       ¦                   createdFiles.lst
+¦       ¦                   inputFiles.lst
+¦       ¦                   
+¦       +---test-classes
+¦           +---com
+¦               +---perfect8
+¦                   +---admin
+¦                       +---integration
+¦                               AuthControllerTest.class
+¦                               BaseTest.class
+¦                               HealthCheckTest.class
+¦                               
 +---blog-service
 ¦   ¦   .dockerignore
 ¦   ¦   Dockerfile
@@ -227,14 +263,11 @@ C:.
 ¦   ¦   ¦   ¦               ¦       ImageServiceClient.java
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---config
-¦   ¦   ¦   ¦               ¦       DataInitializer.java
 ¦   ¦   ¦   ¦               ¦       FeignConfig.java
 ¦   ¦   ¦   ¦               ¦       JwtConfig.java
 ¦   ¦   ¦   ¦               ¦       SecurityConfig.java
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---controller
-¦   ¦   ¦   ¦               ¦       AdminController.java
-¦   ¦   ¦   ¦               ¦       AuthController.java
 ¦   ¦   ¦   ¦               ¦       HealthController.java
 ¦   ¦   ¦   ¦               ¦       PostController.java
 ¦   ¦   ¦   ¦               ¦       
@@ -250,25 +283,17 @@ C:.
 ¦   ¦   ¦   ¦               +---model
 ¦   ¦   ¦   ¦               ¦       ImageReference.java
 ¦   ¦   ¦   ¦               ¦       Post.java
-¦   ¦   ¦   ¦               ¦       Role.java
-¦   ¦   ¦   ¦               ¦       User.java
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---repository
 ¦   ¦   ¦   ¦               ¦       ImageReferenceRepository.java
 ¦   ¦   ¦   ¦               ¦       PostRepository.java
-¦   ¦   ¦   ¦               ¦       RoleRepository.java
-¦   ¦   ¦   ¦               ¦       UserRepository.java
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---security
 ¦   ¦   ¦   ¦               ¦       JwtAuthenticationFilter.java
 ¦   ¦   ¦   ¦               ¦       JwtTokenProvider.java
-¦   ¦   ¦   ¦               ¦       UserDetailsServiceImpl.java
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---service
-¦   ¦   ¦   ¦                       AdminService.java
-¦   ¦   ¦   ¦                       AuthService.java
 ¦   ¦   ¦   ¦                       PostService.java
-¦   ¦   ¦   ¦                       UserService.java
 ¦   ¦   ¦   ¦                       
 ¦   ¦   ¦   +---resources
 ¦   ¦   ¦           application.properties
@@ -293,14 +318,11 @@ C:.
 ¦       ¦               ¦       ImageServiceClient.class
 ¦       ¦               ¦       
 ¦       ¦               +---config
-¦       ¦               ¦       DataInitializer.class
 ¦       ¦               ¦       FeignConfig.class
 ¦       ¦               ¦       JwtConfig.class
 ¦       ¦               ¦       SecurityConfig.class
 ¦       ¦               ¦       
 ¦       ¦               +---controller
-¦       ¦               ¦       AdminController.class
-¦       ¦               ¦       AuthController.class
 ¦       ¦               ¦       HealthController.class
 ¦       ¦               ¦       PostController.class
 ¦       ¦               ¦       
@@ -325,27 +347,17 @@ C:.
 ¦       ¦               ¦       ImageReference.class
 ¦       ¦               ¦       Post$PostBuilder.class
 ¦       ¦               ¦       Post.class
-¦       ¦               ¦       Role$RoleBuilder.class
-¦       ¦               ¦       Role.class
-¦       ¦               ¦       User$UserBuilder.class
-¦       ¦               ¦       User.class
 ¦       ¦               ¦       
 ¦       ¦               +---repository
 ¦       ¦               ¦       ImageReferenceRepository.class
 ¦       ¦               ¦       PostRepository.class
-¦       ¦               ¦       RoleRepository.class
-¦       ¦               ¦       UserRepository.class
 ¦       ¦               ¦       
 ¦       ¦               +---security
 ¦       ¦               ¦       JwtAuthenticationFilter.class
 ¦       ¦               ¦       JwtTokenProvider.class
-¦       ¦               ¦       UserDetailsServiceImpl.class
 ¦       ¦               ¦       
 ¦       ¦               +---service
-¦       ¦                       AdminService.class
-¦       ¦                       AuthService.class
 ¦       ¦                       PostService.class
-¦       ¦                       UserService.class
 ¦       ¦                       
 ¦       +---generated-sources
 ¦       ¦   +---annotations
@@ -402,6 +414,7 @@ C:.
 ¦                           
 +---docs
 ¦       api-versioning-doc.md
+¦       Bootstrap Addendum 2025-11-12.md
 ¦       universal-bootstrap.md
 ¦       
 +---email-service
@@ -436,6 +449,7 @@ C:.
 ¦   ¦       ¦               ¦       AttachmentDto.java
 ¦   ¦       ¦               ¦       BulkEmailRequestDto.java
 ¦   ¦       ¦               ¦       CustomerEmailDTO.java
+¦   ¦       ¦               ¦       EmailMessage.java
 ¦   ¦       ¦               ¦       EmailRequest.java
 ¦   ¦       ¦               ¦       EmailResponseDto.java
 ¦   ¦       ¦               ¦       EmailStatusDto.java
@@ -452,19 +466,24 @@ C:.
 ¦   ¦       ¦               ¦       GlobalExceptionHandler.java
 ¦   ¦       ¦               ¦       
 ¦   ¦       ¦               +---model
-¦   ¦       ¦               ¦       EmailMessage.java
 ¦   ¦       ¦               ¦       EmailTemplate.java
 ¦   ¦       ¦               ¦       
 ¦   ¦       ¦               +---repository
 ¦   ¦       ¦               ¦       EmailRepository.java
 ¦   ¦       ¦               ¦       EmailTemplateRepository.java
 ¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---security
+¦   ¦       ¦               ¦       JwtAuthenticationFilter.java
+¦   ¦       ¦               ¦       
 ¦   ¦       ¦               +---service
-¦   ¦       ¦                       EmailFormatter.java
-¦   ¦       ¦                       EmailService.java
-¦   ¦       ¦                       NewsletterService.java
-¦   ¦       ¦                       OrderEmailService.java
-¦   ¦       ¦                       TemplateService.java
+¦   ¦       ¦               ¦       EmailFormatter.java
+¦   ¦       ¦               ¦       EmailService.java
+¦   ¦       ¦               ¦       NewsletterService.java
+¦   ¦       ¦               ¦       OrderEmailService.java
+¦   ¦       ¦               ¦       TemplateService.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---util
+¦   ¦       ¦                       JwtUtil.java
 ¦   ¦       ¦                       
 ¦   ¦       +---resources
 ¦   ¦           ¦   application.properties
@@ -516,6 +535,10 @@ C:.
 ¦       ¦   ¦           ¦       BulkEmailRequestDto.class
 ¦       ¦   ¦           ¦       CustomerEmailDTO$CustomerEmailDTOBuilder.class
 ¦       ¦   ¦           ¦       CustomerEmailDTO.class
+¦       ¦   ¦           ¦       EmailMessage$EmailAttachment$EmailAttachmentBuilder.class
+¦       ¦   ¦           ¦       EmailMessage$EmailAttachment.class
+¦       ¦   ¦           ¦       EmailMessage$EmailMessageBuilder.class
+¦       ¦   ¦           ¦       EmailMessage.class
 ¦       ¦   ¦           ¦       EmailRequest$EmailRequestBuilder.class
 ¦       ¦   ¦           ¦       EmailRequest.class
 ¦       ¦   ¦           ¦       EmailResponseDto$EmailResponseDtoBuilder.class
@@ -550,25 +573,27 @@ C:.
 ¦       ¦   ¦           ¦       GlobalExceptionHandler.class
 ¦       ¦   ¦           ¦       
 ¦       ¦   ¦           +---model
-¦       ¦   ¦           ¦       EmailMessage$EmailAttachment$EmailAttachmentBuilder.class
-¦       ¦   ¦           ¦       EmailMessage$EmailAttachment.class
-¦       ¦   ¦           ¦       EmailMessage$EmailMessageBuilder.class
-¦       ¦   ¦           ¦       EmailMessage.class
 ¦       ¦   ¦           ¦       EmailTemplate$EmailTemplateBuilder.class
 ¦       ¦   ¦           ¦       EmailTemplate.class
 ¦       ¦   ¦           ¦       
 ¦       ¦   ¦           +---repository
 ¦       ¦   ¦           ¦       EmailTemplateRepository.class
 ¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---security
+¦       ¦   ¦           ¦       JwtAuthenticationFilter.class
+¦       ¦   ¦           ¦       
 ¦       ¦   ¦           +---service
-¦       ¦   ¦                   EmailFormatter$FormattedEmail.class
-¦       ¦   ¦                   EmailFormatter$SimpleEmailFormatter.class
-¦       ¦   ¦                   EmailFormatter.class
-¦       ¦   ¦                   EmailService.class
-¦       ¦   ¦                   NewsletterService.class
-¦       ¦   ¦                   OrderEmailService$1.class
-¦       ¦   ¦                   OrderEmailService.class
-¦       ¦   ¦                   TemplateService.class
+¦       ¦   ¦           ¦       EmailFormatter$FormattedEmail.class
+¦       ¦   ¦           ¦       EmailFormatter$SimpleEmailFormatter.class
+¦       ¦   ¦           ¦       EmailFormatter.class
+¦       ¦   ¦           ¦       EmailService.class
+¦       ¦   ¦           ¦       NewsletterService.class
+¦       ¦   ¦           ¦       OrderEmailService$1.class
+¦       ¦   ¦           ¦       OrderEmailService.class
+¦       ¦   ¦           ¦       TemplateService.class
+¦       ¦   ¦           ¦       
+¦       ¦   ¦           +---util
+¦       ¦   ¦                   JwtUtil.class
 ¦       ¦   ¦                   
 ¦       ¦   +---templates
 ¦       ¦           new-post-notification.html
@@ -637,9 +662,15 @@ C:.
 ¦   ¦       ¦               +---repository
 ¦   ¦       ¦               ¦       ImageRepository.java
 ¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---security
+¦   ¦       ¦               ¦       JwtAuthenticationFilter.java
+¦   ¦       ¦               ¦       
 ¦   ¦       ¦               +---service
-¦   ¦       ¦                       ImageProcessingService.java
-¦   ¦       ¦                       ImageService.java
+¦   ¦       ¦               ¦       ImageProcessingService.java
+¦   ¦       ¦               ¦       ImageService.java
+¦   ¦       ¦               ¦       
+¦   ¦       ¦               +---util
+¦   ¦       ¦                       JwtUtil.java
 ¦   ¦       ¦                       
 ¦   ¦       +---resources
 ¦   ¦               application.properties
@@ -875,11 +906,9 @@ C:.
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---service
 ¦   ¦   ¦   ¦                       AnalyticsService.java
-¦   ¦   ¦   ¦                       AuthService.java
 ¦   ¦   ¦   ¦                       CartService.java
 ¦   ¦   ¦   ¦                       CategoryService.java
 ¦   ¦   ¦   ¦                       CustomerService.java
-¦   ¦   ¦   ¦                       CustomerUserDetailsService.java
 ¦   ¦   ¦   ¦                       EmailService.java
 ¦   ¦   ¦   ¦                       InventoryService.java
 ¦   ¦   ¦   ¦                       OrderService.java
@@ -1177,7 +1206,6 @@ C:.
 ¦       ¦               ¦       
 ¦       ¦               +---service
 ¦       ¦                       AnalyticsService.class
-¦       ¦                       AuthService.class
 ¦       ¦                       CartService.class
 ¦       ¦                       CategoryService$CategoryDropdownItem.class
 ¦       ¦                       CategoryService$CategoryStatistics.class
@@ -1186,8 +1214,6 @@ C:.
 ¦       ¦                       CustomerService$CustomerStatsDTO$CustomerStatsDTOBuilder.class
 ¦       ¦                       CustomerService$CustomerStatsDTO.class
 ¦       ¦                       CustomerService.class
-¦       ¦                       CustomerUserDetailsService$CustomerUserPrincipal.class
-¦       ¦                       CustomerUserDetailsService.class
 ¦       ¦                       EmailService.class
 ¦       ¦                       InventoryService.class
 ¦       ¦                       OrderService$1.class
@@ -1208,15 +1234,30 @@ C:.
 ¦                           inputFiles.lst
 ¦                           
 +---SQL
-¦       admin-CREATE-TABLE.sql
+¦       admin-Create-Mock.sql
 ¦       admin-MOCK-DATA.sql
+¦       auth_CREATE-TABLE.sql
+¦       blog-Create-Mock.sql
 ¦       blog-CREATE-TABLE.sql
+¦       blog-MOCK-DATA.sql
+¦       customers-table.sql
+¦       email-Create-Mock.sql
 ¦       email-CREATE-TABLE.sql
+¦       email-MOCK-DATA.sql
 ¦       image-CREATE-TABLE.sql
+¦       image-Create.Mock.sql
+¦       image-MOCK-DATA.sql
 ¦       Normal omstart.txt
 ¦       run-create-tables.sh
 ¦       run-drop-tables.sh
+¦       shop-Create-Mock.sql
+¦       shop-CREATE-TABLE-complete.sql
 ¦       shop-CREATE-TABLE.sql
+¦       shop-Database_Table.sql
+¦       shop-MOCK-DATA.sql
+¦       shop-mock-data1.sql
+¦       shop-mock-data2.sql
+¦       shop-RESTART.sql
 ¦       SQL-SCRIPTS-README.md
 ¦       
 +---www

@@ -1,5 +1,8 @@
+// image-service/src/main/java/com/perfect8/image/config/SecurityConfig.java
+
 package com.perfect8.image.config;
 
+import com.perfect8.image.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,6 +29,8 @@ import java.util.Arrays;
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     /**
      * Configure Security Filter Chain
@@ -69,7 +75,10 @@ public class SecurityConfig {
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
-                );
+                )
+
+                // Add JWT filter before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -85,12 +94,13 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",  // React development
                 "http://localhost:4200",  // Angular development
+                "http://localhost:8000",  // Django admin GUI
                 "http://localhost:8080",  // Local testing
                 "http://localhost:8081",  // admin-service
                 "http://localhost:8082",  // blog-service
                 "http://localhost:8084",  // image-service
-                "http://localhost:8085"   // shop-service
-                // Add production URLs here
+                "http://localhost:8085",  // shop-service
+                "https://p8.rantila.com"  // Production
         ));
 
         // Allow methods
@@ -126,16 +136,4 @@ public class SecurityConfig {
 
         return source;
     }
-
-    // Version 2.0 - Commented out for future implementation
-    /*
-    // Image analytics - to be added in version 2.0
-    .requestMatchers("/api/images/analytics/**").hasRole("ADMIN")
-
-    // Image metrics - to be added in version 2.0
-    .requestMatchers("/api/images/metrics/**").hasRole("ADMIN")
-
-    // Advanced image processing - to be added in version 2.0
-    .requestMatchers("/api/images/batch/**").hasRole("ADMIN")
-    */
 }

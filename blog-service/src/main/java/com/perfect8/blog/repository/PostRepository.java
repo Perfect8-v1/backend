@@ -1,3 +1,5 @@
+// blog-service/src/main/java/com/perfect8/blog/repository/PostRepository.java
+
 package com.perfect8.blog.repository;
 
 import com.perfect8.blog.model.Post;
@@ -13,13 +15,13 @@ import java.util.Optional;
 
 /**
  * PostRepository - Blog post data access
- * 
- * Uses authorId (Long) to reference users in admin-service
- * No direct JPA relation to User entity
+ *
+ * UPDATED (2025-12-03):
+ * - Removed authorId methods (auth handled by admin-service)
  */
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    
+
     /**
      * Find all published posts (paginated)
      */
@@ -31,21 +33,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByIsPublishedTrue();
 
     /**
-     * Find published posts by author
-     */
-    Page<Post> findByAuthorIdAndIsPublishedTrue(Long authorId, Pageable pageable);
-
-    /**
-     * Find all posts by author (including drafts)
-     */
-    Page<Post> findByAuthorId(Long authorId, Pageable pageable);
-
-    /**
-     * Find all posts by author (list)
-     */
-    List<Post> findByAuthorId(Long authorId);
-
-    /**
      * Find post by slug (for SEO-friendly URLs)
      */
     Optional<Post> findBySlug(String slug);
@@ -54,7 +41,7 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * Find published post by slug
      */
     Optional<Post> findBySlugAndIsPublishedTrue(String slug);
-    
+
     /**
      * Check if slug already exists
      */
@@ -64,16 +51,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      * Find all drafts (unpublished posts)
      */
     Page<Post> findByIsPublishedFalse(Pageable pageable);
-
-    /**
-     * Find drafts by author
-     */
-    List<Post> findByAuthorIdAndIsPublishedFalse(Long authorId);
-
-    /**
-     * Count posts by author
-     */
-    long countByAuthorId(Long authorId);
 
     /**
      * Count published posts

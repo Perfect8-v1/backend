@@ -1,3 +1,5 @@
+// blog-service/src/main/java/com/perfect8/blog/service/PostService.java
+
 package com.perfect8.blog.service;
 
 import com.perfect8.blog.dto.PostDto;
@@ -10,8 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +28,6 @@ public class PostService {
      */
     public Page<Post> getPublishedPosts(Pageable pageable) {
         return postRepository.findByIsPublishedTrue(pageable);
-    }
-
-    /**
-     * Get published posts by author
-     */
-    public Page<Post> getPublishedPostsByAuthor(Long authorId, Pageable pageable) {
-        return postRepository.findByAuthorIdAndIsPublishedTrue(authorId, pageable);
     }
 
     /**
@@ -59,11 +52,11 @@ public class PostService {
     public Post getPublishedPostBySlug(String slug) {
         Post post = postRepository.findBySlugAndIsPublishedTrue(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Published post not found with slug: " + slug));
-        
+
         // Increment view count
         post.incrementViewCount();
         postRepository.save(post);
-        
+
         return post;
     }
 
@@ -84,13 +77,6 @@ public class PostService {
     }
 
     /**
-     * Get all posts by author (including drafts) - Admin only
-     */
-    public Page<Post> getPostsByAuthor(Long authorId, Pageable pageable) {
-        return postRepository.findByAuthorId(authorId, pageable);
-    }
-
-    /**
      * Get all drafts - Admin only
      */
     public Page<Post> getDrafts(Pageable pageable) {
@@ -98,17 +84,10 @@ public class PostService {
     }
 
     /**
-     * Get drafts by author - Admin only
-     */
-    public List<Post> getDraftsByAuthor(Long authorId) {
-        return postRepository.findByAuthorIdAndIsPublishedFalse(authorId);
-    }
-
-    /**
      * Create new post
      */
-    public Post createPost(String title, String content, Long authorId) {
-        log.info("Creating new post: {} by author: {}", title, authorId);
+    public Post createPost(String title, String content) {
+        log.info("Creating new post: {}", title);
 
         // Generate unique slug
         String slug = generateUniqueSlug(title);
@@ -117,7 +96,6 @@ public class PostService {
                 .title(title)
                 .content(content)
                 .slug(slug)
-                .authorId(authorId)
                 .isPublished(false)
                 .viewCount(0)
                 .build();
@@ -131,8 +109,8 @@ public class PostService {
     /**
      * Create post from DTO
      */
-    public Post createPost(PostDto postDto, Long authorId) {
-        return createPost(postDto.getTitle(), postDto.getContent(), authorId);
+    public Post createPost(PostDto postDto) {
+        return createPost(postDto.getTitle(), postDto.getContent());
     }
 
     /**
@@ -216,21 +194,6 @@ public class PostService {
         }
 
         return slug;
-    }
-
-    /**
-     * Check if user is author of post
-     */
-    public boolean isAuthor(Long postId, Long userId) {
-        Post post = getPostById(postId);
-        return post.getAuthorId() != null && post.getAuthorId().equals(userId);
-    }
-
-    /**
-     * Count posts by author
-     */
-    public long countPostsByAuthor(Long authorId) {
-        return postRepository.countByAuthorId(authorId);
     }
 
     /**

@@ -3,9 +3,7 @@ package com.perfect8.blog.controller;
 import com.perfect8.blog.dto.PostDto;
 import com.perfect8.blog.model.ImageReference;
 import com.perfect8.blog.model.Post;
-import com.perfect8.blog.security.JwtTokenProvider;
 import com.perfect8.blog.service.PostService;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +15,10 @@ import java.util.stream.Collectors;
 
 /**
  * REST Controller for blog posts
- * 
- * UPDATED (2025-11-20):
- * - Removed UserRepository dependency
- * - Gets userId from JWT token via JwtTokenProvider
- * - Central auth handled by admin-service
- * - Fixed method names to match PostService
+ *
+ * UPDATED (2025-12-03):
+ * - Removed authorId/userId handling
+ * - Auth handled by admin-service via JWT
  */
 @RestController
 @RequestMapping("/api/v1/posts")
@@ -30,7 +26,6 @@ import java.util.stream.Collectors;
 public class PostController {
 
     private final PostService postService;
-    private final JwtTokenProvider jwtTokenProvider;
 
     @GetMapping
     public Page<PostDto> listPublished(Pageable pageable) {
@@ -44,10 +39,8 @@ public class PostController {
     }
 
     @PostMapping
-    public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto,
-                                              HttpServletRequest request) {
-        Long userId = extractUserIdFromToken(request);
-        Post created = postService.createPost(postDto, userId);
+    public ResponseEntity<PostDto> createPost(@RequestBody PostDto postDto) {
+        Post created = postService.createPost(postDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(toDto(created));
     }
 
@@ -65,14 +58,6 @@ public class PostController {
     }
 
     // --- Helper methods ---
-
-    private Long extractUserIdFromToken(HttpServletRequest request) {
-        String token = jwtTokenProvider.resolveToken(request);
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            return jwtTokenProvider.getUserIdFromToken(token);
-        }
-        return null;
-    }
 
     private PostDto toDto(Post post) {
         return PostDto.builder()
