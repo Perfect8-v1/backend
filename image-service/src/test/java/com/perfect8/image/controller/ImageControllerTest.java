@@ -27,6 +27,7 @@ import static org.hamcrest.Matchers.*;
 public class ImageControllerTest {
 
     private static final String BASE_URL = "https://p8.rantila.com";
+    private static final String API_PATH = "/api/v1/images";
     private static Long uploadedImageId;
 
     @BeforeAll
@@ -41,7 +42,7 @@ public class ImageControllerTest {
     public void testHealthCheck() {
         given()
                 .when()
-                .get("/api/images/health")
+                .get(API_PATH + "/health")
                 .then()
                 .statusCode(200)
                 .body(containsString("running"));
@@ -64,7 +65,7 @@ public class ImageControllerTest {
                 .multiPart("altText", "REST Assured Test Image")
                 .multiPart("category", "test")
                 .when()
-                .post("/api/images/upload")
+                .post(API_PATH + "/upload")
                 .then()
                 .statusCode(201)
                 .contentType(ContentType.JSON)
@@ -94,7 +95,7 @@ public class ImageControllerTest {
 
         given()
                 .when()
-                .get("/api/images/" + uploadedImageId)
+                .get(API_PATH + "/" + uploadedImageId)
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
@@ -109,7 +110,7 @@ public class ImageControllerTest {
     public void testGetImagesByCategory() {
         given()
                 .when()
-                .get("/api/images/category/test")
+                .get(API_PATH + "/category/test")
                 .then()
                 .statusCode(anyOf(equalTo(200), equalTo(204)));
     }
@@ -127,7 +128,7 @@ public class ImageControllerTest {
                 .param("altText", "Updated Alt Text")
                 .param("category", "updated-test")
                 .when()
-                .put("/api/images/" + uploadedImageId)
+                .put(API_PATH + "/" + uploadedImageId)
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
@@ -141,7 +142,7 @@ public class ImageControllerTest {
     public void testGetNonExistentImage() {
         given()
                 .when()
-                .get("/api/images/999999")
+                .get(API_PATH + "/999999")
                 .then()
                 .statusCode(404);
     }
@@ -160,7 +161,7 @@ public class ImageControllerTest {
         given()
                 .multiPart("file", invalidFile)
                 .when()
-                .post("/api/images/upload")
+                .post(API_PATH + "/upload")
                 .then()
                 .statusCode(400);
     }
@@ -176,7 +177,7 @@ public class ImageControllerTest {
 
         given()
                 .when()
-                .delete("/api/images/" + uploadedImageId)
+                .delete(API_PATH + "/" + uploadedImageId)
                 .then()
                 .statusCode(204);
 
@@ -194,7 +195,7 @@ public class ImageControllerTest {
 
         given()
                 .when()
-                .get("/api/images/" + uploadedImageId)
+                .get(API_PATH + "/" + uploadedImageId)
                 .then()
                 .statusCode(404);
     }

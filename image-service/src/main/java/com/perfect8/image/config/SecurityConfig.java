@@ -54,6 +54,7 @@ public class SecurityConfig {
                         // Health check endpoints
                         .requestMatchers(
                                 "/api/health",
+                                "/api/images/health",
                                 "/actuator/health",
                                 "/actuator/health/**"
                         ).permitAll()
@@ -61,6 +62,7 @@ public class SecurityConfig {
                         // Public image viewing (GET)
                         .requestMatchers(HttpMethod.GET,
                                 "/api/images/{imageId}",
+                                "/api/images/category/**",
                                 "/api/images/*/thumbnail",
                                 "/api/images/*/preview"
                         ).permitAll()
