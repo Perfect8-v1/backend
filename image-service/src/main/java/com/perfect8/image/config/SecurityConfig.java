@@ -1,5 +1,3 @@
-// image-service/src/main/java/com/perfect8/image/config/SecurityConfig.java
-
 package com.perfect8.image.config;
 
 import com.perfect8.image.security.JwtAuthenticationFilter;
@@ -59,13 +57,8 @@ public class SecurityConfig {
                                 "/actuator/health/**"
                         ).permitAll()
 
-                        // Public image viewing (GET)
-                        .requestMatchers(HttpMethod.GET,
-                                "/api/images/{imageId}",
-                                "/api/images/category/**",
-                                "/api/images/*/thumbnail",
-                                "/api/images/*/preview"
-                        ).permitAll()
+                        // ALL GET requests to images are public
+                        .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
 
                         // Image upload/management - require authentication
                         .requestMatchers(HttpMethod.POST, "/api/images/**").authenticated()
@@ -92,25 +85,22 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",  // React development
-                "http://localhost:4200",  // Angular development
-                "http://localhost:8000",  // Django admin GUI
-                "http://localhost:8080",  // Local testing
-                "http://localhost:8081",  // admin-service
-                "http://localhost:8082",  // blog-service
-                "http://localhost:8084",  // image-service
-                "http://localhost:8085",  // shop-service
-                "https://p8.rantila.com"  // Production
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:8000",
+                "http://localhost:8080",
+                "http://localhost:8081",
+                "http://localhost:8082",
+                "http://localhost:8084",
+                "http://localhost:8085",
+                "https://p8.rantila.com"
         ));
 
-        // Allow methods
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
 
-        // Allow headers
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
@@ -121,16 +111,12 @@ public class SecurityConfig {
                 "Access-Control-Request-Headers"
         ));
 
-        // Exposed headers
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Disposition"
         ));
 
-        // Allow credentials
         configuration.setAllowCredentials(true);
-
-        // Max age for preflight requests
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
