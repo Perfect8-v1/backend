@@ -60,7 +60,7 @@ public class ImageDto {
     private Integer originalWidth;
     private Integer originalHeight;
     private Long originalSizeBytes;
-    private String readableSize; // "1.5 MB"
+    private String readableSize;
 
     /**
      * Image status
@@ -74,6 +74,11 @@ public class ImageDto {
      */
     private String referenceType;
     private Long referenceId;
+
+    /**
+     * Categorization
+     */
+    private String category;
 
     /**
      * SEO and accessibility
@@ -113,11 +118,8 @@ public class ImageDto {
         private Integer width;
         private Integer height;
         private Double aspectRatio;
-        private String orientation; // "landscape", "portrait", "square"
+        private String orientation;
 
-        /**
-         * Create from width and height
-         */
         public static DimensionDto from(Integer width, Integer height) {
             if (width == null || height == null) {
                 return null;
@@ -156,9 +158,6 @@ public class ImageDto {
         private String failureReason;
         private Long processingTimeMs;
 
-        /**
-         * Create from ImageStatus
-         */
         public static ProcessingStatusDto from(ImageStatus status, String errorMessage, Long processingTime) {
             return ProcessingStatusDto.builder()
                     .status(status)

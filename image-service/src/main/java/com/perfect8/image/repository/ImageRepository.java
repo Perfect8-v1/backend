@@ -18,38 +18,38 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     List<Image> findByReferenceTypeAndReferenceId(String referenceType, Long referenceId);
 
     // Find by category
-    List<Image> findByCategoryAndImageStatusAndIsDeletedFalse(String category, ImageStatus status);
+    List<Image> findByCategoryAndImageStatusAndIsDeletedFalse(String category, ImageStatus imageStatus);
 
     // Find all active images
-    List<Image> findByImageStatusAndIsDeletedFalse(ImageStatus status);
+    List<Image> findByImageStatusAndIsDeletedFalse(ImageStatus imageStatus);
 
     // Find by stored filename
     Optional<Image> findByStoredFilename(String storedFilename);
 
     // Find active images by reference
-    @Query("SELECT i FROM Image i WHERE i.referenceType = :type AND i.referenceId = :customerEmailDTOId " +
-            "AND i.imageStatus = :status AND i.isDeleted = false")
+    @Query("SELECT i FROM Image i WHERE i.referenceType = :referenceType AND i.referenceId = :referenceId " +
+            "AND i.imageStatus = :imageStatus AND i.isDeleted = false")
     List<Image> findActiveImagesByReference(
-            @Param("type") String referenceType,
-            @Param("id") Long referenceId,
-            @Param("status") ImageStatus status
+            @Param("referenceType") String referenceType,
+            @Param("referenceId") Long referenceId,
+            @Param("imageStatus") ImageStatus imageStatus
     );
 
     // Count images by category
     Long countByCategoryAndIsDeletedFalse(String category);
 
     // Find images needing processing
-    List<Image> findByImageStatus(ImageStatus status);
+    List<Image> findByImageStatus(ImageStatus imageStatus);
 
     // Find orphaned images (no reference)
     @Query("SELECT i FROM Image i WHERE i.referenceType IS NULL AND i.referenceId IS NULL " +
-            "AND i.createdDate < :before AND i.isDeleted = false")
-    List<Image> findOrphanedImages(@Param("before") LocalDateTime before);
+            "AND i.createdDate < :createdBefore AND i.isDeleted = false")
+    List<Image> findOrphanedImages(@Param("createdBefore") LocalDateTime createdBefore);
 
     // Find by multiple categories
     List<Image> findByCategoryInAndImageStatusAndIsDeletedFalse(
             List<String> categories,
-            ImageStatus status
+            ImageStatus imageStatus
     );
 
     // Check if image exists for reference

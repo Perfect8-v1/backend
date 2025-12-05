@@ -65,6 +65,9 @@ public class ImageMapper {
                 .referenceType(image.getReferenceType())
                 .referenceId(image.getReferenceId())
 
+                // Categorization
+                .category(image.getCategory())
+
                 // SEO and accessibility
                 .altText(image.getAltText())
                 .title(image.getTitle())
@@ -137,6 +140,9 @@ public class ImageMapper {
                 .referenceType(dto.getReferenceType())
                 .referenceId(dto.getReferenceId())
 
+                // Categorization
+                .category(dto.getCategory())
+
                 // SEO
                 .altText(dto.getAltText())
                 .title(dto.getTitle())
@@ -190,7 +196,6 @@ public class ImageMapper {
     private Map<ImageSize, String> buildUrlsMap(Image image) {
         Map<ImageSize, String> urls = new HashMap<>();
 
-        // Add non-null URLs to map
         if (image.getThumbnailUrl() != null) {
             urls.put(ImageSize.THUMBNAIL, image.getThumbnailUrl());
         }
@@ -216,12 +221,14 @@ public class ImageMapper {
             return;
         }
 
-        // Update only non-null values from DTO
         if (dto.getAltText() != null) {
             existingImage.setAltText(dto.getAltText());
         }
         if (dto.getTitle() != null) {
             existingImage.setTitle(dto.getTitle());
+        }
+        if (dto.getCategory() != null) {
+            existingImage.setCategory(dto.getCategory());
         }
         if (dto.getReferenceType() != null) {
             existingImage.setReferenceType(dto.getReferenceType());
@@ -265,7 +272,6 @@ public class ImageMapper {
      * Simple version without computed fields
      */
     public ImageDto createSuccessDto(Image image) {
-        // Just use the standard toDto method
         return toDto(image);
     }
 }
