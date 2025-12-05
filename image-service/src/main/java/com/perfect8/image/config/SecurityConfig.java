@@ -7,7 +7,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -19,10 +18,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -37,27 +36,16 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        // Health and error endpoints
-                        .requestMatchers(
-                                "/api/health",
-                                "/api/images/health",
-                                "/actuator/health",
-                                "/actuator/health/**",
-                                "/error"
-                        ).permitAll()
+                        // Public endpoints - order matters!
+                        .requestMatchers("/error").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/api/health").permitAll()
+                        .requestMatchers("/api/images/health").permitAll()
 
-                        // ALL GET requests to images are public
+                        // ALL GET requests to /api/images are public
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
 
-                        // Image upload/management - require authentication
-                        .requestMatchers(HttpMethod.POST, "/api/images/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/images/**").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/images/**").authenticated()
-
-                        // Admin endpoints - require ADMIN role
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // All other requests require authentication
+                        // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -69,17 +57,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",
-                "http://localhost:4200",
-                "http://localhost:8000",
-                "http://localhost:8080",
-                "http://localhost:8081",
-                "http://localhost:8082",
-                "http://localhost:8084",
-                "http://localhost:8085",
-                "https://p8.rantila.com"
-        ));
+        configuration.setAllowedOriginPatterns(List.of("*"));
 
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
