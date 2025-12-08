@@ -28,12 +28,34 @@ public class ImageControllerTest {
 
     private static final String BASE_URL = "https://p8.rantila.com";
     private static final String API_PATH = "/api/v1/images";
+    private static final String AUTH_PATH = "/api/v1/auth";
+
+    private static String jwtToken;
     private static Long uploadedImageId;
 
     @BeforeAll
     public static void setup() {
         RestAssured.baseURI = BASE_URL;
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+
+        jwtToken = getAuthToken();
+    }
+
+    private static String getAuthToken() {
+        String loginJson = "{\"email\":\"admin@perfect8.com\",\"password\":\"Admin123!\"}";
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .body(loginJson)
+                .when()
+                .post(AUTH_PATH + "/login")
+                .then()
+                .statusCode(200)
+                .extract().response();
+
+        String token = response.jsonPath().getString("token");
+        System.out.println("✅ JWT-token hämtad");
+        return token;
     }
 
     @Test
@@ -61,6 +83,7 @@ public class ImageControllerTest {
         }
 
         Response response = given()
+                .header("Authorization", "Bearer " + jwtToken)
                 .multiPart("file", testImage)
                 .multiPart("altText", "REST Assured Test Image")
                 .multiPart("category", "test")
@@ -125,6 +148,7 @@ public class ImageControllerTest {
         }
 
         given()
+                .header("Authorization", "Bearer " + jwtToken)
                 .param("altText", "Updated Alt Text")
                 .param("category", "updated-test")
                 .when()
@@ -159,6 +183,7 @@ public class ImageControllerTest {
         }
 
         given()
+                .header("Authorization", "Bearer " + jwtToken)
                 .multiPart("file", invalidFile)
                 .when()
                 .post(API_PATH + "/upload")
@@ -176,6 +201,7 @@ public class ImageControllerTest {
         }
 
         given()
+                .header("Authorization", "Bearer " + jwtToken)
                 .when()
                 .delete(API_PATH + "/" + uploadedImageId)
                 .then()

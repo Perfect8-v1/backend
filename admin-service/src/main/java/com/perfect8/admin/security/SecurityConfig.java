@@ -3,9 +3,6 @@ package com.perfect8.admin.security;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,9 +20,10 @@ import java.util.Arrays;
 
 /**
  * Security Configuration for Admin Service
- * Version 1.0 - Core security setup for admin authentication and authorization
  * 
- * UPDATED (2025-11-23): Added CORS support for Flutter frontend (localhost:8000)
+ * Plain branch - Uses API Key authentication instead of JWT.
+ * 
+ * @version 1.0-plain
  */
 @Configuration
 @EnableWebSecurity
@@ -33,7 +31,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     /**
      * Configure Security Filter Chain
@@ -54,14 +52,7 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(authorize -> authorize
-                        // Public endpoints - authentication
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/api/auth/refresh"
-                        ).permitAll()
-
-                        // Health check endpoints
+                        // Health check endpoints - public
                         .requestMatchers(
                                 "/api/health",
                                 "/actuator/health",
@@ -71,61 +62,55 @@ public class SecurityConfig {
                         // Admin endpoints - require ADMIN role
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // Auth endpoints - require ADMIN role (API key)
+                        .requestMatchers("/api/auth/**").hasRole("ADMIN")
+
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
 
-                // Add JWT filter before UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // Add API Key filter before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
     /**
      * Configure CORS settings
-     * UPDATED (2025-11-23): Added localhost:8000 for Flutter frontend
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8000",  // Flutter development (ADDED 2025-11-23)
-                "http://localhost:3000",  // React development
-                "http://localhost:4200",  // Angular development
-                "http://localhost:8080",  // Local testing
-                "http://localhost:8081",  // Admin service port
-                "http://p8.rantila.com",  // Production server
-                "http://perfect8alpine.rantila.com"  // Production domain
+                "http://localhost:8000",
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:8080",
+                "http://localhost:8081",
+                "http://p8.rantila.com",
+                "http://perfect8alpine.rantila.com"
         ));
 
-        // Allow methods
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
 
-        // Allow headers
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
+                "X-API-Key",
                 "X-Requested-With",
                 "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
+                "Origin"
         ));
 
-        // Exposed headers
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Disposition"
         ));
 
-        // Allow credentials
         configuration.setAllowCredentials(true);
-
-        // Max age for preflight requests
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -141,28 +126,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    /**
-     * Authentication manager bean
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    // Version 2.0 - Commented out for future implementation
-    /*
-    // Dashboard endpoints - to be added in version 2.0
-    .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
-
-    // Analytics endpoints - to be added in version 2.0
-    .requestMatchers("/api/analytics/**").hasRole("ADMIN")
-
-    // Metrics endpoints - to be added in version 2.0
-    .requestMatchers("/api/metrics/**").hasRole("ADMIN")
-
-    // Performance monitoring - to be added in version 2.0
-    .requestMatchers("/actuator/**").hasRole("ADMIN")
-    */
 }
