@@ -11,12 +11,18 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
+// @Component - Disabled for Plain branch (using ApiKeyAuthenticationFilter instead)
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-@Component
+/**
+ * JWT Authentication Filter for Admin Service
+ * 
+ * NOTE: @Component disabled for Plain branch.
+ * Re-enable when switching back to JWT authentication in AuthMan branch.
+ */
+// @Component - Disabled for Plain branch
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -38,7 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
-                username = jwtUtil.extractUsername(jwt);  // Ändrat från getUsernameFromToken till extractUsername
+                username = jwtUtil.extractUsername(jwt);
             } catch (Exception e) {
                 logger.error("JWT Token extraction failed", e);
             }
