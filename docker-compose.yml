@@ -133,6 +133,7 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - MAIL_PROTOCOL=${MAIL_PROTOCOL:-smtp}
       - JWT_SECRET=${JWT_SECRET}
+      - EMAIL_API_KEY=${EMAIL_API_KEY}
     ports:
       - "8083:8083"
     healthcheck:
@@ -167,6 +168,7 @@ services:
       - MANAGEMENT_HEALTH_READINESSSTATE_ENABLED=true
       - EMAIL_BASE_URL=http://email-service:8083
       - JWT_SECRET=${JWT_SECRET}
+      - IMAGE_API_KEY=${IMAGE_API_KEY}
     ports:
       - "8084:8084"
     healthcheck:
@@ -204,6 +206,7 @@ services:
       - EMAIL_BASE_URL=http://email-service:8083
       - IMAGE_BASE_URL=http://image-service:8084
       - JWT_SECRET=${JWT_SECRET}
+      - ADMIN_API_KEY=${ADMIN_API_KEY}
     ports:
       - "8081:8081"
     healthcheck:
@@ -244,6 +247,7 @@ services:
       - IMAGE_BASE_URL=http://image-service:8084
       - ADMIN_BASE_URL=http://admin-service:8081
       - JWT_SECRET=${JWT_SECRET}
+      - BLOG_API_KEY=${BLOG_API_KEY}
     ports:
       - "8082:8082"
     healthcheck:
@@ -289,6 +293,7 @@ services:
       - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
       - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
       - JWT_SECRET=${JWT_SECRET}
+      - SHOP_API_KEY=${SHOP_API_KEY}
     ports:
       - "8085:8085"
     healthcheck:
