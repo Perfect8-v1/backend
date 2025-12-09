@@ -1,4 +1,4 @@
-package com.perfect8.blog.security;
+package com.perfect8.shop.security;
 
 import com.perfect8.common.auth.AuthProvider;
 import jakarta.servlet.FilterChain;
@@ -26,7 +26,7 @@ import java.util.List;
 @Slf4j
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final String SERVICE_NAME = "blog";
+    private static final String SERVICE_NAME = "shop";
     private final AuthProvider authProvider;
 
     @Override
