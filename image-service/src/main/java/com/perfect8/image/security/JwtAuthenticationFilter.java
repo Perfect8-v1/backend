@@ -11,13 +11,19 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
+// @Component - Disabled for Plain branch (using ApiKeyAuthenticationFilter instead)
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
 
-@Component
+/**
+ * JWT Authentication Filter for Image Service
+ * 
+ * NOTE: @Component disabled for Plain branch.
+ * Re-enable when switching back to JWT authentication in AuthMan branch.
+ */
+// @Component - Disabled for Plain branch
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;

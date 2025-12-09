@@ -1,8 +1,6 @@
-// image-service/src/main/java/com/perfect8/image/config/SecurityConfig.java
-
 package com.perfect8.image.config;
 
-import com.perfect8.image.security.JwtAuthenticationFilter;
+import com.perfect8.image.security.ApiKeyAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,12 +18,19 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Security Configuration for Image Service
+ * 
+ * Plain branch - Uses API Key authentication instead of JWT.
+ * 
+ * @version 1.0-plain
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -36,7 +41,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(authorize -> authorize
-                        // Public endpoints - order matters!
+                        // Public endpoints
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
@@ -44,11 +49,20 @@ public class SecurityConfig {
 
                         // ALL GET requests to /api/images are public
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/images/**").permitAll()
+
+                        // POST/PUT/DELETE require ADMIN role
+                        .requestMatchers(HttpMethod.POST, "/api/images/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/images/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/images/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/images/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/images/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/images/**").hasRole("ADMIN")
 
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -66,11 +80,10 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
+                "X-API-Key",
                 "X-Requested-With",
                 "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
+                "Origin"
         ));
 
         configuration.setExposedHeaders(Arrays.asList(
