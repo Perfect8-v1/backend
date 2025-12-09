@@ -1,5 +1,7 @@
 package com.perfect8.blog.config;
 
+import com.perfect8.blog.security.ApiKeyAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -11,6 +13,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -19,12 +22,18 @@ import java.util.Arrays;
 
 /**
  * Security Configuration for Blog Service
- * Version 1.0 - Simplified security without JWT filter
+ * 
+ * Plain branch - Uses API Key authentication instead of JWT.
+ * 
+ * @version 1.0-plain
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     /**
      * Configure Security Filter Chain
@@ -45,7 +54,7 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(authorize -> authorize
-                        // Health check endpoints
+                        // Health check endpoints - public
                         .requestMatchers(
                                 "/api/health",
                                 "/actuator/health",
@@ -61,9 +70,20 @@ public class SecurityConfig {
                                 "/api/posts/author/**"
                         ).permitAll()
 
-                        // All other requests permitted for v1.0
-                        .anyRequest().permitAll()
-                );
+                        // Admin endpoints - require ADMIN role
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        // POST/PUT/DELETE on posts - require ADMIN role
+                        .requestMatchers(HttpMethod.POST, "/api/posts/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/posts/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/posts/**").hasRole("ADMIN")
+
+                        // All other requests require authentication
+                        .anyRequest().authenticated()
+                )
+
+                // Add API Key filter before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -75,41 +95,34 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:3000",  // React development
-                "http://localhost:4200",  // Angular development
-                "http://localhost:8080",  // Local testing
-                "http://localhost:8082"   // Blog service port
-                // Add production URLs here
+                "http://localhost:3000",
+                "http://localhost:4200",
+                "http://localhost:8080",
+                "http://localhost:8082",
+                "http://p8.rantila.com",
+                "https://p8.rantila.com"
         ));
 
-        // Allow methods
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
 
-        // Allow headers
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
+                "X-API-Key",
                 "X-Requested-With",
                 "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
+                "Origin"
         ));
 
-        // Exposed headers
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Disposition"
         ));
 
-        // Allow credentials
         configuration.setAllowCredentials(true);
-
-        // Max age for preflight requests
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -125,17 +138,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
-    // Version 2.0 - JWT Authentication and authorization will be added
-    /*
-    // Add JwtAuthenticationFilter
-    // Add authentication endpoints
-    // Add role-based access control
-
-    // Analytics endpoints - to be added in version 2.0
-    .requestMatchers("/api/analytics/**").hasRole("ADMIN")
-
-    // Content metrics - to be added in version 2.0
-    .requestMatchers("/api/metrics/**").hasRole("ADMIN")
-    */
 }
