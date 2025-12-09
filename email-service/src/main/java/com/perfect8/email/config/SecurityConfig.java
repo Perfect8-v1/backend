@@ -1,8 +1,6 @@
-// email-service/src/main/java/com/perfect8/email/config/SecurityConfig.java
-
 package com.perfect8.email.config;
 
-import com.perfect8.email.security.JwtAuthenticationFilter;
+import com.perfect8.email.security.ApiKeyAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,7 +19,10 @@ import java.util.Arrays;
 
 /**
  * Security Configuration for Email Service
- * Version 1.0 - Core security setup for email notifications
+ * 
+ * Plain branch - Uses API Key authentication instead of JWT.
+ * 
+ * @version 1.0-plain
  */
 @Configuration
 @EnableWebSecurity
@@ -29,7 +30,7 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     /**
      * Configure Security Filter Chain
@@ -50,22 +51,22 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(authorize -> authorize
-                        // Health check endpoints
+                        // Health check endpoints - public
                         .requestMatchers(
                                 "/api/health",
                                 "/actuator/health",
                                 "/actuator/health/**"
                         ).permitAll()
 
-                        // Email endpoints - permit all (internal service-to-service communication)
-                        .requestMatchers("/api/email/**").permitAll()
+                        // Email endpoints - require ADMIN role
+                        .requestMatchers("/api/email/**").hasRole("ADMIN")
 
                         // All other requests require authentication
                         .anyRequest().authenticated()
                 )
 
-                // Add JWT filter before UsernamePasswordAuthenticationFilter
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // Add API Key filter before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -77,43 +78,35 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Allow origins - configure based on environment
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:8000",  // Django admin GUI
-                "http://localhost:8081",  // admin-service
-                "http://localhost:8082",  // blog-service
-                "http://localhost:8083",  // email-service
-                "http://localhost:8084",  // image-service
-                "http://localhost:8085",  // shop-service
-                "https://p8.rantila.com"  // Production
+                "http://localhost:8081",
+                "http://localhost:8082",
+                "http://localhost:8083",
+                "http://localhost:8084",
+                "http://localhost:8085",
+                "http://p8.rantila.com",
+                "https://p8.rantila.com"
         ));
 
-        // Allow methods
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
 
-        // Allow headers
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
+                "X-API-Key",
                 "X-Requested-With",
                 "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"
+                "Origin"
         ));
 
-        // Exposed headers
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Disposition"
         ));
 
-        // Allow credentials
         configuration.setAllowCredentials(true);
-
-        // Max age for preflight requests
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
