@@ -17,6 +17,9 @@ import java.util.List;
 /**
  * Product Entity - Version 1.0
  * Magnum Opus Compliant: Descriptive field names (productId not customerEmailDTOId)
+ * 
+ * FIXED (2025-12-10): Added FetchType.EAGER on tags and additionalImages
+ * to prevent LazyInitializationException when serializing to JSON
  */
 @Entity
 @Table(name = "products")
@@ -30,7 +33,7 @@ public class Product {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productId;  // CHANGED: customerEmailDTOId → productId (Magnum Opus)
+    private Long productId;
 
     @Column(name = "name", nullable = false, length = 200)
     private String name;
@@ -62,7 +65,8 @@ public class Product {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
-    @ElementCollection
+    // FIXED: Added fetch = FetchType.EAGER to prevent LazyInitializationException
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "image_url")
     @Builder.Default
@@ -95,7 +99,8 @@ public class Product {
     @Column(name = "meta_keywords", length = 500)
     private String metaKeywords;
 
-    @ElementCollection
+    // FIXED: Added fetch = FetchType.EAGER to prevent LazyInitializationException
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "product_tags", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "tag")
     @Builder.Default
@@ -125,10 +130,8 @@ public class Product {
     @Builder.Default
     private List<CartItem> cartItems = new ArrayList<>();
 
-    // FIXED: JPA handles createdDate automatically
     private LocalDateTime createdDate;
 
-    // FIXED: JPA handles updatedDate automatically
     private LocalDateTime updatedDate;
 
     @PrePersist
@@ -156,10 +159,6 @@ public class Product {
     protected void onUpdate() {
         updatedDate = LocalDateTime.now();
     }
-
-    // ========== MAGNUM OPUS COMPLIANT ==========
-    // Lombok generates: getProductId() / setProductId()
-    // No alias methods - one method, one name
 
     // ========== Business methods ==========
 
