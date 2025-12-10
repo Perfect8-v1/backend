@@ -58,7 +58,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/health",
                                 "/actuator/health",
-                                "/actuator/health/**"
+                                "/actuator/health/**",
+                                "/error"
                         ).permitAll()
 
                         // Admin endpoints - require ADMIN role
