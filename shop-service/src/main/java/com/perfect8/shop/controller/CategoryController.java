@@ -58,15 +58,15 @@ public class CategoryController {
     }
 
     /**
-     * Get category by ID (Public endpoint)
+     * Get category by categoryId (Public endpoint)
      */
-    @GetMapping("/{customerEmailDTOId}")
-    public ResponseEntity<ApiResponse<Category>> getCategoryById(@PathVariable Long id) {
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<Category>> getCategoryByCategoryId(@PathVariable Long categoryId) {
         try {
-            Category category = categoryService.getCategoryById(id);
+            Category category = categoryService.getCategoryByCategoryId(categoryId);
             return ResponseEntity.ok(ApiResponse.success("Category retrieved successfully", category));
         } catch (Exception e) {
-            log.error("Error retrieving category {}: {}", id, e.getMessage());
+            log.error("Error retrieving category {}: {}", categoryId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Failed to retrieve category: " + e.getMessage()));
         }
@@ -102,7 +102,7 @@ public class CategoryController {
     }
 
     /**
-     * Get subcategories by parent ID (Public endpoint)
+     * Get subcategories by parent categoryId (Public endpoint)
      */
     @GetMapping("/{parentId}/subcategories")
     public ResponseEntity<ApiResponse<List<Category>>> getSubcategories(@PathVariable Long parentId) {
@@ -132,9 +132,9 @@ public class CategoryController {
     /**
      * Get products by category with pagination (Public endpoint)
      */
-    @GetMapping("/{customerEmailDTOId}/products")
+    @GetMapping("/{categoryId}/products")
     public ResponseEntity<ApiResponse<Page<Product>>> getProductsByCategory(
-            @PathVariable Long id,
+            @PathVariable Long categoryId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(defaultValue = "name") String sortBy,
@@ -145,10 +145,10 @@ public class CategoryController {
                     : Sort.by(sortBy).ascending();
 
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Product> products = categoryService.getProductsByCategory(id, pageable);
+            Page<Product> products = categoryService.getProductsByCategory(categoryId, pageable);
             return ResponseEntity.ok(ApiResponse.success("Products retrieved successfully", products));
         } catch (Exception e) {
-            log.error("Error retrieving products for category {}: {}", id, e.getMessage());
+            log.error("Error retrieving products for category {}: {}", categoryId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to retrieve products: " + e.getMessage()));
         }
     }
@@ -172,16 +172,16 @@ public class CategoryController {
     /**
      * Update category (Admin only)
      */
-    @PutMapping("/{customerEmailDTOId}")
+    @PutMapping("/{categoryId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Category>> updateCategory(
-            @PathVariable Long id,
+            @PathVariable Long categoryId,
             @Valid @RequestBody CategoryDTO categoryDTO) {
         try {
-            Category updatedCategory = categoryService.updateCategory(id, categoryDTO);
+            Category updatedCategory = categoryService.updateCategory(categoryId, categoryDTO);
             return ResponseEntity.ok(ApiResponse.success("Category updated successfully", updatedCategory));
         } catch (Exception e) {
-            log.error("Error updating category {}: {}", id, e.getMessage());
+            log.error("Error updating category {}: {}", categoryId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to update category: " + e.getMessage()));
         }
     }
@@ -189,14 +189,14 @@ public class CategoryController {
     /**
      * Delete category (Admin only) - Soft delete
      */
-    @DeleteMapping("/{customerEmailDTOId}")
+    @DeleteMapping("/{categoryId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<String>> deleteCategory(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<String>> deleteCategory(@PathVariable Long categoryId) {
         try {
-            categoryService.deleteCategory(id);
+            categoryService.deleteCategory(categoryId);
             return ResponseEntity.ok(ApiResponse.success("Category deleted successfully", "Category has been deactivated"));
         } catch (Exception e) {
-            log.error("Error deleting category {}: {}", id, e.getMessage());
+            log.error("Error deleting category {}: {}", categoryId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to delete category: " + e.getMessage()));
         }
     }
@@ -204,14 +204,14 @@ public class CategoryController {
     /**
      * Restore deleted category (Admin only)
      */
-    @PutMapping("/{customerEmailDTOId}/restore")
+    @PutMapping("/{categoryId}/restore")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Category>> restoreCategory(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Category>> restoreCategory(@PathVariable Long categoryId) {
         try {
-            Category restoredCategory = categoryService.restoreCategory(id);
+            Category restoredCategory = categoryService.restoreCategory(categoryId);
             return ResponseEntity.ok(ApiResponse.success("Category restored successfully", restoredCategory));
         } catch (Exception e) {
-            log.error("Error restoring category {}: {}", id, e.getMessage());
+            log.error("Error restoring category {}: {}", categoryId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to restore category: " + e.getMessage()));
         }
     }
@@ -219,15 +219,15 @@ public class CategoryController {
     /**
      * Toggle category active status (Admin only)
      */
-    @PutMapping("/{customerEmailDTOId}/toggle-status")
+    @PutMapping("/{categoryId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Category>> toggleCategoryStatus(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Category>> toggleCategoryStatus(@PathVariable Long categoryId) {
         try {
-            Category category = categoryService.toggleCategoryStatus(id);
+            Category category = categoryService.toggleCategoryStatus(categoryId);
             String status = category.getActive() ? "activated" : "deactivated";
             return ResponseEntity.ok(ApiResponse.success("Category " + status + " successfully", category));
         } catch (Exception e) {
-            log.error("Error toggling category {} status: {}", id, e.getMessage());
+            log.error("Error toggling category {} status: {}", categoryId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to toggle category status: " + e.getMessage()));
         }
     }
@@ -297,16 +297,16 @@ public class CategoryController {
     /**
      * Move category to different parent (Admin only)
      */
-    @PutMapping("/{customerEmailDTOId}/move")
+    @PutMapping("/{categoryId}/move")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Category>> moveCategory(
-            @PathVariable Long id,
+            @PathVariable Long categoryId,
             @RequestParam(required = false) Long newParentId) {
         try {
-            Category movedCategory = categoryService.moveCategory(id, newParentId);
+            Category movedCategory = categoryService.moveCategory(categoryId, newParentId);
             return ResponseEntity.ok(ApiResponse.success("Category moved successfully", movedCategory));
         } catch (Exception e) {
-            log.error("Error moving category {}: {}", id, e.getMessage());
+            log.error("Error moving category {}: {}", categoryId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to move category: " + e.getMessage()));
         }
     }
@@ -314,13 +314,13 @@ public class CategoryController {
     /**
      * Get category breadcrumb (Public endpoint)
      */
-    @GetMapping("/{customerEmailDTOId}/breadcrumb")
-    public ResponseEntity<ApiResponse<List<Category>>> getCategoryBreadcrumb(@PathVariable Long id) {
+    @GetMapping("/{categoryId}/breadcrumb")
+    public ResponseEntity<ApiResponse<List<Category>>> getCategoryBreadcrumb(@PathVariable Long categoryId) {
         try {
-            List<Category> breadcrumb = categoryService.getCategoryBreadcrumb(id);
+            List<Category> breadcrumb = categoryService.getCategoryBreadcrumb(categoryId);
             return ResponseEntity.ok(ApiResponse.success("Category breadcrumb retrieved successfully", breadcrumb));
         } catch (Exception e) {
-            log.error("Error retrieving category breadcrumb for {}: {}", id, e.getMessage());
+            log.error("Error retrieving category breadcrumb for {}: {}", categoryId, e.getMessage());
             return ResponseEntity.badRequest().body(ApiResponse.error("Failed to retrieve category breadcrumb: " + e.getMessage()));
         }
     }
@@ -332,9 +332,9 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Boolean>> checkSlugAvailable(
             @RequestParam String slug,
-            @RequestParam(required = false) Long excludeId) {
+            @RequestParam(required = false) Long excludeCategoryId) {
         try {
-            boolean available = categoryService.isSlugAvailable(slug, excludeId);
+            boolean available = categoryService.isSlugAvailable(slug, excludeCategoryId);
             return ResponseEntity.ok(ApiResponse.success("Slug check completed", available));
         } catch (Exception e) {
             log.error("Error checking slug availability: {}", e.getMessage());

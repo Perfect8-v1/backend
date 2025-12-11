@@ -44,7 +44,7 @@ public class CategoryService {
         return categoryRepository.findByActiveTrue();
     }
 
-    public Category getCategoryById(Long categoryId) {
+    public Category getCategoryByCategoryId(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with ID: " + categoryId));
     }
@@ -84,7 +84,7 @@ public class CategoryService {
                 .build();
 
         if (categoryDTO.getParentId() != null) {
-            Category parentCategory = getCategoryById(categoryDTO.getParentId());
+            Category parentCategory = getCategoryByCategoryId(categoryDTO.getParentId());
             category.setParent(parentCategory);
         }
 
@@ -92,7 +92,7 @@ public class CategoryService {
     }
 
     public Category updateCategory(Long categoryId, CategoryDTO categoryDTO) {
-        Category category = getCategoryById(categoryId);
+        Category category = getCategoryByCategoryId(categoryId);
 
         category.setName(categoryDTO.getName());
         category.setDescription(categoryDTO.getDescription());
@@ -100,7 +100,7 @@ public class CategoryService {
         category.setUpdatedDate(LocalDateTime.now());
 
         if (categoryDTO.getParentId() != null) {
-            Category parentCategory = getCategoryById(categoryDTO.getParentId());
+            Category parentCategory = getCategoryByCategoryId(categoryDTO.getParentId());
             category.setParent(parentCategory);
         }
 
@@ -108,21 +108,21 @@ public class CategoryService {
     }
 
     public void deleteCategory(Long categoryId) {
-        Category category = getCategoryById(categoryId);
+        Category category = getCategoryByCategoryId(categoryId);
         category.setActive(false);
         category.setUpdatedDate(LocalDateTime.now());
         categoryRepository.save(category);
     }
 
     public Category restoreCategory(Long categoryId) {
-        Category category = getCategoryById(categoryId);
+        Category category = getCategoryByCategoryId(categoryId);
         category.setActive(true);
         category.setUpdatedDate(LocalDateTime.now());
         return categoryRepository.save(category);
     }
 
     public Category toggleCategoryStatus(Long categoryId) {
-        Category category = getCategoryById(categoryId);
+        Category category = getCategoryByCategoryId(categoryId);
         category.setActive(!category.getActive());
         category.setUpdatedDate(LocalDateTime.now());
         return categoryRepository.save(category);
@@ -130,7 +130,7 @@ public class CategoryService {
 
     public void reorderCategories(List<Long> categoryIds) {
         for (int i = 0; i < categoryIds.size(); i++) {
-            Category category = getCategoryById(categoryIds.get(i));
+            Category category = getCategoryByCategoryId(categoryIds.get(i));
             category.setSortOrder(i + 1);
             categoryRepository.save(category);
         }
@@ -164,10 +164,10 @@ public class CategoryService {
     }
 
     public Category moveCategory(Long categoryId, Long newParentId) {
-        Category category = getCategoryById(categoryId);
+        Category category = getCategoryByCategoryId(categoryId);
 
         if (newParentId != null) {
-            Category newParentCategory = getCategoryById(newParentId);
+            Category newParentCategory = getCategoryByCategoryId(newParentId);
             category.setParent(newParentCategory);
         } else {
             category.setParent(null);
@@ -179,7 +179,7 @@ public class CategoryService {
 
     public List<Category> getCategoryBreadcrumb(Long categoryId) {
         List<Category> breadcrumb = new ArrayList<>();
-        Category category = getCategoryById(categoryId);
+        Category category = getCategoryByCategoryId(categoryId);
 
         while (category != null) {
             breadcrumb.add(0, category);
