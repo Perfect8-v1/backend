@@ -56,10 +56,10 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/{customerEmailDTOId}")
-    public ResponseEntity<ApiResponse<ProductResponse>> getProductById(@PathVariable Long id) {
+    @GetMapping("/{productId}")
+    public ResponseEntity<ApiResponse<ProductResponse>> getProductById(@PathVariable Long productId) {
         try {
-            Product product = productService.findById(id);
+            Product product = productService.findById(productId);
             ProductResponse response = convertToProductResponse(product);
             return ResponseEntity.ok(ApiResponse.success("Product retrieved successfully", response));
         } catch (Exception e) {
@@ -150,13 +150,13 @@ public class ProductController {
         }
     }
 
-    @PutMapping("/{customerEmailDTOId}")
+    @PutMapping("/{productId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProductResponse>> updateProduct(
-            @PathVariable Long id,
+            @PathVariable Long productId,
             @Valid @RequestBody ProductUpdateRequest request) {
         try {
-            ProductDTO productDTO = convertToProductDTO(request, id);
+            ProductDTO productDTO = convertToProductDTO(request, productId);
             Product updatedProduct = productService.updateProduct(productDTO);
             ProductResponse response = convertToProductResponse(updatedProduct);
 
@@ -167,11 +167,11 @@ public class ProductController {
         }
     }
 
-    @DeleteMapping("/{customerEmailDTOId}")
+    @DeleteMapping("/{productId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Void>> deleteProduct(@PathVariable Long productId) {
         try {
-            productService.deleteProduct(id);
+            productService.deleteProduct(productId);
             return ResponseEntity.ok(ApiResponse.success("Product deleted successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
@@ -179,11 +179,11 @@ public class ProductController {
         }
     }
 
-    @PatchMapping("/{customerEmailDTOId}/toggle-status")
+    @PatchMapping("/{productId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProductResponse>> toggleProductStatus(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<ProductResponse>> toggleProductStatus(@PathVariable Long productId) {
         try {
-            Product product = productService.toggleActiveStatus(id);
+            Product product = productService.toggleActiveStatus(productId);
             ProductResponse response = convertToProductResponse(product);
 
             return ResponseEntity.ok(ApiResponse.success("Product status toggled successfully", response));
@@ -193,10 +193,10 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/{customerEmailDTOId}/stock")
-    public ResponseEntity<ApiResponse<Integer>> getStockLevel(@PathVariable Long id) {
+    @GetMapping("/{productId}/stock")
+    public ResponseEntity<ApiResponse<Integer>> getStockLevel(@PathVariable Long productId) {
         try {
-            Product product = productService.findById(id);
+            Product product = productService.findById(productId);
             return ResponseEntity.ok(ApiResponse.success("Stock level retrieved successfully", product.getStockQuantity()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
@@ -204,12 +204,12 @@ public class ProductController {
         }
     }
 
-    @PostMapping("/{customerEmailDTOId}/check-availability")
+    @PostMapping("/{productId}/check-availability")
     public ResponseEntity<ApiResponse<Boolean>> checkAvailability(
-            @PathVariable Long id,
+            @PathVariable Long productId,
             @RequestParam Integer quantity) {
         try {
-            Product product = productService.findById(id);
+            Product product = productService.findById(productId);
             Boolean available = product.getStockQuantity() >= quantity;
             String message = available ? "Product is available" : "Product is not available in requested quantity";
 
@@ -220,12 +220,12 @@ public class ProductController {
         }
     }
 
-    @GetMapping("/{customerEmailDTOId}/related")
+    @GetMapping("/{productId}/related")
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getRelatedProducts(
-            @PathVariable Long id,
+            @PathVariable Long productId,
             @RequestParam(defaultValue = "5") int limit) {
         try {
-            List<Product> products = productService.findRelatedProducts(id, limit);
+            List<Product> products = productService.findRelatedProducts(productId, limit);
             List<ProductResponse> productResponses = products.stream()
                     .map(this::convertToProductResponse)
                     .toList();
@@ -241,7 +241,7 @@ public class ProductController {
     // FIXED: Changed getActivityFeedResponseId() -> getProductId(), getCreatedDate() -> getCreatedDate(), getUpdatedDate() -> getUpdatedDate()
     private ProductResponse convertToProductResponse(Product product) {
         return ProductResponse.builder()
-                .id(product.getProductId())  // FIXED: getActivityFeedResponseId() -> getProductId()
+                .productId(product.getProductId())  // FIXED: getActivityFeedResponseId() -> getProductId()
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
@@ -279,9 +279,9 @@ public class ProductController {
                 .build();
     }
 
-    private ProductDTO convertToProductDTO(ProductUpdateRequest request, Long id) {
+    private ProductDTO convertToProductDTO(ProductUpdateRequest request, Long productId) {
         return ProductDTO.builder()
-                .productId(id)  // FIXED: customerEmailDTOId() -> productId()
+                .productId(productId)  // FIXED: productId() -> productId()
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
