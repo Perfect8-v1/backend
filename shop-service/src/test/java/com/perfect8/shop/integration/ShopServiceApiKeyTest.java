@@ -45,11 +45,11 @@ public class ShopServiceApiKeyTest {
 
     // Endpoints
     private static final String HEALTH_ENDPOINT = "/actuator/health";
-    private static final String PRODUCTS_ENDPOINT = "/api/v1/products";
-    private static final String CATEGORIES_ENDPOINT = "/api/v1/categories";
-    private static final String CUSTOMERS_ENDPOINT = "/api/v1/customers";
-    private static final String ORDERS_ENDPOINT = "/api/v1/orders";
-    private static final String ADMIN_ORDERS_ENDPOINT = "/api/v1/admin/orders";
+    private static final String PRODUCTS_ENDPOINT = "/api/products";
+    private static final String CATEGORIES_ENDPOINT = "/api/categories";
+    private static final String CUSTOMERS_ENDPOINT = "/api/customers";
+    private static final String ORDERS_ENDPOINT = "/api/orders";
+    private static final String ADMIN_ORDERS_ENDPOINT = "/api/admin/orders";
 
     @BeforeAll
     public static void setup() {
