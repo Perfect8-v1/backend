@@ -18,6 +18,8 @@ import java.util.List;
  * 
  * FIXED (2025-11-12):
  * - @JoinColumn(name = "parent_id") → "parent_category_id" (matches SQL)
+ * FIXED (2025-12-11):
+ * - subcategories: FetchType.LAZY → EAGER (fix LazyInitializationException)
  */
 @Entity
 @Table(name = "categories")
@@ -66,7 +68,8 @@ public class Category {
     @JoinColumn(name = "parent_category_id")  // FIXED: parent_id → parent_category_id (matches SQL)
     private Category parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // FIXED (2025-12-11): LAZY → EAGER to prevent LazyInitializationException when serializing to JSON
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Builder.Default
     private List<Category> subcategories = new ArrayList<>();
 
