@@ -19,7 +19,7 @@ public abstract class BaseTest {
 
     // Base URLs for different environments
     protected static final String PROD_BASE_URL = "http://p8.rantila.com";
-    protected static final String LOCAL_BASE_URL = "http://localhost";
+    protected static final String LOCAL_BASE_URL = "http://127.0.0.1";
 
     // Choose which environment to test
     protected static final String BASE_URL = PROD_BASE_URL;
