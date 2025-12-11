@@ -17,19 +17,19 @@ import static org.hamcrest.Matchers.*;
  * 
  * PUBLIC (no auth):
  * - GET /actuator/health
- * - GET /api/v1/products
- * - GET /api/v1/products/{id}
- * - GET /api/v1/categories
- * - GET /api/v1/categories/{id}
- * - POST /api/v1/customers/register
- * - POST /api/v1/customers/login
- * - GET/POST /api/v1/cart (guest access)
+ * - GET /api/products
+ * - GET /api/products/{id}
+ * - GET /api/categories
+ * - GET /api/categories/{id}
+ * - POST /api/customers/register
+ * - POST /api/customers/login
+ * - GET/POST /api/cart (guest access)
  * 
  * PROTECTED (requires API key):
- * - POST/PUT/DELETE /api/v1/products
- * - POST/PUT/DELETE /api/v1/categories
- * - GET /api/v1/orders (customer orders)
- * - GET /api/v1/admin/* (admin endpoints)
+ * - POST/PUT/DELETE /api/products
+ * - POST/PUT/DELETE /api/categories
+ * - GET /api/orders (customer orders)
+ * - GET /api/admin/* (admin endpoints)
  */
 @DisplayName("Shop Service - API Key Authentication Tests")
 public class ShopServiceApiKeyTest {
@@ -92,7 +92,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products should work WITHOUT API key (public)")
+    @DisplayName("GET /api/products should work WITHOUT API key (public)")
     public void testGetProducts_NoApiKey_Returns200() {
         System.out.println("\n🧪 Testing: GET products without API key (public)");
 
@@ -107,7 +107,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/products/{id} should work WITHOUT API key (public)")
+    @DisplayName("GET /api/products/{id} should work WITHOUT API key (public)")
     public void testGetProductById_NoApiKey_PublicEndpoint() {
         System.out.println("\n🧪 Testing: GET product by ID without API key (public)");
 
@@ -126,7 +126,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/categories should work WITHOUT API key (public)")
+    @DisplayName("GET /api/categories should work WITHOUT API key (public)")
     public void testGetCategories_NoApiKey_Returns200() {
         System.out.println("\n🧪 Testing: GET categories without API key (public)");
 
@@ -143,7 +143,7 @@ public class ShopServiceApiKeyTest {
     // ==================== PROTECTED PRODUCT ENDPOINTS - NO KEY ====================
 
     @Test
-    @DisplayName("POST /api/v1/products WITHOUT API key should return 403")
+    @DisplayName("POST /api/products WITHOUT API key should return 403")
     public void testCreateProduct_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: POST product WITHOUT API key → 403");
 
@@ -168,7 +168,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/products/{id} WITHOUT API key should return 403")
+    @DisplayName("PUT /api/products/{id} WITHOUT API key should return 403")
     public void testUpdateProduct_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: PUT product WITHOUT API key → 403");
 
@@ -191,7 +191,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/v1/products/{id} WITHOUT API key should return 403")
+    @DisplayName("DELETE /api/products/{id} WITHOUT API key should return 403")
     public void testDeleteProduct_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: DELETE product WITHOUT API key → 403");
 
@@ -208,7 +208,7 @@ public class ShopServiceApiKeyTest {
     // ==================== PROTECTED CATEGORY ENDPOINTS - NO KEY ====================
 
     @Test
-    @DisplayName("POST /api/v1/categories WITHOUT API key should return 403")
+    @DisplayName("POST /api/categories WITHOUT API key should return 403")
     public void testCreateCategory_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: POST category WITHOUT API key → 403");
 
@@ -233,7 +233,7 @@ public class ShopServiceApiKeyTest {
     // ==================== ADMIN ENDPOINTS - NO KEY ====================
 
     @Test
-    @DisplayName("GET /api/v1/admin/orders WITHOUT API key should return 403")
+    @DisplayName("GET /api/admin/orders WITHOUT API key should return 403")
     public void testGetAdminOrders_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: GET admin orders WITHOUT API key → 403");
 
@@ -250,7 +250,7 @@ public class ShopServiceApiKeyTest {
     // ==================== PROTECTED ENDPOINTS - WITH KEY ====================
 
     @Test
-    @DisplayName("POST /api/v1/products WITH valid API key should pass auth")
+    @DisplayName("POST /api/products WITH valid API key should pass auth")
     public void testCreateProduct_WithApiKey_AuthPasses() {
         System.out.println("\n🧪 Testing: POST product WITH API key → auth passes");
 
@@ -278,7 +278,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/products/{id} WITH valid API key should pass auth")
+    @DisplayName("PUT /api/products/{id} WITH valid API key should pass auth")
     public void testUpdateProduct_WithApiKey_AuthPasses() {
         System.out.println("\n🧪 Testing: PUT product WITH API key → auth passes");
 
@@ -304,7 +304,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/v1/products/{id} WITH valid API key should pass auth")
+    @DisplayName("DELETE /api/products/{id} WITH valid API key should pass auth")
     public void testDeleteProduct_WithApiKey_AuthPasses() {
         System.out.println("\n🧪 Testing: DELETE product WITH API key → auth passes");
 
@@ -322,7 +322,7 @@ public class ShopServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/orders WITH valid API key should pass auth")
+    @DisplayName("GET /api/admin/orders WITH valid API key should pass auth")
     public void testGetAdminOrders_WithApiKey_AuthPasses() {
         System.out.println("\n🧪 Testing: GET admin orders WITH API key → auth passes");
 
