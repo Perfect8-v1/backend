@@ -18,11 +18,11 @@ public abstract class BaseTest {
     protected static RequestSpecification authenticatedSpec;
 
     // Base URLs for different environments
-    protected static final String PROD_BASE_URL = "http://p8.rantila.com";
+    protected static final String PROD_BASE_URL = "http://127.0.0.1";
     protected static final String LOCAL_BASE_URL = "http://127.0.0.1";
 
     // Choose which environment to test
-    protected static final String BASE_URL = PROD_BASE_URL;
+    protected static final String BASE_URL = LOCAL_BASE_URL;
 
     // Service ports
     protected static final int ADMIN_PORT = 8081;
