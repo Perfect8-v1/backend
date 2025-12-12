@@ -38,7 +38,7 @@ public class UserAdminController {
             // TODO: Replace with Feign call to user-service in v2.0
             List<Map<String, Object>> mockUsers = List.of(
                     Map.of(
-                            "id", 1,
+                            "userId", 1,
                             "username", "admin",
                             "email", "admin@perfect8.com",
                             "role", "ADMIN",
@@ -47,7 +47,7 @@ public class UserAdminController {
                             "lastLogin", "2025-12-10T06:45:00"
                     ),
                     Map.of(
-                            "id", 2,
+                            "userId", 2,
                             "username", "magnus",
                             "email", "magnus@perfect8.com",
                             "role", "ADMIN",
@@ -56,7 +56,7 @@ public class UserAdminController {
                             "lastLogin", "2025-12-09T22:30:00"
                     ),
                     Map.of(
-                            "id", 3,
+                            "userId", 3,
                             "username", "testuser",
                             "email", "test@example.com",
                             "role", "USER",
@@ -88,17 +88,17 @@ public class UserAdminController {
     }
 
     /**
-     * GET /api/admin/users/{id}
-     * Get specific user by ID
+     * GET /api/admin/users/{userId}
+     * Get specific user by userId
      */
-    @GetMapping("/{id}")
+    @GetMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+    public ResponseEntity<?> getUserById(@PathVariable Long userId) {
         try {
             // TODO: Replace with Feign call in v2.0
-            if (id == 1) {
+            if (userId == 1) {
                 Map<String, Object> user = Map.of(
-                        "id", 1,
+                        "userId", 1,
                         "username", "admin",
                         "email", "admin@perfect8.com",
                         "role", "ADMIN",
@@ -123,7 +123,7 @@ public class UserAdminController {
                         "success", false,
                         "error", Map.of(
                                 "code", "USER_NOT_FOUND",
-                                "message", "User with ID " + id + " not found"
+                                "message", "User with ID " + userId + " not found"
                         )
                 ));
             }
@@ -134,19 +134,19 @@ public class UserAdminController {
     }
 
     /**
-     * PUT /api/admin/users/{id}
+     * PUT /api/admin/users/{userId}
      * Update user (status, role, profile)
      */
-    @PutMapping("/{id}")
+    @PutMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateUser(
-            @PathVariable Long id,
+            @PathVariable Long userId,
             @RequestBody Map<String, Object> updates) {
 
         try {
             // TODO: Replace with Feign call in v2.0
             Map<String, Object> updatedUser = new HashMap<>();
-            updatedUser.put("id", id);
+            updatedUser.put("userId", userId);
             updatedUser.put("username", "admin");
             updatedUser.put("email", updates.getOrDefault("email", "admin@perfect8.com"));
             updatedUser.put("role", updates.getOrDefault("role", "ADMIN"));
@@ -166,19 +166,19 @@ public class UserAdminController {
     }
 
     /**
-     * DELETE /api/admin/users/{id}
+     * DELETE /api/admin/users/{userId}
      * Soft delete (deactivate) user
      */
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
         try {
             // TODO: Replace with Feign call in v2.0
             // Soft delete - set status to INACTIVE
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", Map.of(
-                    "id", id,
+                    "userId", userId,
                     "status", "INACTIVE",
                     "deletedAt", LocalDateTime.now().toString()
             ));
@@ -192,18 +192,18 @@ public class UserAdminController {
     }
 
     /**
-     * POST /api/admin/users/{id}/toggle-status
+     * POST /api/admin/users/{userId}/toggle-status
      * Toggle user active/inactive status
      */
-    @PostMapping("/{id}/toggle-status")
+    @PostMapping("/{userId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> toggleUserStatus(@PathVariable Long id) {
+    public ResponseEntity<?> toggleUserStatus(@PathVariable Long userId) {
         try {
             // TODO: Replace with Feign call in v2.0
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("data", Map.of(
-                    "id", id,
+                    "userId", userId,
                     "previousStatus", "ACTIVE",
                     "newStatus", "INACTIVE",
                     "toggledAt", LocalDateTime.now().toString()

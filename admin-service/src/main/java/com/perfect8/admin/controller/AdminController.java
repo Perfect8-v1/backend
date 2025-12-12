@@ -61,9 +61,9 @@ public class AdminController {
             // Mock data - senare kan du implementera Feign call till shop-service
             Map<String, Object> mockData = new HashMap<>();
             mockData.put("content", List.of(
-                    Map.of("id", 1, "name", "iPhone 15 Pro Max", "price", 1199.99, "stock", 25, "active", true),
-                    Map.of("id", 2, "name", "Samsung Galaxy S24 Ultra", "price", 1299.99, "stock", 30, "active", true),
-                    Map.of("id", 3, "name", "MacBook Pro 16\"", "price", 3999.99, "stock", 3, "active", true)
+                    Map.of("ProductId", 1, "name", "iPhone 15 Pro Max", "price", 1199.99, "stock", 25, "active", true),
+                    Map.of("ProductId", 2, "name", "Samsung Galaxy S24 Ultra", "price", 1299.99, "stock", 30, "active", true),
+                    Map.of("ProductId", 3, "name", "MacBook Pro 16\"", "price", 3999.99, "stock", 3, "active", true)
             ));
 
             mockData.put("page", Map.of(
@@ -98,9 +98,9 @@ public class AdminController {
             // Mock data - senare implementera Feign call till shop-service
             Map<String, Object> mockData = Map.of(
                     "categories", List.of(
-                            Map.of("id", 1, "name", "Electronics", "active", true, "productCount", 45),
-                            Map.of("id", 2, "name", "Fashion", "active", true, "productCount", 32),
-                            Map.of("id", 3, "name", "Books", "active", true, "productCount", 28)
+                            Map.of("CategoryId", 1, "name", "Electronics", "active", true, "productCount", 45),
+                            Map.of("CategoryId", 2, "name", "Fashion", "active", true, "productCount", 32),
+                            Map.of("CategoryId", 3, "name", "Books", "active", true, "productCount", 28)
                     )
             );
 
@@ -133,9 +133,9 @@ public class AdminController {
             // Mock data - senare implementera Feign call till blog-service
             Map<String, Object> mockData = Map.of(
                     "posts", List.of(
-                            Map.of("id", 1, "title", "Top 10 Smartphones of 2024", "status", "PUBLISHED", "author", "Tech Team"),
-                            Map.of("id", 2, "title", "Sustainable Fashion Guide", "status", "PUBLISHED", "author", "Style Team"),
-                            Map.of("id", 3, "title", "Home Office Setup", "status", "DRAFT", "author", "Productivity Team")
+                            Map.of("PostId", 1, "title", "Top 10 Smartphones of 2024", "status", "PUBLISHED", "author", "Tech Team"),
+                            Map.of("PostId", 2, "title", "Sustainable Fashion Guide", "status", "PUBLISHED", "author", "Style Team"),
+                            Map.of("PostId", 3, "title", "Home Office Setup", "status", "DRAFT", "author", "Productivity Team")
                     )
             );
 
@@ -180,14 +180,14 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/products/{customerEmailDTOId}/toggle-status")
+    @PostMapping("/products/{productId}/toggle-status")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
-    public ResponseEntity<?> toggleProductStatus(@PathVariable Long id) {
+    public ResponseEntity<?> toggleProductStatus(@PathVariable Long productId) {
         try {
 //TODO Mock till feign
             // Mock response - senare implementera Feign call till shop-service
             Map<String, Object> result = new HashMap<>();
-            result.put("productId", id);
+            result.put("productId", productId);
             result.put("message", "Product status toggle request sent to shop-service");
             result.put("note", "Actual implementation requires shop-service endpoint");
 
