@@ -62,8 +62,8 @@ public class SecurityConfig {
                                 "/error"
                         ).permitAll()
 
-                        // Login endpoint - public (must be before /api/auth/**)
-                        .requestMatchers("/api/auth/login").permitAll()
+                        // Auth endpoints - login and register are public
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
 
                         // Other auth endpoints - require ADMIN role
                         .requestMatchers("/api/auth/**").hasRole("ADMIN")
