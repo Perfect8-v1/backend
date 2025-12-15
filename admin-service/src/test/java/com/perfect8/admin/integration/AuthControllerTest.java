@@ -163,8 +163,8 @@ public class AuthControllerTest extends BaseTest {
 
         String loginRequest = """
                 {
-                    "email": "admin@perfect8.com",
-                    "password": "admin123"
+                    "email": "newadmin@perfect8.com",
+                    "password": "admin123!"
                 }
                 """;
 
