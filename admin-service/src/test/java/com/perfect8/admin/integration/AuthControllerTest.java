@@ -42,7 +42,7 @@ public class AuthControllerTest extends BaseTest {
                 .response();
 
         // Extract and log token (for debugging)
-        String accessToken = response.jsonPath().getString("token");
+        String accessToken = response.jsonPath().getString("accessToken");
         System.out.println("✅ AccessToken received: " + accessToken.substring(0, 20) + "...");
         
         logTestResult("Login with valid credentials", true);
