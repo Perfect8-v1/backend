@@ -36,14 +36,14 @@ public class AuthControllerTest extends BaseTest {
                 .post(LOGIN_ENDPOINT)
         .then()
                 .statusCode(200)
-                .body("token", notNullValue())
-                .body("token", not(emptyString()))
+                .body("accessToken", notNullValue())
+                .body("accessToken", not(emptyString()))
                 .extract()
                 .response();
 
         // Extract and log token (for debugging)
-        String token = response.jsonPath().getString("token");
-        System.out.println("✅ Token received: " + token.substring(0, 20) + "...");
+        String accessToken = response.jsonPath().getString("token");
+        System.out.println("✅ AccessToken received: " + accessToken.substring(0, 20) + "...");
         
         logTestResult("Login with valid credentials", true);
     }
