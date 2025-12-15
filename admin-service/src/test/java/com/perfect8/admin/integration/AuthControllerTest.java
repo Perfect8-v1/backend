@@ -24,7 +24,7 @@ public class AuthControllerTest extends BaseTest {
         // Login request body
         String loginRequest = """
                 {
-                    "email": "admin@perfect8.com",
+                    "email": "newadmin@perfect8.com",
                     "password": "admin123"
                 }
                 """;
