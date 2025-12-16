@@ -26,7 +26,7 @@ public class EmailServiceApiKeyTest {
     protected static RequestSpecification authenticatedSpec;
 
     // Configuration
-    private static final String BASE_URL = "http://p8.rantila.com";
+    private static final String BASE_URL = "http://127.0.0.1";
     private static final int EMAIL_PORT = 8083;
     private static final String EMAIL_API_KEY = "p8email_9Bz4cD7gJ1kQ6wY3";
     private static final String BLOG_API_KEY = "p8blog_3Fw6yH9jM2nP5vX8";
