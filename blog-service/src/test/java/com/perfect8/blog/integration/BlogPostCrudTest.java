@@ -11,13 +11,13 @@ import static org.hamcrest.Matchers.*;
 
 /**
  * Integration tests for Blog Post CRUD operations (Plain branch)
- * 
+ *
  * Tests the complete lifecycle:
  * 1. CREATE - POST /api/posts
  * 2. READ   - GET /api/posts, GET /api/posts/{slug}
  * 3. UPDATE - PUT /api/posts/{id}
  * 4. DELETE - DELETE /api/posts/{id}
- * 
+ *
  * Uses @TestMethodOrder to run tests in sequence (CREATE → READ → UPDATE → DELETE)
  */
 @DisplayName("Blog Service - Post CRUD Tests")
@@ -84,9 +84,9 @@ public class BlogPostCrudTest {
         Response response = given()
                 .spec(authenticatedSpec)
                 .body(postBody)
-        .when()
+                .when()
                 .post(POSTS_ENDPOINT)
-        .then()
+                .then()
                 .statusCode(anyOf(is(200), is(201)))
                 .body("title", equalTo("REST Assured CRUD Test Post"))
                 .body("slug", notNullValue())
@@ -112,9 +112,9 @@ public class BlogPostCrudTest {
 
         given()
                 .spec(requestSpec)  // No auth needed for GET
-        .when()
+                .when()
                 .get(POSTS_ENDPOINT)
-        .then()
+                .then()
                 .statusCode(200)
                 .body("content", notNullValue())
                 .body("content.size()", greaterThanOrEqualTo(0));
@@ -133,9 +133,9 @@ public class BlogPostCrudTest {
 
         given()
                 .spec(requestSpec)  // No auth needed for GET
-        .when()
+                .when()
                 .get(POSTS_ENDPOINT + "/" + createdPostSlug)
-        .then()
+                .then()
                 .statusCode(200)
                 .body("slug", equalTo(createdPostSlug))
                 .body("title", equalTo("REST Assured CRUD Test Post"));
@@ -154,9 +154,9 @@ public class BlogPostCrudTest {
                 .spec(requestSpec)
                 .queryParam("page", 0)
                 .queryParam("size", 5)
-        .when()
+                .when()
                 .get(POSTS_ENDPOINT)
-        .then()
+                .then()
                 .statusCode(200)
                 .body("content", notNullValue())
                 .body("pageable", notNullValue())
@@ -184,16 +184,22 @@ public class BlogPostCrudTest {
                 }
                 """;
 
-        given()
+        Response response = given()
                 .spec(authenticatedSpec)
                 .body(updateBody)
-        .when()
+                .when()
                 .put(POSTS_ENDPOINT + "/" + createdPostId)
-        .then()
+                .then()
                 .statusCode(200)
-                .body("title", containsString("UPDATED"));
+                .body("title", containsString("UPDATED"))
+                .extract()
+                .response();
+
+        // Update slug since title changed (slug is regenerated from title)
+        createdPostSlug = response.jsonPath().getString("slug");
 
         System.out.println("   ✅ Updated post ID: " + createdPostId);
+        System.out.println("   ✅ New slug: " + createdPostSlug);
         logTestResult("UPDATE post", true);
     }
 
@@ -208,9 +214,9 @@ public class BlogPostCrudTest {
 
         given()
                 .spec(requestSpec)
-        .when()
+                .when()
                 .get(POSTS_ENDPOINT + "/" + createdPostSlug)
-        .then()
+                .then()
                 .statusCode(200)
                 .body("title", containsString("UPDATED"));
 
@@ -230,9 +236,9 @@ public class BlogPostCrudTest {
 
         given()
                 .spec(authenticatedSpec)
-        .when()
+                .when()
                 .delete(POSTS_ENDPOINT + "/" + createdPostId)
-        .then()
+                .then()
                 .statusCode(anyOf(is(200), is(204)));
 
         System.out.println("   ✅ Deleted post ID: " + createdPostId);
@@ -250,9 +256,9 @@ public class BlogPostCrudTest {
 
         given()
                 .spec(requestSpec)
-        .when()
+                .when()
                 .get(POSTS_ENDPOINT + "/" + createdPostSlug)
-        .then()
+                .then()
                 .statusCode(404);  // Post should not exist
 
         logTestResult("Verify DELETE (404)", true);
@@ -268,9 +274,9 @@ public class BlogPostCrudTest {
 
         given()
                 .spec(requestSpec)
-        .when()
+                .when()
                 .get(POSTS_ENDPOINT + "/this-slug-does-not-exist-xyz")
-        .then()
+                .then()
                 .statusCode(404);
 
         logTestResult("Non-existent post → 404", true);
@@ -292,9 +298,9 @@ public class BlogPostCrudTest {
         given()
                 .spec(authenticatedSpec)
                 .body(updateBody)
-        .when()
+                .when()
                 .put(POSTS_ENDPOINT + "/99999999")
-        .then()
+                .then()
                 .statusCode(404);
 
         logTestResult("Update non-existent → 404", true);
