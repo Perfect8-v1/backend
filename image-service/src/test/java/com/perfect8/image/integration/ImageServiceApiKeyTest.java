@@ -27,7 +27,7 @@ public class ImageServiceApiKeyTest {
     protected static RequestSpecification authenticatedSpec;
 
     // Configuration
-    private static final String BASE_URL = "http://p8.rantila.com";
+    private static final String BASE_URL = "http://127.0.0.1";
     private static final int IMAGE_PORT = 8084;
     private static final String IMAGE_API_KEY = "p8image_5Nt8rU2xA4eI7oS0";
     private static final String BLOG_API_KEY = "p8blog_3Fw6yH9jM2nP5vX8";
