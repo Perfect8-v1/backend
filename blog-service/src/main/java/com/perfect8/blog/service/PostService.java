@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -108,9 +110,31 @@ public class PostService {
 
     /**
      * Create post from DTO
+     * Respects the published flag from DTO
      */
     public Post createPost(PostDto postDto) {
-        return createPost(postDto.getTitle(), postDto.getContent());
+        log.info("Creating new post: {}", postDto.getTitle());
+
+        String slug = generateUniqueSlug(postDto.getTitle());
+
+        boolean shouldPublish = postDto.getPublished() != null && postDto.getPublished();
+
+        Post post = Post.builder()
+                .title(postDto.getTitle())
+                .content(postDto.getContent())
+                .slug(slug)
+                .isPublished(shouldPublish)
+                .viewCount(0)
+                .build();
+
+        if (shouldPublish) {
+            post.setPublishedDate(LocalDateTime.now());
+        }
+
+        Post savedPost = postRepository.save(post);
+        log.info("Post created with id: {}, published: {}", savedPost.getPostId(), shouldPublish);
+
+        return savedPost;
     }
 
     /**
