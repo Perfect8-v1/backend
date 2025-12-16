@@ -28,7 +28,7 @@ public class BlogPostCrudTest {
     protected static RequestSpecification authenticatedSpec;
 
     // Configuration
-    private static final String BASE_URL = "http://p8.rantila.com";
+    private static final String BASE_URL = "http://127.0.0.1";
     private static final int BLOG_PORT = 8082;
     private static final String BLOG_API_KEY = "p8blog_3Fw6yH9jM2nP5vX8";
 
