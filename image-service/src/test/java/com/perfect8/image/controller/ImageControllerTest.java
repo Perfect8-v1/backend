@@ -27,8 +27,8 @@ import static org.hamcrest.Matchers.*;
 public class ImageControllerTest {
 
     private static final String BASE_URL = "https://p8.rantila.com";
-    private static final String API_PATH = "/api/v1/images";
-    private static final String AUTH_PATH = "/api/v1/auth";
+    private static final String API_PATH = "/api/images";
+    private static final String AUTH_PATH = "/api/auth";
 
     private static String jwtToken;
     private static Long uploadedImageId;

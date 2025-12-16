@@ -14,11 +14,11 @@ import static org.hamcrest.Matchers.*;
  * Integration tests for API-Key Authentication on Blog Service (Plain branch)
  * 
  * Blog Service endpoints:
- * - GET /api/v1/posts         → PUBLIC (list posts)
- * - GET /api/v1/posts/{slug}  → PUBLIC (get post by slug)
- * - POST /api/v1/posts        → PROTECTED (create post)
- * - PUT /api/v1/posts/{id}    → PROTECTED (update post)
- * - DELETE /api/v1/posts/{id} → PROTECTED (delete post)
+ * - GET /api/posts         → PUBLIC (list posts)
+ * - GET /api/posts/{slug}  → PUBLIC (get post by slug)
+ * - POST /api/posts        → PROTECTED (create post)
+ * - PUT /api/posts/{id}    → PROTECTED (update post)
+ * - DELETE /api/posts/{id} → PROTECTED (delete post)
  */
 @DisplayName("Blog Service - API Key Authentication Tests")
 public class BlogServiceApiKeyTest {
@@ -34,7 +34,7 @@ public class BlogServiceApiKeyTest {
 
     // Endpoints
     private static final String HEALTH_ENDPOINT = "/actuator/health";
-    private static final String POSTS_ENDPOINT = "/api/v1/posts";
+    private static final String POSTS_ENDPOINT = "/api/posts";
 
     @BeforeAll
     public static void setup() {
@@ -79,7 +79,7 @@ public class BlogServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/posts should work WITHOUT API key (public)")
+    @DisplayName("GET /api/posts should work WITHOUT API key (public)")
     public void testGetPosts_NoApiKey_Returns200() {
         System.out.println("\n🧪 Testing: GET posts without API key (public endpoint)");
 
@@ -96,7 +96,7 @@ public class BlogServiceApiKeyTest {
     // ==================== PROTECTED ENDPOINTS - NO KEY ====================
 
     @Test
-    @DisplayName("POST /api/v1/posts WITHOUT API key should return 403")
+    @DisplayName("POST /api/posts WITHOUT API key should return 403")
     public void testCreatePost_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: POST posts WITHOUT API key → 403");
 
@@ -120,7 +120,7 @@ public class BlogServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/posts/{id} WITHOUT API key should return 403")
+    @DisplayName("PUT /api/posts/{id} WITHOUT API key should return 403")
     public void testUpdatePost_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: PUT posts WITHOUT API key → 403");
 
@@ -143,7 +143,7 @@ public class BlogServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/v1/posts/{id} WITHOUT API key should return 403")
+    @DisplayName("DELETE /api/posts/{id} WITHOUT API key should return 403")
     public void testDeletePost_NoApiKey_Returns403() {
         System.out.println("\n🧪 Testing: DELETE posts WITHOUT API key → 403");
 
@@ -160,7 +160,7 @@ public class BlogServiceApiKeyTest {
     // ==================== PROTECTED ENDPOINTS - WITH KEY ====================
 
     @Test
-    @DisplayName("POST /api/v1/posts WITH valid API key should pass auth")
+    @DisplayName("POST /api/posts WITH valid API key should pass auth")
     public void testCreatePost_WithApiKey_AuthPasses() {
         System.out.println("\n🧪 Testing: POST posts WITH API key → auth passes");
 
@@ -187,7 +187,7 @@ public class BlogServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/posts/{id} WITH valid API key should pass auth")
+    @DisplayName("PUT /api/posts/{id} WITH valid API key should pass auth")
     public void testUpdatePost_WithApiKey_AuthPasses() {
         System.out.println("\n🧪 Testing: PUT posts WITH API key → auth passes");
 
@@ -213,7 +213,7 @@ public class BlogServiceApiKeyTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/v1/posts/{id} WITH valid API key should pass auth")
+    @DisplayName("DELETE /api/posts/{id} WITH valid API key should pass auth")
     public void testDeletePost_WithApiKey_AuthPasses() {
         System.out.println("\n🧪 Testing: DELETE posts WITH API key → auth passes");
 

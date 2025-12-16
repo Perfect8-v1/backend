@@ -30,7 +30,7 @@ import java.util.Map;
  * - Basic operational oversight
  */
 @RestController
-@RequestMapping("/api/v1/orders")
+@RequestMapping("/api/orders")
 @RequiredArgsConstructor
 @Slf4j
 public class OrderController {
@@ -348,13 +348,13 @@ public class OrderController {
      * VERSION 2.0 ENDPOINTS - To be added later
      * ============================================
      * Future endpoints for version 2.0:
-     * - /api/v1/orders/analytics - Advanced order analytics
-     * - /api/v1/orders/export - Export orders to CSV/Excel
-     * - /api/v1/orders/bulk-update - Bulk status updates
-     * - /api/v1/orders/revenue-report - Revenue analytics
-     * - /api/v1/orders/performance-metrics - Fulfillment metrics
-     * - /api/v1/orders/customer-lifetime-value - CLV calculations
-     * - /api/v1/orders/subscription - Subscription order management
-     * - /api/v1/orders/recurring - Recurring order handling
+     * - /api/orders/analytics - Advanced order analytics
+     * - /api/orders/export - Export orders to CSV/Excel
+     * - /api/orders/bulk-update - Bulk status updates
+     * - /api/orders/revenue-report - Revenue analytics
+     * - /api/orders/performance-metrics - Fulfillment metrics
+     * - /api/orders/customer-lifetime-value - CLV calculations
+     * - /api/orders/subscription - Subscription order management
+     * - /api/orders/recurring - Recurring order handling
      */
 }

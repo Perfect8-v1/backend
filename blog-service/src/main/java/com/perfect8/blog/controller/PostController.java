@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
  * - Auth handled by admin-service via JWT
  */
 @RestController
-@RequestMapping("/api/v1/posts")
+@RequestMapping("/api/posts")
 @RequiredArgsConstructor
 public class PostController {
 

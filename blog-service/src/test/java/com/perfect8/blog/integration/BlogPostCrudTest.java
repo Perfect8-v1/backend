@@ -13,10 +13,10 @@ import static org.hamcrest.Matchers.*;
  * Integration tests for Blog Post CRUD operations (Plain branch)
  * 
  * Tests the complete lifecycle:
- * 1. CREATE - POST /api/v1/posts
- * 2. READ   - GET /api/v1/posts, GET /api/v1/posts/{slug}
- * 3. UPDATE - PUT /api/v1/posts/{id}
- * 4. DELETE - DELETE /api/v1/posts/{id}
+ * 1. CREATE - POST /api/posts
+ * 2. READ   - GET /api/posts, GET /api/posts/{slug}
+ * 3. UPDATE - PUT /api/posts/{id}
+ * 4. DELETE - DELETE /api/posts/{id}
  * 
  * Uses @TestMethodOrder to run tests in sequence (CREATE → READ → UPDATE → DELETE)
  */
@@ -33,7 +33,7 @@ public class BlogPostCrudTest {
     private static final String BLOG_API_KEY = "p8blog_3Fw6yH9jM2nP5vX8";
 
     // Endpoints
-    private static final String POSTS_ENDPOINT = "/api/v1/posts";
+    private static final String POSTS_ENDPOINT = "/api/posts";
 
     // Store created post data for subsequent tests
     private static Long createdPostId;
@@ -68,7 +68,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(1)
-    @DisplayName("CREATE: POST /api/v1/posts should create new post")
+    @DisplayName("CREATE: POST /api/posts should create new post")
     public void testCreatePost() {
         System.out.println("\n🧪 Testing: CREATE post");
 
@@ -106,7 +106,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(2)
-    @DisplayName("READ: GET /api/v1/posts should list posts (public)")
+    @DisplayName("READ: GET /api/posts should list posts (public)")
     public void testGetAllPosts() {
         System.out.println("\n🧪 Testing: READ all posts (public)");
 
@@ -124,7 +124,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(3)
-    @DisplayName("READ: GET /api/v1/posts/{slug} should return specific post")
+    @DisplayName("READ: GET /api/posts/{slug} should return specific post")
     public void testGetPostBySlug() {
         System.out.println("\n🧪 Testing: READ post by slug");
 
@@ -146,7 +146,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(4)
-    @DisplayName("READ: GET /api/v1/posts with pagination")
+    @DisplayName("READ: GET /api/posts with pagination")
     public void testGetPostsWithPagination() {
         System.out.println("\n🧪 Testing: READ posts with pagination");
 
@@ -169,7 +169,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(5)
-    @DisplayName("UPDATE: PUT /api/v1/posts/{id} should update post")
+    @DisplayName("UPDATE: PUT /api/posts/{id} should update post")
     public void testUpdatePost() {
         System.out.println("\n🧪 Testing: UPDATE post");
 
@@ -221,7 +221,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(7)
-    @DisplayName("DELETE: DELETE /api/v1/posts/{id} should delete post")
+    @DisplayName("DELETE: DELETE /api/posts/{id} should delete post")
     public void testDeletePost() {
         System.out.println("\n🧪 Testing: DELETE post");
 
