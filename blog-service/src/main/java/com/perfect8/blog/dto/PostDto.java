@@ -30,7 +30,7 @@ import java.util.List;
 @Builder
 public class PostDto {
 
-    private Long postDtoId;
+    private Long postId;
 
     @NotBlank(message = "Title is required")
     @Size(max = 255, message = "Title must be less than 255 characters")

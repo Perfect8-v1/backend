@@ -61,7 +61,7 @@ public class PostController {
 
     private PostDto toDto(Post post) {
         return PostDto.builder()
-                .postDtoId(post.getPostId())
+                .postId(post.getPostId())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .slug(post.getSlug())
