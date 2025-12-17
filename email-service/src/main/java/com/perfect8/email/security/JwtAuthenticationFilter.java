@@ -1,5 +1,3 @@
-// email-service/src/main/java/com/perfect8/email/security/JwtAuthenticationFilter.java
-
 package com.perfect8.email.security;
 
 import com.perfect8.email.util.JwtUtil;
@@ -7,11 +5,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-// @Component - Disabled for Plain branch (using ApiKeyAuthenticationFilter instead)
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -20,17 +20,16 @@ import java.util.List;
 /**
  * JWT Authentication Filter for Email Service
  * 
- * NOTE: @Component disabled for Plain branch.
- * Re-enable when switching back to JWT authentication in AuthMan branch.
+ * Dev branch - JWT authentication enabled
+ * 
+ * @version 1.0-jwt
  */
-// @Component - Disabled for Plain branch
+@Component
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
-
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -51,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     role = jwtUtil.extractRole(jwt);
                 }
             } catch (Exception e) {
-                logger.error("JWT Token validation failed", e);
+                log.error("JWT Token validation failed", e);
             }
         }
 

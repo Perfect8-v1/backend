@@ -10,7 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-// @Component - Disabled for Plain branch (using ApiKeyAuthenticationFilter instead)
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,12 +23,11 @@ import java.util.stream.Collectors;
 /**
  * JWT Authentication Filter for Shop Service
  * 
- * NOTE: @Component disabled for Plain branch.
- * Re-enable when switching back to JWT authentication in AuthMan branch.
+ * Dev branch - JWT authentication enabled
  * 
- * @version 1.0-plain
+ * @version 1.0-jwt
  */
-// @Component - Disabled for Plain branch
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {

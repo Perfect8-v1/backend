@@ -23,9 +23,9 @@ import java.util.Arrays;
 /**
  * Security Configuration for Admin Service
  *
- * Plain branch - Uses API Key authentication instead of JWT.
+ * Dev branch - Uses JWT authentication
  *
- * @version 1.0-plain
+ * @version 1.0-jwt
  */
 @Configuration
 @EnableWebSecurity
@@ -33,7 +33,8 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
     /**
      * Configure Security Filter Chain
@@ -50,6 +51,11 @@ public class SecurityConfig {
                 // Set session management to stateless
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // Configure exception handling
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
 
                 // Configure authorization rules
@@ -75,8 +81,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // Add API Key filter before UsernamePasswordAuthenticationFilter
-                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                // Add JWT filter before UsernamePasswordAuthenticationFilter
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -105,7 +111,6 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
-                "X-API-Key",
                 "X-Requested-With",
                 "Accept",
                 "Origin"

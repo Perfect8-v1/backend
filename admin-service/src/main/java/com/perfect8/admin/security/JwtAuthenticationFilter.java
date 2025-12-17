@@ -6,12 +6,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-// @Component - Disabled for Plain branch (using ApiKeyAuthenticationFilter instead)
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,10 +20,10 @@ import java.io.IOException;
 /**
  * JWT Authentication Filter for Admin Service
  * 
- * NOTE: @Component disabled for Plain branch.
- * Re-enable when switching back to JWT authentication in AuthMan branch.
+ * Dev branch - JWT authentication enabled
  */
-// @Component - Disabled for Plain branch
+@Component
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
@@ -46,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.extractUsername(jwt);
             } catch (Exception e) {
-                logger.error("JWT Token extraction failed", e);
+                log.error("JWT Token extraction failed", e);
             }
         }
 

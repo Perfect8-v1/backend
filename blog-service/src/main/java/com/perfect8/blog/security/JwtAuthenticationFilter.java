@@ -1,6 +1,4 @@
-// blog-service/src/main/java/com/perfect8/blog/security/JwtAuthenticationFilter.java
-
-        package com.perfect8.blog.security;
+package com.perfect8.blog.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

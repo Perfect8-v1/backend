@@ -11,7 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
+// @Component - Disabled for dev branch (using JwtAuthenticationFilter instead)
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,9 +19,13 @@ import java.util.List;
 
 /**
  * API Key Authentication Filter - Plain branch
- * Proof of concept: Valid key = ADMIN access to everything.
+ * 
+ * NOTE: @Component disabled for dev branch.
+ * Re-enable when switching back to API Key authentication.
+ * 
+ * @version 1.0
  */
-@Component
+// @Component - Disabled for dev branch (using JWT)
 @RequiredArgsConstructor
 @Slf4j
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
