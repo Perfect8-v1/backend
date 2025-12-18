@@ -1,6 +1,6 @@
 package com.perfect8.image.config;
 
-import com.perfect8.image.security.ApiKeyAuthenticationFilter;
+import com.perfect8.image.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,17 +20,17 @@ import java.util.List;
 
 /**
  * Security Configuration for Image Service
- * 
- * Plain branch - Uses API Key authentication instead of JWT.
- * 
- * @version 1.0-plain
+ *
+ * Dev branch - Uses JWT authentication
+ *
+ * @version 1.0-jwt
  */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -49,12 +49,8 @@ public class SecurityConfig {
 
                         // ALL GET requests to /api/images are public
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
 
                         // POST/PUT/DELETE require ADMIN role
-                        .requestMatchers(HttpMethod.POST, "/api/images/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/images/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/images/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/images/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/images/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/images/**").hasRole("ADMIN")
@@ -62,7 +58,7 @@ public class SecurityConfig {
                         // Everything else requires authentication
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -80,7 +76,6 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
-                "X-API-Key",
                 "X-Requested-With",
                 "Accept",
                 "Origin"
