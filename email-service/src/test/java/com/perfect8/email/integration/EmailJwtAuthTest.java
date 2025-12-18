@@ -39,6 +39,7 @@ public class EmailJwtAuthTest {
 
     @BeforeAll
     public static void setup() {
+        RestAssured.useRelaxedHTTPSValidation();
         RestAssured.baseURI = BASE_URL;
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 

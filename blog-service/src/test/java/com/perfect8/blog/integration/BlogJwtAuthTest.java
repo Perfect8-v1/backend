@@ -37,6 +37,7 @@ public class BlogJwtAuthTest {
 
     @BeforeAll
     public static void setup() {
+        RestAssured.useRelaxedHTTPSValidation();
         RestAssured.baseURI = BASE_URL;
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
