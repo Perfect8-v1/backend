@@ -1,4 +1,4 @@
-package com.perfect8.image.util;
+package com.perfect8.shop.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * JWT Utility for Image Service
+ * JWT Utility for Shop Service
  * 
  * Compatible with admin-service JWT tokens
  */

@@ -1,5 +1,3 @@
-// image-service/src/main/java/com/perfect8/image/security/JwtAuthenticationFilter.java
-
 package com.perfect8.image.security;
 
 import com.perfect8.image.util.JwtUtil;
@@ -7,11 +5,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-// @Component - Disabled for Plain branch (using ApiKeyAuthenticationFilter instead)
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -20,17 +20,14 @@ import java.util.List;
 /**
  * JWT Authentication Filter for Image Service
  * 
- * NOTE: @Component disabled for Plain branch.
- * Re-enable when switching back to JWT authentication in AuthMan branch.
+ * Dev branch - JWT authentication enabled
  */
-// @Component - Disabled for Plain branch
+@Component
+@RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -38,9 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
+        log.debug("=== JWT Filter === Path: {} | Auth header present: {}", 
+                  request.getRequestURI(), authorizationHeader != null);
 
         String username = null;
-        String role = null;
         String jwt = null;
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -48,21 +46,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 if (jwtUtil.validateToken(jwt)) {
                     username = jwtUtil.extractUsername(jwt);
-                    role = jwtUtil.extractRole(jwt);
+                    log.debug("Extracted username: {}", username);
                 }
             } catch (Exception e) {
-                logger.error("JWT Token validation failed", e);
+                log.error("JWT Token validation failed", e);
             }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+            List<SimpleGrantedAuthority> authorities = jwtUtil.extractAuthorities(jwt);
+            log.debug("Extracted authorities: {}", authorities);
 
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(username, null, authorities);
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            log.debug("SecurityContext set for user: {}", username);
         }
 
         filterChain.doFilter(request, response);

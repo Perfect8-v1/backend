@@ -5,8 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,15 +21,13 @@ import java.util.List;
  * JWT Authentication Filter for Email Service
  * 
  * Dev branch - JWT authentication enabled
- * 
- * @version 1.0-jwt
  */
 @Component
+@RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtUtil jwtUtil;
+    private final JwtUtil jwtUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,9 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
+        log.debug("=== JWT Filter === Path: {} | Auth header present: {}", 
+                  request.getRequestURI(), authorizationHeader != null);
 
         String username = null;
-        String role = null;
         String jwt = null;
 
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
@@ -47,7 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 if (jwtUtil.validateToken(jwt)) {
                     username = jwtUtil.extractUsername(jwt);
-                    role = jwtUtil.extractRole(jwt);
+                    log.debug("Extracted username: {}", username);
                 }
             } catch (Exception e) {
                 log.error("JWT Token validation failed", e);
@@ -55,13 +54,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            List<SimpleGrantedAuthority> authorities = List.of(new SimpleGrantedAuthority(role));
+            List<SimpleGrantedAuthority> authorities = jwtUtil.extractAuthorities(jwt);
+            log.debug("Extracted authorities: {}", authorities);
 
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(username, null, authorities);
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
             SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            log.debug("SecurityContext set for user: {}", username);
         }
 
         filterChain.doFilter(request, response);

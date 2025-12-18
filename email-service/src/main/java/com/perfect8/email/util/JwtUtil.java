@@ -1,19 +1,27 @@
-// email-service/src/main/java/com/perfect8/email/util/JwtUtil.java
-
 package com.perfect8.email.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Function;
 
+/**
+ * JWT Utility for Email Service
+ * 
+ * Compatible with admin-service JWT tokens
+ */
 @Component
+@Slf4j
 public class JwtUtil {
 
     @Value("${jwt.secret}")
@@ -27,8 +35,26 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String extractRole(String token) {
-        return extractClaim(token, claims -> claims.get("role", String.class));
+    /**
+     * Extract authorities/roles from JWT token
+     * Reads "roles" claim as list (compatible with admin-service tokens)
+     */
+    @SuppressWarnings("unchecked")
+    public List<SimpleGrantedAuthority> extractAuthorities(String token) {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        try {
+            Claims claims = extractAllClaims(token);
+            Object rolesClaim = claims.get("roles");
+            if (rolesClaim instanceof List) {
+                List<String> roles = (List<String>) rolesClaim;
+                for (String role : roles) {
+                    authorities.add(new SimpleGrantedAuthority(role));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error extracting authorities from token: {}", e.getMessage());
+        }
+        return authorities;
     }
 
     public Date extractExpiration(String token) {
@@ -57,6 +83,7 @@ public class JwtUtil {
             extractAllClaims(token);
             return !isTokenExpired(token);
         } catch (Exception e) {
+            log.error("Token validation failed: {}", e.getMessage());
             return false;
         }
     }

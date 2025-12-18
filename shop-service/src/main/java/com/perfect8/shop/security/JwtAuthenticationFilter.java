@@ -1,5 +1,6 @@
 package com.perfect8.shop.security;
 
+import com.perfect8.shop.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,126 +12,59 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * JWT Authentication Filter for Shop Service
  * 
  * Dev branch - JWT authentication enabled
- * 
- * @version 1.0-jwt
  */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider jwtTokenProvider;
+    private final JwtUtil jwtUtil;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        try {
-            String jwtToken = extractJwtFromRequest(request);
+        final String authorizationHeader = request.getHeader("Authorization");
+        log.debug("=== JWT Filter === Path: {} | Auth header present: {}", 
+                  request.getRequestURI(), authorizationHeader != null);
 
-            if (StringUtils.hasText(jwtToken) && jwtTokenProvider.validateToken(jwtToken)) {
-                String userEmail = jwtTokenProvider.getUsernameFromToken(jwtToken);
-                String authoritiesString = jwtTokenProvider.getAuthoritiesFromToken(jwtToken);
-                List<SimpleGrantedAuthority> authorities = parseAuthorities(authoritiesString);
-                Long customerId = jwtTokenProvider.getCustomerIdFromToken(jwtToken);
+        String username = null;
+        String jwt = null;
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userEmail, null, authorities);
-
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                if (customerId != null) {
-                    request.setAttribute("customerId", customerId);
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            jwt = authorizationHeader.substring(7);
+            try {
+                if (jwtUtil.validateToken(jwt)) {
+                    username = jwtUtil.extractUsername(jwt);
+                    log.debug("Extracted username: {}", username);
                 }
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                log.debug("Successfully authenticated user: {} for request: {}",
-                        userEmail, request.getRequestURI());
+            } catch (Exception e) {
+                log.error("JWT Token validation failed", e);
             }
-        } catch (Exception ex) {
-            log.error("Could not set user authentication in security context", ex);
-            SecurityContextHolder.clearContext();
+        }
+
+        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            List<SimpleGrantedAuthority> authorities = jwtUtil.extractAuthorities(jwt);
+            log.debug("Extracted authorities: {}", authorities);
+
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(username, null, authorities);
+            authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            log.debug("SecurityContext set for user: {}", username);
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String extractJwtFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-
-        String tokenParam = request.getParameter("token");
-        if (StringUtils.hasText(tokenParam)) {
-            return tokenParam;
-        }
-
-        return null;
-    }
-
-    private List<SimpleGrantedAuthority> parseAuthorities(String authoritiesString) {
-        if (!StringUtils.hasText(authoritiesString)) {
-            return Collections.emptyList();
-        }
-
-        return Arrays.stream(authoritiesString.split(","))
-                .map(String::trim)
-                .filter(StringUtils::hasText)
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        String path = request.getRequestURI();
-
-        return path.startsWith("/api/public/") ||
-                path.startsWith("/api/auth/login") ||
-                path.startsWith("/api/auth/register") ||
-                path.startsWith("/api/products/public") ||
-                path.startsWith("/api/categories/public") ||
-                path.equals("/api/health") ||
-                path.equals("/actuator/health");
-    }
-
-    public static Long getCurrentCustomerId(HttpServletRequest request) {
-        Object customerIdObj = request.getAttribute("customerId");
-        if (customerIdObj != null) {
-            if (customerIdObj instanceof Long) {
-                return (Long) customerIdObj;
-            } else if (customerIdObj instanceof String) {
-                try {
-                    return Long.parseLong((String) customerIdObj);
-                } catch (NumberFormatException e) {
-                    return null;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static String getCurrentUserEmail() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof String) {
-            return (String) principal;
-        }
-        return null;
     }
 }
