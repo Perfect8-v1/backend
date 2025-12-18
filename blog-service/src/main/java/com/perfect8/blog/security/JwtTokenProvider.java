@@ -6,11 +6,14 @@ import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * JWT Token Provider for blog-service
@@ -18,6 +21,7 @@ import java.util.Date;
  * UPDATED (2025-11-20):
  * - Added resolveToken() for extracting token from request
  * - Added getUserIdFromToken() for central auth support
+ * - Added getAuthoritiesFromToken() for role extraction
  * - Compatible with admin-service JWT tokens
  * - JJWT 0.12.3 API
  */
@@ -99,6 +103,33 @@ public class JwtTokenProvider {
             log.error("Error extracting userId from token: {}", e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Get authorities/roles from JWT token
+     * Extracts "roles" claim from token and converts to Spring Security authorities
+     */
+    @SuppressWarnings("unchecked")
+    public List<SimpleGrantedAuthority> getAuthoritiesFromToken(String token) {
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSigningKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            Object rolesClaim = claims.get("roles");
+            if (rolesClaim instanceof List) {
+                List<String> roles = (List<String>) rolesClaim;
+                for (String role : roles) {
+                    authorities.add(new SimpleGrantedAuthority(role));
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error extracting authorities from token: {}", e.getMessage());
+        }
+        return authorities;
     }
 
     /**
