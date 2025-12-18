@@ -18,10 +18,11 @@ import static org.hamcrest.Matchers.*;
  * - /api/v1/categories/ → shop-service /api/categories/
  * - /api/v1/customers/  → shop-service /api/customers/
  * - /api/v1/orders/     → shop-service /api/orders/
+ * - /api/v1/auth/       → admin-service /api/auth/ (for admin login)
  * 
  * Shop Service endpoints:
- * PUBLIC: GET products, categories, customer register/login
- * PROTECTED: POST/PUT/DELETE products, categories, orders, admin/*
+ * PUBLIC: GET products, categories
+ * PROTECTED: POST/PUT/DELETE products, categories, orders
  */
 @DisplayName("Shop Service - JWT Authentication Tests (Remote)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -31,14 +32,14 @@ public class ShopJwtAuthTest {
     private static String jwtToken;
 
     // Configuration - via nginx
-    private static final String BASE_URL = "http://p8.rantila.com";
+    private static final String BASE_URL = "https://p8.rantila.com";
 
-    // Test credentials (shop customer login)
+    // Test credentials (admin-service login for admin operations)
     private static final String TEST_EMAIL = "admin@perfect8.com";
-    private static final String TEST_PASSWORD = "admin123";
+    private static final String TEST_PASSWORD = "password";
 
     // Endpoints (nginx mapped)
-    private static final String LOGIN_ENDPOINT = "/api/v1/customers/login";
+    private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
     private static final String PRODUCTS_ENDPOINT = "/api/v1/products";
     private static final String CATEGORIES_ENDPOINT = "/api/v1/categories";
     private static final String ORDERS_ENDPOINT = "/api/v1/orders";
@@ -79,11 +80,11 @@ public class ShopJwtAuthTest {
                 .post(LOGIN_ENDPOINT)
         .then()
                 .statusCode(200)
-                .body("token", notNullValue())
+                .body("accessToken", notNullValue())
                 .extract()
                 .response();
 
-        jwtToken = response.jsonPath().getString("token");
+        jwtToken = response.jsonPath().getString("accessToken");
         System.out.println("   ✅ Received JWT token: " + jwtToken.substring(0, 20) + "...");
         
         logTestResult("Login returns JWT token", true);

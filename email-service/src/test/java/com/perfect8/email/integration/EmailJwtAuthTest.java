@@ -25,11 +25,11 @@ public class EmailJwtAuthTest {
     private static String jwtToken;
 
     // Configuration - via nginx
-    private static final String BASE_URL = "http://p8.rantila.com";
+    private static final String BASE_URL = "https://p8.rantila.com";
 
     // Test credentials (admin-service login)
-    private static final String TEST_USERNAME = "admin";
-    private static final String TEST_PASSWORD = "admin123";
+    private static final String TEST_EMAIL = "admin@perfect8.com";
+    private static final String TEST_PASSWORD = "password";
 
     // Endpoints (nginx mapped)
     private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
@@ -61,10 +61,10 @@ public class EmailJwtAuthTest {
 
         String loginBody = """
                 {
-                    "username": "%s",
+                    "email": "%s",
                     "password": "%s"
                 }
-                """.formatted(TEST_USERNAME, TEST_PASSWORD);
+                """.formatted(TEST_EMAIL, TEST_PASSWORD);
 
         Response response = given()
                 .spec(requestSpec)
@@ -73,11 +73,11 @@ public class EmailJwtAuthTest {
                 .post(LOGIN_ENDPOINT)
         .then()
                 .statusCode(200)
-                .body("token", notNullValue())
+                .body("accessToken", notNullValue())
                 .extract()
                 .response();
 
-        jwtToken = response.jsonPath().getString("token");
+        jwtToken = response.jsonPath().getString("accessToken");
         System.out.println("   ✅ Received JWT token: " + jwtToken.substring(0, 20) + "...");
         
         logTestResult("Got JWT from admin-service", true);
