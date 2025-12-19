@@ -6,6 +6,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.*;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -33,6 +34,7 @@ public class AdminJwtAuthTest {
 
     // Endpoints (nginx mapped)
     private static final String HEALTH_ENDPOINT = "/actuator/health";
+    private static final String SALT_ENDPOINT = "/api/v1/auth/salt";
     private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
     private static final String PROTECTED_ENDPOINT = "/api/v1/admin/users";
 
@@ -57,14 +59,31 @@ public class AdminJwtAuthTest {
     @Order(1)
     @DisplayName("Login should return JWT token")
     public void testLogin_ValidCredentials_ReturnsToken() {
-        System.out.println("\n🧪 Testing: Login with valid credentials");
+        System.out.println("\n🧪 Testing: Login with valid credentials (client-side hashing)");
 
+        // Step 1: Fetch salt for user
+        String salt = given()
+                .spec(requestSpec)
+        .when()
+                .get(SALT_ENDPOINT + "?email=" + TEST_EMAIL)
+        .then()
+                .statusCode(200)
+                .extract()
+                .jsonPath().getString("salt");
+
+        System.out.println("   Got salt: " + salt);
+
+        // Step 2: Hash password with BCrypt
+        String passwordHash = BCrypt.hashpw(TEST_PASSWORD, salt);
+        System.out.println("   Created hash: " + passwordHash.substring(0, 20) + "...");
+
+        // Step 3: Login with hash
         String loginBody = """
                 {
                     "email": "%s",
-                    "password": "%s"
+                    "passwordHash": "%s"
                 }
-                """.formatted(TEST_EMAIL, TEST_PASSWORD);
+                """.formatted(TEST_EMAIL, passwordHash);
 
         Response response = given()
                 .spec(requestSpec)
@@ -79,7 +98,7 @@ public class AdminJwtAuthTest {
 
         jwtToken = response.jsonPath().getString("accessToken");
         System.out.println("   ✅ Received JWT token: " + jwtToken.substring(0, 20) + "...");
-        
+
         logTestResult("Login returns JWT token", true);
     }
 
@@ -89,12 +108,15 @@ public class AdminJwtAuthTest {
     public void testLogin_InvalidCredentials_Returns401() {
         System.out.println("\n🧪 Testing: Login with invalid credentials → 401");
 
+        // For invalid user, we send a fake hash (user doesn't exist, so no salt to fetch)
+        String fakeHash = BCrypt.hashpw("wrongpassword", BCrypt.gensalt(10));
+
         String loginBody = """
                 {
                     "email": "wrong@example.com",
-                    "password": "wrongpassword"
+                    "passwordHash": "%s"
                 }
-                """;
+                """.formatted(fakeHash);
 
         given()
                 .spec(requestSpec)
