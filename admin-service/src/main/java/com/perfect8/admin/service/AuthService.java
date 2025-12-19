@@ -130,9 +130,11 @@ public class AuthService {
             roles.add(Role.USER);
         }
 
+        // passwordHash is already hashed by frontend
         User user = User.builder()
                 .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .passwordHash(request.getPasswordHash())
+                .passwordSalt(request.getPasswordSalt())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .roles(roles)

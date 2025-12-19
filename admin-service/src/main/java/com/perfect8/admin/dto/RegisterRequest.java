@@ -11,8 +11,10 @@ import lombok.NoArgsConstructor;
 /**
  * Registration Request DTO
  * Used for new user registration
- * 
- * Updated: 2025-11-20
+ *
+ * Updated: 2025-12-19
+ * - Changed from password to passwordHash (client-side hashing)
+ * - Added passwordSalt field
  */
 @Data
 @Builder
@@ -24,9 +26,21 @@ public class RegisterRequest {
     @Email(message = "Invalid email format")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
-    private String password;
+    /**
+     * BCrypt hash of the password (hashed on client-side)
+     * Format: $2a$10$... (60 characters)
+     */
+    @NotBlank(message = "Password hash is required")
+    @Size(min = 60, max = 60, message = "Invalid password hash format")
+    private String passwordHash;
+
+    /**
+     * BCrypt salt used for hashing (from /api/auth/salt endpoint)
+     * Format: $2a$10$... (29 characters)
+     */
+    @NotBlank(message = "Password salt is required")
+    @Size(min = 29, max = 29, message = "Invalid salt format")
+    private String passwordSalt;
 
     private String firstName;
 

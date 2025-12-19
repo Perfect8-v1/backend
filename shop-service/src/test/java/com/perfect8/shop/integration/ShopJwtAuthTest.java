@@ -40,9 +40,10 @@ public class ShopJwtAuthTest {
 
     // Endpoints (nginx mapped)
     private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
-    private static final String PRODUCTS_ENDPOINT = "/api/v1/products";
-    private static final String CATEGORIES_ENDPOINT = "/api/v1/categories";
-    private static final String ORDERS_ENDPOINT = "/api/v1/orders";
+    private static final String PRODUCTS_ENDPOINT = "/api/v1/products/";
+    private static final String CATEGORIES_ENDPOINT = "/api/v1/categories/";
+    private static final String ORDERS_ENDPOINT = "/api/v1/orders/reset" +
+            "";
 
     @BeforeAll
     public static void setup() {

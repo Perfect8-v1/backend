@@ -7,6 +7,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Login Request DTO
+ * Updated: 2025-12-19
+ * - Changed from password to passwordHash (client-side hashing)
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,6 +22,10 @@ public class LoginRequest {
     @Email(message = "Invalid email format")
     private String email;
 
-    @NotBlank(message = "Password is required")
-    private String password;
+    /**
+     * BCrypt hash of the password (hashed on client-side using salt from /api/auth/salt)
+     * Format: $2a$10$... (60 characters)
+     */
+    @NotBlank(message = "Password hash is required")
+    private String passwordHash;
 }

@@ -46,15 +46,14 @@ public class AuthController {
         try {
             log.info("Login attempt for email: {}", request.getEmail());
 
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            request.getEmail(),
-                            request.getPassword()
-                    )
-            );
-
+            // Find user by email
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+            // Direct hash comparison (password already hashed by frontend)
+            if (!request.getPasswordHash().equals(user.getPasswordHash())) {
+                throw new BadCredentialsException("Invalid credentials");
+            }
 
             // Check if account is locked
             if (user.isLocked()) {
@@ -139,10 +138,11 @@ public class AuthController {
             roles.add(Role.USER);
         }
 
-        // Create new user
+        // Create new user - passwordHash is already hashed by frontend
         User user = User.builder()
                 .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .passwordHash(request.getPasswordHash())
+                .passwordSalt(request.getPasswordSalt())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .roles(roles)
@@ -227,6 +227,57 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+    }
+
+    /**
+     * Get password salt for client-side hashing.
+     * For login: Returns existing user's salt
+     * For registration: Generates and returns a new random salt
+     *
+     * Security note: Returns 404 if user not found (reveals email existence).
+     * If this is a concern, consider returning a fake salt instead.
+     */
+    @GetMapping("/salt")
+    public ResponseEntity<?> getSalt(@RequestParam String email,
+                                      @RequestParam(defaultValue = "false") boolean forRegistration) {
+        log.debug("Salt request for email: {}, forRegistration: {}", email, forRegistration);
+
+        if (forRegistration) {
+            // Check if email already exists
+            if (userRepository.existsByEmail(email)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(Map.of("error", "Email already registered"));
+            }
+            // Generate new salt for registration
+            String newSalt = generateBcryptSalt();
+            return ResponseEntity.ok(Map.of("salt", newSalt));
+        }
+
+        // For login - get existing user's salt
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "User not found"));
+        }
+
+        User user = userOpt.get();
+        if (user.getPasswordSalt() == null) {
+            // Legacy user without salt - this shouldn't happen in new system
+            log.warn("User {} has no password salt", email);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Account requires password reset"));
+        }
+
+        return ResponseEntity.ok(Map.of("salt", user.getPasswordSalt()));
+    }
+
+    /**
+     * Generate a BCrypt salt (22 characters + version prefix)
+     * Format: $2a$10$XXXXXXXXXXXXXXXXXXXX (29 chars total)
+     */
+    private String generateBcryptSalt() {
+        // BCrypt.gensalt() generates a salt string like "$2a$10$N9qo8uLOickgx2ZMRZoMye"
+        return org.springframework.security.crypto.bcrypt.BCrypt.gensalt(10);
     }
 
     /**

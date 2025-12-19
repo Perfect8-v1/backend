@@ -26,6 +26,14 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    /**
+     * Salt used for client-side password hashing.
+     * Frontend fetches this salt, hashes password with it, then sends the hash.
+     * This ensures passwords never travel in plaintext beyond the frontend.
+     */
+    @Column(name = "password_salt", nullable = false, length = 29)
+    private String passwordSalt;
+
     @Column(name = "first_name", length = 100)
     private String firstName;
 

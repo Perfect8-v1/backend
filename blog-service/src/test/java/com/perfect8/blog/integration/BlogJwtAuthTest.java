@@ -33,7 +33,7 @@ public class BlogJwtAuthTest {
 
     // Endpoints (nginx mapped)
     private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
-    private static final String POSTS_ENDPOINT = "/api/v1/posts";
+    private static final String POSTS_ENDPOINT = "/api/v1/posts/";
 
     @BeforeAll
     public static void setup() {
