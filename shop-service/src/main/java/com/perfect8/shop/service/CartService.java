@@ -135,7 +135,7 @@ public class CartService {
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with customerEmailDTOId: " + customerId));
 
         Cart cart = cartRepository.findByCustomer(customer)
-                .orElse(createNewCart(customer));
+                .orElseGet(() -> createNewCart(customer));
 
         return convertToCartResponse(cart);
     }
@@ -159,7 +159,7 @@ public class CartService {
         }
 
         Cart cart = cartRepository.findByCustomer(customer)
-                .orElse(createNewCart(customer));
+                .orElseGet(() -> createNewCart(customer));
 
         Optional<CartItem> existingCartItem = cart.getItems().stream()
                 .filter(cartItem -> cartItem.getProduct().getProductId().equals(request.getProductId()))
