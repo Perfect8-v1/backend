@@ -47,6 +47,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/images/health").permitAll()
 
+                        // Static image files are public
+                        .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
+
                         // ALL GET requests to /api/images are public
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
 
