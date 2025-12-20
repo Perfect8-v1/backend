@@ -169,6 +169,9 @@ services:
       - EMAIL_BASE_URL=http://email-service:8083
       - JWT_SECRET=${JWT_SECRET}
       - IMAGE_API_KEY=${IMAGE_API_KEY}
+      - APP_UPLOAD_DIR=/app/uploads
+    volumes:
+      - imageUploads:/app/uploads
     ports:
       - "8084:8084"
     healthcheck:
@@ -325,4 +328,6 @@ volumes:
   imageVol:
     driver: local
   shopVol:
+    driver: local
+  imageUploads:
     driver: local
