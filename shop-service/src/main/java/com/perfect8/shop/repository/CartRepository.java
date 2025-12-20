@@ -14,11 +14,17 @@ import java.util.Optional;
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
-    @Query("SELECT c FROM Cart c WHERE c.customer = :customer")
-    Optional<Cart> findByCustomer(@Param("customer") Customer customer);
+    Optional<Cart> findFirstByCustomerOrderByCreatedDateDesc(Customer customer);
 
-    @Query("SELECT c FROM Cart c WHERE c.customer.customerId = :customerId")
-    Optional<Cart> findByCustomerId(@Param("customerId") Long customerId);
+    default Optional<Cart> findByCustomer(Customer customer) {
+        return findFirstByCustomerOrderByCreatedDateDesc(customer);
+    }
+
+    Optional<Cart> findFirstByCustomerCustomerIdOrderByCreatedDateDesc(Long customerId);
+
+    default Optional<Cart> findByCustomerId(Long customerId) {
+        return findFirstByCustomerCustomerIdOrderByCreatedDateDesc(customerId);
+    }
 
     @Query("SELECT c FROM Cart c WHERE c.customer.customerId = :customerId AND c.createdDate BETWEEN :start AND :end")
     List<Cart> findByCustomerIdAndCreatedDateBetween(@Param("customerId") Long customerId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
