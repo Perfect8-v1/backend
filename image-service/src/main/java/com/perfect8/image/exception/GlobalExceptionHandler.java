@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -250,6 +251,7 @@ public class GlobalExceptionHandler {
          * Get simplified response for production
          * Hides technical details in production mode
          */
+        @JsonIgnore
         public ErrorResponse getProductionSafe() {
             return ErrorResponse.builder()
                     .status(this.status)
