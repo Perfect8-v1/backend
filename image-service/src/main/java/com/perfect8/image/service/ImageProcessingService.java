@@ -115,7 +115,7 @@ public class ImageProcessingService {
      * Ensure all required directories exist
      */
     private void ensureDirectoriesExist() throws IOException {
-        String[] dirs = {"original", "thumbnail", "small", "medium", "large"};
+        String[] dirs = {"products", "original", "thumbnail", "small", "medium", "large"};
         for (String dir : dirs) {
             Path path = Paths.get(uploadDirectory, dir);
             Files.createDirectories(path);

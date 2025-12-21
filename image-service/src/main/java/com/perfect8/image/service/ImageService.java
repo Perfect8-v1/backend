@@ -214,6 +214,7 @@ public class ImageService {
 
     private void ensureDirectoriesExist() throws IOException {
         Path baseDir = Paths.get(uploadDirectory);
+        Files.createDirectories(baseDir.resolve("products"));
         Files.createDirectories(baseDir.resolve("original"));
         Files.createDirectories(baseDir.resolve("thumbnail"));
         Files.createDirectories(baseDir.resolve("small"));
