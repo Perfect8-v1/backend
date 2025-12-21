@@ -48,7 +48,9 @@ public class JwtUtil {
             if (rolesClaim instanceof List) {
                 List<String> roles = (List<String>) rolesClaim;
                 for (String role : roles) {
-                    authorities.add(new SimpleGrantedAuthority(role));
+                    // Add ROLE_ prefix if not present (required for hasRole() checks)
+                    String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                    authorities.add(new SimpleGrantedAuthority(authority));
                 }
             }
         } catch (Exception e) {
