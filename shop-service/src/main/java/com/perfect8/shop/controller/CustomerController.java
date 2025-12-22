@@ -410,11 +410,30 @@ public class CustomerController {
 
     /**
      * Get customer ID from JWT token
+     * FIXED (2025-12-22): First try customerId from token, then lookup by email
+     * This supports both admin-service tokens (email only) and shop tokens (with customerId)
      */
     private Long getCurrentCustomerId(HttpServletRequest request) {
         String token = jwtTokenProvider.resolveToken(request);
         if (token != null && jwtTokenProvider.validateToken(token)) {
-            return jwtTokenProvider.getCustomerIdFromToken(token);
+            // First try to get customerId directly from token
+            Long customerId = jwtTokenProvider.getCustomerIdFromToken(token);
+            if (customerId != null) {
+                return customerId;
+            }
+
+            // Fallback: lookup customer by email from token
+            String email = jwtTokenProvider.getEmailFromToken(token);
+            if (email != null) {
+                try {
+                    CustomerDTO customer = customerService.getCustomerDTOByEmail(email);
+                    if (customer != null) {
+                        return customer.getCustomerId();
+                    }
+                } catch (Exception e) {
+                    // Customer not found by email - will throw below
+                }
+            }
         }
         throw new RuntimeException("Unable to determine customer ID from token");
     }

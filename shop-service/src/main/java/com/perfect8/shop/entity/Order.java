@@ -150,6 +150,11 @@ public class Order {
         if (orderStatus == null) {
             orderStatus = OrderStatus.PENDING;
         }
+        if (orderNumber == null) {
+            // Generate order number: ORD-YYYYMMDD-RANDOM
+            orderNumber = "ORD-" + java.time.LocalDate.now().toString().replace("-", "") +
+                          "-" + String.format("%06d", (int)(Math.random() * 1000000));
+        }
     }
 
     @PreUpdate
