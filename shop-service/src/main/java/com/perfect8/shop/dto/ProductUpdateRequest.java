@@ -25,6 +25,9 @@ public class ProductUpdateRequest {
     @Size(max = 2000, message = "Description must not exceed 2000 characters")
     private String description;
 
+    @Size(max = 100, message = "SKU must not exceed 100 characters")
+    private String sku;
+
     @NotNull(message = "Price is required")
     @DecimalMin(value = "0.00", inclusive = false, message = "Price must be greater than 0")
     @Digits(integer = 10, fraction = 2, message = "Invalid price format")

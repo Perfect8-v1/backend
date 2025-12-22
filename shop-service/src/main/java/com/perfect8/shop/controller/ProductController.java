@@ -284,6 +284,7 @@ public class ProductController {
                 .productId(productId)  // FIXED: productId() -> productId()
                 .name(request.getName())
                 .description(request.getDescription())
+                .sku(request.getSku())
                 .price(request.getPrice())
                 .discountPrice(request.getDiscountPrice())
                 .stockQuantity(request.getStockQuantity())
