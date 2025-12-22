@@ -250,6 +250,7 @@ public class ProductController {
                 .stockQuantity(product.getStockQuantity())
                 .imageUrl(product.getImageUrl())
                 .category(product.getCategory() != null ? product.getCategory().getName() : null)
+                .categoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null)
                 .featured(product.isFeatured())
                 .active(product.isActive())
                 .weight(product.getWeight())
