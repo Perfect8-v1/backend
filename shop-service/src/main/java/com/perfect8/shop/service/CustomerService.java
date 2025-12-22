@@ -256,6 +256,8 @@ public class CustomerService {
 
         Address address = Address.builder()
                 .customer(customer)
+                .recipientName(addressDTO.getRecipientName())
+                .phoneNumber(addressDTO.getPhoneNumber())
                 .street(addressDTO.getStreetAddress())
                 .apartment(addressDTO.getAddressLine2())
                 .city(addressDTO.getCity())
@@ -438,6 +440,8 @@ public class CustomerService {
 
         return AddressDTO.builder()
                 .addressId(address.getAddressId())
+                .recipientName(address.getRecipientName())
+                .phoneNumber(address.getPhoneNumber())
                 .streetAddress(address.getStreet())
                 .addressLine2(address.getApartment())
                 .city(address.getCity())

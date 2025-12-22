@@ -31,6 +31,12 @@ public class Address {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
+    @Column(name = "recipient_name", length = 200)
+    private String recipientName;
+
+    @Column(name = "phone_number", length = 30)
+    private String phoneNumber;
+
     @Column(nullable = false, length = 255)
     private String street;
 
