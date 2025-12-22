@@ -171,20 +171,21 @@ public class ProductService {
      * Update existing product
      * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
+    @Transactional
     public Product updateProduct(ProductDTO productDTO) {
         log.info("Updating product with ID: {}", productDTO.getProductId());
 
-        Product product = findById(productDTO.getProductId());
+        Product product = productRepository.findById(productDTO.getProductId())
+                .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + productDTO.getProductId()));
 
         // Check for duplicate SKU if SKU is being changed
-        if (!product.getSku().equals(productDTO.getSku()) &&
+        if (productDTO.getSku() != null && !productDTO.getSku().equals(product.getSku()) &&
                 productRepository.existsBySku(productDTO.getSku())) {
             throw new DuplicateSkuException("Product with SKU " + productDTO.getSku() + " already exists");
         }
 
         // Update category if changed
-        if (productDTO.getCategoryId() != null &&
-                (product.getCategory() == null || !product.getCategory().getCategoryId().equals(productDTO.getCategoryId()))) {
+        if (productDTO.getCategoryId() != null) {
             Category category = categoryRepository.findById(productDTO.getCategoryId())
                     .orElseThrow(() -> new RuntimeException("Category not found with ID: " + productDTO.getCategoryId()));
             product.setCategory(category);
