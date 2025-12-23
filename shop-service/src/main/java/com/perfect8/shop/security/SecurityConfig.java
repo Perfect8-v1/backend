@@ -45,6 +45,9 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
 
+                        // Customer auth endpoints (login, register)
+                        .requestMatchers("/api/customers/auth/**").permitAll()
+
                         // Public product endpoints (GET only)
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
 
