@@ -101,6 +101,7 @@ public class SecurityConfig {
                 "http://localhost:8080",
                 "http://localhost:8081",
                 "http://p8.rantila.com",
+                "https://p8.rantila.com",
                 "http://perfect8alpine.rantila.com"
         ));
 
