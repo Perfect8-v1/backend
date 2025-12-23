@@ -77,8 +77,8 @@ public class AddressDTO implements Serializable {
     private String countryCode;
 
     @NotBlank(message = "Phone number is required for delivery coordination")
-    @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$",
-            message = "Invalid phone number format (use international format, e.g., +1234567890)")
+    @Pattern(regexp = "^[\\+]?[0-9\\s\\-()]{6,20}$",
+            message = "Invalid phone number format")
     private String phoneNumber;
 
     @Email(message = "Invalid email format")
