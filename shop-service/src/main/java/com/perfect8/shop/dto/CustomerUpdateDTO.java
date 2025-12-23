@@ -52,7 +52,7 @@ public class CustomerUpdateDTO {
     @Size(min = 8, max = 100, message = "Password confirmation must be between 8 and 100 characters")
     private String confirmNewPasswordHash;  // CHANGED: confirmNewPassword → confirmNewPasswordHash
 
-    @NotNull(message = "Current password hash is required for password change")
+    // Note: @NotNull removed - isPasswordChangeValid() handles conditional validation
     @Size(max = 100, message = "Current password hash too long")
     private String currentPasswordHash;  // CHANGED: currentPassword → currentPasswordHash
 
