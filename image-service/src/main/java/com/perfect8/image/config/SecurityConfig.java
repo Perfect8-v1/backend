@@ -74,9 +74,19 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
-        configuration.setAllowedOrigins(Arrays.asList(
+        // Static images - allow any origin (public resources)
+        CorsConfiguration imagesConfig = new CorsConfiguration();
+        imagesConfig.setAllowedOriginPatterns(List.of("*"));
+        imagesConfig.setAllowedMethods(List.of("GET", "OPTIONS"));
+        imagesConfig.setAllowedHeaders(List.of("*"));
+        imagesConfig.setMaxAge(86400L); // 24 hours
+        source.registerCorsConfiguration("/images/**", imagesConfig);
+
+        // API endpoints - more restrictive
+        CorsConfiguration apiConfig = new CorsConfiguration();
+        apiConfig.setAllowedOrigins(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:4200",
                 "http://localhost:8080",
@@ -84,29 +94,23 @@ public class SecurityConfig {
                 "http://p8.rantila.com",
                 "https://p8.rantila.com"
         ));
-
-        configuration.setAllowedMethods(Arrays.asList(
+        apiConfig.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
-
-        configuration.setAllowedHeaders(Arrays.asList(
+        apiConfig.setAllowedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
                 "X-Requested-With",
                 "Accept",
                 "Origin"
         ));
-
-        configuration.setExposedHeaders(Arrays.asList(
+        apiConfig.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Disposition"
         ));
-
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        apiConfig.setAllowCredentials(true);
+        apiConfig.setMaxAge(3600L);
+        source.registerCorsConfiguration("/api/**", apiConfig);
 
         return source;
     }
