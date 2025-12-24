@@ -47,8 +47,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/images/health").permitAll()
 
-                        // Static image files are public
+                        // Static image files are public (with and without trailing slash)
                         .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/original/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/thumbnail/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/small/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/medium/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/large/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/products/**").permitAll()
 
                         // ALL GET requests to /api/images are public
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
