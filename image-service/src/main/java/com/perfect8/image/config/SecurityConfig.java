@@ -15,6 +15,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.core.annotation.Order;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,8 +34,32 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /**
+     * Security chain for static images - no authentication, permissive CORS
+     */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(1)
+    public SecurityFilterChain staticImagesFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/images/**")
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)  // Disable CORS for static images
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().permitAll()
+                );
+
+        return http.build();
+    }
+
+    /**
+     * Security chain for API endpoints - JWT authentication, strict CORS
+     */
+    @Bean
+    @Order(2)
+    public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -46,15 +72,6 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/images/health").permitAll()
-
-                        // Static image files are public (with and without trailing slash)
-                        .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/images/original/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/images/thumbnail/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/images/small/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/images/medium/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/images/large/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/images/products/**").permitAll()
 
                         // ALL GET requests to /api/images are public
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
