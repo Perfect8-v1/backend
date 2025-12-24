@@ -69,7 +69,12 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // Auth endpoints - login, register and salt are public
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/salt").permitAll()
+                        // Include both with and without trailing slash for nginx compatibility
+                        .requestMatchers(
+                                "/api/auth/login", "/api/auth/login/",
+                                "/api/auth/register", "/api/auth/register/",
+                                "/api/auth/salt", "/api/auth/salt/"
+                        ).permitAll()
 
                         // Other auth endpoints - require ADMIN role
                         .requestMatchers("/api/auth/**").hasRole("ADMIN")
