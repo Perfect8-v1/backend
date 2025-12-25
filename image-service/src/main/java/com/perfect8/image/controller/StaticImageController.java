@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 @RestController
 @RequestMapping("/images")
 @Slf4j
-@CrossOrigin(origins = "*")
 public class StaticImageController {
 
     @Value("${app.upload.dir:uploads/images}")
