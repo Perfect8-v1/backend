@@ -35,11 +35,12 @@ public class AuthController {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-// Tvätta strängarna: ta bort mellanslag OCH eventuella citattecken som smugit med från JSON/Testverktyg
+// Tvätta bort både dubbla och enkla citattecken samt mellanslag
             String providedHash = request.getPasswordHash() != null ?
-                    request.getPasswordHash().trim().replace("\"", "") : "";
+                    request.getPasswordHash().trim().replace("\"", "").replace("'", "") : "";
             String storedHash = user.getPasswordHash() != null ?
-                    user.getPasswordHash().trim().replace("\"", "") : "";
+                    user.getPasswordHash().trim().replace("\"", "").replace("'", "") : "";
+
 
 
             // DENNA LOGG GER OSS SVARET
