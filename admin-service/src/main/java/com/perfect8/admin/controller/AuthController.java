@@ -38,6 +38,11 @@ public class AuthController {
             String providedHash = request.getPasswordHash() != null ? request.getPasswordHash().trim() : "";
             String storedHash = user.getPasswordHash() != null ? user.getPasswordHash().trim() : "";
 
+            // KRITISK LOGGNING FÖR ATT HITTA FELET
+            log.info("DEBUG LOGIN: Jämför hashar...");
+            log.info("DEBUG LOGIN: MOTTAGEN: [{}] (Längd: {})", providedHash, providedHash.length());
+            log.info("DEBUG LOGIN: SPARAD:   [{}] (Längd: {})", storedHash, storedHash.length());
+
             if (storedHash.equals(providedHash)) {
                 log.info("DEBUG LOGIN: Hash matchade för: {}", user.getEmail());
 
@@ -45,7 +50,6 @@ public class AuthController {
                 user.setLastLoginDate(LocalDateTime.now());
                 userRepository.save(user);
 
-                // JWT generering med Set<Role>
                 String token = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRoles());
 
                 Map<String, Object> userInfo = new HashMap<>();
@@ -82,7 +86,7 @@ public class AuthController {
         user.setActive(true);
         user.setCreatedDate(LocalDateTime.now());
 
-        // Använder valueOf för att undvika kompileringsfel mot enums i andra moduler
+        // Använder valueOf för att undvika kompileringsfel
         user.setRoles(Set.of(Role.valueOf("ROLE_USER")));
 
         userRepository.save(user);

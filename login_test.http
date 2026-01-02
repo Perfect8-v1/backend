@@ -1,0 +1,14 @@
+### Variabler (Använd IPv4 för att undvika strul)
+@hostname = p8.rantila.com
+@port = 8081
+@email = cmagnusb@yahoo.se
+@passwordHash = '$2a$10$I5Gx4UGZ.9LLZCOkEsBGtufqLB4VKuClswj4fiK8tYXXguSimfrtK'
+
+### TEST 1: Direktanrop till Admin Service (Isolera felet)
+POST http://{{hostname}}:{{port}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "passwordHash": "{{passwordHash}}"
+}
