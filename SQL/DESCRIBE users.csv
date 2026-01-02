@@ -1,0 +1,17 @@
+Field,Type,Null,Key,Default,Extra
+user_id,bigint,NO,PRI,NULL,auto_increment
+email,varchar(255),NO,UNI,NULL,
+password_hash,varchar(255),NO,,NULL,
+password_salt,varchar(29),YES,,NULL,
+first_name,varchar(100),YES,,NULL,
+last_name,varchar(100),YES,,NULL,
+is_active,tinyint(1),NO,,1,
+is_email_verified,tinyint(1),NO,,0,
+email_verification_token,varchar(255),YES,MUL,NULL,
+reset_password_token,varchar(255),YES,MUL,NULL,
+reset_password_token_expiry,datetime,YES,,NULL,
+failed_login_attempts,int,NO,,0,
+account_locked_until,datetime,YES,,NULL,
+created_date,datetime,NO,,NULL,
+updated_date,datetime,YES,,NULL,
+last_login_date,datetime,YES,,NULL,

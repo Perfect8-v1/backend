@@ -1,0 +1,16 @@
+email,password_hash,password_salt
+magnus@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+admin@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMyedHGne.TXwTWJH/.6ht55dUo6J9tTW/y,$2a$10$N9qo8uLOickgx2ZMRZoMye
+writer@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+staff@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+john.doe@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+jane.smith@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+unverified@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+inactive@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+locked@perfect8.com,$2a$10$N9qo8uLOickgx2ZMRZoMye7JrRqX.Qq4YzFWbVYBHVCQ8.6Y8F4vi,NULL
+test@perfect8.com,$2a$10$1pYLHNrkKh1rrzWDSXiS9.Zu870IcTfSSGRUQ4nPh6WNGW1HTVt9.,NULL
+newadmin@perfect8.com,$2a$10$igsoCmZ.x9IwKL08yTsd3ubvyHZShVvp1AYkYCal7XI0dAt0.Yzci,NULL
+cmagnusb@yahoo.se,$2a$10$I5Gx4UGZ.9LLZCOkEsBGtufqLB4VKuClswj4fiK8tYXXguSimfrtK,$2a$10$I5Gx4UGZ.9LLZCOkEsBGtu
+jonteyh@gmail.com,$2a$10$N9qo8uLOickgx2ZMRZoMye1DdZJQqMdVqe9zQJ9C5Y3lK1HJl2eRK,NULL
+jyh@kth.se,$2a$10$9wCovk1Ykm2XU40sYPpGgO03eCVACGwy1GCMLj33190O2ek100iw.,$2a$10$9wCovk1Ykm2XU40sYPpGgO
+test@perfect8.se,$2a$10$gniPSFblsRqK7AAFJ1Ye8Oz0sZ1OjTPco3eD/60m/7MRa.AB0UXH2,NULL

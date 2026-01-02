@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Order Has Shipped</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .shipped-icon {
+            font-size: 48px;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        .tracking-box {
+            background-color: #e7f3ff;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .tracking-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            font-family: monospace;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            letter-spacing: 2px;
+        }
+        .track-button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 20px 0;
+        }
+        .track-button:hover {
+            background-color: #0056b3;
+        }
+        .order-summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .delivery-info {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 4px solid #28a745;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #666;
+            font-size: 14px;
+        }
+        .status-timeline {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .timeline-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        .timeline-icon.completed {
+            background-color: #28a745;
+        }
+        .timeline-icon.current {
+            background-color: #007bff;
+        }
+        .timeline-icon.pending {
+            background-color: #dee2e6;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="email-container">
+    <div class="header">
+        <div class="shipped-icon">📦</div>
+        <div class="logo" th:text="${companyName}">Perfect8</div>
+        <h2 style="color: #555; margin: 10px 0;">Your Order Has Shipped!</h2>
+    </div>
+
+    <div class="content">
+        <p>Dear <strong th:text="${customerName}">Customer</strong>,</p>
+
+        <p>Great news! Your order has been shipped and is on its way to you. You can track your package using the information below.</p>
+
+        <div class="tracking-box">
+            <h3 style="margin-top: 0; color: #007bff;">📍 Track Your Package</h3>
+            <p>Tracking Number:</p>
+            <div class="tracking-number" th:text="${trackingNumber}">1Z999AA1234567890</div>
+            <a href="#" class="track-button">Track Package</a>
+            <p style="font-size: 14px; color: #666; margin-top: 15px;">
+                Click the button above or copy the tracking number to track on the carrier's website
+            </p>
+        </div>
+
+        <div class="order-summary">
+            <h3 style="margin-top: 0;">📋 Order Details</h3>
+            <p><strong>Order #:</strong> <span th:text="${orderId}">12345</span></p>
+            <p><strong>Order Date:</strong> <span th:text="${orderDate}">2024-01-15</span></p>
+            <p><strong>Shipped Date:</strong> <span th:text="${shippedDate}">2024-01-16</span></p>
+            <p><strong>Total Amount:</strong> $<span th:text="${#numbers.formatDecimal(totalAmount, 1, 2)}">113.98</span></p>
+        </div>
+
+        <div class="delivery-info">
+            <h3 style="margin-top: 0; color: #28a745;">🚚 Delivery Information</h3>
+            <p><strong>Estimated Delivery:</strong> 2-3 business days</p>
+            <p><strong>Shipping Address:</strong></p>
+            <div th:if="${shippingAddress}">
+                <p style="margin: 5px 0;" th:text="${shippingAddress.fullName}">John Doe</p>
+                <p style="margin: 5px 0;" th:text="${shippingAddress.addressLine1}">123 Main St</p>
+                <p style="margin: 5px 0;" th:if="${shippingAddress.addressLine2}" th:text="${shippingAddress.addressLine2}">Apt 4B</p>
+                <p style="margin: 5px 0;">
+                    <span th:text="${shippingAddress.city}">New York</span>,
+                    <span th:text="${shippingAddress.state}">NY</span>
+                    <span th:text="${shippingAddress.zipCode}">10001</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="status-timeline">
+            <h3>📈 Shipping Status</h3>
+            <div class="timeline-item">
+                <div class="timeline-icon completed">✓</div>
+                <div>Order Confirmed</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon completed">✓</div>
+                <div>Order Processed</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon current">🚛</div>
+                <div><strong>Shipped - In Transit</strong></div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon pending">○</div>
+                <div>Out for Delivery</div>
+            </div>
+            <div class="timeline-item">
+                <div class="timeline-icon pending">○</div>
+                <div>Delivered</div>
+            </div>
+        </div>
+
+        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 5px;">
+            <h4 style="margin-top: 0; color: #856404;">📱 Delivery Tips</h4>
+            <ul style="margin-bottom: 0;">
+                <li>Someone should be available to receive the package</li>
+                <li>Check your tracking number regularly for updates</li>
+                <li>If you're not home, the package may be left with a neighbor or at a pickup location</li>
+                <li>Contact us immediately if there are any delivery issues</li>
+            </ul>
+        </div>
+
+        <p><strong>Questions about your shipment?</strong> Our customer service team is here to help track your package and answer any shipping questions.</p>
+    </div>
+
+    <div class="footer">
+        <p>
+            <strong th:text="${companyName}">Perfect8</strong> - Shipping Department<br>
+            Need help? Contact us at
+            <a href="#" th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@perfect8.com</a>
+        </p>
+
+        <p style="font-size: 12px; color: #999; margin-top: 20px;">
+            This email was sent to <span th:text="${customerEmail}">customer@email.com</span><br>
+            © 2024 <span th:text="${companyName}">Perfect8</span>. All rights reserved.
+        </p>
+    </div>
+</div>
+</body>
+</html>

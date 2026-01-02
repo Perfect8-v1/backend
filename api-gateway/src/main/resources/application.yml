@@ -1,0 +1,260 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      # Global CORS Configuration
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"      # React dev
+              - "http://localhost:8000"      # Django admin
+              - "https://p8.rantila.com"
+              - "https://*.rantila.com"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+              - Accept
+              - Origin
+              - X-Requested-With
+            allowCredentials: true
+            maxAge: 3600
+
+      # Routes Configuration
+      routes:
+        # ==========================================
+        # ADMIN SERVICE (Port 8081)
+        # ==========================================
+
+        # Auth endpoints (public)
+        - id: admin-auth
+          uri: http://admin-service:8081
+          predicates:
+            - Path=/api/auth/**
+
+        # Admin endpoints (protected)
+        - id: admin-management
+          uri: http://admin-service:8081
+          predicates:
+            - Path=/api/admin/**
+
+        # Admin actuator
+        - id: admin-actuator
+          uri: http://admin-service:8081
+          predicates:
+            - Path=/api/admin/actuator/**
+          filters:
+            - RewritePath=/api/admin/actuator/(?<segment>.*), /actuator/$\{segment}
+
+        # Admin OpenAPI
+        - id: admin-openapi
+          uri: http://admin-service:8081
+          predicates:
+            - Path=/admin-service/v3/api-docs/**
+          filters:
+            - RewritePath=/admin-service/v3/api-docs(?<segment>.*), /v3/api-docs$\{segment}
+
+        # ==========================================
+        # BLOG SERVICE (Port 8082)
+        # ==========================================
+
+        # Blog posts (public GET, protected POST/PUT/DELETE)
+        - id: blog-posts
+          uri: http://blog-service:8082
+          predicates:
+            - Path=/api/posts/**
+
+        # Blog actuator
+        - id: blog-actuator
+          uri: http://blog-service:8082
+          predicates:
+            - Path=/api/posts/actuator/**
+          filters:
+            - RewritePath=/api/posts/actuator/(?<segment>.*), /actuator/$\{segment}
+
+        # Blog OpenAPI
+        - id: blog-openapi
+          uri: http://blog-service:8082
+          predicates:
+            - Path=/blog-service/v3/api-docs/**
+          filters:
+            - RewritePath=/blog-service/v3/api-docs(?<segment>.*), /v3/api-docs$\{segment}
+
+        # ==========================================
+        # EMAIL SERVICE (Port 8083)
+        # ==========================================
+
+        # Email endpoints (protected)
+        - id: email-service
+          uri: http://email-service:8083
+          predicates:
+            - Path=/api/email/**
+
+        # Email actuator
+        - id: email-actuator
+          uri: http://email-service:8083
+          predicates:
+            - Path=/api/email/actuator/**
+          filters:
+            - RewritePath=/api/email/actuator/(?<segment>.*), /actuator/$\{segment}
+
+        # Email OpenAPI
+        - id: email-openapi
+          uri: http://email-service:8083
+          predicates:
+            - Path=/email-service/v3/api-docs/**
+          filters:
+            - RewritePath=/email-service/v3/api-docs(?<segment>.*), /v3/api-docs$\{segment}
+
+        # ==========================================
+        # IMAGE SERVICE (Port 8084)
+        # ==========================================
+
+        # Image endpoints (public GET, protected POST/DELETE)
+        - id: image-service
+          uri: http://image-service:8084
+          predicates:
+            - Path=/api/images/**
+
+        # Image actuator
+        - id: image-actuator
+          uri: http://image-service:8084
+          predicates:
+            - Path=/api/images/actuator/**
+          filters:
+            - RewritePath=/api/images/actuator/(?<segment>.*), /actuator/$\{segment}
+
+        # Image OpenAPI
+        - id: image-openapi
+          uri: http://image-service:8084
+          predicates:
+            - Path=/image-service/v3/api-docs/**
+          filters:
+            - RewritePath=/image-service/v3/api-docs(?<segment>.*), /v3/api-docs$\{segment}
+
+        # ==========================================
+        # SHOP SERVICE (Port 8085)
+        # ==========================================
+        # FIXED: Rewrites remove /v1 to match shop-service endpoints
+
+        # Products (public GET, protected POST/PUT/DELETE)
+        - id: shop-products
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/api/products/**
+
+        # Categories (public GET, protected POST/PUT/DELETE)
+        - id: shop-categories
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/api/categories/**
+
+        # Cart (protected)
+        - id: shop-cart
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/api/cart/**
+
+        # Orders (protected)
+        - id: shop-orders
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/api/orders/**
+
+        # Customers (public register/login, protected profile)
+        - id: shop-customers
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/api/customers/**
+
+        # Payments (protected)
+        - id: shop-payments
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/api/payments/**
+
+        # Shop actuator
+        - id: shop-actuator
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/api/shop/actuator/**
+          filters:
+            - RewritePath=/api/shop/actuator/(?<segment>.*), /actuator/$\{segment}
+
+        # Shop OpenAPI
+        - id: shop-openapi
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/shop-service/v3/api-docs/**
+          filters:
+            - RewritePath=/shop-service/v3/api-docs(?<segment>.*), /v3/api-docs$\{segment}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+
+# SpringDoc OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    urls:
+      - name: "1. Admin Service"
+        url: /admin-service/v3/api-docs
+      - name: "2. Blog Service"
+        url: /blog-service/v3/api-docs
+      - name: "3. Email Service"
+        url: /email-service/v3/api-docs
+      - name: "4. Image Service"
+        url: /image-service/v3/api-docs
+      - name: "5. Shop Service"
+        url: /shop-service/v3/api-docs
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+
+# Gateway Global Configuration
+spring.cloud.gateway:
+  default-filters:
+    - PreserveHostHeader
+
+# Management & Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+# Logging
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    com.perfect8.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Application Info
+info:
+  app:
+    name: Perfect8 API Gateway
+    description: Spring Cloud Gateway for Perfect8 microservices
+    version: 1.0.0
