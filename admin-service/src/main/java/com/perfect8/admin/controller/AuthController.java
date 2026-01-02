@@ -29,22 +29,23 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        log.info("DEBUG LOGIN: Inloggningsförsök för: {}", request.getEmail());
+        log.info("MAGNUM OPUS DEBUG: Inloggningsförsök för: {}", request.getEmail());
 
         try {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
+            // Tvätta strängarna från eventuella dolda mellanslag
             String providedHash = request.getPasswordHash() != null ? request.getPasswordHash().trim() : "";
             String storedHash = user.getPasswordHash() != null ? user.getPasswordHash().trim() : "";
 
-            // KRITISK LOGGNING FÖR ATT HITTA FELET
-            log.info("DEBUG LOGIN: Jämför hashar...");
-            log.info("DEBUG LOGIN: MOTTAGEN: [{}] (Längd: {})", providedHash, providedHash.length());
-            log.info("DEBUG LOGIN: SPARAD:   [{}] (Längd: {})", storedHash, storedHash.length());
+            // DENNA LOGG GER OSS SVARET
+            log.info("MAGNUM OPUS DEBUG: Jämför strängar...");
+            log.info("MOTTAGEN: [{}] (Längd: {})", providedHash, providedHash.length());
+            log.info("SPARAD:   [{}] (Längd: {})", storedHash, storedHash.length());
 
             if (storedHash.equals(providedHash)) {
-                log.info("DEBUG LOGIN: Hash matchade för: {}", user.getEmail());
+                log.info("MAGNUM OPUS DEBUG: MATCH! Genererar token...");
 
                 user.setFailedLoginAttempts(0);
                 user.setLastLoginDate(LocalDateTime.now());
@@ -57,39 +58,26 @@ public class AuthController {
                 userInfo.put("email", user.getEmail());
                 userInfo.put("roles", user.getRoles());
 
-                return ResponseEntity.ok(new LoginResponse(
-                        token,
-                        "Bearer",
-                        user.getEmail(),
-                        3600L,
-                        userInfo
-                ));
+                return ResponseEntity.ok(new LoginResponse(token, "Bearer", user.getEmail(), 3600L, userInfo));
             } else {
-                log.error("DEBUG LOGIN: Felaktigt lösenord för: {}", user.getEmail());
+                log.error("MAGNUM OPUS DEBUG: MISS! Hasharna är inte identiska.");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
             }
         } catch (Exception e) {
-            log.error("DEBUG LOGIN: Fel: {}", e.getMessage());
+            log.error("MAGNUM OPUS DEBUG: Fel: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Login failed"));
         }
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody LoginRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already registered"));
-        }
-
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(request.getPasswordHash().trim());
         user.setActive(true);
         user.setCreatedDate(LocalDateTime.now());
-
-        // Använder valueOf för att undvika kompileringsfel
-        user.setRoles(Set.of(Role.valueOf("ROLE_USER")));
-
+        user.setRoles(Set.of(Role.valueOf("USER"))); // Justerat för att matcha din Role.java (USER)
         userRepository.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "User registered successfully"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "User registered"));
     }
 }
