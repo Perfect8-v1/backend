@@ -41,8 +41,8 @@ public class AuthController {
 
             // DENNA LOGG GER OSS SVARET
             log.info("MAGNUM OPUS DEBUG: Jämför strängar...");
-            log.info("MOTTAGEN: [{}] (Längd: {})", providedHash, providedHash.length());
-            log.info("SPARAD:   [{}] (Längd: {})", storedHash, storedHash.length());
+            log.info("MAGNUM OPUS DEBUG: MOTTAGEN: [{}] (Längd: {})", providedHash, providedHash.length());
+            log.info("MAGNUM OPUS DEBUG: SPARAD:   [{}] (Längd: {})", storedHash, storedHash.length());
 
             if (storedHash.equals(providedHash)) {
                 log.info("MAGNUM OPUS DEBUG: MATCH! Genererar token...");
