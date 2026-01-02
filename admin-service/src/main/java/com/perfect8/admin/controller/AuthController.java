@@ -36,8 +36,10 @@ public class AuthController {
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
             // Tvätta strängarna från eventuella dolda mellanslag
-            String providedHash = request.getPasswordHash() != null ? request.getPasswordHash().trim() : "";
-            String storedHash = user.getPasswordHash() != null ? user.getPasswordHash().trim() : "";
+            String providedHash = request.getPasswordHash() != null ?
+                    request.getPasswordHash().trim().replace("\"", "") : "";
+            String storedHash = user.getPasswordHash() != null ?
+                    user.getPasswordHash().trim().replace("\"", "") : "";
 
             // DENNA LOGG GER OSS SVARET
             log.info("MAGNUM OPUS DEBUG: Jämför strängar...");
