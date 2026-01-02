@@ -35,11 +35,12 @@ public class AuthController {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("User not found"));
 
-            // Tvätta strängarna från eventuella dolda mellanslag
+// Tvätta strängarna: ta bort mellanslag OCH eventuella citattecken som smugit med från JSON/Testverktyg
             String providedHash = request.getPasswordHash() != null ?
                     request.getPasswordHash().trim().replace("\"", "") : "";
             String storedHash = user.getPasswordHash() != null ?
                     user.getPasswordHash().trim().replace("\"", "") : "";
+
 
             // DENNA LOGG GER OSS SVARET
             log.info("MAGNUM OPUS DEBUG: Jämför strängar...");
