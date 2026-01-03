@@ -1,14 +1,22 @@
-### Variabler (Använd IPv4 för att undvika strul)
-@hostname = p8.rantila.com
-@port = 8081
+@baseUrl = http://p8.rantila.com:8080
 @email = cmagnusb@yahoo.se
-@passwordHash = '$2a$10$I5Gx4UGZ.9LLZCOkEsBGtufqLB4VKuClswj4fiK8tYXXguSimfrtK'
+@passwordHash = $2a$10$I5Gx4UGZ.9LLZCOkEsBGtufqLB4VKuClswj4fiK8tYXXguSimfrtK
 
-### TEST 1: Direktanrop till Admin Service (Isolera felet)
-POST http://{{hostname}}:{{port}}/api/auth/login
+### 1. LOGIN (Kör denna först för att uppdatera token)
+# @name loginRequest
+POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
   "email": "{{email}}",
   "passwordHash": "{{passwordHash}}"
 }
+
+### EXTRAHERA TOKEN (Detta script körs automatiskt av VS Code)
+@authToken = {{loginRequest.response.body.accessToken}}
+
+
+### 2. HÄMTA PRODUKTER (Använder variabeln automatiskt)
+GET {{baseUrl}}/api/shop/products
+Authorization: Bearer {{authToken}}
+Accept: application/json
