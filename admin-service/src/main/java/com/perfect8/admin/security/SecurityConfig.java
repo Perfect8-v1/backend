@@ -1,6 +1,5 @@
-package com.perfect8.admin.config;
+package com.perfect8.admin.security;
 
-import com.perfect8.admin.security.HeaderAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -8,6 +7,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Lägg till denna import
+import org.springframework.security.crypto.password.PasswordEncoder;   // Lägg till denna import
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -19,21 +20,24 @@ public class SecurityConfig {
 
     private final HeaderAuthenticationFilter headerAuthenticationFilter;
 
+    // MAGNUM OPUS FIX: Lägg tillbaka PasswordEncoder som DataInitializer kräver
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Öppna för inloggning och registrering (Publika)
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        // Health checks och OpenAPI
-                        .requestMatchers("/actuator/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
-                        // Alla administrations-endpoints kräver autentisering via Gateway-headers
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .requestMatchers("/api/admin/**").authenticated()
                         .anyRequest().authenticated()
                 )
-                // Lägg till header-filtret
                 .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
