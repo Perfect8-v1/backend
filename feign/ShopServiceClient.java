@@ -1,16 +1,4 @@
-package com.perfect8.feign;
-
-import com.perfect8.dto.ProductDto;
-import com.perfect8.dto.CategoryDto;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
-
-@FeignClient(name = "shop-service", url = "http://localhost:8082")
+@FeignClient(name = "shop-service", url = "http://shop-service:8085", configuration = FeignConfig.class)
 public interface ShopServiceClient {
 
     @GetMapping("/api/products")
@@ -19,8 +7,9 @@ public interface ShopServiceClient {
             @RequestParam(defaultValue = "20") int size
     );
 
-    @GetMapping("/api/products/{customerEmailDTOId}")
-    ResponseEntity<ProductDto> getProduct(@PathVariable Long id);
+    // Magnum Opus: Explicit namngivning av resursens ID
+    @GetMapping("/api/products/{productId}")
+    ResponseEntity<ProductDto> getProduct(@PathVariable("productId") Long productId);
 
     @GetMapping("/api/categories")
     ResponseEntity<List<CategoryDto>> getAllCategories();

@@ -1,15 +1,4 @@
-package com.perfect8.feign;
-
-import com.perfect8.dto.BlogPostDto;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
-
-@FeignClient(name = "blog-service", url = "http://localhost:8080")
+@FeignClient(name = "blog-service", url = "http://blog-service:8082", configuration = FeignConfig.class)
 public interface BlogServiceClient {
 
     @GetMapping("/api/posts")
@@ -18,8 +7,9 @@ public interface BlogServiceClient {
             @RequestParam(defaultValue = "10") int size
     );
 
-    @GetMapping("/api/posts/{customerEmailDTOId}")
-    ResponseEntity<BlogPostDto> getPost(@PathVariable Long id);
+    // Magnum Opus: Domänspecifikt ID för blogginlägg
+    @GetMapping("/api/posts/{postId}")
+    ResponseEntity<BlogPostDto> getPost(@PathVariable("postId") Long postId);
 
     @GetMapping("/api/posts/published")
     ResponseEntity<List<BlogPostDto>> getPublishedPosts();

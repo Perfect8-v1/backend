@@ -1,4 +1,4 @@
-package com.perfect8.shop.security;
+package com.perfect8.image.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,17 +22,15 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // Gateway skickar dessa headers efter lyckad JWT-validering
         String userId = request.getHeader("X-User-Id");
         String userEmail = request.getHeader("X-Auth-User");
         String rolesHeader = request.getHeader("X-User-Roles");
 
-        if (userId != null && userEmail != null) {
+        if (userId != null && userEmail != null && rolesHeader != null) {
             List<SimpleGrantedAuthority> authorities = Arrays.stream(rolesHeader.split(","))
                     .map(role -> new SimpleGrantedAuthority(role.trim()))
                     .collect(Collectors.toList());
 
-            // Skapa ett SecurityContext baserat på headers istället för JWT
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(userEmail, null, authorities);
 

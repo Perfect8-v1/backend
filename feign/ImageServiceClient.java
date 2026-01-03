@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.util.Map;
 
-@FeignClient(name = "image-service", url = "http://localhost:8081")
+@FeignClient(name = "image-service", url = "http://image-service:8084", configuration = FeignConfig.class)
 public interface ImageServiceClient {
 
     @GetMapping("/api/images/stats")
