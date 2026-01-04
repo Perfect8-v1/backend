@@ -7,9 +7,8 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
 /**
- * TEMPORARY Security Config - ALLOW EVERYTHING
- * 
- * TODO: Add proper JWT validation after OpenAPI works
+ * Gateway Security Config
+ * Hanterar routing-säkerhet.
  */
 @Configuration
 @EnableWebFluxSecurity
@@ -18,10 +17,23 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-            .csrf(csrf -> csrf.disable())
-            .authorizeExchange(exchange -> exchange
-                .anyExchange().permitAll()  // SLÄPP IGENOM ALLT!
-            )
-            .build();
+                .csrf(csrf -> csrf.disable())
+                .authorizeExchange(exchange -> exchange
+                        // MAGNUM OPUS FIX: Explicita tillåtelser i Gatewayen
+                        .pathMatchers(
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/salt", // <--- VIKTIGT
+                                "/actuator/**"
+                        ).permitAll()
+
+                        // Wildcards
+                        .pathMatchers("/api/auth/**").permitAll()
+
+                        // För utveckling tillåter vi allt annat också just nu,
+                        // men ovanstående rader garanterar att saltet släpps igenom först.
+                        .anyExchange().permitAll()
+                )
+                .build();
     }
 }

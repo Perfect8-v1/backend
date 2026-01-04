@@ -20,3 +20,21 @@ Content-Type: application/json
 GET {{baseUrl}}/api/shop/products
 Authorization: Bearer {{authToken}}
 Accept: application/json
+
+### 2. HÄMTA PRODUKTER (Variabeln @authToken uppdateras automatiskt av login-anropet ovan)
+GET http://p8.rantila.com:8080/api/shop/products
+Authorization: Bearer {{loginRequest.response.body.accessToken}}
+Accept: application/json
+
+### LOGIN TEST
+POST http://p8.rantila.com:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "cmagnusb@yahoo.se",
+  "passwordHash": "$2a$10$I5Gx4UGZ.9LLZCOkEsBGtufqLB4VKuClswj4fiK8tYXXguSimfrtK"
+}
+
+
+
+

@@ -1,9 +1,8 @@
 package com.perfect8.admin.security;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy; // Lägg till denna import
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -18,8 +17,7 @@ public class SecurityConfig {
 
     private final HeaderAuthenticationFilter headerAuthenticationFilter;
 
-    // Här använder vi manuell konstruktor istället för @RequiredArgsConstructor
-    // för att kunna sätta @Lazy på just detta filter
+    // Vi använder manuell konstruktor med @Lazy för att undvika cirkulära beroenden
     public SecurityConfig(@Lazy HeaderAuthenticationFilter headerAuthenticationFilter) {
         this.headerAuthenticationFilter = headerAuthenticationFilter;
     }
@@ -30,10 +28,25 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // MAGNUM OPUS FIX: Explicita undantag för salt och auth
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/info",
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/salt" // <--- DEN HÄR MÅSTE VARA HÄR!
+                        ).permitAll()
+
+                        // Swagger UI
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
+                        // Wildcard backup (bra att ha kvar)
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Allt annat under /api/admin kräver inloggning
                         .requestMatchers("/api/admin/**").authenticated()
+
+                        // Övrigt måste vara autentiserat
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
