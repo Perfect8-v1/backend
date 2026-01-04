@@ -11,11 +11,7 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins:
-              - "http://localhost:3000"
-              - "http://localhost:8000"
-              - "https://p8.rantila.com"
-              - "https://*.rantila.com"
+            allowedOrigins: "*" # För utveckling. I prod, specifiera exakta domäner.
             allowedMethods:
               - GET
               - POST
@@ -37,28 +33,58 @@ spring:
         # ==========================================
         # ADMIN SERVICE (Port 8081)
         # ==========================================
-        # Auth endpoints (public)
-        - id: admin-auth
+        # Login, Register, Salt & Admin endpoints
+        # Flutter skickar: /api/auth/... eller /api/admin/...
+        # Ingen prefix-strip behövs här eftersom Admin Service förväntar sig dessa paths.
+        - id: admin-service
           uri: http://admin-service:8081
           predicates:
-            - Path=/api/auth/**
-
-        # Admin management (protected)
-        - id: admin-management
-          uri: http://admin-service:8081
-          predicates:
-            - Path=/api/admin/**
+            - Path=/api/admin/**, /api/auth/**, /actuator/**
 
         # ==========================================
         # SHOP SERVICE (Port 8085)
         # ==========================================
-        - id: shop-service-api
+        # Flutter skickar: /shop/api/cart
+        # Gateway ser "/shop", tar bort det (StripPrefix=1), och skickar "/api/cart" till tjänsten.
+        - id: shop-service
           uri: http://shop-service:8085
           predicates:
-            - Path=/api/shop/**
+            - Path=/shop/**
           filters:
-            # Tvättar /api/shop/products -> /api/products för att matcha ProductController
-            - RewritePath=/api/shop/(?<segment>.*), /api/$\{segment}
+            - StripPrefix=1
+
+        # ==========================================
+        # BLOG SERVICE (Port 8083)
+        # ==========================================
+        # Flutter skickar: /blog/api/posts
+        - id: blog-service
+          uri: http://blog-service:8083
+          predicates:
+            - Path=/blog/**
+          filters:
+            - StripPrefix=1
+
+        # ==========================================
+        # IMAGE SERVICE (Port 8084)
+        # ==========================================
+        - id: image-service
+          uri: http://image-service:8084
+          predicates:
+            - Path=/image/**
+          filters:
+            - StripPrefix=1
+
+        # ==========================================
+        # EMAIL SERVICE (Port 8085?)
+        # ==========================================
+        # OBS: Dubbelkolla porten för email-service. Ofta ligger den separat.
+        # Om den ligger i samma jar som shop kan de dela port, annars byt portnummer här.
+        - id: email-service
+          uri: http://email-service:8085
+          predicates:
+            - Path=/email/**
+          filters:
+            - StripPrefix=1
 
         # ==========================================
         # SWAGGER / OPENAPI (Docs)
@@ -91,13 +117,5 @@ springdoc:
         url: /admin-service/v3/api-docs
       - name: "2. Shop Service"
         url: /shop-service/v3/api-docs
-
-# Management & Actuator
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,gateway
-  endpoint:
-    health:
-      show-details: always
+      - name: "3. Blog Service"
+        url: /blog-service/v3/api-docs  # Antag att denna finns
