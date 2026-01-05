@@ -19,48 +19,44 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         return http
-                // I Gateway (WebFlux) inaktiverar vi CSRF så här
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-
-                // Hantera CORS (Cross-Origin Resource Sharing)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-
-                // Auktoriseringsregler
                 .authorizeExchange(exchange -> exchange
-                        // 1. Auth & Salt & Actuator (Måste vara öppna)
+                        // 1. Auth & Salt & Actuator
                         .pathMatchers(
                                 "/api/auth/**",
                                 "/actuator/**"
                         ).permitAll()
 
                         // 2. Swagger / OpenAPI Documentation
-                        // Vi måste tillåta åtkomst till JSON-docs och UI-resurser
+                        // MAGNUM OPUS FIX: Vi måste lista dem explicit eftersom
+                        // "/**/v3/api-docs/**" är ogiltigt i nyare Spring.
                         .pathMatchers(
-                                "/**/v3/api-docs/**",
-                                "/webjars/**",
+                                "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**"
+                                "/webjars/**",
+                                // Specifika tjänster
+                                "/admin-service/v3/api-docs/**",
+                                "/shop-service/v3/api-docs/**",
+                                "/blog-service/v3/api-docs/**",
+                                "/image-service/v3/api-docs/**",
+                                "/email-service/v3/api-docs/**"
                         ).permitAll()
 
-                        // 3. Tillåt OPTIONS anrop (CORS pre-flight)
+                        // 3. Tillåt OPTIONS (CORS)
                         .pathMatchers(org.springframework.http.HttpMethod.OPTIONS).permitAll()
 
-                        //TODO kolla upp detta noga.
-                        // 4. Utvecklingsläge: Släpp igenom allt
-                        // (Eftersom vi hanterar säkerheten i respektive mikrotjänst också)
+                        // 4. Utvecklingsläge
                         .anyExchange().permitAll()
                 )
                 .build();
     }
 
-    /**
-     * Konfigurera CORS för Reactive Stack (WebFlux)
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*")); // I prod: Byt "*" mot "https://p8.rantila.com"
+        configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
         configuration.setAllowCredentials(true);
