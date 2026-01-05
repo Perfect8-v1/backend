@@ -33,9 +33,7 @@ spring:
         # ==========================================
         # ADMIN SERVICE (Port 8081)
         # ==========================================
-        # Login, Register, Salt & Admin endpoints
-        # Flutter skickar: /api/auth/... eller /api/admin/...
-        # Ingen prefix-strip behövs här eftersom Admin Service förväntar sig dessa paths.
+        # Auth endpoints & Admin endpoints
         - id: admin-service
           uri: http://admin-service:8081
           predicates:
@@ -44,8 +42,7 @@ spring:
         # ==========================================
         # SHOP SERVICE (Port 8085)
         # ==========================================
-        # Flutter skickar: /shop/api/cart
-        # Gateway ser "/shop", tar bort det (StripPrefix=1), och skickar "/api/cart" till tjänsten.
+        # Tar bort "/shop" och skickar resten till tjänsten
         - id: shop-service
           uri: http://shop-service:8085
           predicates:
@@ -56,7 +53,6 @@ spring:
         # ==========================================
         # BLOG SERVICE (Port 8083)
         # ==========================================
-        # Flutter skickar: /blog/api/posts
         - id: blog-service
           uri: http://blog-service:8083
           predicates:
@@ -75,10 +71,8 @@ spring:
             - StripPrefix=1
 
         # ==========================================
-        # EMAIL SERVICE (Port 8085?)
+        # EMAIL SERVICE (Port 8085)
         # ==========================================
-        # OBS: Dubbelkolla porten för email-service. Ofta ligger den separat.
-        # Om den ligger i samma jar som shop kan de dela port, annars byt portnummer här.
         - id: email-service
           uri: http://email-service:8085
           predicates:
@@ -87,21 +81,49 @@ spring:
             - StripPrefix=1
 
         # ==========================================
-        # SWAGGER / OPENAPI (Docs)
+        # SWAGGER / OPENAPI DOCS (MAGNUM OPUS FIX)
         # ==========================================
+        # Vi använder StripPrefix istället för RewritePath för stabilitet.
+
+        # 1. Admin Service Docs
         - id: admin-docs
           uri: http://admin-service:8081
           predicates:
             - Path=/admin-service/v3/api-docs/**
           filters:
-            - RewritePath=/admin-service/v3/api-docs(?<segment>.*), /v3/api-docs$\{segment}
+            - StripPrefix=1
 
+        # 2. Shop Service Docs
         - id: shop-docs
           uri: http://shop-service:8085
           predicates:
             - Path=/shop-service/v3/api-docs/**
           filters:
-            - RewritePath=/shop-service/v3/api-docs(?<segment>.*), /v3/api-docs$\{segment}
+            - StripPrefix=1
+
+        # 3. Blog Service Docs
+        - id: blog-docs
+          uri: http://blog-service:8083
+          predicates:
+            - Path=/blog-service/v3/api-docs/**
+          filters:
+            - StripPrefix=1
+
+        # 4. Image Service Docs
+        - id: image-docs
+          uri: http://image-service:8084
+          predicates:
+            - Path=/image-service/v3/api-docs/**
+          filters:
+            - StripPrefix=1
+
+        # 5. Email Service Docs
+        - id: email-docs
+          uri: http://email-service:8085
+          predicates:
+            - Path=/email-service/v3/api-docs/**
+          filters:
+            - StripPrefix=1
 
 # JWT Configuration
 jwt:
@@ -112,10 +134,15 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
+    # Här mappar vi namnen i dropdown-menyn till rutterna ovan
     urls:
       - name: "1. Admin Service"
         url: /admin-service/v3/api-docs
       - name: "2. Shop Service"
         url: /shop-service/v3/api-docs
       - name: "3. Blog Service"
-        url: /blog-service/v3/api-docs  # Antag att denna finns
+        url: /blog-service/v3/api-docs
+      - name: "4. Image Service"
+        url: /image-service/v3/api-docs
+      - name: "5. Email Service"
+        url: /email-service/v3/api-docs
