@@ -1,4 +1,4 @@
-package com.perfect8.gateway.filter;
+package com.perfect8.gateway.config;
 
 import com.perfect8.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -18,13 +18,13 @@ import java.util.List;
 import java.util.function.Predicate;
 
 @Component
-public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAuthenticationFilter.Config> {
+public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtAuthenticationGatewayFilterFactory.Config> {
 
-    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationGatewayFilterFactory.class);
 
     private final JwtUtil jwtUtil;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil) {
+    public JwtAuthenticationGatewayFilterFactory(JwtUtil jwtUtil) {
         super(Config.class);
         this.jwtUtil = jwtUtil;
     }
@@ -39,9 +39,9 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             "/actuator/health",
             "/v3/api-docs",
             "/swagger-ui",
-            "/api/products",      // Publika produkter
-            "/api/categories",    // Publika kategorier
-            "/api/posts"          // Publika bloggposter
+            "/api/products",
+            "/api/categories",
+            "/api/posts"
     );
 
     private final Predicate<ServerHttpRequest> isPublic = request -> {
@@ -57,13 +57,11 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
             log.debug("JWT Filter: {} {}", request.getMethod(), path);
 
-            // Publika endpoints - släpp igenom utan validering
             if (isPublic.test(request)) {
                 log.debug("Public endpoint, skipping JWT validation: {}", path);
                 return chain.filter(exchange);
             }
 
-            // Kolla Authorization header
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 log.warn("Missing Authorization header for: {}", path);
                 return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
@@ -85,13 +83,10 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                 Claims claims = jwtUtil.extractAllClaims(token);
                 String username = claims.getSubject();
                 String userId = String.valueOf(claims.get("userId"));
-
-                // Hantera roles som kan vara antingen List eller String
                 String roles = extractRoles(claims);
 
                 log.info("JWT validated - user: {}, userId: {}, roles: {}", username, userId, roles);
 
-                // Lägg till headers för downstream services
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-Auth-User", username)
                         .header("X-Auth-Roles", roles)
@@ -107,9 +102,6 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
         };
     }
 
-    /**
-     * Extrahera roles från claims - hanterar både List och String format
-     */
     @SuppressWarnings("unchecked")
     private String extractRoles(Claims claims) {
         Object rolesObj = claims.get("roles");
