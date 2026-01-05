@@ -4,45 +4,22 @@ server:
 spring:
   application:
     name: api-gateway
-
   cloud:
     gateway:
-      # Global CORS Configuration
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "*" # För utveckling. I prod, specifiera exakta domäner.
-            allowedMethods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - OPTIONS
-              - PATCH
-            allowedHeaders:
-              - Authorization
-              - Content-Type
-              - Accept
-              - Origin
-              - X-Requested-With
-            allowCredentials: true
-            maxAge: 3600
-
-      # Routes Configuration
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       routes:
-        # ==========================================
-        # ADMIN SERVICE (Port 8081)
-        # ==========================================
-        # Auth endpoints & Admin endpoints
+        # --- ADMIN ---
         - id: admin-service
           uri: http://admin-service:8081
           predicates:
             - Path=/api/admin/**, /api/auth/**, /actuator/**
 
-        # ==========================================
-        # SHOP SERVICE (Port 8085)
-        # ==========================================
-        # Tar bort "/shop" och skickar resten till tjänsten
+        # --- SHOP (Cart, Customer, Product) ---
         - id: shop-service
           uri: http://shop-service:8085
           predicates:
@@ -50,9 +27,7 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ==========================================
-        # BLOG SERVICE (Port 8083)
-        # ==========================================
+        # --- BLOG ---
         - id: blog-service
           uri: http://blog-service:8083
           predicates:
@@ -60,9 +35,7 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ==========================================
-        # IMAGE SERVICE (Port 8084)
-        # ==========================================
+        # --- IMAGE ---
         - id: image-service
           uri: http://image-service:8084
           predicates:
@@ -70,9 +43,7 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ==========================================
-        # EMAIL SERVICE (Port 8085)
-        # ==========================================
+        # --- EMAIL ---
         - id: email-service
           uri: http://email-service:8085
           predicates:
@@ -80,12 +51,10 @@ spring:
           filters:
             - StripPrefix=1
 
-        # ==========================================
-        # SWAGGER / OPENAPI DOCS (MAGNUM OPUS FIX)
-        # ==========================================
-        # Vi använder StripPrefix istället för RewritePath för stabilitet.
+        # --- SWAGGER DOCS (Explicita routes för dokumentation) ---
+        # Dessa måste ligga FÖRE de generella reglerna om det krockar,
+        # men här använder vi unika prefix så det är lugnt.
 
-        # 1. Admin Service Docs
         - id: admin-docs
           uri: http://admin-service:8081
           predicates:
@@ -93,7 +62,6 @@ spring:
           filters:
             - StripPrefix=1
 
-        # 2. Shop Service Docs
         - id: shop-docs
           uri: http://shop-service:8085
           predicates:
@@ -101,7 +69,6 @@ spring:
           filters:
             - StripPrefix=1
 
-        # 3. Blog Service Docs
         - id: blog-docs
           uri: http://blog-service:8083
           predicates:
@@ -109,7 +76,6 @@ spring:
           filters:
             - StripPrefix=1
 
-        # 4. Image Service Docs
         - id: image-docs
           uri: http://image-service:8084
           predicates:
@@ -117,32 +83,9 @@ spring:
           filters:
             - StripPrefix=1
 
-        # 5. Email Service Docs
         - id: email-docs
           uri: http://email-service:8085
           predicates:
             - Path=/email-service/v3/api-docs/**
           filters:
             - StripPrefix=1
-
-# JWT Configuration
-jwt:
-  secret: ${JWT_SECRET}
-
-# SpringDoc Configuration for Swagger UI
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    # Här mappar vi namnen i dropdown-menyn till rutterna ovan
-    urls:
-      - name: "1. Admin Service"
-        url: /admin-service/v3/api-docs
-      - name: "2. Shop Service"
-        url: /shop-service/v3/api-docs
-      - name: "3. Blog Service"
-        url: /blog-service/v3/api-docs
-      - name: "4. Image Service"
-        url: /image-service/v3/api-docs
-      - name: "5. Email Service"
-        url: /email-service/v3/api-docs
