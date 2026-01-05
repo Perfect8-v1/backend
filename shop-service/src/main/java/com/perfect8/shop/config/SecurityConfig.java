@@ -1,4 +1,4 @@
-package com.perfect8.gateway.config;
+package com.perfect8.shop.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +22,11 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchange -> exchange
-                        // Släpp igenom ALLT under utveckling för att eliminera 403-fel
+                        // Publika endpoints
+                        .pathMatchers("/api/auth/**").permitAll()
+                        .pathMatchers("/actuator/**").permitAll()
+                        .pathMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        // Allt annat hanteras av JwtAuthenticationFilter på route-nivå
                         .anyExchange().permitAll()
                 )
                 .build();
@@ -31,14 +35,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:8080",      // Flutter web debug
-                "http://127.0.0.1:8080",      // Flutter web (IPv4)
-                "http://p8.rantila.com",
-                "https://p8.rantila.com"
-        ));
+        // Tillåt alla origins för utveckling - begränsa i produktion
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
