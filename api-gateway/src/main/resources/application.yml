@@ -13,7 +13,7 @@ spring:
             allowedMethods: "*"
             allowedHeaders: "*"
       routes:
-        # --- ADMIN ---
+        # --- ADMIN (auth endpoints - publika, hanteras av filtret) ---
         - id: admin-service
           uri: http://admin-service:8081
           predicates:
@@ -26,14 +26,16 @@ spring:
             - Path=/shop/**
           filters:
             - StripPrefix=1
+            - JwtAuthentication
 
         # --- BLOG ---
         - id: blog-service
-          uri: http://blog-service:8083
+          uri: http://blog-service:8082
           predicates:
             - Path=/blog/**
           filters:
             - StripPrefix=1
+            - JwtAuthentication
 
         # --- IMAGE ---
         - id: image-service
@@ -42,19 +44,18 @@ spring:
             - Path=/image/**
           filters:
             - StripPrefix=1
+            - JwtAuthentication
 
         # --- EMAIL ---
         - id: email-service
-          uri: http://email-service:8085
+          uri: http://email-service:8083
           predicates:
             - Path=/email/**
           filters:
             - StripPrefix=1
+            - JwtAuthentication
 
-        # --- SWAGGER DOCS (Explicita routes för dokumentation) ---
-        # Dessa måste ligga FÖRE de generella reglerna om det krockar,
-        # men här använder vi unika prefix så det är lugnt.
-
+        # --- SWAGGER DOCS ---
         - id: admin-docs
           uri: http://admin-service:8081
           predicates:
@@ -70,7 +71,7 @@ spring:
             - StripPrefix=1
 
         - id: blog-docs
-          uri: http://blog-service:8083
+          uri: http://blog-service:8082
           predicates:
             - Path=/blog-service/v3/api-docs/**
           filters:
@@ -84,8 +85,12 @@ spring:
             - StripPrefix=1
 
         - id: email-docs
-          uri: http://email-service:8085
+          uri: http://email-service:8083
           predicates:
             - Path=/email-service/v3/api-docs/**
           filters:
             - StripPrefix=1
+
+# JWT Secret för token-validering
+jwt:
+  secret: ${JWT_SECRET}

@@ -4,9 +4,7 @@ import com.perfect8.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
-import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -33,18 +31,23 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
 
     public static class Config {}
 
-    // Lista på publika endpoints som inte kräver JWT
+    // Publika endpoints som inte kräver JWT
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/api/auth/login",
             "/api/auth/register",
             "/api/auth/salt",
             "/actuator/health",
             "/v3/api-docs",
-            "/swagger-ui"
+            "/swagger-ui",
+            "/api/products",      // Publika produkter
+            "/api/categories",    // Publika kategorier
+            "/api/posts"          // Publika bloggposter
     );
 
-    private final Predicate<ServerHttpRequest> isPublic = request ->
-            PUBLIC_ENDPOINTS.stream().anyMatch(uri -> request.getURI().getPath().contains(uri));
+    private final Predicate<ServerHttpRequest> isPublic = request -> {
+        String path = request.getURI().getPath();
+        return PUBLIC_ENDPOINTS.stream().anyMatch(path::contains);
+    };
 
     @Override
     public GatewayFilter apply(Config config) {
@@ -52,41 +55,43 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
 
-            // LOGGA ALLA INKOMMANDE ANROP (Isolera IPv4/IPv6 problem)
-            log.info("DEBUG: Inkommande anrop till Gateway - Path: {}, Method: {}, Remote: {}", 
-                    path, request.getMethod(), request.getRemoteAddress());
+            log.debug("JWT Filter: {} {}", request.getMethod(), path);
 
+            // Publika endpoints - släpp igenom utan validering
             if (isPublic.test(request)) {
-                log.info("DEBUG: Public endpoint identifierad, släpper igenom: {}", path);
+                log.debug("Public endpoint, skipping JWT validation: {}", path);
                 return chain.filter(exchange);
             }
 
+            // Kolla Authorization header
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                log.warn("DEBUG: Saknar Authorization header för skyddad endpoint: {}", path);
+                log.warn("Missing Authorization header for: {}", path);
                 return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                log.warn("DEBUG: Felaktigt format på Authorization header för: {}", path);
+                log.warn("Invalid Authorization header format for: {}", path);
                 return onError(exchange, "Invalid Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String token = authHeader.substring(7);
             try {
                 if (jwtUtil.isTokenExpired(token)) {
-                    log.error("DEBUG: JWT Token har löpt ut för: {}", path);
+                    log.warn("Token expired for: {}", path);
                     return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
                 }
 
                 Claims claims = jwtUtil.extractAllClaims(token);
                 String username = claims.getSubject();
-                String roles = claims.get("roles", String.class);
                 String userId = String.valueOf(claims.get("userId"));
 
-                log.info("DEBUG: JWT validerad för user: {}, roles: {}, userId: {}", username, roles, userId);
+                // Hantera roles som kan vara antingen List eller String
+                String roles = extractRoles(claims);
 
-                // Sätt headers för downstream services (FAS 2)
+                log.info("JWT validated - user: {}, userId: {}, roles: {}", username, userId, roles);
+
+                // Lägg till headers för downstream services
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-Auth-User", username)
                         .header("X-Auth-Roles", roles)
@@ -96,16 +101,32 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
 
             } catch (Exception e) {
-                log.error("DEBUG: JWT validering misslyckades: {}", e.getMessage());
+                log.error("JWT validation failed: {}", e.getMessage());
                 return onError(exchange, "Invalid JWT Token", HttpStatus.UNAUTHORIZED);
             }
         };
     }
 
+    /**
+     * Extrahera roles från claims - hanterar både List och String format
+     */
+    @SuppressWarnings("unchecked")
+    private String extractRoles(Claims claims) {
+        Object rolesObj = claims.get("roles");
+        if (rolesObj == null) {
+            return "";
+        }
+        if (rolesObj instanceof List) {
+            List<String> rolesList = (List<String>) rolesObj;
+            return String.join(",", rolesList);
+        }
+        return rolesObj.toString();
+    }
+
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
-        log.error("DEBUG: Returnerar fel till klient: {} - Status: {}", err, httpStatus);
+        log.error("Returning error: {} - Status: {}", err, httpStatus);
         return response.setComplete();
     }
 }

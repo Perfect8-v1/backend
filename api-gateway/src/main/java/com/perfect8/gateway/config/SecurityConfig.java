@@ -22,32 +22,7 @@ public class SecurityConfig {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(exchange -> exchange
-                        // 1. Auth & Salt & Actuator
-                        .pathMatchers(
-                                "/api/auth/**",
-                                "/actuator/**"
-                        ).permitAll()
-
-                        // 2. Swagger / OpenAPI Documentation
-                        // MAGNUM OPUS FIX: Vi måste lista dem explicit eftersom
-                        // "/**/v3/api-docs/**" är ogiltigt i nyare Spring.
-                        .pathMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/webjars/**",
-                                // Specifika tjänster
-                                "/admin-service/v3/api-docs/**",
-                                "/shop-service/v3/api-docs/**",
-                                "/blog-service/v3/api-docs/**",
-                                "/image-service/v3/api-docs/**",
-                                "/email-service/v3/api-docs/**"
-                        ).permitAll()
-
-                        // 3. Tillåt OPTIONS (CORS)
-                        .pathMatchers(org.springframework.http.HttpMethod.OPTIONS).permitAll()
-
-                        // 4. Utvecklingsläge
+                        // Släpp igenom ALLT under utveckling för att eliminera 403-fel
                         .anyExchange().permitAll()
                 )
                 .build();
@@ -58,9 +33,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
