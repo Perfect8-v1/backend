@@ -13,22 +13,13 @@ spring:
             allowedMethods: "*"
             allowedHeaders: "*"
       routes:
-        # --- ADMIN (auth endpoints - publika, hanteras av filtret) ---
+        # --- 1. ADMIN SERVICE ---
         - id: admin-service
           uri: http://admin-service:8081
           predicates:
-            - Path=/api/admin/**, /api/auth/**, /actuator/**
+            - Path=/admin/**, /auth/**
 
-        # --- SHOP (Cart, Customer, Product) ---
-        - id: shop-service
-          uri: http://shop-service:8085
-          predicates:
-            - Path=/shop/**
-          filters:
-            - StripPrefix=1
-            - JwtAuthentication
-
-        # --- BLOG ---
+        # --- 2. BLOG SERVICE ---
         - id: blog-service
           uri: http://blog-service:8082
           predicates:
@@ -37,16 +28,7 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- IMAGE ---
-        - id: image-service
-          uri: http://image-service:8084
-          predicates:
-            - Path=/image/**
-          filters:
-            - StripPrefix=1
-            - JwtAuthentication
-
-        # --- EMAIL ---
+        # --- 3. EMAIL SERVICE ---
         - id: email-service
           uri: http://email-service:8083
           predicates:
@@ -55,7 +37,25 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- SWAGGER DOCS ---
+        # --- 4. IMAGE SERVICE ---
+        - id: image-service
+          uri: http://image-service:8084
+          predicates:
+            - Path=/image/**
+          filters:
+            - StripPrefix=1
+            - JwtAuthentication
+
+        # --- 5. SHOP SERVICE ---
+        - id: shop-service
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/shop/**
+          filters:
+            - StripPrefix=1
+            - JwtAuthentication
+
+        # --- SWAGGER AGGREGATION ROUTES ---
         - id: admin-docs
           uri: http://admin-service:8081
           predicates:
@@ -63,17 +63,17 @@ spring:
           filters:
             - StripPrefix=1
 
-        - id: shop-docs
-          uri: http://shop-service:8085
-          predicates:
-            - Path=/shop-service/v3/api-docs/**
-          filters:
-            - StripPrefix=1
-
         - id: blog-docs
           uri: http://blog-service:8082
           predicates:
             - Path=/blog-service/v3/api-docs/**
+          filters:
+            - StripPrefix=1
+            -
+        - id: email-docs
+          uri: http://email-service:8083
+          predicates:
+            - Path=/email-service/v3/api-docs/**
           filters:
             - StripPrefix=1
 
@@ -84,13 +84,42 @@ spring:
           filters:
             - StripPrefix=1
 
-        - id: email-docs
-          uri: http://email-service:8083
+        - id: shop-docs
+          uri: http://shop-service:8085
           predicates:
-            - Path=/email-service/v3/api-docs/**
+            - Path=/shop-service/v3/api-docs/**
           filters:
             - StripPrefix=1
 
-# JWT Secret för token-validering
+
+# --- SÄKERHET ---
 jwt:
   secret: ${JWT_SECRET}
+
+# --- HEALTH CHECKS ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+# --- SWAGGER UI CONFIGURATION ---
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: 1. Admin Service
+        url: /admin-service/v3/api-docs
+      - name: 2. Blog Service
+        url: /blog-service/v3/api-docs
+      - name: 3. Email Service
+        url: /email-service/v3/api-docs
+      - name: 4. Image Service
+        url: /image-service/v3/api-docs
+      - name: 5. Shop Service
+        url: /shop-service/v3/api-docs
+  api-docs:
+    path: /v3/api-docs
