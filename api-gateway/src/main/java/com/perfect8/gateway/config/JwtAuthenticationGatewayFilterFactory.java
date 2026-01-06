@@ -1,4 +1,4 @@
-package com.perfect8.gateway.config;
+package com.perfect8.gateway.config; // Magnum Opus: Kontrollera att detta matchar din struktur.txt
 
 import com.perfect8.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -9,13 +9,15 @@ import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFac
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
+/**
+ * Filtret registreras automatiskt som "JwtAuthentication" i Spring Cloud Gateway.
+ */
 @Component
 public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtAuthenticationGatewayFilterFactory.Config> {
 
@@ -29,13 +31,13 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
     public static class Config {}
 
-    // Magnum Opus: Komplett lista för att tillåta hälsa, auth och swagger-resurser
+    // Magnum Opus: Tillåt hälsa, auth och alla Swagger-resurser (webjars ingår)
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/auth/",           // Inloggning/Register
-            "/actuator/health", // Docker Healthcheck
-            "/v3/api-docs",     // Swagger JSON docs
-            "/swagger-ui",      // Swagger HTML
-            "/webjars/"         // Swagger JS/CSS (LÖSER 500-FELET)
+            "/auth/",
+            "/actuator/health",
+            "/v3/api-docs",
+            "/swagger-ui",
+            "/webjars/"
     );
 
     @Override
@@ -43,12 +45,10 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
         return (exchange, chain) -> {
             String path = exchange.getRequest().getURI().getPath();
 
-            // 1. Släpp igenom publika endpoints
             if (isPublic(path)) {
                 return chain.filter(exchange);
             }
 
-            // 2. Validera JWT för resten
             if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
@@ -67,18 +67,13 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
                 Claims claims = jwtUtil.extractAllClaims(token);
 
-                // Extrahera data för mikrotjänsterna
-                String username = claims.getSubject();
-                String userId = claims.get("userId") != null ? claims.get("userId").toString() : "";
-
-                // Berika requesten med headers
+                // Skicka vidare användarinformation till mikrotjänsterna
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                        .header("X-Auth-User", username)
-                        .header("X-User-Id", userId)
+                        .header("X-Auth-User", claims.getSubject())
+                        .header("X-User-Id", claims.get("userId") != null ? claims.get("userId").toString() : "")
                         .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
-
             } catch (Exception e) {
                 log.error("JWT Error: {}", e.getMessage());
                 return onError(exchange, "Invalid JWT", HttpStatus.UNAUTHORIZED);
@@ -91,8 +86,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus status) {
-        ServerHttpResponse response = exchange.getResponse();
-        response.setStatusCode(status);
-        return response.setComplete();
+        exchange.getResponse().setStatusCode(status);
+        return exchange.getResponse().setComplete();
     }
 }
