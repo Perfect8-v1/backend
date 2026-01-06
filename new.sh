@@ -2,7 +2,7 @@
 # Server - bygg och deploy
 
 cd ~/backend
-git pull origin SCG
+git pull origin scg
 mvn clean package -DskipTests
 bash copy-jars*.sh
 docker compose down
