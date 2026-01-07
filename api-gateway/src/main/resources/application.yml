@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: api-gateway
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.actuate.autoconfigure.availability.AvailabilityProbesAutoConfiguration
   cloud:
     gateway:
       globalcors:
@@ -105,8 +108,11 @@ management:
   endpoint:
     health:
       show-details: always
-      probes:
-        enabled: false
+  health:
+    livenessstate:
+      enabled: false
+    readinessstate:
+      enabled: false
 
 # --- SWAGGER UI CONFIGURATION ---
 springdoc:
