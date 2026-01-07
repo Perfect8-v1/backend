@@ -1,4 +1,4 @@
-package com.perfect8.gateway.config; // Magnum Opus: Kontrollera att detta matchar din struktur.txt
+package com.perfect8.gateway.config;
 
 import com.perfect8.gateway.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -31,7 +31,6 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
     public static class Config {}
 
-    // Magnum Opus: Tillåt hälsa, auth och alla Swagger-resurser (webjars ingår)
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
             "/auth/",
             "/actuator/health",
@@ -44,17 +43,21 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
     public GatewayFilter apply(Config config) {
         return (exchange, chain) -> {
             String path = exchange.getRequest().getURI().getPath();
+            log.debug("Processing request: {}", path);
 
             if (isPublic(path)) {
+                log.debug("Public endpoint, skipping JWT validation: {}", path);
                 return chain.filter(exchange);
             }
 
             if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+                log.warn("Missing Authorization header for: {}", path);
                 return onError(exchange, "Missing Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
             String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                log.warn("Invalid Authorization header format for: {}", path);
                 return onError(exchange, "Invalid Authorization Header", HttpStatus.UNAUTHORIZED);
             }
 
@@ -62,20 +65,31 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
 
             try {
                 if (jwtUtil.isTokenExpired(token)) {
+                    log.warn("Expired token for: {}", path);
                     return onError(exchange, "Token Expired", HttpStatus.UNAUTHORIZED);
                 }
 
                 Claims claims = jwtUtil.extractAllClaims(token);
+                String username = claims.getSubject();
+                String userId = claims.get("userId") != null ? claims.get("userId").toString() : "";
+
+                // Extrahera roller från claims
+                @SuppressWarnings("unchecked")
+                List<String> roles = claims.get("roles", List.class);
+                String rolesHeader = roles != null ? String.join(",", roles) : "";
+
+                log.info("JWT validated - user: {}, userId: {}, roles: {}", username, userId, rolesHeader);
 
                 // Skicka vidare användarinformation till mikrotjänsterna
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                        .header("X-Auth-User", claims.getSubject())
-                        .header("X-User-Id", claims.get("userId") != null ? claims.get("userId").toString() : "")
+                        .header("X-Auth-User", username)
+                        .header("X-User-Id", userId)
+                        .header("X-Auth-Roles", rolesHeader)
                         .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (Exception e) {
-                log.error("JWT Error: {}", e.getMessage());
+                log.error("JWT validation error for {}: {}", path, e.getMessage());
                 return onError(exchange, "Invalid JWT", HttpStatus.UNAUTHORIZED);
             }
         };
@@ -86,6 +100,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
     }
 
     private Mono<Void> onError(ServerWebExchange exchange, String err, HttpStatus status) {
+        log.debug("Returning {} - {}", status, err);
         exchange.getResponse().setStatusCode(status);
         return exchange.getResponse().setComplete();
     }
