@@ -105,6 +105,8 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: false
 
 # --- SWAGGER UI CONFIGURATION ---
 springdoc:
