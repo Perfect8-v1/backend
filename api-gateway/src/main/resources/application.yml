@@ -69,7 +69,7 @@ spring:
             - Path=/blog-service/v3/api-docs/**
           filters:
             - StripPrefix=1
-            -
+
         - id: email-docs
           uri: http://email-service:8083
           predicates:
