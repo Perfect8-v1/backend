@@ -16,23 +16,80 @@ spring:
             allowedMethods: "*"
             allowedHeaders: "*"
       routes:
-        # --- 1. ADMIN SERVICE ---
-        - id: admin-service
+        # ===========================================
+        # PUBLIKA ROUTES (ingen JWT krävs)
+        # ===========================================
+
+        # --- AUTH (login, register) ---
+        - id: auth-service
           uri: http://admin-service:8081
           predicates:
-            - Path=/admin/**, /auth/**
+            - Path=/auth/**
 
-        # --- 2. BLOG SERVICE ---
-        - id: blog-service
+        # --- BLOG PUBLIKA (läsa posts) ---
+        - id: blog-public
           uri: http://blog-service:8082
           predicates:
-            - Path=/blog/**
+            - Path=/blog/api/posts/**, /blog/api/posts
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # --- IMAGE PUBLIKA (visa bilder) ---
+        - id: image-public
+          uri: http://image-service:8084
+          predicates:
+            - Path=/image/api/images/**, /image/api/images
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # --- SHOP PUBLIKA (visa produkter, kategorier) ---
+        - id: shop-public
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/shop/api/products/**, /shop/api/products, /shop/api/categories/**, /shop/api/categories
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
+        # ===========================================
+        # SKYDDADE ROUTES - KUND (JWT krävs)
+        # ===========================================
+
+        # --- SHOP KUND (cart, orders, betalningar, kundprofil) ---
+        - id: shop-customer
+          uri: http://shop-service:8085
+          predicates:
+            - Path=/shop/api/cart/**, /shop/api/cart, /shop/api/orders/**, /shop/api/orders, /shop/api/customers/**, /shop/api/payments/**
           filters:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- 3. EMAIL SERVICE ---
-        - id: email-service
+        # ===========================================
+        # SKYDDADE ROUTES - ADMIN (JWT krävs, service kollar roll)
+        # ===========================================
+
+        # --- ADMIN ---
+        - id: admin-service
+          uri: http://admin-service:8081
+          predicates:
+            - Path=/admin/**
+          filters:
+            - JwtAuthentication
+
+        # --- BLOG ADMIN (skapa/redigera posts) ---
+        - id: blog-admin
+          uri: http://blog-service:8082
+          predicates:
+            - Path=/blog/api/posts/**, /blog/api/posts, /blog/api/admin/**
+            - Method=POST,PUT,DELETE
+          filters:
+            - StripPrefix=1
+            - JwtAuthentication
+
+        # --- EMAIL ADMIN (alltid skyddad) ---
+        - id: email-admin
           uri: http://email-service:8083
           predicates:
             - Path=/email/**
@@ -40,25 +97,30 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- 4. IMAGE SERVICE ---
-        - id: image-service
+        # --- IMAGE ADMIN (upload, delete) ---
+        - id: image-admin
           uri: http://image-service:8084
           predicates:
-            - Path=/image/**
+            - Path=/image/api/images/**, /image/api/images
+            - Method=POST,PUT,DELETE
           filters:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- 5. SHOP SERVICE ---
-        - id: shop-service
+        # --- SHOP ADMIN (skapa/ändra produkter, kategorier) ---
+        - id: shop-admin
           uri: http://shop-service:8085
           predicates:
-            - Path=/shop/**
+            - Path=/shop/api/products/**, /shop/api/products, /shop/api/categories/**, /shop/api/categories
+            - Method=POST,PUT,DELETE
           filters:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- SWAGGER AGGREGATION ROUTES ---
+
+        # ===========================================
+        # SWAGGER DOCS (publika)
+        # ===========================================
         - id: admin-docs
           uri: http://admin-service:8081
           predicates:
