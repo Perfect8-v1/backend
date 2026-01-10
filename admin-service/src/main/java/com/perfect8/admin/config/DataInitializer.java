@@ -22,24 +22,37 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Only initialize if no users exist
+        // Initiera endast om inga användare finns
         if (userRepository.count() == 0) {
-            log.info("Initializing default users...");
+            log.info("Initierar standardanvändare för SOP-branschen...");
 
-            // Super Admin
-            User superAdmin = User.builder()
-                    .email("admin@perfect8.com")
-                    .passwordHash(passwordEncoder.encode("admin123"))
-                    .firstName("System")
+            // 1. Super Admin - Magnus (Din profil)
+            User magnusAdmin = User.builder()
+                    .email("cmb@p8.se")
+                    .passwordHash(passwordEncoder.encode("magnus123"))
+                    .firstName("Magnus")
                     .lastName("Admin")
                     .roles(new HashSet<>(Set.of(Role.SUPER_ADMIN, Role.ADMIN)))
                     .isActive(true)
                     .isEmailVerified(true)
                     .build();
-            userRepository.save(superAdmin);
-            log.info("Created super admin: {}", superAdmin.getEmail());
+            userRepository.save(magnusAdmin);
+            log.info("Skapat super admin (Magnus): {}", magnusAdmin.getEmail());
 
-            // Shop Manager (Staff)
+            // 2. Super Admin - Jonathan (Kollega)
+            User jonathanAdmin = User.builder()
+                    .email("jonathan@p8.se")
+                    .passwordHash(passwordEncoder.encode("jonathan123"))
+                    .firstName("Jonathan")
+                    .lastName("Admin")
+                    .roles(new HashSet<>(Set.of(Role.SUPER_ADMIN, Role.ADMIN)))
+                    .isActive(true)
+                    .isEmailVerified(true)
+                    .build();
+            userRepository.save(jonathanAdmin);
+            log.info("Skapat super admin (Jonathan): {}", jonathanAdmin.getEmail());
+
+            // 3. Shop Manager
             User shopManager = User.builder()
                     .email("shop@perfect8.com")
                     .passwordHash(passwordEncoder.encode("shop123"))
@@ -50,22 +63,9 @@ public class DataInitializer implements CommandLineRunner {
                     .isEmailVerified(true)
                     .build();
             userRepository.save(shopManager);
-            log.info("Created shop manager: {}", shopManager.getEmail());
+            log.info("Skapat shop manager: {}", shopManager.getEmail());
 
-            // Content Editor (Writer)
-            User contentEditor = User.builder()
-                    .email("writer@perfect8.com")
-                    .passwordHash(passwordEncoder.encode("writer123"))
-                    .firstName("Content")
-                    .lastName("Writer")
-                    .roles(new HashSet<>(Set.of(Role.WRITER)))
-                    .isActive(true)
-                    .isEmailVerified(true)
-                    .build();
-            userRepository.save(contentEditor);
-            log.info("Created content editor: {}", contentEditor.getEmail());
-
-            // Test Customer
+            // 4. Testkund
             User customer = User.builder()
                     .email("customer@test.com")
                     .passwordHash(passwordEncoder.encode("customer123"))
@@ -76,11 +76,11 @@ public class DataInitializer implements CommandLineRunner {
                     .isEmailVerified(true)
                     .build();
             userRepository.save(customer);
-            log.info("Created test customer: {}", customer.getEmail());
+            log.info("Skapat testkund: {}", customer.getEmail());
 
-            log.info("Default users initialized successfully!");
+            log.info("Standardanvändare har initierats framgångsrikt!");
         } else {
-            log.info("Users already exist, skipping initialization.");
+            log.info("Användare finns redan, hoppar över initiering.");
         }
     }
 }

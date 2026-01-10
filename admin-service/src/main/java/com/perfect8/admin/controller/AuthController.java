@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -27,55 +28,25 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
+    private final PasswordEncoder passwordEncoder; // Nu använder vi Spring Securitys standard
 
     /**
-     * MAGNUM OPUS: Hämta salt för klient-side hashing.
-     * Detta är endpointen som saknades och orsakade 403/404.
+     * LOGIN: Industristandard (klartext över HTTPS)
      */
-    @GetMapping("/salt")
-    public ResponseEntity<?> getSalt(@RequestParam String email, @RequestParam(required = false) boolean forRegistration) {
-        log.info("SALT: Begäran om salt för {}", email);
-
-        if (forRegistration) {
-            // Vid registrering genererar vi ett nytt salt (BCrypt format)
-            // Här returnerar vi en hårdkodad "genSalt"-liknande sträng eller genererar en
-            // För enkelhetens skull i MVP kan vi låta klienten generera saltet vid reg,
-            // men för login MÅSTE vi hämta det från DB.
-            return ResponseEntity.ok(Map.of("salt", org.springframework.security.crypto.bcrypt.BCrypt.gensalt()));
-        }
-
-        return userRepository.findByEmail(email)
-                .map(user -> {
-                    String hash = user.getPasswordHash();
-                    if (hash != null && hash.length() >= 29) {
-                        // BCrypt-salt är de första 29 tecknen av hashen ($2a$10$...)
-                        String salt = hash.substring(0, 29);
-                        return ResponseEntity.ok(Map.of("salt", salt));
-                    }
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(Map.of("error", "Ogiltigt hash-format i databasen"));
-                })
-                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Användaren hittades inte")));
-    }
-
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        log.info("LOGIN: Inloggningsförsök för: {}", request.getEmail());
+        log.info("SOP LOGIN: Inloggningsförsök för: {}", request.getEmail());
 
         try {
             User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                    .orElseThrow(() -> new RuntimeException("Användaren hittades inte"));
 
-            // Tvätta strängarna
-            String providedHash = request.getPasswordHash() != null ?
-                    request.getPasswordHash().trim().replace("\"", "").replace("'", "") : "";
-            String storedHash = user.getPasswordHash() != null ?
-                    user.getPasswordHash().trim().replace("\"", "").replace("'", "") : "";
+            // passwordEncoder.matches() jämför det inkommande lösenordet mot hashen i DB
+            // Det spelar ingen roll om lösenordet är "magnus123" eller "jonathan123"
+            if (passwordEncoder.matches(request.getPasswordHash(), user.getPasswordHash())) {
+                log.info("SOP LOGIN: Match för {}, genererar token.", user.getEmail());
 
-            if (storedHash.equals(providedHash)) {
-                log.info("LOGIN: Match för {}, genererar token.", user.getEmail());
-
+                // Uppdatera metadata
                 user.setFailedLoginAttempts(0);
                 user.setLastLoginDate(LocalDateTime.now());
                 userRepository.save(user);
@@ -95,27 +66,36 @@ public class AuthController {
                         userInfo
                 ));
             } else {
-                log.error("LOGIN: Felaktigt lösenord för: {}", user.getEmail());
+                log.warn("SOP LOGIN: Felaktigt lösenord för: {}", user.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
             }
         } catch (Exception e) {
-            log.error("LOGIN: Fel vid inloggning: {}", e.getMessage());
+            log.error("SOP LOGIN: Fel vid inloggning: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Login failed"));
         }
     }
 
+    /**
+     * REGISTER: Haschar lösenordet direkt i backend
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody LoginRequest request) {
+        log.info("SOP REGISTER: Registrerar ny användare: {}", request.getEmail());
+
         if (userRepository.existsByEmail(request.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already registered"));
         }
 
         User user = new User();
         user.setEmail(request.getEmail());
-        user.setPasswordHash(request.getPasswordHash().trim().replace("\"", "").replace("'", ""));
+
+        // Här haschar vi lösenordet innan det sparas i databasen
+        user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
+
         user.setActive(true);
-        user.setCreatedDate(LocalDateTime.now());
-        user.setRoles(Set.of(Role.valueOf("USER")));
+        // Datum sköts nu automatiskt av MySQL (via ditt nya script),
+        // men vi kan sätta det här också om vi vill vara extra tydliga.
+        user.setRoles(Set.of(Role.USER));
 
         userRepository.save(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "User registered successfully"));
