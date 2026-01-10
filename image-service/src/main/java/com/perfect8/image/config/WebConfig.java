@@ -1,21 +1,17 @@
 package com.perfect8.image.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * Web configuration for Spring MVC.
- *
- * Enables trailing slash matching for all endpoints.
- * Required for nginx compatibility where locations use trailing slashes.
- */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
-
     @Override
-    public void configurePathMatch(PathMatchConfigurer configurer) {
-        // Match both /images/original/file.jpg and /images/original/file.jpg/
-        configurer.setUseTrailingSlashMatch(true);
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:8080", "http://p8.rantila.com")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }
