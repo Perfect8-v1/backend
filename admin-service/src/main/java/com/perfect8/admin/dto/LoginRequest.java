@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * Login Request DTO
- * Updated: 2025-12-19
- * - Changed from password to passwordHash (client-side hashing)
+ * Updated: 2026-01-11
+ * - SOP: Changed from passwordHash to password (plaintext over HTTPS)
  */
 @Data
 @Builder
@@ -23,9 +23,9 @@ public class LoginRequest {
     private String email;
 
     /**
-     * BCrypt hash of the password (hashed on client-side using salt from /api/auth/salt)
-     * Format: $2a$10$... (60 characters)
+     * Plaintext password - will be verified against BCrypt hash in database
+     * Security: Always use HTTPS in production
      */
-    @NotBlank(message = "Password hash is required")
-    private String passwordHash;
+    @NotBlank(message = "Password is required")
+    private String password;
 }

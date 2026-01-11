@@ -2,7 +2,6 @@ package com.perfect8.admin.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,14 +14,22 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * JWT Utility för Perfect8 - SOP Edition.
+ * Hanterar generering, extraktion och validering av tokens enligt JJWT 0.12.3.
+ */
 @Component
 public class JwtUtil {
 
     @Value("${jwt.secret:din_super_hemliga_nyckel_som_maste_vara_minst_32_tecken_lang}")
     private String secret;
 
+    @Value("${jwt.expiration:3600000}")
+    private long expiration;
+
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String extractUsername(String token) {
@@ -35,22 +42,34 @@ public class JwtUtil {
     }
 
     private Claims extractAllClaims(String token) {
-        return Jwts.parser().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
+        return Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
+    /**
+     * Genererar en token för inloggad användare.
+     */
     public String generateToken(Long userId, String email, Set<?> roles) {
-        String rolesString = roles.stream().map(Object::toString).collect(Collectors.joining(","));
+        String rolesString = roles.stream()
+                .map(Object::toString)
+                .collect(Collectors.joining(","));
+
         return Jwts.builder()
-                .setSubject(email)
+                .subject(email)
                 .claim("userId", userId)
                 .claim("roles", rolesString)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 3600000))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey())
                 .compact();
     }
 
-    // Matchar det filtret förväntar sig (två argument)
+    /**
+     * Validerar token mot användarens UserDetails.
+     */
     public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));

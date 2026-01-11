@@ -28,10 +28,10 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final JwtUtil jwtUtil;
-    private final PasswordEncoder passwordEncoder; // Nu använder vi Spring Securitys standard
+    private final PasswordEncoder passwordEncoder;
 
     /**
-     * LOGIN: Industristandard (klartext över HTTPS)
+     * LOGIN: Industristandard (plaintext over HTTPS)
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
@@ -41,9 +41,8 @@ public class AuthController {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("Användaren hittades inte"));
 
-            // passwordEncoder.matches() jämför det inkommande lösenordet mot hashen i DB
-            // Det spelar ingen roll om lösenordet är "magnus123" eller "jonathan123"
-            if (passwordEncoder.matches(request.getPasswordHash(), user.getPasswordHash())) {
+            // passwordEncoder.matches() jämför plaintext password mot hash i DB
+            if (passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
                 log.info("SOP LOGIN: Match för {}, genererar token.", user.getEmail());
 
                 // Uppdatera metadata
@@ -89,12 +88,10 @@ public class AuthController {
         User user = new User();
         user.setEmail(request.getEmail());
 
-        // Här haschar vi lösenordet innan det sparas i databasen
-        user.setPasswordHash(passwordEncoder.encode(request.getPasswordHash()));
+        // Hascha lösenordet innan det sparas i databasen
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
 
         user.setActive(true);
-        // Datum sköts nu automatiskt av MySQL (via ditt nya script),
-        // men vi kan sätta det här också om vi vill vara extra tydliga.
         user.setRoles(Set.of(Role.USER));
 
         userRepository.save(user);
