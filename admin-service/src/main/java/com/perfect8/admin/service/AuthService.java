@@ -29,15 +29,15 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     /**
-     * Login - Förenklad för SOP-branschen (Klartext -> BCrypt match)
-     * Denna metod matchar industristandard där backend sköter hashning.
+     * Login - SOP-branchen (Plaintext -> BCrypt match)
+     * Industristandard där backend sköter hashning.
      */
     public LoginResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Användaren hittades inte"));
 
-        // passwordEncoder.matches() jämför inkommande klartext mot den hashade strängen i DB
-        if (passwordEncoder.matches(request.getPasswordHash(), user.getPasswordHash())) {
+        // passwordEncoder.matches() jämför inkommande klartext mot hashen i DB
+        if (passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             log.info("SOP LOGIN: Framgångsrik inloggning för {}", user.getEmail());
 
             // Uppdatera inloggningsstatistik och nollställ felaktiga försök
@@ -48,18 +48,12 @@ public class AuthService {
             // Generera JWT-token
             String token = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRoles());
 
-            // Bygg userInfo-mappen för att matcha LoginResponse-strukturen
+            // Bygg userInfo-mappen
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("userId", user.getUserId());
             userInfo.put("email", user.getEmail());
             userInfo.put("roles", user.getRoles());
 
-            // Returnera svaret med alla 5 obligatoriska fält:
-            // 1. JWT Token
-            // 2. Refresh Token (UUID)
-            // 3. Typ (Bearer)
-            // 4. ExpiresIn (3600 sekunder)
-            // 5. User Info Map
             return new LoginResponse(
                     token,
                     UUID.randomUUID().toString(),
