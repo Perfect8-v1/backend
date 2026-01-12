@@ -32,7 +32,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
     public static class Config {}
 
     private static final List<String> PUBLIC_ENDPOINTS = List.of(
-            "/auth/",
+            "/api/auth/",
             "/actuator/health",
             "/v3/api-docs",
             "/swagger-ui",
@@ -73,10 +73,18 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                 String username = claims.getSubject();
                 String userId = claims.get("userId") != null ? claims.get("userId").toString() : "";
 
-                // Extrahera roller från claims
-                @SuppressWarnings("unchecked")
-                List<String> roles = claims.get("roles", List.class);
-                String rolesHeader = roles != null ? String.join(",", roles) : "";
+                // Extrahera roller - admin-service sparar som sträng "ROLE_ADMIN,ROLE_SUPER_ADMIN"
+                String rolesHeader = "";
+                Object rolesClaim = claims.get("roles");
+                if (rolesClaim instanceof String) {
+                    // Roller sparade som kommaseparerad sträng
+                    rolesHeader = (String) rolesClaim;
+                } else if (rolesClaim instanceof List) {
+                    // Roller sparade som lista (för bakåtkompatibilitet)
+                    @SuppressWarnings("unchecked")
+                    List<String> rolesList = (List<String>) rolesClaim;
+                    rolesHeader = String.join(",", rolesList);
+                }
 
                 log.info("JWT validated - user: {}, userId: {}, roles: {}", username, userId, rolesHeader);
 
@@ -84,7 +92,7 @@ public class JwtAuthenticationGatewayFilterFactory extends AbstractGatewayFilter
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
                         .header("X-Auth-User", username)
                         .header("X-User-Id", userId)
-                        .header("X-Auth-Roles", rolesHeader)
+                        .header("X-User-Roles", rolesHeader)
                         .build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
