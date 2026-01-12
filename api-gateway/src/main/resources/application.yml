@@ -24,7 +24,7 @@ spring:
         - id: auth-service
           uri: http://admin-service:8081
           predicates:
-            - Path=/auth/**
+            - Path=/api/auth/**
 
         # --- BLOG PUBLIKA (läsa posts) ---
         - id: blog-public
