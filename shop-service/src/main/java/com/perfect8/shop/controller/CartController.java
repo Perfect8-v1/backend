@@ -17,11 +17,11 @@ import java.util.Collections;
 /**
  * Cart Controller - Version 1.0
  * FIXED: Using Long customerId instead of String!
+ * CORS hanteras globalt av WebConfig
  */
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 @Slf4j
 public class CartController {
 
@@ -111,7 +111,7 @@ public class CartController {
      * Get cart - Core functionality
      * FIXED: Converting email to customerId
      */
-    @GetMapping("/")
+    @GetMapping({"", "/"})
     public ResponseEntity<ApiResponse<CartResponse>> getCart(Principal principal) {
         try {
             Long customerIdLong = getCustomerIdFromPrincipal(principal);

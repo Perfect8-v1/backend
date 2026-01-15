@@ -26,6 +26,7 @@ public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+//TODO Remove the concept of customerId
     @Column(name = "customer_id")
     private Long customerId;
 
@@ -44,7 +45,7 @@ public class Customer {
 
     @Column(nullable = false, unique = true, length = 255)
     private String email;
-
+//TODO Decide where the phonenumber shall be stored.
     @Column(length = 20)
     private String phone;
 

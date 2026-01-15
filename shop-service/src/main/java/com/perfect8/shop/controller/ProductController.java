@@ -16,10 +16,13 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 
+/**
+ * Product Controller - Version 1.0
+ * CORS hanteras globalt av WebConfig
+ */
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ProductController {
 
     private final ProductService productService;
@@ -238,10 +241,9 @@ public class ProductController {
     }
 
     // Helper conversion methods
-    // FIXED: Changed getActivityFeedResponseId() -> getProductId(), getCreatedDate() -> getCreatedDate(), getUpdatedDate() -> getUpdatedDate()
     private ProductResponse convertToProductResponse(Product product) {
         return ProductResponse.builder()
-                .productId(product.getProductId())  // FIXED: getActivityFeedResponseId() -> getProductId()
+                .productId(product.getProductId())
                 .name(product.getName())
                 .description(product.getDescription())
                 .price(product.getPrice())
@@ -256,8 +258,8 @@ public class ProductController {
                 .weight(product.getWeight())
                 .dimensions(product.getDimensions())
                 .tags(product.getTags())
-                .createdDate(product.getCreatedDate())  // FIXED: getCreatedDate() -> getCreatedDate()
-                .updatedDate(product.getUpdatedDate())  // FIXED: getUpdatedDate() -> getUpdatedDate()
+                .createdDate(product.getCreatedDate())
+                .updatedDate(product.getUpdatedDate())
                 .inStock(product.getStockQuantity() != null && product.getStockQuantity() > 0)
                 .build();
     }
@@ -282,7 +284,7 @@ public class ProductController {
 
     private ProductDTO convertToProductDTO(ProductUpdateRequest request, Long productId) {
         return ProductDTO.builder()
-                .productId(productId)  // FIXED: productId() -> productId()
+                .productId(productId)
                 .name(request.getName())
                 .description(request.getDescription())
                 .sku(request.getSku())

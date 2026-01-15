@@ -151,7 +151,7 @@ public class CustomerService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .email(email)
-                .phone(phone)
+                .phone(phone) //TODO Check if it is phoneNumer or phone
                 .active(true)
                 .emailVerified(false)
                 .newsletterSubscribed(false)
@@ -197,14 +197,8 @@ public class CustomerService {
         if (updateDTO.getLastName() != null) {
             customer.setLastName(updateDTO.getLastName());
         }
-        if (updateDTO.getPhone() != null) {
+        if (updateDTO.getPhone() != null) { //TODO Number or not
             customer.setPhone(updateDTO.getPhone());
-        }
-        if (updateDTO.getNewsletterSubscribed() != null) {
-            customer.setNewsletterSubscribed(updateDTO.getNewsletterSubscribed());
-        }
-        if (updateDTO.getMarketingConsent() != null) {
-            customer.setMarketingConsent(updateDTO.getMarketingConsent());
         }
         if (updateDTO.getPreferredLanguage() != null) {
             customer.setPreferredLanguage(updateDTO.getPreferredLanguage());
@@ -212,44 +206,52 @@ public class CustomerService {
         if (updateDTO.getPreferredCurrency() != null) {
             customer.setPreferredCurrency(updateDTO.getPreferredCurrency());
         }
+        if (updateDTO.getNewsletterSubscribed() != null) {
+            customer.setNewsletterSubscribed(updateDTO.getNewsletterSubscribed());
+        }
+        if (updateDTO.getMarketingConsent() != null) {
+            customer.setMarketingConsent(updateDTO.getMarketingConsent());
+        }
 
         Customer savedCustomer = customerRepository.save(customer);
-        log.info("Customer profile updated for customer ID: {}", customerId);
+        log.info("Customer {} updated successfully", customerId);
 
         return convertToDTO(savedCustomer);
     }
 
     @Transactional
-    public void deactivateCustomer(Long customerId) {
+    public CustomerDTO deactivateCustomer(Long customerId) {
         log.debug("Deactivating customer ID: {}", customerId);
 
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
 
         customer.setActive(false);
-        customerRepository.save(customer);
+        Customer savedCustomer = customerRepository.save(customer);
 
-        log.info("Customer ID {} deactivated", customerId);
+        log.info("Customer {} deactivated", customerId);
+        return convertToDTO(savedCustomer);
     }
 
     @Transactional
-    public void activateCustomer(Long customerId) {
-        log.debug("Activating customer ID: {}", customerId);
+    public CustomerDTO reactivateCustomer(Long customerId) {
+        log.debug("Reactivating customer ID: {}", customerId);
 
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
 
         customer.setActive(true);
-        customerRepository.save(customer);
+        Customer savedCustomer = customerRepository.save(customer);
 
-        log.info("Customer ID {} activated", customerId);
+        log.info("Customer {} reactivated", customerId);
+        return convertToDTO(savedCustomer);
     }
 
     // ==================== Address Management ====================
 
     @Transactional
     public AddressDTO addCustomerAddress(Long customerId, AddressDTO addressDTO) {
-        log.debug("Adding new address for customer ID: {}", customerId);
+        log.debug("Adding address for customer ID: {}", customerId);
 
         Customer customer = customerRepository.findById(customerId)
                 .orElseThrow(() -> new CustomerNotFoundException("Customer not found with ID: " + customerId));
@@ -269,7 +271,7 @@ public class CustomerService {
                 .build();
 
         Address savedAddress = addressRepository.save(address);
-        log.info("New address added for customer ID: {}", customerId);
+        log.info("Address {} added for customer ID: {}", savedAddress.getAddressId(), customerId);
 
         return convertToAddressDTO(savedAddress);
     }
@@ -285,6 +287,12 @@ public class CustomerService {
             throw new UnauthorizedAccessException("Address does not belong to customer");
         }
 
+        if (addressDTO.getRecipientName() != null) {
+            address.setRecipientName(addressDTO.getRecipientName());
+        }
+        if (addressDTO.getPhoneNumber() != null) {
+            address.setPhoneNumber(addressDTO.getPhoneNumber());
+        }
         if (addressDTO.getStreetAddress() != null) {
             address.setStreet(addressDTO.getStreetAddress());
         }
@@ -388,6 +396,12 @@ public class CustomerService {
     @Transactional(readOnly = true)
     public Page<CustomerDTO> getAllCustomers(Pageable pageable) {
         return customerRepository.findAll(pageable).map(this::convertToDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<CustomerDTO> searchCustomers(String searchTerm, Pageable pageable) {
+        log.debug("Searching customers with term: {}", searchTerm);
+        return customerRepository.searchCustomers(searchTerm, pageable).map(this::convertToDTO);
     }
 
     @Transactional(readOnly = true)

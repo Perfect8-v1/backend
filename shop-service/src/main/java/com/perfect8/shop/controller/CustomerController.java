@@ -39,10 +39,11 @@ import java.util.List;
  * - Descriptive variable names (customerId not id)
  * - Sort field names match entity (createdDate)
  * - Trust Gateway for authentication (single point of JWT validation)
+ * 
+ * CORS hanteras globalt av WebConfig
  */
 @RestController
 @RequestMapping("/api/customers")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class CustomerController {
 
     @Autowired
@@ -192,33 +193,7 @@ public class CustomerController {
     }
 
     /**
-     * Get customer by email (admin only)
-     */
-    @GetMapping("/email/{email}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<CustomerDTO>> getCustomerByEmail(@PathVariable String email) {
-        try {
-            CustomerDTO customer = customerService.getCustomerDTOByEmail(email);
-
-            ApiResponse<CustomerDTO> response = new ApiResponse<>(
-                    "Customer retrieved successfully",
-                    customer,
-                    true
-            );
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            ApiResponse<CustomerDTO> errorResponse = new ApiResponse<>(
-                    "Failed to retrieve customer: " + e.getMessage(),
-                    null,
-                    false
-            );
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
-        }
-    }
-
-    /**
-     * Get all customers (admin only, paginated)
+     * Get all customers with pagination (admin only)
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -226,12 +201,12 @@ public class CustomerController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdDate") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDirection) {
+            @RequestParam(defaultValue = "desc") String sortDir) {
         try {
-            Sort sort = sortDirection.equalsIgnoreCase("asc") 
-                ? Sort.by(sortBy).ascending() 
-                : Sort.by(sortBy).descending();
-            
+            Sort sort = sortDir.equalsIgnoreCase("desc")
+                    ? Sort.by(sortBy).descending()
+                    : Sort.by(sortBy).ascending();
+
             Pageable pageable = PageRequest.of(page, size, sort);
             Page<CustomerDTO> customers = customerService.getAllCustomers(pageable);
 
@@ -252,7 +227,37 @@ public class CustomerController {
         }
     }
 
-    // ========== ADDRESS MANAGEMENT ==========
+    /**
+     * Search customers (admin only)
+     */
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Page<CustomerDTO>>> searchCustomers(
+            @RequestParam String searchTerm,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        try {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<CustomerDTO> customers = customerService.searchCustomers(searchTerm, pageable);
+
+            ApiResponse<Page<CustomerDTO>> response = new ApiResponse<>(
+                    "Customer search completed successfully",
+                    customers,
+                    true
+            );
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            ApiResponse<Page<CustomerDTO>> errorResponse = new ApiResponse<>(
+                    "Failed to search customers: " + e.getMessage(),
+                    null,
+                    false
+            );
+            return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // ========== ADDRESS ENDPOINTS ==========
 
     /**
      * Get customer addresses
@@ -298,7 +303,7 @@ public class CustomerController {
     }
 
     /**
-     * Add new address
+     * Add customer address
      */
     @PostMapping("/addresses")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('USER')")
@@ -313,11 +318,11 @@ public class CustomerController {
                 if (email != null) {
                     CustomerDTO customer = customerService.getCustomerDTOByEmail(email);
                     AddressDTO newAddress = customerService.addCustomerAddress(customer.getCustomerId(), addressDTO);
-                    return new ResponseEntity<>(new ApiResponse<>(
+                    return ResponseEntity.ok(new ApiResponse<>(
                             "Address added successfully",
                             newAddress,
                             true
-                    ), HttpStatus.CREATED);
+                    ));
                 }
                 throw new RuntimeException("Unable to determine customer ID");
             }
@@ -330,7 +335,7 @@ public class CustomerController {
                     newAddress,
                     true
             );
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             ApiResponse<AddressDTO> errorResponse = new ApiResponse<>(

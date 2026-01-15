@@ -20,10 +20,13 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Category Controller - Version 1.0
+ * CORS hanteras globalt av WebConfig
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/categories")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RequiredArgsConstructor
 public class CategoryController {
 
@@ -187,7 +190,7 @@ public class CategoryController {
     }
 
     /**
-     * Delete category (Admin only) - Soft delete
+     * Delete category (Admin only) - soft delete
      */
     @DeleteMapping("/{categoryId}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -279,13 +282,11 @@ public class CategoryController {
 
     /**
      * Get categories with product count (Admin only)
-     * FIXED: Changed return type to handle CategoryWithProductCount
      */
     @GetMapping("/with-product-count")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<CategoryService.CategoryWithProductCount>>> getCategoriesWithProductCount() {
         try {
-            // FIXED: Using the correct return type from CategoryService
             List<CategoryService.CategoryWithProductCount> categoriesWithCount = categoryService.getCategoriesWithProductCount();
             return ResponseEntity.ok(ApiResponse.success("Categories with product count retrieved successfully", categoriesWithCount));
         } catch (Exception e) {
@@ -344,13 +345,11 @@ public class CategoryController {
 
     /**
      * Get categories for dropdown/select (Admin only)
-     * FIXED: Changed return type to handle CategoryDropdownItem
      */
     @GetMapping("/dropdown")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<List<CategoryService.CategoryDropdownItem>>> getCategoriesForDropdown() {
         try {
-            // FIXED: Using the correct return type from CategoryService
             List<CategoryService.CategoryDropdownItem> dropdownCategories = categoryService.getCategoriesForDropdown();
             return ResponseEntity.ok(ApiResponse.success("Dropdown categories retrieved successfully", dropdownCategories));
         } catch (Exception e) {

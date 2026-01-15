@@ -47,11 +47,12 @@ import java.util.Map;
  * - Trust Gateway for authentication (single point of JWT validation)
  * - Read headers directly - no helper methods
  * - Clear variable names
+ * 
+ * CORS hanteras globalt av WebConfig
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/payments")
-@CrossOrigin(origins = "*", maxAge = 3600)
 @RequiredArgsConstructor
 public class PaymentController {
 
@@ -200,12 +201,11 @@ public class PaymentController {
             // Check authorization
             if (!"ROLE_ADMIN".equalsIgnoreCase(role)) {
                 if (customerId == null || !order.getCustomer().getCustomerId().equals(customerId)) {
-                    throw new UnauthorizedAccessException("You are not authorized to view payments for this order");
+                    throw new UnauthorizedAccessException("You are not authorized to view this payment");
                 }
             }
 
             Payment payment = paymentService.getPaymentByOrderId(orderId);
-
             if (payment == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ApiResponse.error("No payment found for this order"));
