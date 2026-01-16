@@ -1,5 +1,7 @@
 package com.perfect8.shop.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +22,8 @@ import java.util.List;
  * - @JoinColumn(name = "parent_id") → "parent_category_id" (matches SQL)
  * FIXED (2025-12-11):
  * - subcategories: FetchType.LAZY → EAGER (fix LazyInitializationException)
+ * FIXED (2026-01-16):
+ * - Added @JsonBackReference/@JsonManagedReference to prevent infinite recursion
  */
 @Entity
 @Table(name = "categories")
@@ -65,11 +69,12 @@ public class Category {
     private String metaKeywords;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_category_id")  // FIXED: parent_id → parent_category_id (matches SQL)
+    @JoinColumn(name = "parent_category_id")
+    @JsonBackReference
     private Category parent;
 
-    // FIXED (2025-12-11): LAZY → EAGER to prevent LazyInitializationException when serializing to JSON
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @JsonManagedReference
     @Builder.Default
     private List<Category> subcategories = new ArrayList<>();
 

@@ -4,10 +4,13 @@ C:.
 ¦   .env
 ¦   .gitignore
 ¦   api-gateway.zip
+¦   Backend_struktur.txt
+¦   Bootstrap_Addendum_2026-01-15_CORS_Success.md
 ¦   copy-jars.sh
 ¦   docker
 ¦   docker-compose.yml
 ¦   login_test.http
+¦   Nasta_Arbetsdag_2026-01-16_Flutter_Testing.md
 ¦   new.sh
 ¦   pom.xml
 ¦   README.md
@@ -258,12 +261,11 @@ C:.
 ¦   ¦       ¦               ¦   GatewayApplication.java
 ¦   ¦       ¦               ¦   
 ¦   ¦       ¦               +---config
+¦   ¦       ¦               ¦       JwtAuthenticationGatewayFilterFactory.java
 ¦   ¦       ¦               ¦       OpenAPIConfig.java
 ¦   ¦       ¦               ¦       SecurityConfig.java
 ¦   ¦       ¦               ¦       
 ¦   ¦       ¦               +---filter
-¦   ¦       ¦               ¦       JwtAuthenticationFilter.java
-¦   ¦       ¦               ¦       
 ¦   ¦       ¦               +---util
 ¦   ¦       ¦                       JwtUtil.java
 ¦   ¦       ¦                       
@@ -280,12 +282,10 @@ C:.
 ¦       ¦               ¦   GatewayApplication.class
 ¦       ¦               ¦   
 ¦       ¦               +---config
+¦       ¦               ¦       JwtAuthenticationGatewayFilterFactory$Config.class
+¦       ¦               ¦       JwtAuthenticationGatewayFilterFactory.class
 ¦       ¦               ¦       OpenAPIConfig.class
 ¦       ¦               ¦       SecurityConfig.class
-¦       ¦               ¦       
-¦       ¦               +---filter
-¦       ¦               ¦       JwtAuthenticationFilter$Config.class
-¦       ¦               ¦       JwtAuthenticationFilter.class
 ¦       ¦               ¦       
 ¦       ¦               +---util
 ¦       ¦                       JwtUtil.class
@@ -842,6 +842,7 @@ C:.
 ¦   ¦   ¦   ¦               ¦   
 ¦   ¦   ¦   ¦               +---config
 ¦   ¦   ¦   ¦               ¦       OpenAPIConfig.java
+¦   ¦   ¦   ¦               ¦       SecurityConfig.java
 ¦   ¦   ¦   ¦               ¦       WebConfig.java
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---controller
@@ -985,7 +986,6 @@ C:.
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---security
 ¦   ¦   ¦   ¦               ¦       HeaderAuthenticationFilter.java
-¦   ¦   ¦   ¦               ¦       SecurityConfig.java
 ¦   ¦   ¦   ¦               ¦       
 ¦   ¦   ¦   ¦               +---service
 ¦   ¦   ¦   ¦                       AnalyticsService.java
@@ -1324,6 +1324,7 @@ C:.
 ¦                           
 +---SQL
 ¦       admin-Create-Mock.sql
+¦       admin-Create.sql
 ¦       admin-MOCK-DATA.sql
 ¦       auth_CREATE-TABLE.sql
 ¦       blog-Create-Mock.sql
@@ -1340,6 +1341,7 @@ C:.
 ¦       image-Create.Mock.sql
 ¦       image-MOCK-DATA.sql
 ¦       Make admin.sql
+¦       Mockdata-adminDB.sql
 ¦       Normal omstart.txt
 ¦       run-create-tables.sh
 ¦       run-drop-tables.sh
