@@ -1,7 +1,6 @@
 package com.perfect8.shop.entity;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +22,10 @@ import java.util.List;
  * FIXED (2025-12-11):
  * - subcategories: FetchType.LAZY → EAGER (fix LazyInitializationException)
  * FIXED (2026-01-16):
- * - Added @JsonBackReference/@JsonManagedReference to prevent infinite recursion
+ * - Added @JsonIgnore on parent, subcategories, products to prevent infinite recursion
+ * - Changed subcategories back to LAZY (EAGER caused timeout with deep hierarchies)
+ * - Added getParentId() transient method to expose parent ID without loading entity
+ * - Frontend should use /{parentId}/subcategories endpoint to get children
  */
 @Entity
 @Table(name = "categories")
@@ -70,20 +72,30 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_category_id")
-    @JsonBackReference
+    @JsonIgnore
     private Category parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     @Builder.Default
     private List<Category> subcategories = new ArrayList<>();
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    @JsonIgnore
     @Builder.Default
     private List<Product> products = new ArrayList<>();
 
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
+
+    /**
+     * Transient field to expose parent ID without loading the full parent entity.
+     * This avoids LazyInitializationException while still providing parent info.
+     */
+    @Transient
+    public Long getParentId() {
+        return parent != null ? parent.getCategoryId() : null;
+    }
 
     @PrePersist
     protected void onCreate() {
