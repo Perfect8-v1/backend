@@ -9,12 +9,7 @@ spring:
       - org.springframework.boot.actuate.autoconfigure.availability.AvailabilityProbesAutoConfiguration
   cloud:
     gateway:
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins: "*"
-            allowedMethods: "*"
-            allowedHeaders: "*"
+
       routes:
         # ===========================================
         # PUBLIKA ROUTES (ingen JWT krävs)
