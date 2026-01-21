@@ -6,17 +6,16 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Web-konfiguration för admin-service.
- * Anpassad för Spring Cloud Gateway och SOP-branschen.
+ * Tillåter CORS från alla origins för utveckling.
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        // Tillåt trafik från API Gateway (port 8080)
         registry.addMapping("/**")
-                .allowedOrigins("http://localhost:8080", "http://p8.rantila.com")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedOriginPatterns("*")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }
