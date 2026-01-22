@@ -21,7 +21,6 @@ import java.util.Set;
 @RequestMapping("/api/images")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "*")
 public class ImageController {
 
     private final ImageService imageService;
@@ -35,6 +34,16 @@ public class ImageController {
     );
 
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+    /**
+     * GET /api/images - List all images
+     */
+    @GetMapping
+    public ResponseEntity<List<ImageDto>> getAllImages() {
+        log.info("Fetching all images");
+        List<ImageDto> images = imageService.getAllImages();
+        return ResponseEntity.ok(images);
+    }
 
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ImageDto> uploadImage(

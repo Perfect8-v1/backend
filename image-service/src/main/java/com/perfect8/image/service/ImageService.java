@@ -40,6 +40,19 @@ public class ImageService {
     @Value("${app.base-url:http://localhost:8084}")
     private String baseUrl;
 
+    /**
+     * Get all active images
+     */
+    @Transactional(readOnly = true)
+    public List<ImageDto> getAllImages() {
+        log.info("Fetching all active images");
+        List<Image> images = imageRepository.findByImageStatusAndIsDeletedFalse(ImageStatus.ACTIVE);
+
+        return images.stream()
+                .map(imageMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     // Main upload method
     @Transactional
     public ImageDto saveImage(MultipartFile file, String altText, String category) {
