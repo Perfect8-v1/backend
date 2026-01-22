@@ -27,14 +27,14 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // VIKTIGT: Tillåt GET på bilder så de kan visas i mobilen/webben
-                        .requestMatchers(HttpMethod.GET, "/images/**", "/api/images/display/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                         // Health checks och OpenAPI
                         .requestMatchers("/actuator/**", "/v3/api-docs/**").permitAll()
                         // Allt annat (Upload, Delete) kräver autentisering via Gateway-headers
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-
         return http.build();
     }
 }
