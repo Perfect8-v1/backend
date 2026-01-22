@@ -356,3 +356,5 @@ volumes:
     driver: local
   shopVol:
     driver: local
+  imageUploads:
+    driver: local
