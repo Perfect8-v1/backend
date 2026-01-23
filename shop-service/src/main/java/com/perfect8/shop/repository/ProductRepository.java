@@ -19,9 +19,16 @@ import java.util.Optional;
  * FIXED (2025-12-10):
  * - Added JOIN FETCH p.category to prevent LazyInitializationException
  * - All queries that return Product now eager-load Category
+ * 
+ * FIXED (2026-01-23):
+ * - Added findByIdWithCategory for single product lookup with eager loading
  */
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+
+    // Find by ID with category eager loaded - FIXED: Prevents LazyInitializationException
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.category WHERE p.productId = :productId")
+    Optional<Product> findByIdWithCategory(@Param("productId") Long productId);
 
     // Find by SKU
     Optional<Product> findBySku(String sku);
