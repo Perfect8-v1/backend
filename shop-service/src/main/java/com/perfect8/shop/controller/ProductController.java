@@ -48,7 +48,6 @@ public class ProductController {
             Page<Product> products = productService.findProducts(
                     pageable, categoryId, minPrice, maxPrice, featured, inStock);
 
-            // Convert to ProductResponse page
             Page<ProductResponse> productResponses = products.map(this::convertToProductResponse);
 
             return ResponseEntity.ok(ApiResponse.success("Products retrieved successfully", productResponses));
@@ -66,7 +65,8 @@ public class ProductController {
             ProductResponse response = convertToProductResponse(product);
             return ResponseEntity.ok(ApiResponse.success("Product retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(404).body(
+                    ApiResponse.error("Product not found", e.getMessage()));
         }
     }
 
@@ -240,7 +240,6 @@ public class ProductController {
         }
     }
 
-    // Helper conversion methods
     private ProductResponse convertToProductResponse(Product product) {
         return ProductResponse.builder()
                 .productId(product.getProductId())
