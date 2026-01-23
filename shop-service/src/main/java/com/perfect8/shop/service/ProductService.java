@@ -31,11 +31,11 @@ public class ProductService {
 
     /**
      * Find product by ID
-     * FIXED: Changed parameter from 'customerEmailDTOId' to 'productId' (Magnum Opus principle)
+     * FIXED (2026-01-23): Uses findByIdWithCategory to eager load Category and prevent LazyInitializationException
      */
     @Transactional(readOnly = true)
     public Product findById(Long productId) {
-        return productRepository.findById(productId)
+        return productRepository.findByIdWithCategory(productId)
                 .orElseThrow(() -> new ProductNotFoundException("Product not found with ID: " + productId));
     }
 
@@ -98,7 +98,6 @@ public class ProductService {
 
     /**
      * Find related products
-     * FIXED: Changed .getActivityFeedResponseId() to .getProductId() and .getCategoryId() (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public List<Product> findRelatedProducts(Long productId, int limit) {
@@ -127,7 +126,6 @@ public class ProductService {
 
     /**
      * Create new product
-     * FIXED: Changed createdDate -> createdDate (Magnum Opus principle)
      */
     public Product createProduct(ProductDTO productDTO) {
         log.info("Creating new product: {}", productDTO.getName());
@@ -157,7 +155,7 @@ public class ProductService {
                 .featured(productDTO.isFeatured())
                 .active(productDTO.isActive())
                 .weight(productDTO.getWeight())
-                .dimensions(convertDimensionsToString(productDTO.getDimensions()))  // FIXED: Convert List<String> to String
+                .dimensions(convertDimensionsToString(productDTO.getDimensions()))
                 .tags(productDTO.getTags())
                 .build();
 
@@ -169,7 +167,6 @@ public class ProductService {
 
     /**
      * Update existing product
-     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     @Transactional
     public Product updateProduct(ProductDTO productDTO) {
@@ -202,7 +199,7 @@ public class ProductService {
         product.setFeatured(productDTO.isFeatured());
         product.setActive(productDTO.isActive());
         product.setWeight(productDTO.getWeight());
-        product.setDimensions(convertDimensionsToString(productDTO.getDimensions()));  // FIXED: Convert List<String> to String
+        product.setDimensions(convertDimensionsToString(productDTO.getDimensions()));
         product.setTags(productDTO.getTags());
 
         Product updatedProduct = productRepository.save(product);
@@ -213,7 +210,6 @@ public class ProductService {
 
     /**
      * Delete product (soft delete)
-     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public void deleteProduct(Long productId) {
         log.info("Deleting product with ID: {}", productId);
@@ -227,7 +223,6 @@ public class ProductService {
 
     /**
      * Toggle product active status
-     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public Product toggleActiveStatus(Long productId) {
         log.info("Toggling active status for product ID: {}", productId);
@@ -243,7 +238,6 @@ public class ProductService {
 
     /**
      * Update stock quantity
-     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public Product updateStock(Long productId, Integer quantity) {
         log.info("Updating stock for product ID: {} to quantity: {}", productId, quantity);
@@ -259,7 +253,6 @@ public class ProductService {
 
     /**
      * Adjust stock quantity (increase or decrease)
-     * FIXED: Changed setUpdatedDate -> setUpdatedDate (Magnum Opus principle)
      */
     public Product adjustStock(Long productId, Integer adjustment) {
         log.info("Adjusting stock for product ID: {} by: {}", productId, adjustment);
@@ -281,7 +274,6 @@ public class ProductService {
 
     /**
      * Check if product is in stock
-     * FIXED: Changed parameter from 'customerEmailDTOId' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public boolean isInStock(Long productId) {
@@ -291,7 +283,6 @@ public class ProductService {
 
     /**
      * Check if sufficient stock is available
-     * FIXED: Changed parameter from 'customerEmailDTOId' to 'productId' (Magnum Opus principle)
      */
     @Transactional(readOnly = true)
     public boolean hasStock(Long productId, Integer requiredQuantity) {
@@ -301,25 +292,21 @@ public class ProductService {
 
     /**
      * Convert dimensions list to string for storage
-     * FIXED: Helper method to convert List<String> to String
      */
     private String convertDimensionsToString(List<String> dimensions) {
         if (dimensions == null || dimensions.isEmpty()) {
             return null;
         }
-        // Join dimensions with 'x' separator (e.g., "10cm x 20cm x 30cm")
         return String.join(" x ", dimensions);
     }
 
     /**
      * Convert dimensions string to list
-     * Helper method for converting back from String to List<String>
      */
     private List<String> convertDimensionsToList(String dimensions) {
         if (dimensions == null || dimensions.trim().isEmpty()) {
             return null;
         }
-        // Split by 'x' separator
         return List.of(dimensions.split(" x "));
     }
 }
