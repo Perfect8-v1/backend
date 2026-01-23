@@ -30,7 +30,7 @@ spring:
           filters:
             - StripPrefix=1
 
-        # --- IMAGE PUBLIKA (visa bilder) ---
+        # --- IMAGE PUBLIKA (visa bilder via API) ---
         - id: image-public
           uri: http://image-service:8084
           predicates:
@@ -38,6 +38,13 @@ spring:
             - Method=GET
           filters:
             - StripPrefix=1
+
+        # --- IMAGE STATISKA FILER (thumbnails, original, etc) ---
+        - id: image-static
+          uri: http://image-service:8084
+          predicates:
+            - Path=/images/**
+            - Method=GET
 
         # --- SHOP PUBLIKA (visa produkter, kategorier) ---
         - id: shop-public
