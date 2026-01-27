@@ -2,82 +2,210 @@ package com.perfect8.admin.integration;
 
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.BeforeAll;
 
 /**
- * Base test class for all REST Assured integration tests
- * Supports both Plain (API-key) and AuthMan (JWT) branches
+ * Base test class for REST Assured integration tests - v1.3
  * 
- * Plain branch: Uses X-API-Key header
- * AuthMan branch: Uses Bearer token
+ * Testar mot produktionsservern via Gateway:
+ * - https://p8.rantila.com (HTTPS)
+ * - Industristandard auth (email + password)
+ * - Automatisk token-hantering
  */
 public abstract class BaseTest {
 
     protected static RequestSpecification requestSpec;
-    protected static RequestSpecification authenticatedSpec;
+    protected static String accessToken;
+    protected static String refreshToken;
 
-    // Base URLs for different environments
-    protected static final String PROD_BASE_URL = "http://127.0.0.1";
-    protected static final String LOCAL_BASE_URL = "http://127.0.0.1";
+    // ===========================================
+    // KONFIGURATION
+    // ===========================================
+    
+    protected static final String BASE_URL = "https://p8.rantila.com";
+    
+    // Test credentials (måste finnas i databasen)
+    protected static final String TEST_EMAIL = "cmb@p8.se";
+    protected static final String TEST_PASSWORD = "magnus123";
 
-    // Choose which environment to test
-    protected static final String BASE_URL = LOCAL_BASE_URL;
+    // ===========================================
+    // GATEWAY ROUTES
+    // ===========================================
+    
+    // Auth (direkt på Gateway)
+    protected static final String AUTH_LOGIN = "/api/auth/login";
+    protected static final String AUTH_REGISTER = "/api/auth/register";
+    protected static final String AUTH_REFRESH = "/api/auth/refresh";
+    protected static final String AUTH_LOGOUT = "/api/auth/logout";
+    
+    // Admin
+    protected static final String ADMIN_USERS = "/api/admin/users";
+    
+    // Blog (via /blog prefix)
+    protected static final String BLOG_POSTS = "/blog/api/posts";
+    
+    // Shop (via /shop prefix)
+    protected static final String SHOP_PRODUCTS = "/shop/api/products";
+    protected static final String SHOP_CATEGORIES = "/shop/api/categories";
+    protected static final String SHOP_CART = "/shop/api/cart";
+    protected static final String SHOP_ORDERS = "/shop/api/orders";
+    protected static final String SHOP_CUSTOMERS = "/shop/api/customers";
+    
+    // Image (via /image prefix)
+    protected static final String IMAGE_IMAGES = "/image/api/images";
+    
+    // Email (via /email prefix)
+    protected static final String EMAIL_SEND = "/email/api/email/send";
+    protected static final String EMAIL_LOGS = "/email/api/email/logs";
+    
+    // Health
+    protected static final String HEALTH = "/actuator/health";
 
-    // Service ports
-    protected static final int ADMIN_PORT = 8081;
-    protected static final int BLOG_PORT = 8082;
-    protected static final int EMAIL_PORT = 8083;
-    protected static final int IMAGE_PORT = 8084;
-    protected static final int SHOP_PORT = 8085;
-
-    // API Keys for Plain branch (from .env)
-    protected static final String ADMIN_API_KEY = "p8admin_7Kx9mN2pL4qR8sT1";
-    protected static final String BLOG_API_KEY = "p8blog_3Fw6yH9jM2nP5vX8";
-    protected static final String EMAIL_API_KEY = "p8email_9Bz4cD7gJ1kQ6wY3";
-    protected static final String IMAGE_API_KEY = "p8image_5Nt8rU2xA4eI7oS0";
-    protected static final String SHOP_API_KEY = "p8shop_1Lm3pV6bC9fK2hW4";
-
-    // Default port (override in subclasses)
-    protected static int servicePort = ADMIN_PORT;
-    protected static String apiKey = ADMIN_API_KEY;
+    // ===========================================
+    // SETUP
+    // ===========================================
 
     @BeforeAll
     public static void setup() {
-        String fullUrl = BASE_URL + ":" + servicePort;
-        RestAssured.baseURI = fullUrl;
+        // Tillåt self-signed certificates (om nödvändigt)
+        RestAssured.useRelaxedHTTPSValidation();
+        RestAssured.baseURI = BASE_URL;
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
-        // Request spec WITHOUT authentication (for public endpoints)
         requestSpec = new RequestSpecBuilder()
-                .setBaseUri(fullUrl)
-                .setContentType("application/json")
-                .setAccept("application/json")
+                .setBaseUri(BASE_URL)
+                .setContentType(ContentType.JSON)
+                .setAccept(ContentType.JSON)
                 .build();
 
-        // Request spec WITH API-key authentication (for protected endpoints)
-        authenticatedSpec = new RequestSpecBuilder()
-                .setBaseUri(fullUrl)
-                .setContentType("application/json")
-                .setAccept("application/json")
-                .addHeader("X-API-Key", apiKey)
-                .build();
+        System.out.println("🚀 REST Assured configured for: " + BASE_URL);
+    }
 
-        System.out.println("🚀 REST Assured configured for: " + fullUrl);
-        System.out.println("🔑 Using API-Key: " + apiKey.substring(0, 10) + "...");
+    // ===========================================
+    // HJÄLPMETODER - AUTHENTICATION
+    // ===========================================
+
+    /**
+     * Loggar in och sparar tokens för användning i andra tester
+     */
+    protected static void login() {
+        login(TEST_EMAIL, TEST_PASSWORD);
     }
 
     /**
-     * Helper method to print test results
+     * Loggar in med specifika credentials
      */
+    protected static void login(String email, String password) {
+        String loginBody = """
+                {
+                    "email": "%s",
+                    "password": "%s"
+                }
+                """.formatted(email, password);
+
+        Response response = RestAssured.given()
+                .spec(requestSpec)
+                .body(loginBody)
+                .when()
+                .post(AUTH_LOGIN)
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        accessToken = response.jsonPath().getString("accessToken");
+        refreshToken = response.jsonPath().getString("refreshToken");
+
+        System.out.println("🔑 Logged in as: " + email);
+        System.out.println("   Access token: " + accessToken.substring(0, 30) + "...");
+        System.out.println("   Refresh token: " + refreshToken);
+    }
+
+    /**
+     * Skapar en RequestSpecification med Bearer token
+     */
+    protected static RequestSpecification withAuth() {
+        if (accessToken == null) {
+            login();
+        }
+        return new RequestSpecBuilder()
+                .addRequestSpecification(requestSpec)
+                .addHeader("Authorization", "Bearer " + accessToken)
+                .build();
+    }
+
+    /**
+     * Förnyar access token med refresh token
+     */
+    protected static void refreshAccessToken() {
+        if (refreshToken == null) {
+            throw new IllegalStateException("No refresh token available - login first");
+        }
+
+        String refreshBody = """
+                {
+                    "refreshToken": "%s"
+                }
+                """.formatted(refreshToken);
+
+        Response response = RestAssured.given()
+                .spec(requestSpec)
+                .body(refreshBody)
+                .when()
+                .post(AUTH_REFRESH)
+                .then()
+                .statusCode(200)
+                .extract()
+                .response();
+
+        accessToken = response.jsonPath().getString("accessToken");
+        refreshToken = response.jsonPath().getString("refreshToken");
+
+        System.out.println("🔄 Token refreshed");
+        System.out.println("   New access token: " + accessToken.substring(0, 30) + "...");
+    }
+
+    /**
+     * Loggar ut (revoke refresh token)
+     */
+    protected static void logout() {
+        if (refreshToken == null) {
+            return;
+        }
+
+        String logoutBody = """
+                {
+                    "refreshToken": "%s"
+                }
+                """.formatted(refreshToken);
+
+        RestAssured.given()
+                .spec(requestSpec)
+                .body(logoutBody)
+                .when()
+                .post(AUTH_LOGOUT)
+                .then()
+                .statusCode(200);
+
+        accessToken = null;
+        refreshToken = null;
+
+        System.out.println("👋 Logged out");
+    }
+
+    // ===========================================
+    // HJÄLPMETODER - LOGGING
+    // ===========================================
+
     protected void logTestResult(String testName, boolean passed) {
         String status = passed ? "✅ PASSED" : "❌ FAILED";
         System.out.println(status + " - " + testName);
     }
 
-    /**
-     * Helper to get service URL
-     */
-    protected static String getServiceUrl(int port) {
-        return BASE_URL + ":" + port;
+    protected void logTestStart(String testName) {
+        System.out.println("\n🧪 Testing: " + testName);
     }
 }

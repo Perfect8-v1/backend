@@ -17,7 +17,6 @@ public class SecurityConfig {
 
     private final HeaderAuthenticationFilter headerAuthenticationFilter;
 
-    // Vi använder manuell konstruktor med @Lazy för att undvika cirkulära beroenden
     public SecurityConfig(@Lazy HeaderAuthenticationFilter headerAuthenticationFilter) {
         this.headerAuthenticationFilter = headerAuthenticationFilter;
     }
@@ -28,22 +27,24 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // MAGNUM OPUS FIX: Explicita undantag för salt och auth
+                        // Auth endpoints - PUBLIC
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/info",
                                 "/api/auth/login",
                                 "/api/auth/register",
-                                "/api/auth/salt" // <--- DEN HÄR MÅSTE VARA HÄR!
+                                "/api/auth/refresh",
+                                "/api/auth/logout",
+                                "/api/auth/salt"
                         ).permitAll()
 
                         // Swagger UI
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
 
-                        // Wildcard backup (bra att ha kvar)
+                        // Wildcard backup
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Allt annat under /api/admin kräver inloggning
+                        // Admin endpoints kräver inloggning
                         .requestMatchers("/api/admin/**").authenticated()
 
                         // Övrigt måste vara autentiserat
