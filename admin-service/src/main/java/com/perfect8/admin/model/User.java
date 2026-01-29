@@ -7,6 +7,18 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * User Entity - Version 1.3 Unified
+ * 
+ * Central användartabell för både admins och customers.
+ * - Admins: roles = {SUPER_ADMIN, ADMIN, STAFF, WRITER}
+ * - Customers: roles = {USER, CUSTOMER}
+ * 
+ * ÄNDRINGAR v1.3:
+ * - Borttaget: passwordSalt (v1.2 legacy, används ej i industristandard)
+ * - Tillagt: phone (för customer-profiler)
+ * - Industristandard: password skickas plaintext över HTTPS, hashas i backend
+ */
 @Entity
 @Table(name = "users")
 @Data
@@ -23,22 +35,25 @@ public class User {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
+    /**
+     * BCrypt hash av lösenord
+     * Hashas i backend med BCryptPasswordEncoder
+     */
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
-
-    /**
-     * Salt used for client-side password hashing.
-     * Frontend fetches this salt, hashes password with it, then sends the hash.
-     * This ensures passwords never travel in plaintext beyond the frontend.
-     */
-    @Column(name = "password_salt", nullable = false, length = 29)
-    private String passwordSalt;
 
     @Column(name = "first_name", length = 100)
     private String firstName;
 
     @Column(name = "last_name", length = 100)
     private String lastName;
+
+    /**
+     * Telefonnummer (för customers)
+     * TODO: Verifiera om detta ska ligga här eller i Customer entity
+     */
+    @Column(name = "phone", length = 20)
+    private String phone;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
@@ -97,13 +112,18 @@ public class User {
         updatedDate = LocalDateTime.now();
     }
 
-    // Convenience methods
+    // ========== Role Convenience Methods ==========
+
     public boolean hasRole(Role role) {
         return roles != null && roles.contains(role);
     }
 
     public boolean isAdmin() {
         return hasRole(Role.ADMIN) || hasRole(Role.SUPER_ADMIN);
+    }
+
+    public boolean isSuperAdmin() {
+        return hasRole(Role.SUPER_ADMIN);
     }
 
     public boolean isStaff() {
@@ -114,10 +134,16 @@ public class User {
         return hasRole(Role.WRITER) || isAdmin();
     }
 
+    public boolean isCustomer() {
+        return hasRole(Role.CUSTOMER) || hasRole(Role.USER);
+    }
+
     public boolean isLocked() {
         return accountLockedUntil != null &&
                 accountLockedUntil.isAfter(LocalDateTime.now());
     }
+
+    // ========== Name Methods ==========
 
     public String getFullName() {
         if (firstName == null && lastName == null) {
@@ -125,5 +151,11 @@ public class User {
         }
         return (firstName != null ? firstName : "") +
                 (lastName != null ? " " + lastName : "").trim();
+    }
+
+    // ========== Account Status ==========
+
+    public boolean canLogin() {
+        return isActive && !isLocked();
     }
 }

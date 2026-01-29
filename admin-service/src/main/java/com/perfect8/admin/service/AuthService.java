@@ -22,10 +22,10 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * AuthService v1.3 - Industristandard
- * - Password i plaintext över HTTPS
- * - BCrypt hashar i backend
- * - Ignorerar passwordSalt (v1.2 legacy)
+ * AuthService v1.3 Unified
+ * - Industristandard: password i plaintext över HTTPS, hashas i backend
+ * - Stödjer både ADMIN och CUSTOMER roller
+ * - Ingen passwordSalt (v1.2 legacy borttaget)
  */
 @Slf4j
 @Service
@@ -60,6 +60,11 @@ public class AuthService {
             throw new BadCredentialsException("Account is inactive");
         }
 
+        if (user.isLocked()) {
+            log.error("SOP LOGIN: Låst användare: {}", request.getEmail());
+            throw new BadCredentialsException("Account is locked");
+        }
+
         // Uppdatera användarmetadata
         user.setLastLoginDate(LocalDateTime.now());
         user.setFailedLoginAttempts(0);
@@ -77,9 +82,9 @@ public class AuthService {
                 .build();
         refreshTokenRepository.save(refreshToken);
 
-        log.info("SOP LOGIN: Lyckad inloggning för: {}", user.getEmail());
+        log.info("SOP LOGIN: Lyckad inloggning för: {} med roller: {}", user.getEmail(), user.getRoles());
 
-        // Bygg flat AuthResponse (inte nested)
+        // Bygg flat AuthResponse
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshTokenValue)
@@ -104,27 +109,36 @@ public class AuthService {
             throw new IllegalArgumentException("Email already registered");
         }
 
-        // TEKNISK SKULD: RegisterRequest har passwordHash från v1.2
-        // Men vi behandlar det som plaintext och hashar igen (double-hash för mock-data)
-        // I produktion behöver RegisterRequest uppdateras till att ta "password"
-        String hashedPassword = passwordEncoder.encode(request.getPasswordHash());
+        // v1.3: BCrypt-hasha plaintext password
+        String hashedPassword = passwordEncoder.encode(request.getPassword());
+
+        // Bestäm roll (default: USER om inget anges)
+        Role userRole = Role.USER;
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            try {
+                userRole = Role.valueOf(request.getRole().toUpperCase());
+                log.info("SOP REGISTER: Använder angiven roll: {}", userRole);
+            } catch (IllegalArgumentException e) {
+                log.warn("SOP REGISTER: Ogiltig roll '{}', använder default USER", request.getRole());
+            }
+        }
 
         User user = User.builder()
                 .email(request.getEmail())
                 .passwordHash(hashedPassword)
-                .passwordSalt(request.getPasswordSalt()) // v1.2 legacy, entity kräver det
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .roles(Set.of(Role.ADMIN))
+                .phone(request.getPhone())
+                .roles(Set.of(userRole))
                 .isActive(true)
                 .isEmailVerified(false)
                 .failedLoginAttempts(0)
                 .build();
 
         userRepository.save(user);
-        log.info("SOP REGISTER: Användare skapad: {}", user.getEmail());
+        log.info("SOP REGISTER: Användare skapad: {} med roll: {}", user.getEmail(), userRole);
 
-        // Skapa tokens direkt (kan inte anropa login eftersom request.passwordHash ≠ plaintext)
+        // Skapa tokens direkt (auto-login efter registrering)
         String accessToken = jwtUtil.generateToken(user.getUserId(), user.getEmail(), user.getRoles());
         String refreshTokenValue = UUID.randomUUID().toString();
 

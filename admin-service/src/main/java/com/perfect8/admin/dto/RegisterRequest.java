@@ -9,12 +9,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Registration Request DTO
- * Used for new user registration
- *
- * Updated: 2025-12-19
- * - Changed from password to passwordHash (client-side hashing)
- * - Added passwordSalt field
+ * Registration Request DTO - Version 1.3
+ * 
+ * ÄNDRINGAR v1.3 (Industristandard):
+ * - Borttaget: passwordHash, passwordSalt (v1.2 client-side hashing)
+ * - Tillagt: password (plaintext, skickas över HTTPS)
+ * - Backend hashar med BCrypt automatiskt
  */
 @Data
 @Builder
@@ -27,24 +27,24 @@ public class RegisterRequest {
     private String email;
 
     /**
-     * BCrypt hash of the password (hashed on client-side)
-     * Format: $2a$10$... (60 characters)
+     * Plaintext password (v1.3 industristandard)
+     * Skickas över HTTPS, hashas i backend med BCrypt
      */
-    @NotBlank(message = "Password hash is required")
-    @Size(min = 60, max = 60, message = "Invalid password hash format")
-    private String passwordHash;
+    @NotBlank(message = "Password is required")
+    @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
+    private String password;
 
-    /**
-     * BCrypt salt used for hashing (from /api/auth/salt endpoint)
-     * Format: $2a$10$... (29 characters)
-     */
-    @NotBlank(message = "Password salt is required")
-    @Size(min = 29, max = 29, message = "Invalid salt format")
-    private String passwordSalt;
-
+    @Size(max = 100, message = "First name cannot exceed 100 characters")
     private String firstName;
 
+    @Size(max = 100, message = "Last name cannot exceed 100 characters")
     private String lastName;
+
+    /**
+     * Phone number (optional, för customers)
+     */
+    @Size(max = 20, message = "Phone number cannot exceed 20 characters")
+    private String phone;
 
     /**
      * Role name (optional)
