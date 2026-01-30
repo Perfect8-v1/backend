@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -42,6 +43,7 @@ public class AuthController {
      * LOGIN: Industristandard (plaintext over HTTPS)
      */
     @PostMapping("/login")
+    @Transactional
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         log.info("SOP LOGIN: Inloggningsförsök för: {}", request.getEmail());
 
@@ -89,6 +91,7 @@ public class AuthController {
      * REFRESH: Förnya access token med refresh token
      */
     @PostMapping("/refresh")
+    @Transactional
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
         String refreshTokenString = request.get("refreshToken");
         log.info("SOP REFRESH: Försöker förnya token");
@@ -106,6 +109,7 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired refresh token"));
             }
 
+            // Nu fungerar getUser() tack vare @Transactional
             User user = refreshToken.getUser();
 
             // Generera ny access token
@@ -132,7 +136,7 @@ public class AuthController {
                     userInfo
             ));
         } catch (Exception e) {
-            log.error("SOP REFRESH: Fel vid token-förnyelse: {}", e.getMessage());
+            log.error("SOP REFRESH: Fel vid token-förnyelse: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Token refresh failed"));
         }
     }
@@ -141,6 +145,7 @@ public class AuthController {
      * LOGOUT: Revoke refresh token
      */
     @PostMapping("/logout")
+    @Transactional
     public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
         String refreshTokenString = request.get("refreshToken");
         log.info("SOP LOGOUT: Loggar ut användare");
@@ -160,6 +165,7 @@ public class AuthController {
      * REGISTER: Haschar lösenordet direkt i backend
      */
     @PostMapping("/register")
+    @Transactional
     public ResponseEntity<?> register(@Valid @RequestBody LoginRequest request) {
         log.info("SOP REGISTER: Registrerar ny användare: {}", request.getEmail());
 

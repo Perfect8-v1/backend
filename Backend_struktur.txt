@@ -4,13 +4,11 @@ C:.
 ¦   .env
 ¦   .gitignore
 ¦   api-gateway.zip
-¦   Backend_struktur.txt
-¦   Bootstrap_Addendum_2026-01-15_CORS_Success.md
+¦   Backend-struktur.txt
 ¦   copy-jars.sh
 ¦   docker
 ¦   docker-compose.yml
 ¦   login_test.http
-¦   Nasta_Arbetsdag_2026-01-16_Flutter_Testing.md
 ¦   new.sh
 ¦   pom.xml
 ¦   README.md
@@ -136,7 +134,6 @@ C:.
 ¦   ¦               +---perfect8
 ¦   ¦                   +---admin
 ¦   ¦                       +---integration
-¦   ¦                               AdminJwtAuthTest.java
 ¦   ¦                               AuthControllerTest.java
 ¦   ¦                               BaseTest.java
 ¦   ¦                               HealthCheckTest.java
@@ -264,6 +261,7 @@ C:.
 ¦   ¦       ¦               ¦       JwtAuthenticationGatewayFilterFactory.java
 ¦   ¦       ¦               ¦       OpenAPIConfig.java
 ¦   ¦       ¦               ¦       SecurityConfig.java
+¦   ¦       ¦               ¦       StaticResourceConfig.java
 ¦   ¦       ¦               ¦       
 ¦   ¦       ¦               +---filter
 ¦   ¦       ¦               +---util
@@ -286,6 +284,7 @@ C:.
 ¦       ¦               ¦       JwtAuthenticationGatewayFilterFactory.class
 ¦       ¦               ¦       OpenAPIConfig.class
 ¦       ¦               ¦       SecurityConfig.class
+¦       ¦               ¦       StaticResourceConfig.class
 ¦       ¦               ¦       
 ¦       ¦               +---util
 ¦       ¦                       JwtUtil.class
@@ -830,7 +829,6 @@ C:.
 ¦   ¦   .dockerignore
 ¦   ¦   Dockerfile
 ¦   ¦   pom.xml
-¦   ¦   shop.iml
 ¦   ¦   
 ¦   +---src
 ¦   ¦   +---main
@@ -1331,12 +1329,14 @@ C:.
 ¦       blog-CREATE-TABLE.sql
 ¦       blog-MOCK-DATA.sql
 ¦       CHECK IF ADMIN.sql
+¦       create_testcustomer_same_password.sql
 ¦       customers-table.sql
 ¦       DESCRIBE role.csv
 ¦       DESCRIBE users.csv
 ¦       email-Create-Mock.sql
 ¦       email-CREATE-TABLE.sql
 ¦       email-MOCK-DATA.sql
+¦       fix_customer_password.sql
 ¦       image-CREATE-TABLE.sql
 ¦       image-Create.Mock.sql
 ¦       image-MOCK-DATA.sql
@@ -1355,6 +1355,8 @@ C:.
 ¦       shop-RESTART.sql
 ¦       SQL-SCRIPTS-README.md
 ¦       users.csv
+¦       user_migration_v13_safe.sql
+¦       user_migration_v13_unified.sql
 ¦       
 +---www
         dashboard.html

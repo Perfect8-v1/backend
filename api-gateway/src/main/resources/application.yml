@@ -78,11 +78,11 @@ spring:
         # SKYDDADE ROUTES - ADMIN (JWT krävs, service kollar roll)
         # ===========================================
 
-        # --- ADMIN ---
+        # --- ADMIN (ÄNDRAD: /api/admin/** istället för /admin/**) ---
         - id: admin-service
           uri: http://admin-service:8081
           predicates:
-            - Path=/admin/**
+            - Path=/api/admin/**
           filters:
             - JwtAuthentication
 
@@ -199,5 +199,3 @@ springdoc:
         url: /image-service/v3/api-docs
       - name: 5. Shop Service
         url: /shop-service/v3/api-docs
-  api-docs:
-    path: /v3/api-docs
