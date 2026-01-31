@@ -13,9 +13,9 @@ import static org.hamcrest.Matchers.*;
 /**
  * Integration tests for JWT Authentication (v1.3)
  * 
- * Endpoints:
- * - /api/email  → email-service
- * - /api/auth/  → admin-service
+ * Endpoints (via Gateway):
+ * - /email/**    → email-service (admin only)
+ * - /api/auth/   → admin-service
  */
 @DisplayName("Email Service - JWT Auth Tests (v1.3)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -28,10 +28,11 @@ public class EmailJwtAuthTest {
     private static final String TEST_EMAIL = "cmb@p8.se";
     private static final String TEST_PASSWORD = "magnus123";
 
+    // Endpoints (v1.3 med service-prefix)
     private static final String LOGIN_ENDPOINT = "/api/auth/login";
-    private static final String SEND_ENDPOINT = "/api/email/send";
-    private static final String LOGS_ENDPOINT = "/api/email/logs";
-    private static final String TEMPLATES_ENDPOINT = "/api/email/templates";
+    private static final String SEND_ENDPOINT = "/email/send";
+    private static final String LOGS_ENDPOINT = "/email/logs";
+    private static final String TEMPLATES_ENDPOINT = "/email/templates";
 
     @BeforeAll
     public static void setup() {
@@ -46,6 +47,7 @@ public class EmailJwtAuthTest {
                 .build();
 
         System.out.println("🚀 Email tests: " + BASE_URL);
+        System.out.println("📍 Email endpoint: /email/**");
     }
 
     @Test
@@ -72,7 +74,7 @@ public class EmailJwtAuthTest {
 
     @Test
     @Order(2)
-    @DisplayName("POST /api/email/send WITHOUT token → 401/403")
+    @DisplayName("POST /email/send WITHOUT token → 401/403")
     public void testSendEmail_NoToken_Unauthorized() {
         String emailBody = """
                 {"to": "test@example.com", "subject": "Test", "body": "Test"}
@@ -85,7 +87,7 @@ public class EmailJwtAuthTest {
 
     @Test
     @Order(3)
-    @DisplayName("GET /api/email/logs WITHOUT token → 401/403")
+    @DisplayName("GET /email/logs WITHOUT token → 401/403")
     public void testGetLogs_NoToken_Unauthorized() {
         given().spec(requestSpec)
         .when().get(LOGS_ENDPOINT)
@@ -94,7 +96,7 @@ public class EmailJwtAuthTest {
 
     @Test
     @Order(4)
-    @DisplayName("GET /api/email/templates WITHOUT token → 401/403")
+    @DisplayName("GET /email/templates WITHOUT token → 401/403")
     public void testGetTemplates_NoToken_Unauthorized() {
         given().spec(requestSpec)
         .when().get(TEMPLATES_ENDPOINT)
@@ -103,7 +105,7 @@ public class EmailJwtAuthTest {
 
     @Test
     @Order(5)
-    @DisplayName("POST /api/email/send WITH token → auth passes")
+    @DisplayName("POST /email/send WITH token → auth passes")
     public void testSendEmail_WithToken_AuthPasses() {
         Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
@@ -120,7 +122,7 @@ public class EmailJwtAuthTest {
 
     @Test
     @Order(6)
-    @DisplayName("GET /api/email/logs WITH token → auth passes")
+    @DisplayName("GET /email/logs WITH token → auth passes")
     public void testGetLogs_WithToken_AuthPasses() {
         Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
@@ -132,7 +134,7 @@ public class EmailJwtAuthTest {
 
     @Test
     @Order(7)
-    @DisplayName("GET /api/email/templates WITH token → auth passes")
+    @DisplayName("GET /email/templates WITH token → auth passes")
     public void testGetTemplates_WithToken_AuthPasses() {
         Assumptions.assumeTrue(jwtToken != null, "JWT required");
 

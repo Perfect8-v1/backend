@@ -11,12 +11,11 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * Integration tests for JWT Authentication (p8.rantila.com)
- * v1.3 - Industristandard auth
+ * Integration tests for JWT Authentication (v1.3)
  * 
- * Endpoints:
- * - /api/posts  → blog-service
- * - /api/auth/  → admin-service
+ * Endpoints (via Gateway):
+ * - /blog/api/posts  → blog-service
+ * - /api/auth/       → admin-service
  */
 @DisplayName("Blog Service - JWT Auth Tests (v1.3)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -29,8 +28,9 @@ public class BlogJwtAuthTest {
     private static final String TEST_EMAIL = "cmb@p8.se";
     private static final String TEST_PASSWORD = "magnus123";
 
+    // Endpoints (v1.3 med service-prefix)
     private static final String LOGIN_ENDPOINT = "/api/auth/login";
-    private static final String POSTS_ENDPOINT = "/api/posts";
+    private static final String POSTS_ENDPOINT = "/blog/api/posts";
 
     @BeforeAll
     public static void setup() {
@@ -45,6 +45,7 @@ public class BlogJwtAuthTest {
                 .build();
 
         System.out.println("🚀 Blog tests: " + BASE_URL);
+        System.out.println("📍 Posts endpoint: " + POSTS_ENDPOINT);
     }
 
     @Test
@@ -71,7 +72,7 @@ public class BlogJwtAuthTest {
 
     @Test
     @Order(2)
-    @DisplayName("GET /api/posts without token (public)")
+    @DisplayName("GET /blog/api/posts without token (public)")
     public void testGetPosts_NoToken_Returns200() {
         given().spec(requestSpec)
         .when().get(POSTS_ENDPOINT)
@@ -80,7 +81,7 @@ public class BlogJwtAuthTest {
 
     @Test
     @Order(3)
-    @DisplayName("POST /api/posts WITHOUT token → 401/403")
+    @DisplayName("POST /blog/api/posts WITHOUT token → 401/403")
     public void testCreatePost_NoToken_Unauthorized() {
         String postBody = """
                 {"title": "Test", "content": "Test", "slug": "test"}
@@ -93,7 +94,7 @@ public class BlogJwtAuthTest {
 
     @Test
     @Order(4)
-    @DisplayName("PUT /api/posts/{id} WITHOUT token → 401/403")
+    @DisplayName("PUT /blog/api/posts/{id} WITHOUT token → 401/403")
     public void testUpdatePost_NoToken_Unauthorized() {
         String updateBody = """
                 {"title": "Updated", "content": "Updated"}
@@ -106,7 +107,7 @@ public class BlogJwtAuthTest {
 
     @Test
     @Order(5)
-    @DisplayName("DELETE /api/posts/{id} WITHOUT token → 401/403")
+    @DisplayName("DELETE /blog/api/posts/{id} WITHOUT token → 401/403")
     public void testDeletePost_NoToken_Unauthorized() {
         given().spec(requestSpec)
         .when().delete(POSTS_ENDPOINT + "/1")
@@ -115,7 +116,7 @@ public class BlogJwtAuthTest {
 
     @Test
     @Order(6)
-    @DisplayName("POST /api/posts WITH token → auth passes")
+    @DisplayName("POST /blog/api/posts WITH token → auth passes")
     public void testCreatePost_WithToken_AuthPasses() {
         Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
@@ -132,7 +133,7 @@ public class BlogJwtAuthTest {
 
     @Test
     @Order(7)
-    @DisplayName("DELETE /api/posts/{id} WITH token → auth passes")
+    @DisplayName("DELETE /blog/api/posts/{id} WITH token → auth passes")
     public void testDeletePost_WithToken_AuthPasses() {
         Assumptions.assumeTrue(jwtToken != null, "JWT required");
 

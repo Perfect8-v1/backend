@@ -13,9 +13,9 @@ import static org.hamcrest.Matchers.*;
 /**
  * Integration tests for Blog Post CRUD (v1.3)
  * 
- * Endpoints:
- * - /api/posts  → blog-service
- * - /api/auth/  → admin-service
+ * Endpoints (via Gateway):
+ * - /blog/api/posts  → blog-service
+ * - /api/auth/       → admin-service
  */
 @DisplayName("Blog Service - Post CRUD Tests (v1.3)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -29,8 +29,9 @@ public class BlogPostCrudTest {
     private static final String TEST_EMAIL = "cmb@p8.se";
     private static final String TEST_PASSWORD = "magnus123";
 
+    // Endpoints (v1.3 med service-prefix)
     private static final String LOGIN_ENDPOINT = "/api/auth/login";
-    private static final String POSTS_ENDPOINT = "/api/posts";
+    private static final String POSTS_ENDPOINT = "/blog/api/posts";
 
     private static Long createdPostId;
     private static String createdPostSlug;
@@ -47,6 +48,9 @@ public class BlogPostCrudTest {
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
                 .build();
+
+        System.out.println("🚀 Blog CRUD tests: " + BASE_URL);
+        System.out.println("📍 Posts endpoint: " + POSTS_ENDPOINT);
 
         jwtToken = getAuthToken();
         
@@ -84,7 +88,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(1)
-    @DisplayName("CREATE: POST /api/posts")
+    @DisplayName("CREATE: POST /blog/api/posts")
     public void testCreatePost() {
         Assumptions.assumeTrue(authenticatedSpec != null, "JWT required");
 
@@ -114,7 +118,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(2)
-    @DisplayName("READ: GET /api/posts (public)")
+    @DisplayName("READ: GET /blog/api/posts (public)")
     public void testGetAllPosts() {
         given().spec(requestSpec)
         .when().get(POSTS_ENDPOINT)
@@ -123,7 +127,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(3)
-    @DisplayName("READ: GET /api/posts/{slug}")
+    @DisplayName("READ: GET /blog/api/posts/{slug}")
     public void testGetPostBySlug() {
         Assumptions.assumeTrue(createdPostSlug != null, "No post created");
 
@@ -134,7 +138,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(4)
-    @DisplayName("READ: GET /api/posts with pagination")
+    @DisplayName("READ: GET /blog/api/posts with pagination")
     public void testGetPostsWithPagination() {
         given().spec(requestSpec)
                 .queryParam("page", 0)
@@ -145,7 +149,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(5)
-    @DisplayName("UPDATE: PUT /api/posts/{id}")
+    @DisplayName("UPDATE: PUT /blog/api/posts/{id}")
     public void testUpdatePost() {
         Assumptions.assumeTrue(createdPostId != null, "No post created");
         Assumptions.assumeTrue(authenticatedSpec != null, "JWT required");
@@ -184,7 +188,7 @@ public class BlogPostCrudTest {
 
     @Test
     @Order(7)
-    @DisplayName("DELETE: DELETE /api/posts/{id}")
+    @DisplayName("DELETE: DELETE /blog/api/posts/{id}")
     public void testDeletePost() {
         Assumptions.assumeTrue(createdPostId != null, "No post created");
         Assumptions.assumeTrue(authenticatedSpec != null, "JWT required");
