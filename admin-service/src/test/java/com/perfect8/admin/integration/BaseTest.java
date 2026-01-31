@@ -35,14 +35,15 @@ public abstract class BaseTest {
     // GATEWAY ROUTES
     // ===========================================
     
-    // Auth (direkt på Gateway)
+    // Auth (direkt på Gateway - inget service-prefix)
     protected static final String AUTH_LOGIN = "/api/auth/login";
     protected static final String AUTH_REGISTER = "/api/auth/register";
     protected static final String AUTH_REFRESH = "/api/auth/refresh";
     protected static final String AUTH_LOGOUT = "/api/auth/logout";
     
-    // Admin
+    // Admin (direkt på Gateway - inget service-prefix)
     protected static final String ADMIN_USERS = "/api/admin/users";
+    protected static final String ADMIN_DASHBOARD = "/api/admin/dashboard/stats";
     
     // Blog (via /blog prefix)
     protected static final String BLOG_POSTS = "/blog/api/posts";
@@ -57,9 +58,9 @@ public abstract class BaseTest {
     // Image (via /image prefix)
     protected static final String IMAGE_IMAGES = "/image/api/images";
     
-    // Email (via /email prefix)
-    protected static final String EMAIL_SEND = "/email/api/email/send";
-    protected static final String EMAIL_LOGS = "/email/api/email/logs";
+    // Email (via /email prefix - utan /api)
+    protected static final String EMAIL_SEND = "/email/send";
+    protected static final String EMAIL_LOGS = "/email/logs";
     
     // Health
     protected static final String HEALTH = "/actuator/health";

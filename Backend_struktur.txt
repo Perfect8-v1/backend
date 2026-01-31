@@ -4,7 +4,7 @@ C:.
 ¦   .env
 ¦   .gitignore
 ¦   api-gateway.zip
-¦   Backend-struktur.txt
+¦   Backend_struktur.txt
 ¦   copy-jars.sh
 ¦   docker
 ¦   docker-compose.yml
@@ -238,13 +238,35 @@ C:.
 ¦       ¦                       
 ¦       +---generated-sources
 ¦       ¦   +---annotations
+¦       +---generated-test-sources
+¦       ¦   +---test-annotations
 ¦       +---maven-status
-¦           +---maven-compiler-plugin
-¦               +---compile
-¦                   +---default-compile
-¦                           createdFiles.lst
-¦                           inputFiles.lst
-¦                           
+¦       ¦   +---maven-compiler-plugin
+¦       ¦       +---compile
+¦       ¦       ¦   +---default-compile
+¦       ¦       ¦           createdFiles.lst
+¦       ¦       ¦           inputFiles.lst
+¦       ¦       ¦           
+¦       ¦       +---testCompile
+¦       ¦           +---default-testCompile
+¦       ¦                   createdFiles.lst
+¦       ¦                   inputFiles.lst
+¦       ¦                   
+¦       +---surefire-reports
+¦       ¦       com.perfect8.admin.integration.AuthControllerTest.txt
+¦       ¦       com.perfect8.admin.integration.HealthCheckTest.txt
+¦       ¦       TEST-com.perfect8.admin.integration.AuthControllerTest.xml
+¦       ¦       TEST-com.perfect8.admin.integration.HealthCheckTest.xml
+¦       ¦       
+¦       +---test-classes
+¦           +---com
+¦               +---perfect8
+¦                   +---admin
+¦                       +---integration
+¦                               AuthControllerTest.class
+¦                               BaseTest.class
+¦                               HealthCheckTest.class
+¦                               
 +---api-gateway
 ¦   ¦   Dockerfile
 ¦   ¦   pom.xml
@@ -415,13 +437,34 @@ C:.
 ¦       ¦                       
 ¦       +---generated-sources
 ¦       ¦   +---annotations
+¦       +---generated-test-sources
+¦       ¦   +---test-annotations
 ¦       +---maven-status
-¦           +---maven-compiler-plugin
-¦               +---compile
-¦                   +---default-compile
-¦                           createdFiles.lst
-¦                           inputFiles.lst
-¦                           
+¦       ¦   +---maven-compiler-plugin
+¦       ¦       +---compile
+¦       ¦       ¦   +---default-compile
+¦       ¦       ¦           createdFiles.lst
+¦       ¦       ¦           inputFiles.lst
+¦       ¦       ¦           
+¦       ¦       +---testCompile
+¦       ¦           +---default-testCompile
+¦       ¦                   createdFiles.lst
+¦       ¦                   inputFiles.lst
+¦       ¦                   
+¦       +---surefire-reports
+¦       ¦       com.perfect8.blog.integration.BlogJwtAuthTest.txt
+¦       ¦       com.perfect8.blog.integration.BlogPostCrudTest.txt
+¦       ¦       TEST-com.perfect8.blog.integration.BlogJwtAuthTest.xml
+¦       ¦       TEST-com.perfect8.blog.integration.BlogPostCrudTest.xml
+¦       ¦       
+¦       +---test-classes
+¦           +---com
+¦               +---perfect8
+¦                   +---blog
+¦                       +---integration
+¦                               BlogJwtAuthTest.class
+¦                               BlogPostCrudTest.class
+¦                               
 +---common
 ¦   ¦   pom.xml
 ¦   ¦   
@@ -665,13 +708,34 @@ C:.
 ¦       ¦           
 ¦       +---generated-sources
 ¦       ¦   +---annotations
+¦       +---generated-test-sources
+¦       ¦   +---test-annotations
 ¦       +---maven-status
-¦           +---maven-compiler-plugin
-¦               +---compile
-¦                   +---default-compile
-¦                           createdFiles.lst
-¦                           inputFiles.lst
-¦                           
+¦       ¦   +---maven-compiler-plugin
+¦       ¦       +---compile
+¦       ¦       ¦   +---default-compile
+¦       ¦       ¦           createdFiles.lst
+¦       ¦       ¦           inputFiles.lst
+¦       ¦       ¦           
+¦       ¦       +---testCompile
+¦       ¦           +---default-testCompile
+¦       ¦                   createdFiles.lst
+¦       ¦                   inputFiles.lst
+¦       ¦                   
+¦       +---surefire-reports
+¦       ¦       com.perfect8.email.integration.EmailJwtAuthTest.txt
+¦       ¦       com.perfect8.email.integration.EmailSendLiveTest.txt
+¦       ¦       TEST-com.perfect8.email.integration.EmailJwtAuthTest.xml
+¦       ¦       TEST-com.perfect8.email.integration.EmailSendLiveTest.xml
+¦       ¦       
+¦       +---test-classes
+¦           +---com
+¦               +---perfect8
+¦                   +---email
+¦                       +---integration
+¦                               EmailJwtAuthTest.class
+¦                               EmailSendLiveTest.class
+¦                               
 +---feign
 ¦       BlogServiceClient.java
 ¦       FeignConfig.java
@@ -818,13 +882,43 @@ C:.
 ¦       ¦                       
 ¦       +---generated-sources
 ¦       ¦   +---annotations
+¦       +---generated-test-sources
+¦       ¦   +---test-annotations
 ¦       +---maven-status
-¦           +---maven-compiler-plugin
-¦               +---compile
-¦                   +---default-compile
-¦                           createdFiles.lst
-¦                           inputFiles.lst
-¦                           
+¦       ¦   +---maven-compiler-plugin
+¦       ¦       +---compile
+¦       ¦       ¦   +---default-compile
+¦       ¦       ¦           createdFiles.lst
+¦       ¦       ¦           inputFiles.lst
+¦       ¦       ¦           
+¦       ¦       +---testCompile
+¦       ¦           +---default-testCompile
+¦       ¦                   createdFiles.lst
+¦       ¦                   inputFiles.lst
+¦       ¦                   
+¦       +---surefire-reports
+¦       ¦       com.perfect8.image.controller.ImageControllerTest.txt
+¦       ¦       com.perfect8.image.integration.ImageJwtAuthTest.txt
+¦       ¦       TEST-com.perfect8.image.controller.ImageControllerTest.xml
+¦       ¦       TEST-com.perfect8.image.integration.ImageJwtAuthTest.xml
+¦       ¦       
+¦       +---test-classes
+¦           ¦   Cube-S.jpg
+¦           ¦   perfect8-cube-s.jpg
+¦           ¦   test-file.txt
+¦           ¦   test-image.jpg
+¦           ¦   the-cube-t-detail.jpg
+¦           ¦   the-cube-t-full.jpg
+¦           ¦   
+¦           +---com
+¦               +---perfect8
+¦                   +---image
+¦                       +---controller
+¦                       ¦       ImageControllerTest.class
+¦                       ¦       
+¦                       +---integration
+¦                               ImageJwtAuthTest.class
+¦                               
 +---shop-service
 ¦   ¦   .dockerignore
 ¦   ¦   Dockerfile
@@ -1313,13 +1407,31 @@ C:.
 ¦       ¦                       
 ¦       +---generated-sources
 ¦       ¦   +---annotations
+¦       +---generated-test-sources
+¦       ¦   +---test-annotations
 ¦       +---maven-status
-¦           +---maven-compiler-plugin
-¦               +---compile
-¦                   +---default-compile
-¦                           createdFiles.lst
-¦                           inputFiles.lst
-¦                           
+¦       ¦   +---maven-compiler-plugin
+¦       ¦       +---compile
+¦       ¦       ¦   +---default-compile
+¦       ¦       ¦           createdFiles.lst
+¦       ¦       ¦           inputFiles.lst
+¦       ¦       ¦           
+¦       ¦       +---testCompile
+¦       ¦           +---default-testCompile
+¦       ¦                   createdFiles.lst
+¦       ¦                   inputFiles.lst
+¦       ¦                   
+¦       +---surefire-reports
+¦       ¦       com.perfect8.shop.integration.ShopJwtAuthTest.txt
+¦       ¦       TEST-com.perfect8.shop.integration.ShopJwtAuthTest.xml
+¦       ¦       
+¦       +---test-classes
+¦           +---com
+¦               +---perfect8
+¦                   +---shop
+¦                       +---integration
+¦                               ShopJwtAuthTest.class
+¦                               
 +---SQL
 ¦       admin-Create-Mock.sql
 ¦       admin-Create.sql
