@@ -11,31 +11,27 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * Integration tests for JWT Authentication via nginx (p8.rantila.com)
+ * Integration tests for JWT Authentication (v1.3)
  * 
- * Nginx routing:
- * - /api/v1/email/ → email-service /api/email/
- * - /api/v1/auth/  → admin-service /api/auth/ (for login)
+ * Endpoints:
+ * - /api/email  → email-service
+ * - /api/auth/  → admin-service
  */
-@DisplayName("Email Service - JWT Authentication Tests (Remote)")
+@DisplayName("Email Service - JWT Auth Tests (v1.3)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class EmailJwtAuthTest {
 
     private static RequestSpecification requestSpec;
     private static String jwtToken;
 
-    // Configuration - via nginx
     private static final String BASE_URL = "https://p8.rantila.com";
+    private static final String TEST_EMAIL = "cmb@p8.se";
+    private static final String TEST_PASSWORD = "magnus123";
 
-    // Test credentials (admin-service login)
-    private static final String TEST_EMAIL = "admin@perfect8.com";
-    private static final String TEST_PASSWORD = "password";
-
-    // Endpoints (nginx mapped)
-    private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
-    private static final String SEND_ENDPOINT = "/api/v1/email/send";
-    private static final String LOGS_ENDPOINT = "/api/v1/email/logs";
-    private static final String TEMPLATES_ENDPOINT = "/api/v1/email/templates";
+    private static final String LOGIN_ENDPOINT = "/api/auth/login";
+    private static final String SEND_ENDPOINT = "/api/email/send";
+    private static final String LOGS_ENDPOINT = "/api/email/logs";
+    private static final String TEMPLATES_ENDPOINT = "/api/email/templates";
 
     @BeforeAll
     public static void setup() {
@@ -49,22 +45,15 @@ public class EmailJwtAuthTest {
                 .setAccept(ContentType.JSON)
                 .build();
 
-        System.out.println("🚀 Email Service tests configured for: " + BASE_URL);
+        System.out.println("🚀 Email tests: " + BASE_URL);
     }
-
-    // ==================== LOGIN (Get JWT Token from Admin Service) ====================
 
     @Test
     @Order(1)
-    @DisplayName("Get JWT token from admin-service")
-    public void testGetToken_FromAdminService() {
-        System.out.println("\n🧪 Testing: Get JWT token from admin-service");
-
+    @DisplayName("Get JWT token")
+    public void testGetToken() {
         String loginBody = """
-                {
-                    "email": "%s",
-                    "password": "%s"
-                }
+                {"email": "%s", "password": "%s"}
                 """.formatted(TEST_EMAIL, TEST_PASSWORD);
 
         Response response = given()
@@ -75,205 +64,96 @@ public class EmailJwtAuthTest {
         .then()
                 .statusCode(200)
                 .body("accessToken", notNullValue())
-                .extract()
-                .response();
+                .extract().response();
 
         jwtToken = response.jsonPath().getString("accessToken");
-        System.out.println("   ✅ Received JWT token: " + jwtToken.substring(0, 20) + "...");
-        
-        logTestResult("Got JWT from admin-service", true);
+        System.out.println("✅ JWT acquired");
     }
-
-    // ==================== PROTECTED ENDPOINTS - NO TOKEN ====================
 
     @Test
     @Order(2)
-    @DisplayName("POST /api/v1/email/send WITHOUT token should return 401 or 403")
-    public void testSendEmail_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: POST send email WITHOUT token → 401/403");
-
+    @DisplayName("POST /api/email/send WITHOUT token → 401/403")
+    public void testSendEmail_NoToken_Unauthorized() {
         String emailBody = """
-                {
-                    "to": "test@example.com",
-                    "subject": "Test Email",
-                    "body": "This is a test email"
-                }
+                {"to": "test@example.com", "subject": "Test", "body": "Test"}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-                .body(emailBody)
-        .when()
-                .post(SEND_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("POST send without token → " + statusCode, true);
+        given().spec(requestSpec).body(emailBody)
+        .when().post(SEND_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 
     @Test
     @Order(3)
-    @DisplayName("GET /api/v1/email/logs WITHOUT token should return 401 or 403")
-    public void testGetLogs_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: GET logs WITHOUT token → 401/403");
-
-        int statusCode = given()
-                .spec(requestSpec)
-        .when()
-                .get(LOGS_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("GET logs without token → " + statusCode, true);
+    @DisplayName("GET /api/email/logs WITHOUT token → 401/403")
+    public void testGetLogs_NoToken_Unauthorized() {
+        given().spec(requestSpec)
+        .when().get(LOGS_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 
     @Test
     @Order(4)
-    @DisplayName("GET /api/v1/email/templates WITHOUT token should return 401 or 403")
-    public void testGetTemplates_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: GET templates WITHOUT token → 401/403");
-
-        int statusCode = given()
-                .spec(requestSpec)
-        .when()
-                .get(TEMPLATES_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("GET templates without token → " + statusCode, true);
+    @DisplayName("GET /api/email/templates WITHOUT token → 401/403")
+    public void testGetTemplates_NoToken_Unauthorized() {
+        given().spec(requestSpec)
+        .when().get(TEMPLATES_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
-
-    // ==================== PROTECTED ENDPOINTS - WITH VALID TOKEN ====================
 
     @Test
     @Order(5)
-    @DisplayName("POST /api/v1/email/send WITH valid JWT token should pass auth")
+    @DisplayName("POST /api/email/send WITH token → auth passes")
     public void testSendEmail_WithToken_AuthPasses() {
-        System.out.println("\n🧪 Testing: POST send email WITH JWT token → auth passes");
-        
-        Assumptions.assumeTrue(jwtToken != null, "JWT token required - run login test first");
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-        // Invalid email body to trigger validation error (400), not auth error (403)
         String emailBody = """
-                {
-                    "to": "invalid",
-                    "subject": "",
-                    "body": ""
-                }
+                {"to": "invalid", "subject": "", "body": ""}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
+        given().spec(requestSpec)
                 .header("Authorization", "Bearer " + jwtToken)
                 .body(emailBody)
-        .when()
-                .post(SEND_ENDPOINT)
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (auth OK!)");
-        logTestResult("POST send with token → auth passes", true);
+        .when().post(SEND_ENDPOINT)
+        .then().statusCode(allOf(not(401), not(403)));
     }
 
     @Test
     @Order(6)
-    @DisplayName("GET /api/v1/email/logs WITH valid JWT token should pass auth")
+    @DisplayName("GET /api/email/logs WITH token → auth passes")
     public void testGetLogs_WithToken_AuthPasses() {
-        System.out.println("\n🧪 Testing: GET logs WITH JWT token → auth passes");
-        
-        Assumptions.assumeTrue(jwtToken != null, "JWT token required - run login test first");
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-        int statusCode = given()
-                .spec(requestSpec)
+        given().spec(requestSpec)
                 .header("Authorization", "Bearer " + jwtToken)
-        .when()
-                .get(LOGS_ENDPOINT)
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (auth OK!)");
-        logTestResult("GET logs with token → auth passes", true);
+        .when().get(LOGS_ENDPOINT)
+        .then().statusCode(allOf(not(401), not(403)));
     }
 
     @Test
     @Order(7)
-    @DisplayName("GET /api/v1/email/templates WITH valid JWT token should pass auth")
+    @DisplayName("GET /api/email/templates WITH token → auth passes")
     public void testGetTemplates_WithToken_AuthPasses() {
-        System.out.println("\n🧪 Testing: GET templates WITH JWT token → auth passes");
-        
-        Assumptions.assumeTrue(jwtToken != null, "JWT token required - run login test first");
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-        int statusCode = given()
-                .spec(requestSpec)
+        given().spec(requestSpec)
                 .header("Authorization", "Bearer " + jwtToken)
-        .when()
-                .get(TEMPLATES_ENDPOINT)
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (auth OK!)");
-        logTestResult("GET templates with token → auth passes", true);
+        .when().get(TEMPLATES_ENDPOINT)
+        .then().statusCode(allOf(not(401), not(403)));
     }
-
-    // ==================== INVALID TOKENS ====================
 
     @Test
     @Order(8)
-    @DisplayName("Invalid JWT token should return 401 or 403")
-    public void testSendEmail_InvalidToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: Invalid JWT token → 401/403");
-
+    @DisplayName("Invalid token → 401/403")
+    public void testSendEmail_InvalidToken_Unauthorized() {
         String emailBody = """
-                {
-                    "to": "test@example.com",
-                    "subject": "Test",
-                    "body": "Test"
-                }
+                {"to": "test@example.com", "subject": "Test", "body": "Test"}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-                .header("Authorization", "Bearer invalid.token.here")
+        given().spec(requestSpec)
+                .header("Authorization", "Bearer invalid.token")
                 .body(emailBody)
-        .when()
-                .post(SEND_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("Invalid token → " + statusCode, true);
-    }
-
-    // ==================== HELPER ====================
-
-    private void logTestResult(String testName, boolean passed) {
-        String status = passed ? "✅ PASSED" : "❌ FAILED";
-        System.out.println(status + " - " + testName);
+        .when().post(SEND_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 }

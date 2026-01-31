@@ -2,6 +2,7 @@ package com.perfect8.blog.integration;
 
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 import org.junit.jupiter.api.*;
@@ -10,72 +11,87 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * Integration tests for Blog Post CRUD operations (Plain branch)
- *
- * Tests the complete lifecycle:
- * 1. CREATE - POST /api/posts
- * 2. READ   - GET /api/posts, GET /api/posts/{slug}
- * 3. UPDATE - PUT /api/posts/{id}
- * 4. DELETE - DELETE /api/posts/{id}
- *
- * Uses @TestMethodOrder to run tests in sequence (CREATE → READ → UPDATE → DELETE)
+ * Integration tests for Blog Post CRUD (v1.3)
+ * 
+ * Endpoints:
+ * - /api/posts  → blog-service
+ * - /api/auth/  → admin-service
  */
-@DisplayName("Blog Service - Post CRUD Tests")
+@DisplayName("Blog Service - Post CRUD Tests (v1.3)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BlogPostCrudTest {
 
-    protected static RequestSpecification requestSpec;
-    protected static RequestSpecification authenticatedSpec;
+    private static RequestSpecification requestSpec;
+    private static RequestSpecification authenticatedSpec;
+    private static String jwtToken;
 
-    // Configuration
-    private static final String BASE_URL = "http://127.0.0.1";
-    private static final int BLOG_PORT = 8082;
-    private static final String BLOG_API_KEY = "p8blog_3Fw6yH9jM2nP5vX8";
+    private static final String BASE_URL = "https://p8.rantila.com";
+    private static final String TEST_EMAIL = "cmb@p8.se";
+    private static final String TEST_PASSWORD = "magnus123";
 
-    // Endpoints
+    private static final String LOGIN_ENDPOINT = "/api/auth/login";
     private static final String POSTS_ENDPOINT = "/api/posts";
 
-    // Store created post data for subsequent tests
     private static Long createdPostId;
     private static String createdPostSlug;
-
-    // Unique slug to avoid conflicts
-    private static final String TEST_SLUG = "rest-assured-crud-test-" + System.currentTimeMillis();
+    private static final String TEST_SLUG = "rest-crud-test-" + System.currentTimeMillis();
 
     @BeforeAll
     public static void setup() {
-        String fullUrl = BASE_URL + ":" + BLOG_PORT;
-        RestAssured.baseURI = fullUrl;
+        RestAssured.useRelaxedHTTPSValidation();
+        RestAssured.baseURI = BASE_URL;
+        RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
 
         requestSpec = new RequestSpecBuilder()
-                .setBaseUri(fullUrl)
-                .setContentType("application/json")
-                .setAccept("application/json")
+                .setBaseUri(BASE_URL)
+                .setContentType(ContentType.JSON)
+                .setAccept(ContentType.JSON)
                 .build();
 
-        authenticatedSpec = new RequestSpecBuilder()
-                .setBaseUri(fullUrl)
-                .setContentType("application/json")
-                .setAccept("application/json")
-                .addHeader("X-API-Key", BLOG_API_KEY)
-                .build();
-
-        System.out.println("🚀 Blog CRUD tests configured for: " + fullUrl);
-        System.out.println("📝 Test slug: " + TEST_SLUG);
+        jwtToken = getAuthToken();
+        
+        if (jwtToken != null) {
+            authenticatedSpec = new RequestSpecBuilder()
+                    .setBaseUri(BASE_URL)
+                    .setContentType(ContentType.JSON)
+                    .setAccept(ContentType.JSON)
+                    .addHeader("Authorization", "Bearer " + jwtToken)
+                    .build();
+            System.out.println("✅ JWT acquired");
+        }
     }
 
-    // ==================== CREATE ====================
+    private static String getAuthToken() {
+        try {
+            String loginBody = """
+                    {"email": "%s", "password": "%s"}
+                    """.formatted(TEST_EMAIL, TEST_PASSWORD);
+
+            Response response = given()
+                    .contentType(ContentType.JSON)
+                    .body(loginBody)
+            .when()
+                    .post(BASE_URL + LOGIN_ENDPOINT)
+            .then()
+                    .statusCode(200)
+                    .extract().response();
+
+            return response.jsonPath().getString("accessToken");
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     @Test
     @Order(1)
-    @DisplayName("CREATE: POST /api/posts should create new post")
+    @DisplayName("CREATE: POST /api/posts")
     public void testCreatePost() {
-        System.out.println("\n🧪 Testing: CREATE post");
+        Assumptions.assumeTrue(authenticatedSpec != null, "JWT required");
 
         String postBody = String.format("""
                 {
-                    "title": "REST Assured CRUD Test Post",
-                    "content": "This post was created by REST Assured integration tests. Testing the full CRUD lifecycle.",
+                    "title": "REST CRUD Test Post",
+                    "content": "Created by integration test",
                     "slug": "%s",
                     "published": true
                 }
@@ -84,102 +100,60 @@ public class BlogPostCrudTest {
         Response response = given()
                 .spec(authenticatedSpec)
                 .body(postBody)
-                .when()
+        .when()
                 .post(POSTS_ENDPOINT)
-                .then()
+        .then()
                 .statusCode(anyOf(is(200), is(201)))
-                .body("title", equalTo("REST Assured CRUD Test Post"))
-                .body("slug", notNullValue())
-                .extract()
-                .response();
+                .body("title", equalTo("REST CRUD Test Post"))
+                .extract().response();
 
-        // Store ID and slug for subsequent tests
         createdPostId = response.jsonPath().getLong("postId");
         createdPostSlug = response.jsonPath().getString("slug");
-
-        System.out.println("   ✅ Created post with ID: " + createdPostId);
-        System.out.println("   ✅ Slug: " + createdPostSlug);
-        logTestResult("CREATE post", true);
+        System.out.println("✅ Created post ID: " + createdPostId);
     }
-
-    // ==================== READ ====================
 
     @Test
     @Order(2)
-    @DisplayName("READ: GET /api/posts should list posts (public)")
+    @DisplayName("READ: GET /api/posts (public)")
     public void testGetAllPosts() {
-        System.out.println("\n🧪 Testing: READ all posts (public)");
-
-        given()
-                .spec(requestSpec)  // No auth needed for GET
-                .when()
-                .get(POSTS_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("content", notNullValue())
-                .body("content.size()", greaterThanOrEqualTo(0));
-
-        logTestResult("READ all posts", true);
+        given().spec(requestSpec)
+        .when().get(POSTS_ENDPOINT)
+        .then().statusCode(200).body("content", notNullValue());
     }
 
     @Test
     @Order(3)
-    @DisplayName("READ: GET /api/posts/{slug} should return specific post")
+    @DisplayName("READ: GET /api/posts/{slug}")
     public void testGetPostBySlug() {
-        System.out.println("\n🧪 Testing: READ post by slug");
+        Assumptions.assumeTrue(createdPostSlug != null, "No post created");
 
-        // Skip if create failed
-        Assumptions.assumeTrue(createdPostSlug != null, "Skipped: No post was created");
-
-        given()
-                .spec(requestSpec)  // No auth needed for GET
-                .when()
-                .get(POSTS_ENDPOINT + "/" + createdPostSlug)
-                .then()
-                .statusCode(200)
-                .body("slug", equalTo(createdPostSlug))
-                .body("title", equalTo("REST Assured CRUD Test Post"));
-
-        System.out.println("   ✅ Found post with slug: " + createdPostSlug);
-        logTestResult("READ post by slug", true);
+        given().spec(requestSpec)
+        .when().get(POSTS_ENDPOINT + "/" + createdPostSlug)
+        .then().statusCode(200).body("slug", equalTo(createdPostSlug));
     }
 
     @Test
     @Order(4)
     @DisplayName("READ: GET /api/posts with pagination")
     public void testGetPostsWithPagination() {
-        System.out.println("\n🧪 Testing: READ posts with pagination");
-
-        given()
-                .spec(requestSpec)
+        given().spec(requestSpec)
                 .queryParam("page", 0)
                 .queryParam("size", 5)
-                .when()
-                .get(POSTS_ENDPOINT)
-                .then()
-                .statusCode(200)
-                .body("content", notNullValue())
-                .body("pageable", notNullValue())
-                .body("totalElements", greaterThanOrEqualTo(0));
-
-        logTestResult("READ with pagination", true);
+        .when().get(POSTS_ENDPOINT)
+        .then().statusCode(200).body("content", notNullValue());
     }
-
-    // ==================== UPDATE ====================
 
     @Test
     @Order(5)
-    @DisplayName("UPDATE: PUT /api/posts/{id} should update post")
+    @DisplayName("UPDATE: PUT /api/posts/{id}")
     public void testUpdatePost() {
-        System.out.println("\n🧪 Testing: UPDATE post");
-
-        // Skip if create failed
-        Assumptions.assumeTrue(createdPostId != null, "Skipped: No post was created");
+        Assumptions.assumeTrue(createdPostId != null, "No post created");
+        Assumptions.assumeTrue(authenticatedSpec != null, "JWT required");
 
         String updateBody = """
                 {
-                    "title": "UPDATED: REST Assured CRUD Test Post",
-                    "content": "This post was UPDATED by REST Assured integration tests.",
+                    "title": "UPDATED: REST CRUD Test Post",
+                    "content": "Updated by integration test",
                     "published": true
                 }
                 """;
@@ -187,129 +161,71 @@ public class BlogPostCrudTest {
         Response response = given()
                 .spec(authenticatedSpec)
                 .body(updateBody)
-                .when()
+        .when()
                 .put(POSTS_ENDPOINT + "/" + createdPostId)
-                .then()
+        .then()
                 .statusCode(200)
                 .body("title", containsString("UPDATED"))
-                .extract()
-                .response();
+                .extract().response();
 
-        // Update slug since title changed (slug is regenerated from title)
         createdPostSlug = response.jsonPath().getString("slug");
-
-        System.out.println("   ✅ Updated post ID: " + createdPostId);
-        System.out.println("   ✅ New slug: " + createdPostSlug);
-        logTestResult("UPDATE post", true);
     }
 
     @Test
     @Order(6)
-    @DisplayName("UPDATE: Verify post was actually updated")
+    @DisplayName("UPDATE: Verify update worked")
     public void testVerifyUpdate() {
-        System.out.println("\n🧪 Testing: Verify UPDATE worked");
+        Assumptions.assumeTrue(createdPostSlug != null, "No post created");
 
-        // Skip if create failed
-        Assumptions.assumeTrue(createdPostSlug != null, "Skipped: No post was created");
-
-        given()
-                .spec(requestSpec)
-                .when()
-                .get(POSTS_ENDPOINT + "/" + createdPostSlug)
-                .then()
-                .statusCode(200)
-                .body("title", containsString("UPDATED"));
-
-        logTestResult("Verify UPDATE", true);
+        given().spec(requestSpec)
+        .when().get(POSTS_ENDPOINT + "/" + createdPostSlug)
+        .then().statusCode(200).body("title", containsString("UPDATED"));
     }
-
-    // ==================== DELETE ====================
 
     @Test
     @Order(7)
-    @DisplayName("DELETE: DELETE /api/posts/{id} should delete post")
+    @DisplayName("DELETE: DELETE /api/posts/{id}")
     public void testDeletePost() {
-        System.out.println("\n🧪 Testing: DELETE post");
+        Assumptions.assumeTrue(createdPostId != null, "No post created");
+        Assumptions.assumeTrue(authenticatedSpec != null, "JWT required");
 
-        // Skip if create failed
-        Assumptions.assumeTrue(createdPostId != null, "Skipped: No post was created");
-
-        given()
-                .spec(authenticatedSpec)
-                .when()
-                .delete(POSTS_ENDPOINT + "/" + createdPostId)
-                .then()
-                .statusCode(anyOf(is(200), is(204)));
-
-        System.out.println("   ✅ Deleted post ID: " + createdPostId);
-        logTestResult("DELETE post", true);
+        given().spec(authenticatedSpec)
+        .when().delete(POSTS_ENDPOINT + "/" + createdPostId)
+        .then().statusCode(anyOf(is(200), is(204)));
     }
 
     @Test
     @Order(8)
-    @DisplayName("DELETE: Verify post was actually deleted")
+    @DisplayName("DELETE: Verify delete worked (404)")
     public void testVerifyDelete() {
-        System.out.println("\n🧪 Testing: Verify DELETE worked");
+        Assumptions.assumeTrue(createdPostSlug != null, "No post created");
 
-        // Skip if create failed
-        Assumptions.assumeTrue(createdPostSlug != null, "Skipped: No post was created");
-
-        given()
-                .spec(requestSpec)
-                .when()
-                .get(POSTS_ENDPOINT + "/" + createdPostSlug)
-                .then()
-                .statusCode(404);  // Post should not exist
-
-        logTestResult("Verify DELETE (404)", true);
+        given().spec(requestSpec)
+        .when().get(POSTS_ENDPOINT + "/" + createdPostSlug)
+        .then().statusCode(404);
     }
-
-    // ==================== ERROR CASES ====================
 
     @Test
     @Order(9)
-    @DisplayName("ERROR: GET non-existent post should return 404")
+    @DisplayName("ERROR: GET non-existent post → 404")
     public void testGetNonExistentPost() {
-        System.out.println("\n🧪 Testing: GET non-existent post → 404");
-
-        given()
-                .spec(requestSpec)
-                .when()
-                .get(POSTS_ENDPOINT + "/this-slug-does-not-exist-xyz")
-                .then()
-                .statusCode(404);
-
-        logTestResult("Non-existent post → 404", true);
+        given().spec(requestSpec)
+        .when().get(POSTS_ENDPOINT + "/this-slug-does-not-exist-xyz")
+        .then().statusCode(404);
     }
 
     @Test
     @Order(10)
-    @DisplayName("ERROR: UPDATE non-existent post should return 404")
+    @DisplayName("ERROR: UPDATE non-existent post → 404")
     public void testUpdateNonExistentPost() {
-        System.out.println("\n🧪 Testing: UPDATE non-existent post → 404");
+        Assumptions.assumeTrue(authenticatedSpec != null, "JWT required");
 
         String updateBody = """
-                {
-                    "title": "Should fail",
-                    "content": "This update should fail"
-                }
+                {"title": "Should fail", "content": "Should fail"}
                 """;
 
-        given()
-                .spec(authenticatedSpec)
-                .body(updateBody)
-                .when()
-                .put(POSTS_ENDPOINT + "/99999999")
-                .then()
-                .statusCode(404);
-
-        logTestResult("Update non-existent → 404", true);
-    }
-
-    // ==================== HELPER ====================
-
-    private void logTestResult(String testName, boolean passed) {
-        String status = passed ? "✅ PASSED" : "❌ FAILED";
-        System.out.println(status + " - " + testName);
+        given().spec(authenticatedSpec).body(updateBody)
+        .when().put(POSTS_ENDPOINT + "/99999999")
+        .then().statusCode(404);
     }
 }

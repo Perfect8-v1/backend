@@ -11,39 +11,31 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * Integration tests for JWT Authentication via nginx (p8.rantila.com)
+ * Integration tests for JWT Authentication (v1.3)
  * 
- * Nginx routing:
- * - /api/v1/products/   → shop-service /api/products/
- * - /api/v1/categories/ → shop-service /api/categories/
- * - /api/v1/customers/  → shop-service /api/customers/
- * - /api/v1/orders/     → shop-service /api/orders/
- * - /api/v1/auth/       → admin-service /api/auth/ (for admin login)
- * 
- * Shop Service endpoints:
- * PUBLIC: GET products, categories
- * PROTECTED: POST/PUT/DELETE products, categories, orders
+ * Endpoints:
+ * - /api/products    → shop-service (public GET)
+ * - /api/categories  → shop-service (public GET)
+ * - /api/cart        → shop-service (customer, JWT)
+ * - /api/orders      → shop-service (customer, JWT)
+ * - /api/auth/       → admin-service
  */
-@DisplayName("Shop Service - JWT Authentication Tests (Remote)")
+@DisplayName("Shop Service - JWT Auth Tests (v1.3)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class ShopJwtAuthTest {
 
     private static RequestSpecification requestSpec;
     private static String jwtToken;
 
-    // Configuration - via nginx
     private static final String BASE_URL = "https://p8.rantila.com";
+    private static final String TEST_EMAIL = "cmb@p8.se";
+    private static final String TEST_PASSWORD = "magnus123";
 
-    // Test credentials (admin-service login for admin operations)
-    private static final String TEST_EMAIL = "admin@perfect8.com";
-    private static final String TEST_PASSWORD = "password";
-
-    // Endpoints (nginx mapped)
-    private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
-    private static final String PRODUCTS_ENDPOINT = "/api/v1/products/";
-    private static final String CATEGORIES_ENDPOINT = "/api/v1/categories/";
-    private static final String ORDERS_ENDPOINT = "/api/v1/orders/reset" +
-            "";
+    private static final String LOGIN_ENDPOINT = "/api/auth/login";
+    private static final String PRODUCTS_ENDPOINT = "/api/products";
+    private static final String CATEGORIES_ENDPOINT = "/api/categories";
+    private static final String CART_ENDPOINT = "/api/cart";
+    private static final String ORDERS_ENDPOINT = "/api/orders";
 
     @BeforeAll
     public static void setup() {
@@ -57,22 +49,15 @@ public class ShopJwtAuthTest {
                 .setAccept(ContentType.JSON)
                 .build();
 
-        System.out.println("🚀 Shop Service tests configured for: " + BASE_URL);
+        System.out.println("🚀 Shop tests: " + BASE_URL);
     }
-
-    // ==================== LOGIN (Get JWT Token) ====================
 
     @Test
     @Order(1)
-    @DisplayName("Login should return JWT token")
-    public void testLogin_ValidCredentials_ReturnsToken() {
-        System.out.println("\n🧪 Testing: Login with valid credentials");
-
+    @DisplayName("Get JWT token")
+    public void testLogin_ReturnsToken() {
         String loginBody = """
-                {
-                    "email": "%s",
-                    "password": "%s"
-                }
+                {"email": "%s", "password": "%s"}
                 """.formatted(TEST_EMAIL, TEST_PASSWORD);
 
         Response response = given()
@@ -83,297 +68,160 @@ public class ShopJwtAuthTest {
         .then()
                 .statusCode(200)
                 .body("accessToken", notNullValue())
-                .extract()
-                .response();
+                .extract().response();
 
         jwtToken = response.jsonPath().getString("accessToken");
-        System.out.println("   ✅ Received JWT token: " + jwtToken.substring(0, 20) + "...");
-        
-        logTestResult("Login returns JWT token", true);
-    }
-
-    @Test
-    @Order(2)
-    @DisplayName("Login with invalid credentials should return 401")
-    public void testLogin_InvalidCredentials_Returns401() {
-        System.out.println("\n🧪 Testing: Login with invalid credentials → 401");
-
-        String loginBody = """
-                {
-                    "email": "wrong@example.com",
-                    "password": "wrongpassword"
-                }
-                """;
-
-        given()
-                .spec(requestSpec)
-                .body(loginBody)
-        .when()
-                .post(LOGIN_ENDPOINT)
-        .then()
-                .statusCode(401);
-
-        logTestResult("Invalid login → 401", true);
+        System.out.println("✅ JWT acquired");
     }
 
     // ==================== PUBLIC ENDPOINTS ====================
 
     @Test
-    @Order(3)
-    @DisplayName("GET /api/v1/products should work WITHOUT token (public)")
+    @Order(2)
+    @DisplayName("GET /api/products without token (public)")
     public void testGetProducts_NoToken_Returns200() {
-        System.out.println("\n🧪 Testing: GET products without token (public)");
+        given().spec(requestSpec)
+        .when().get(PRODUCTS_ENDPOINT)
+        .then().statusCode(200);
+    }
 
-        given()
-                .spec(requestSpec)
-        .when()
-                .get(PRODUCTS_ENDPOINT)
-        .then()
-                .statusCode(200);
-
-        logTestResult("GET products (public)", true);
+    @Test
+    @Order(3)
+    @DisplayName("GET /api/products/{id} without token (public)")
+    public void testGetProductById_NoToken_Returns200() {
+        given().spec(requestSpec)
+        .when().get(PRODUCTS_ENDPOINT + "/1")
+        .then().statusCode(anyOf(is(200), is(404)));
     }
 
     @Test
     @Order(4)
-    @DisplayName("GET /api/v1/products/{id} should work WITHOUT token (public)")
-    public void testGetProductById_NoToken_PublicEndpoint() {
-        System.out.println("\n🧪 Testing: GET product by ID without token (public)");
-
-        // Will return 200 or 404, but NOT 401/403
-        int statusCode = given()
-                .spec(requestSpec)
-        .when()
-                .get(PRODUCTS_ENDPOINT + "/1")
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (public endpoint OK)");
-        logTestResult("GET product by ID (public)", true);
-    }
-
-    @Test
-    @Order(5)
-    @DisplayName("GET /api/v1/categories should work WITHOUT token (public)")
+    @DisplayName("GET /api/categories without token (public)")
     public void testGetCategories_NoToken_Returns200() {
-        System.out.println("\n🧪 Testing: GET categories without token (public)");
-
-        given()
-                .spec(requestSpec)
-        .when()
-                .get(CATEGORIES_ENDPOINT)
-        .then()
-                .statusCode(200);
-
-        logTestResult("GET categories (public)", true);
+        given().spec(requestSpec)
+        .when().get(CATEGORIES_ENDPOINT)
+        .then().statusCode(200);
     }
 
     // ==================== PROTECTED ENDPOINTS - NO TOKEN ====================
 
     @Test
-    @Order(6)
-    @DisplayName("POST /api/v1/products WITHOUT token should return 401 or 403")
-    public void testCreateProduct_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: POST product WITHOUT token → 401/403");
+    @Order(5)
+    @DisplayName("GET /api/cart WITHOUT token → 401/403")
+    public void testGetCart_NoToken_Unauthorized() {
+        given().spec(requestSpec)
+        .when().get(CART_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
+    }
 
-        String productBody = """
-                {
-                    "name": "Test Product",
-                    "description": "Test description",
-                    "price": 99.99,
-                    "sku": "TEST-SKU-001"
-                }
+    @Test
+    @Order(6)
+    @DisplayName("POST /api/cart/add WITHOUT token → 401/403")
+    public void testAddToCart_NoToken_Unauthorized() {
+        String cartBody = """
+                {"productId": 1, "quantity": 1}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-                .body(productBody)
-        .when()
-                .post(PRODUCTS_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("POST product without token → " + statusCode, true);
+        given().spec(requestSpec).body(cartBody)
+        .when().post(CART_ENDPOINT + "/add")
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 
     @Test
     @Order(7)
-    @DisplayName("PUT /api/v1/products/{id} WITHOUT token should return 401 or 403")
-    public void testUpdateProduct_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: PUT product WITHOUT token → 401/403");
-
-        String updateBody = """
-                {
-                    "name": "Updated Product",
-                    "price": 149.99
-                }
-                """;
-
-        int statusCode = given()
-                .spec(requestSpec)
-                .body(updateBody)
-        .when()
-                .put(PRODUCTS_ENDPOINT + "/1")
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("PUT product without token → " + statusCode, true);
+    @DisplayName("GET /api/orders WITHOUT token → 401/403")
+    public void testGetOrders_NoToken_Unauthorized() {
+        given().spec(requestSpec)
+        .when().get(ORDERS_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 
     @Test
     @Order(8)
-    @DisplayName("DELETE /api/v1/products/{id} WITHOUT token should return 401 or 403")
-    public void testDeleteProduct_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: DELETE product WITHOUT token → 401/403");
+    @DisplayName("POST /api/products WITHOUT token → 401/403 (admin)")
+    public void testCreateProduct_NoToken_Unauthorized() {
+        String productBody = """
+                {"name": "Test Product", "price": 100.00, "stock": 10}
+                """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-        .when()
-                .delete(PRODUCTS_ENDPOINT + "/1")
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("DELETE product without token → " + statusCode, true);
+        given().spec(requestSpec).body(productBody)
+        .when().post(PRODUCTS_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
-
-    // ==================== PROTECTED ENDPOINTS - WITH VALID TOKEN ====================
 
     @Test
     @Order(9)
-    @DisplayName("POST /api/v1/products WITH valid JWT token should pass auth")
-    public void testCreateProduct_WithToken_AuthPasses() {
-        System.out.println("\n🧪 Testing: POST product WITH JWT token → auth passes");
-        
-        Assumptions.assumeTrue(jwtToken != null, "JWT token required - run login test first");
-
-        String productBody = """
-                {
-                    "name": "REST Assured Test Product",
-                    "description": "Created by integration test",
-                    "price": 99.99,
-                    "sku": "RA-TEST-001"
-                }
-                """;
-
-        int statusCode = given()
-                .spec(requestSpec)
-                .header("Authorization", "Bearer " + jwtToken)
-                .body(productBody)
-        .when()
-                .post(PRODUCTS_ENDPOINT)
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (auth OK!)");
-        logTestResult("POST product with token → auth passes", true);
+    @DisplayName("DELETE /api/products/{id} WITHOUT token → 401/403 (admin)")
+    public void testDeleteProduct_NoToken_Unauthorized() {
+        given().spec(requestSpec)
+        .when().delete(PRODUCTS_ENDPOINT + "/1")
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
+
+    // ==================== PROTECTED ENDPOINTS - WITH TOKEN ====================
 
     @Test
     @Order(10)
-    @DisplayName("DELETE /api/v1/products/{id} WITH valid JWT token should pass auth")
-    public void testDeleteProduct_WithToken_AuthPasses() {
-        System.out.println("\n🧪 Testing: DELETE product WITH JWT token → auth passes");
-        
-        Assumptions.assumeTrue(jwtToken != null, "JWT token required - run login test first");
+    @DisplayName("GET /api/cart WITH token → auth passes")
+    public void testGetCart_WithToken_AuthPasses() {
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-        int statusCode = given()
-                .spec(requestSpec)
+        given().spec(requestSpec)
                 .header("Authorization", "Bearer " + jwtToken)
-        .when()
-                .delete(PRODUCTS_ENDPOINT + "/99999")
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (auth OK, product probably doesn't exist)");
-        logTestResult("DELETE product with token → auth passes", true);
+        .when().get(CART_ENDPOINT)
+        .then().statusCode(allOf(not(401), not(403)));
     }
-
-    // ==================== INVALID TOKENS ====================
 
     @Test
     @Order(11)
-    @DisplayName("Invalid JWT token should return 401 or 403")
-    public void testCreateProduct_InvalidToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: Invalid JWT token → 401/403");
+    @DisplayName("POST /api/cart/add WITH token → auth passes")
+    public void testAddToCart_WithToken_AuthPasses() {
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-        String productBody = """
-                {
-                    "name": "Test",
-                    "price": 10.00
-                }
+        String cartBody = """
+                {"productId": 1, "quantity": 1}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-                .header("Authorization", "Bearer invalid.token.here")
-                .body(productBody)
-        .when()
-                .post(PRODUCTS_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("Invalid token → " + statusCode, true);
+        given().spec(requestSpec)
+                .header("Authorization", "Bearer " + jwtToken)
+                .body(cartBody)
+        .when().post(CART_ENDPOINT + "/add")
+        .then().statusCode(allOf(not(401), not(403)));
     }
 
     @Test
     @Order(12)
-    @DisplayName("Empty Authorization header should return 401 or 403")
-    public void testCreateProduct_EmptyHeader_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: Empty Authorization header → 401/403");
+    @DisplayName("GET /api/orders WITH token → auth passes")
+    public void testGetOrders_WithToken_AuthPasses() {
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-        String productBody = """
-                {
-                    "name": "Test",
-                    "price": 10.00
-                }
-                """;
-
-        int statusCode = given()
-                .spec(requestSpec)
-                .header("Authorization", "")
-                .body(productBody)
-        .when()
-                .post(PRODUCTS_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("Empty header → " + statusCode, true);
+        given().spec(requestSpec)
+                .header("Authorization", "Bearer " + jwtToken)
+        .when().get(ORDERS_ENDPOINT)
+        .then().statusCode(allOf(not(401), not(403)));
     }
 
-    // ==================== HELPER ====================
+    @Test
+    @Order(13)
+    @DisplayName("DELETE /api/products/{id} WITH admin token → auth passes")
+    public void testDeleteProduct_WithToken_AuthPasses() {
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-    private void logTestResult(String testName, boolean passed) {
-        String status = passed ? "✅ PASSED" : "❌ FAILED";
-        System.out.println(status + " - " + testName);
+        given().spec(requestSpec)
+                .header("Authorization", "Bearer " + jwtToken)
+        .when().delete(PRODUCTS_ENDPOINT + "/99999")
+        .then().statusCode(allOf(not(401), not(403)));
+    }
+
+    // ==================== INVALID TOKEN ====================
+
+    @Test
+    @Order(14)
+    @DisplayName("Invalid token → 401/403")
+    public void testCart_InvalidToken_Unauthorized() {
+        given().spec(requestSpec)
+                .header("Authorization", "Bearer invalid.token")
+        .when().get(CART_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 }

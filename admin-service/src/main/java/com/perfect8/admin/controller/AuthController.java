@@ -45,14 +45,14 @@ public class AuthController {
     @PostMapping("/login")
     @Transactional
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        log.info("SOP LOGIN: Inloggningsförsök för: {}", request.getEmail());
+        log.info("MAIN LOGIN: Inloggningsförsök för: {}", request.getEmail());
 
         try {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new RuntimeException("Användaren hittades inte"));
 
             if (passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-                log.info("SOP LOGIN: Match för {}, genererar token.", user.getEmail());
+                log.info("MAIN LOGIN: Match för {}, genererar token.", user.getEmail());
 
                 // Uppdatera metadata
                 user.setFailedLoginAttempts(0);
@@ -78,11 +78,11 @@ public class AuthController {
                         userInfo
                 ));
             } else {
-                log.warn("SOP LOGIN: Felaktigt lösenord för: {}", user.getEmail());
+                log.warn("MAIN LOGIN: Felaktigt lösenord för: {}", user.getEmail());
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid credentials"));
             }
         } catch (Exception e) {
-            log.error("SOP LOGIN: Fel vid inloggning: {}", e.getMessage());
+            log.error("MAIN LOGIN: Fel vid inloggning: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Login failed"));
         }
     }
@@ -94,7 +94,7 @@ public class AuthController {
     @Transactional
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
         String refreshTokenString = request.get("refreshToken");
-        log.info("SOP REFRESH: Försöker förnya token");
+        log.info("MAIN REFRESH: Försöker förnya token");
 
         if (refreshTokenString == null || refreshTokenString.isBlank()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Refresh token required"));
@@ -105,7 +105,7 @@ public class AuthController {
                     .orElseThrow(() -> new RuntimeException("Refresh token not found"));
 
             if (!refreshToken.isValid()) {
-                log.warn("SOP REFRESH: Ogiltig eller utgången refresh token");
+                log.warn("MAIN REFRESH: Ogiltig eller utgången refresh token");
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Invalid or expired refresh token"));
             }
 
@@ -126,7 +126,7 @@ public class AuthController {
             userInfo.put("email", user.getEmail());
             userInfo.put("roles", user.getRoles());
 
-            log.info("SOP REFRESH: Token förnyad för: {}", user.getEmail());
+            log.info("MAIN REFRESH: Token förnyad för: {}", user.getEmail());
 
             return ResponseEntity.ok(new LoginResponse(
                     newAccessToken,
@@ -136,7 +136,7 @@ public class AuthController {
                     userInfo
             ));
         } catch (Exception e) {
-            log.error("SOP REFRESH: Fel vid token-förnyelse: {}", e.getMessage(), e);
+            log.error("MAIN REFRESH: Fel vid token-förnyelse: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Token refresh failed"));
         }
     }
@@ -148,13 +148,13 @@ public class AuthController {
     @Transactional
     public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
         String refreshTokenString = request.get("refreshToken");
-        log.info("SOP LOGOUT: Loggar ut användare");
+        log.info("MAIN LOGOUT: Loggar ut användare");
 
         if (refreshTokenString != null && !refreshTokenString.isBlank()) {
             refreshTokenRepository.findByToken(refreshTokenString).ifPresent(token -> {
                 token.revoke();
                 refreshTokenRepository.save(token);
-                log.info("SOP LOGOUT: Refresh token revoked");
+                log.info("MAIN LOGOUT: Refresh token revoked");
             });
         }
 
@@ -167,7 +167,7 @@ public class AuthController {
     @PostMapping("/register")
     @Transactional
     public ResponseEntity<?> register(@Valid @RequestBody LoginRequest request) {
-        log.info("SOP REGISTER: Registrerar ny användare: {}", request.getEmail());
+        log.info("MAIN REGISTER: Registrerar ny användare: {}", request.getEmail());
 
         if (userRepository.existsByEmail(request.getEmail())) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Email already registered"));

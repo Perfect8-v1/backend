@@ -11,29 +11,26 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
 /**
- * Integration tests for JWT Authentication via nginx (p8.rantila.com)
+ * Integration tests for JWT Authentication (p8.rantila.com)
+ * v1.3 - Industristandard auth
  * 
- * Nginx routing:
- * - /api/v1/posts/ → blog-service /api/posts/
- * - /api/v1/auth/  → admin-service /api/auth/ (for login)
+ * Endpoints:
+ * - /api/posts  → blog-service
+ * - /api/auth/  → admin-service
  */
-@DisplayName("Blog Service - JWT Authentication Tests (Remote)")
+@DisplayName("Blog Service - JWT Auth Tests (v1.3)")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class BlogJwtAuthTest {
 
     private static RequestSpecification requestSpec;
     private static String jwtToken;
 
-    // Configuration - via nginx
     private static final String BASE_URL = "https://p8.rantila.com";
+    private static final String TEST_EMAIL = "cmb@p8.se";
+    private static final String TEST_PASSWORD = "magnus123";
 
-    // Test credentials (admin-service login)
-    private static final String TEST_EMAIL = "admin@perfect8.com";
-    private static final String TEST_PASSWORD = "password";
-
-    // Endpoints (nginx mapped)
-    private static final String LOGIN_ENDPOINT = "/api/v1/auth/login";
-    private static final String POSTS_ENDPOINT = "/api/v1/posts/";
+    private static final String LOGIN_ENDPOINT = "/api/auth/login";
+    private static final String POSTS_ENDPOINT = "/api/posts";
 
     @BeforeAll
     public static void setup() {
@@ -47,22 +44,15 @@ public class BlogJwtAuthTest {
                 .setAccept(ContentType.JSON)
                 .build();
 
-        System.out.println("🚀 Blog Service tests configured for: " + BASE_URL);
+        System.out.println("🚀 Blog tests: " + BASE_URL);
     }
-
-    // ==================== LOGIN (Get JWT Token from Admin Service) ====================
 
     @Test
     @Order(1)
-    @DisplayName("Get JWT token from admin-service")
-    public void testLogin_ValidCredentials_ReturnsToken() {
-        System.out.println("\n🧪 Testing: Login with valid credentials");
-
+    @DisplayName("Get JWT token")
+    public void testLogin_ReturnsToken() {
         String loginBody = """
-                {
-                    "email": "%s",
-                    "password": "%s"
-                }
+                {"email": "%s", "password": "%s"}
                 """.formatted(TEST_EMAIL, TEST_PASSWORD);
 
         Response response = given()
@@ -73,204 +63,97 @@ public class BlogJwtAuthTest {
         .then()
                 .statusCode(200)
                 .body("accessToken", notNullValue())
-                .extract()
-                .response();
+                .extract().response();
 
         jwtToken = response.jsonPath().getString("accessToken");
-        System.out.println("   ✅ Received JWT token: " + jwtToken.substring(0, 20) + "...");
-        
-        logTestResult("Login returns JWT token", true);
+        System.out.println("✅ JWT acquired");
     }
-
-    // ==================== PUBLIC ENDPOINTS ====================
 
     @Test
     @Order(2)
-    @DisplayName("GET /api/v1/posts should work WITHOUT token (public)")
+    @DisplayName("GET /api/posts without token (public)")
     public void testGetPosts_NoToken_Returns200() {
-        System.out.println("\n🧪 Testing: GET posts without token (public endpoint)");
-
-        given()
-                .spec(requestSpec)
-        .when()
-                .get(POSTS_ENDPOINT)
-        .then()
-                .statusCode(200);
-
-        logTestResult("GET posts (public, no token)", true);
+        given().spec(requestSpec)
+        .when().get(POSTS_ENDPOINT)
+        .then().statusCode(200);
     }
-
-    // ==================== PROTECTED ENDPOINTS - NO TOKEN ====================
 
     @Test
     @Order(3)
-    @DisplayName("POST /api/v1/posts WITHOUT token should return 401 or 403")
-    public void testCreatePost_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: POST posts WITHOUT token → 401/403");
-
+    @DisplayName("POST /api/posts WITHOUT token → 401/403")
+    public void testCreatePost_NoToken_Unauthorized() {
         String postBody = """
-                {
-                    "title": "Test Post",
-                    "content": "This is test content",
-                    "slug": "test-post"
-                }
+                {"title": "Test", "content": "Test", "slug": "test"}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-                .body(postBody)
-        .when()
-                .post(POSTS_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("POST without token → " + statusCode, true);
+        given().spec(requestSpec).body(postBody)
+        .when().post(POSTS_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 
     @Test
     @Order(4)
-    @DisplayName("PUT /api/v1/posts/{id} WITHOUT token should return 401 or 403")
-    public void testUpdatePost_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: PUT posts WITHOUT token → 401/403");
-
+    @DisplayName("PUT /api/posts/{id} WITHOUT token → 401/403")
+    public void testUpdatePost_NoToken_Unauthorized() {
         String updateBody = """
-                {
-                    "title": "Updated Title",
-                    "content": "Updated content"
-                }
+                {"title": "Updated", "content": "Updated"}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-                .body(updateBody)
-        .when()
-                .put(POSTS_ENDPOINT + "/1")
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("PUT without token → " + statusCode, true);
+        given().spec(requestSpec).body(updateBody)
+        .when().put(POSTS_ENDPOINT + "/1")
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 
     @Test
     @Order(5)
-    @DisplayName("DELETE /api/v1/posts/{id} WITHOUT token should return 401 or 403")
-    public void testDeletePost_NoToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: DELETE posts WITHOUT token → 401/403");
-
-        int statusCode = given()
-                .spec(requestSpec)
-        .when()
-                .delete(POSTS_ENDPOINT + "/1")
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("DELETE without token → " + statusCode, true);
+    @DisplayName("DELETE /api/posts/{id} WITHOUT token → 401/403")
+    public void testDeletePost_NoToken_Unauthorized() {
+        given().spec(requestSpec)
+        .when().delete(POSTS_ENDPOINT + "/1")
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
-
-    // ==================== PROTECTED ENDPOINTS - WITH VALID TOKEN ====================
 
     @Test
     @Order(6)
-    @DisplayName("POST /api/v1/posts WITH valid JWT token should pass auth")
+    @DisplayName("POST /api/posts WITH token → auth passes")
     public void testCreatePost_WithToken_AuthPasses() {
-        System.out.println("\n🧪 Testing: POST posts WITH JWT token → auth passes");
-        
-        Assumptions.assumeTrue(jwtToken != null, "JWT token required - run login test first");
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
         String postBody = """
-                {
-                    "title": "Test Post from REST Assured",
-                    "content": "This is test content created by integration test",
-                    "slug": "rest-assured-test-post"
-                }
+                {"title": "REST Test", "content": "Test", "slug": "rest-test"}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
+        given().spec(requestSpec)
                 .header("Authorization", "Bearer " + jwtToken)
                 .body(postBody)
-        .when()
-                .post(POSTS_ENDPOINT)
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (auth OK!)");
-        logTestResult("POST with token → auth passes", true);
+        .when().post(POSTS_ENDPOINT)
+        .then().statusCode(allOf(not(401), not(403)));
     }
 
     @Test
     @Order(7)
-    @DisplayName("DELETE /api/v1/posts/{id} WITH valid JWT token should pass auth")
+    @DisplayName("DELETE /api/posts/{id} WITH token → auth passes")
     public void testDeletePost_WithToken_AuthPasses() {
-        System.out.println("\n🧪 Testing: DELETE posts WITH JWT token → auth passes");
-        
-        Assumptions.assumeTrue(jwtToken != null, "JWT token required - run login test first");
+        Assumptions.assumeTrue(jwtToken != null, "JWT required");
 
-        int statusCode = given()
-                .spec(requestSpec)
+        given().spec(requestSpec)
                 .header("Authorization", "Bearer " + jwtToken)
-        .when()
-                .delete(POSTS_ENDPOINT + "/99999")
-        .then()
-                .statusCode(allOf(
-                        not(401),
-                        not(403)
-                ))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode + " (auth OK, post probably doesn't exist)");
-        logTestResult("DELETE with token → auth passes", true);
+        .when().delete(POSTS_ENDPOINT + "/99999")
+        .then().statusCode(allOf(not(401), not(403)));
     }
-
-    // ==================== INVALID TOKENS ====================
 
     @Test
     @Order(8)
-    @DisplayName("Invalid JWT token should return 401 or 403")
-    public void testPost_InvalidToken_ReturnsUnauthorized() {
-        System.out.println("\n🧪 Testing: Invalid JWT token → 401/403");
-
+    @DisplayName("Invalid token → 401/403")
+    public void testPost_InvalidToken_Unauthorized() {
         String postBody = """
-                {
-                    "title": "Test",
-                    "content": "Test"
-                }
+                {"title": "Test", "content": "Test"}
                 """;
 
-        int statusCode = given()
-                .spec(requestSpec)
-                .header("Authorization", "Bearer invalid.token.here")
+        given().spec(requestSpec)
+                .header("Authorization", "Bearer invalid.token")
                 .body(postBody)
-        .when()
-                .post(POSTS_ENDPOINT)
-        .then()
-                .statusCode(anyOf(equalTo(401), equalTo(403)))
-                .extract()
-                .statusCode();
-
-        System.out.println("   Received status: " + statusCode);
-        logTestResult("Invalid token → " + statusCode, true);
-    }
-
-    // ==================== HELPER ====================
-
-    private void logTestResult(String testName, boolean passed) {
-        String status = passed ? "✅ PASSED" : "❌ FAILED";
-        System.out.println(status + " - " + testName);
+        .when().post(POSTS_ENDPOINT)
+        .then().statusCode(anyOf(equalTo(401), equalTo(403)));
     }
 }
