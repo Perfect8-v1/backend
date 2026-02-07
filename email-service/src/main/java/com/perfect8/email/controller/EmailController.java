@@ -8,11 +8,16 @@ import com.perfect8.email.service.OrderEmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Email Controller - Version 1.0
- * Enkel controller för email-hantering
+ * Email Controller - Version 1.1
+ * 
+ * Security:
+ * - Order emails: SERVICE (shop-service) or ADMIN
+ * - Marketing/custom emails: ADMIN only
+ * - Test endpoint: Public
  */
 @Slf4j
 @RestController
@@ -23,36 +28,20 @@ public class EmailController {
     private final EmailService emailService;
     private final OrderEmailService orderEmailService;
 
-    /**
-     * Skicka enkel email
-     */
-    @PostMapping("/send")
-    public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
-        log.info("Received email request to: {}", request.getRecipientEmail());
-
-        boolean sent = emailService.sendEmail(
-                request.getRecipientEmail(),
-                request.getSubject(),
-                request.getContent(),
-                request.isHtml()
-        );
-
-        if (sent) {
-            return ResponseEntity.ok("Email sent successfully");
-        } else {
-            return ResponseEntity.internalServerError().body("Failed to send email");
-        }
-    }
+    // ========================================================================
+    // TRANSACTIONAL EMAILS (shop-service or admin)
+    // ========================================================================
 
     /**
-     * Skicka order-bekräftelse
+     * Send order confirmation email
+     * Called by: shop-service when order is created/paid
      */
     @PostMapping("/order/confirmation")
+    @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<String> sendOrderConfirmation(@RequestBody OrderEmailDTO orderDto) {
         log.info("Sending order confirmation for order: {}", orderDto.getOrderNumber());
 
         try {
-            // Sätt status till PAID för bekräftelse om den saknas
             if (orderDto.getOrderStatus() == null) {
                 orderDto.setOrderStatus(OrderStatus.PAID);
             }
@@ -67,14 +56,15 @@ public class EmailController {
     }
 
     /**
-     * Skicka order status-uppdatering
+     * Send order status update email
+     * Called by: shop-service when order status changes
      */
     @PostMapping("/order/status")
+    @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<String> sendOrderStatusUpdate(@RequestBody OrderEmailDTO orderDto) {
         log.info("Sending order status update for order: {}", orderDto.getOrderNumber());
 
         try {
-            // Validera att vi har en status
             if (orderDto.getOrderStatus() == null) {
                 return ResponseEntity.badRequest()
                         .body("Order status is required");
@@ -90,17 +80,17 @@ public class EmailController {
     }
 
     /**
-     * Skicka order shipped notification
+     * Send order shipped notification
+     * Called by: shop-service when order ships
      */
     @PostMapping("/order/shipped")
+    @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<String> sendOrderShipped(@RequestBody OrderEmailDTO orderDto) {
         log.info("Sending shipped notification for order: {}", orderDto.getOrderNumber());
 
         try {
-            // Sätt status till SHIPPED
             orderDto.setOrderStatus(OrderStatus.SHIPPED);
 
-            // Validera tracking info
             if (orderDto.getTrackingNumber() == null || orderDto.getTrackingNumber().isEmpty()) {
                 log.warn("No tracking number provided for shipped order {}", orderDto.getOrderNumber());
             }
@@ -115,14 +105,15 @@ public class EmailController {
     }
 
     /**
-     * Skicka order cancelled notification
+     * Send order cancelled notification
+     * Called by: shop-service when order is cancelled
      */
     @PostMapping("/order/cancelled")
+    @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<String> sendOrderCancelled(@RequestBody OrderEmailDTO orderDto) {
         log.info("Sending cancellation notification for order: {}", orderDto.getOrderNumber());
 
         try {
-            // Sätt status till CANCELLED
             orderDto.setOrderStatus(OrderStatus.CANCELLED);
 
             orderEmailService.sendOrderStatusEmail(orderDto);
@@ -134,8 +125,39 @@ public class EmailController {
         }
     }
 
+    // ========================================================================
+    // ADMIN-ONLY EMAILS (marketing, custom)
+    // ========================================================================
+
     /**
-     * Test endpoint - v1.0
+     * Send custom email (marketing, notifications)
+     * Called by: Admin only
+     */
+    @PostMapping("/send")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
+        log.info("Admin sending email to: {}", request.getRecipientEmail());
+
+        boolean sent = emailService.sendEmail(
+                request.getRecipientEmail(),
+                request.getSubject(),
+                request.getContent(),
+                request.isHtml()
+        );
+
+        if (sent) {
+            return ResponseEntity.ok("Email sent successfully");
+        } else {
+            return ResponseEntity.internalServerError().body("Failed to send email");
+        }
+    }
+
+    // ========================================================================
+    // PUBLIC ENDPOINTS
+    // ========================================================================
+
+    /**
+     * Test endpoint - public
      */
     @GetMapping("/test")
     public ResponseEntity<String> testEmail() {
