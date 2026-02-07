@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 /**
  * Authentication filter for email-service
+ * Version 1.1 - With shouldNotFilter for public endpoints
  * 
  * Supports two authentication methods:
  * 1. API Key (X-Api-Key header) - for service-to-service calls (shop-service)
@@ -36,6 +37,20 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String API_KEY_HEADER = "X-Api-Key";
     private static final String SERVICE_NAME_HEADER = "X-Service-Name";
+
+    /**
+     * Skip filter for public endpoints
+     * These endpoints don't require authentication
+     */
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/health") ||
+               path.startsWith("/actuator") ||
+               path.startsWith("/v3/api-docs") ||
+               path.startsWith("/swagger-ui") ||
+               path.equals("/api/email/test");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
