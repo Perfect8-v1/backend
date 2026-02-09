@@ -134,6 +134,7 @@ services:
       - MAIL_PROTOCOL=${MAIL_PROTOCOL:-smtp}
       - JWT_SECRET=${JWT_SECRET}
       - EMAIL_API_KEY=${EMAIL_API_KEY}
+      - SHOP_API_KEY=${SHOP_API_KEY}
     ports:
       - "8083:8083"
     healthcheck:
