@@ -61,6 +61,15 @@ spring:
           filters:
             - StripPrefix=1
 
+        # --- EMAIL PUBLIK (test endpoint) ---
+        - id: email-public
+          uri: http://email-service:8083
+          predicates:
+            - Path=/email/api/email/test
+            - Method=GET
+          filters:
+            - StripPrefix=1
+
         # ===========================================
         # SKYDDADE ROUTES - KUND (JWT krävs)
         # ===========================================
@@ -96,7 +105,7 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- EMAIL ADMIN (alltid skyddad) ---
+        # --- EMAIL ADMIN (skyddad - kräver JWT eller API-nyckel) ---
         - id: email-admin
           uri: http://email-service:8083
           predicates:
