@@ -32,7 +32,7 @@ public abstract class BaseTest {
     protected static final String TEST_PASSWORD = "magnus123";
 
     // ===========================================
-    // GATEWAY ROUTES
+    // GATEWAY ROUTES (v1.3 - korrekta paths)
     // ===========================================
     
     // Auth (direkt på Gateway - inget service-prefix)
@@ -57,10 +57,13 @@ public abstract class BaseTest {
     
     // Image (via /image prefix)
     protected static final String IMAGE_IMAGES = "/image/api/images";
+    protected static final String IMAGE_UPLOAD = "/image/api/images/upload";
     
-    // Email (via /email prefix - utan /api)
-    protected static final String EMAIL_SEND = "/email/send";
-    protected static final String EMAIL_LOGS = "/email/logs";
+    // Email (via /email prefix - med /api/email)
+    protected static final String EMAIL_TEST = "/email/api/email/test";
+    protected static final String EMAIL_SEND = "/email/api/email/send";
+    protected static final String EMAIL_LOGS = "/email/api/email/logs";
+    protected static final String EMAIL_ORDER_CONFIRMATION = "/email/api/email/order/confirmation";
     
     // Health
     protected static final String HEALTH = "/actuator/health";
