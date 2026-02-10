@@ -6,15 +6,23 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 
 /**
  * Blog Service Application
+ * Version 1.1 - With security auto-configuration excluded
  * 
- * Plain branch - scanBasePackages includes common for AuthProvider
+ * FIXED: Excludes UserDetailsServiceAutoConfiguration to prevent
+ * Spring Boot from generating a default password and overriding
+ * our custom SecurityConfig with HeaderAuthenticationFilter.
  * 
- * @version 1.0-plain
+ * See: Missforstand_Analys.md punkt 15
  */
-@SpringBootApplication(scanBasePackages = {
-        "com.perfect8.blog",
-        "com.perfect8.common"
-})
+@SpringBootApplication(
+        scanBasePackages = {
+                "com.perfect8.blog",
+                "com.perfect8.common"
+        },
+        exclude = {
+                org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+        }
+)
 @EnableFeignClients
 public class BlogServiceApplication {
     public static void main(String[] args) {
