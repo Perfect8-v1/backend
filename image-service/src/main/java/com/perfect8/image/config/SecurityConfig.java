@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -13,6 +12,18 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * Security Configuration for image-service
+ * 
+ * Authentication methods:
+ * 1. API Key (X-Api-Key) - for internal service-to-service calls
+ * 2. Gateway headers - for admin users via API Gateway
+ * 
+ * Access control:
+ * - Health endpoints: Public (for monitoring)
+ * - GET images: Public (view images and thumbnails)
+ * - POST/PUT/DELETE: Requires authentication (admin or service)
+ */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -24,20 +35,27 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Statiska bilder - tillåt GET
-                        .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
-                        // API endpoints - tillåt GET
+                        // Health checks - public for monitoring/Gateway
+                        .requestMatchers("/health/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        
+                        // OpenAPI docs - public
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
+                        
+                        // Public GET for images (view, thumbnails)
                         .requestMatchers(HttpMethod.GET, "/api/images/**").permitAll()
-                        // Health checks och OpenAPI
-                        .requestMatchers("/actuator/**", "/v3/api-docs/**").permitAll()
-                        // Allt annat (Upload, Delete) kräver autentisering via Gateway-headers
+                        .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
+                        
+                        // All other endpoints require authentication
+                        // Fine-grained control via @PreAuthorize in controller
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(headerAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 }

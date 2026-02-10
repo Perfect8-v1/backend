@@ -5,21 +5,19 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
  * Image Service Application
+ * Version 1.1 - With security auto-configuration excluded
  * 
- * Plain branch - scanBasePackages includes common for AuthProvider
+ * FIXED: Excludes UserDetailsServiceAutoConfiguration to prevent
+ * Spring Boot from generating a default password and overriding
+ * our custom SecurityConfig with HeaderAuthenticationFilter.
  * 
- * @version 1.0-plain
+ * See: Missforstand_Analys.md punkt 15
  */
-@SpringBootApplication(
-        scanBasePackages = {
-                "com.perfect8.image",
-                "com.perfect8.common"
-        },
-        exclude = {
-                org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
-        }
-)
+@SpringBootApplication(exclude = {
+    org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
+})
 public class ImageServiceApplication {
+
     public static void main(String[] args) {
         SpringApplication.run(ImageServiceApplication.class, args);
     }
