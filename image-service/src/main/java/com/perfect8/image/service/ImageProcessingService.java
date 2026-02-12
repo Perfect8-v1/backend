@@ -28,7 +28,7 @@ public class ImageProcessingService {
     @Value("${app.upload.dir:uploads/images}")
     private String uploadDirectory;
 
-    @Value("${app.base-url:http://localhost:8084}")
+    @Value("${app.base-url: https://p8.rantila.com}")
     private String baseUrl;
 
     @Value("${image.output.quality:0.90}")
