@@ -1,6 +1,8 @@
 package com.perfect8.email.dto;
 
 import com.perfect8.common.enums.OrderStatus;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,8 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Order Email DTO - Version 1.0
+ * Order Email DTO - Version 1.1
  * Följer "Less Strings, More Objects" principen
+ * 
+ * v1.1: Lagt till email-validering
  */
 @Data
 @Builder
@@ -23,14 +27,23 @@ public class OrderEmailDTO {
 
     // Order details
     private Long orderId;
+    
+    @NotBlank(message = "Order number is required")
     private String orderNumber;
+    
     private LocalDateTime orderDate;
-    private OrderStatus orderStatus;  // CHANGED: Enum istället för String!
+    private OrderStatus orderStatus;
 
     // Customer information
     private Long customerId;
+    
+    @NotBlank(message = "Customer name is required")
     private String customerName;
+    
+    @NotBlank(message = "Customer email is required")
+    @Email(message = "Invalid email format")
     private String customerEmail;
+    
     private String customerPhone;
 
     // Items
@@ -43,10 +56,9 @@ public class OrderEmailDTO {
     private BigDecimal shippingCost;
     private BigDecimal discountAmount;
     private BigDecimal totalAmount;
-    private String currency;  // OK som String (ISO kod som "SEK", "USD")
+    private String currency;
 
-    // Addresses - Version 1.0: Behåll som String för enkelhet
-    // TODO v2.0: Skapa Address objekt med street, city, postal, country
+    // Addresses
     private String billingAddress;
     private String shippingAddress;
 
@@ -58,18 +70,18 @@ public class OrderEmailDTO {
     private LocalDateTime shippedDate;
 
     // Payment
-    private String paymentMethod;  // OK som String i v1.0
-    private String paymentStatus;   // OK som String i v1.0
+    private String paymentMethod;
+    private String paymentStatus;
     private String transactionId;
 
     // Additional information
     private String orderNotes;
     private String giftMessage;
-    private boolean isGift;  // Boolean är bättre än String
-    private String couponCode;  // Tas bort i v2.0 (Coupon-funktionalitet)
+    private boolean isGift;
+    private String couponCode;
     private String invoiceNumber;
 
-    // Store information - v1.0: Behåll enkelt
+    // Store information
     private String storeName;
     private String storeEmail;
     private String storePhone;
@@ -83,7 +95,7 @@ public class OrderEmailDTO {
     private String returnUrl;
 
     // Metadata
-    private String language;  // OK som ISO kod
+    private String language;
     private String templateVersion;
 
     // Helper methods
@@ -122,22 +134,15 @@ public class OrderEmailDTO {
         return String.format("%.2f %s", totalAmount, currency != null ? currency : "SEK");
     }
 
-    /**
-     * Hjälpmetod för att få status som text när det behövs
-     */
     public String getOrderStatusText() {
         return orderStatus != null ? orderStatus.name() : "UNKNOWN";
     }
 
-    /**
-     * Hjälpmetod för att sätta status från String (för bakåtkompatibilitet)
-     */
     public void setOrderStatusFromString(String statusString) {
         if (statusString != null && !statusString.isEmpty()) {
             try {
                 this.orderStatus = OrderStatus.valueOf(statusString.toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Log och sätt default
                 this.orderStatus = OrderStatus.PENDING;
             }
         }

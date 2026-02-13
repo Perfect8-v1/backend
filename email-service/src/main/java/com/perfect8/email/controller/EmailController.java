@@ -5,6 +5,7 @@ import com.perfect8.email.dto.EmailRequest;
 import com.perfect8.email.dto.OrderEmailDTO;
 import com.perfect8.email.service.EmailService;
 import com.perfect8.email.service.OrderEmailService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -12,12 +13,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Email Controller - Version 1.1
+ * Email Controller - Version 1.2
  * 
  * Security:
  * - Order emails: SERVICE (shop-service) or ADMIN
  * - Marketing/custom emails: ADMIN only
  * - Test endpoint: Public
+ * 
+ * v1.2: Lagt till @Valid för email-validering
  */
 @Slf4j
 @RestController
@@ -38,7 +41,7 @@ public class EmailController {
      */
     @PostMapping("/order/confirmation")
     @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<String> sendOrderConfirmation(@RequestBody OrderEmailDTO orderDto) {
+    public ResponseEntity<String> sendOrderConfirmation(@Valid @RequestBody OrderEmailDTO orderDto) {
         log.info("Sending order confirmation for order: {}", orderDto.getOrderNumber());
 
         try {
@@ -61,7 +64,7 @@ public class EmailController {
      */
     @PostMapping("/order/status")
     @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<String> sendOrderStatusUpdate(@RequestBody OrderEmailDTO orderDto) {
+    public ResponseEntity<String> sendOrderStatusUpdate(@Valid @RequestBody OrderEmailDTO orderDto) {
         log.info("Sending order status update for order: {}", orderDto.getOrderNumber());
 
         try {
@@ -85,7 +88,7 @@ public class EmailController {
      */
     @PostMapping("/order/shipped")
     @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<String> sendOrderShipped(@RequestBody OrderEmailDTO orderDto) {
+    public ResponseEntity<String> sendOrderShipped(@Valid @RequestBody OrderEmailDTO orderDto) {
         log.info("Sending shipped notification for order: {}", orderDto.getOrderNumber());
 
         try {
@@ -110,7 +113,7 @@ public class EmailController {
      */
     @PostMapping("/order/cancelled")
     @PreAuthorize("hasAnyRole('SERVICE', 'INTERNAL', 'ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<String> sendOrderCancelled(@RequestBody OrderEmailDTO orderDto) {
+    public ResponseEntity<String> sendOrderCancelled(@Valid @RequestBody OrderEmailDTO orderDto) {
         log.info("Sending cancellation notification for order: {}", orderDto.getOrderNumber());
 
         try {
@@ -135,7 +138,7 @@ public class EmailController {
      */
     @PostMapping("/send")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
+    public ResponseEntity<String> sendEmail(@Valid @RequestBody EmailRequest request) {
         log.info("Admin sending email to: {}", request.getRecipientEmail());
 
         boolean sent = emailService.sendEmail(
