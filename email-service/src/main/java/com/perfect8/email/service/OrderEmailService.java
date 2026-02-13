@@ -12,8 +12,10 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Order Email Service - Version 1.0
+ * Order Email Service - Version 1.1
  * Simple service for order notifications via Gmail
+ * 
+ * FIX v1.1: Changed sendEmail() to sendHtmlEmail() for proper HTML rendering
  */
 @Slf4j
 @Service
@@ -32,7 +34,7 @@ public class OrderEmailService {
         String subject = "Order Confirmation #" + orderDto.getOrderNumber();
         String body = buildOrderEmailBody(orderDto);
 
-        emailService.sendEmail(
+        emailService.sendHtmlEmail(
                 orderDto.getCustomerEmail(),
                 subject,
                 body
@@ -54,7 +56,7 @@ public class OrderEmailService {
         String subject = getSubjectForStatus(orderStatus, orderDto.getOrderNumber());
         String body = buildOrderEmailBody(orderDto);
 
-        emailService.sendEmail(
+        emailService.sendHtmlEmail(
                 orderDto.getCustomerEmail(),
                 subject,
                 body

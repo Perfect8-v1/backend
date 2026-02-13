@@ -24,7 +24,7 @@ import static org.hamcrest.Matchers.*;
 public class EmailSendLiveTest {
 
     // ⚠️ SET TO true TO SEND REAL EMAILS
-    private static final boolean SEND_LIVE_EMAILS = false;
+    private static final boolean SEND_LIVE_EMAILS = true;
 
     private static RequestSpecification authenticatedSpec;
     private static String jwtToken;
@@ -32,13 +32,13 @@ public class EmailSendLiveTest {
     private static final String BASE_URL = "https://p8.rantila.com";
     private static final String TEST_EMAIL = "cmb@p8.se";
     private static final String TEST_PASSWORD = "magnus123";
-    private static final String RECIPIENT_EMAIL = "taxiberglund@gmail.com";
+    private static final String RECIPIENT_EMAIL = "cmagnusb@gmail.com";
 
     // Endpoints (v1.3 - korrekta paths)
     private static final String LOGIN_ENDPOINT = "/api/auth/login";
     private static final String SEND_ENDPOINT = "/email/api/email/send";
     private static final String ORDER_CONFIRMATION_ENDPOINT = "/email/api/email/order/confirmation";
-    private static final String SHIPPING_NOTIFICATION_ENDPOINT = "/email/api/email/order/shipping";
+    private static final String SHIPPING_NOTIFICATION_ENDPOINT = "/email/api/email/order/shipped";
 
     @BeforeAll
     public static void setup() {
