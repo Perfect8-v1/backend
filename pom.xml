@@ -145,6 +145,17 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+
+            <!-- Surefire - don't fail modules without tests -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.2</version>
+                <configuration>
+                    <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
+                    <failIfNoTests>false</failIfNoTests>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

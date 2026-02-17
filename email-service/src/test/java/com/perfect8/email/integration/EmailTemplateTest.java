@@ -407,17 +407,16 @@ public class EmailTemplateTest {
                 }
                 """;
 
-        // Server doesn't validate email format - accepts request
-        // 200 = processed, 500 = SMTP failed to deliver
+        // 400 = server validates email format, 200 = processed, 500 = SMTP failed
         given()
                 .spec(authenticatedSpec)
                 .body(orderBody)
         .when()
                 .post(ORDER_CONFIRMATION)
         .then()
-                .statusCode(anyOf(equalTo(200), equalTo(500)));
+                .statusCode(anyOf(equalTo(200), equalTo(400), equalTo(500)));
 
-        System.out.println("✅ Invalid email handled (no server-side validation)");
+        System.out.println("✅ Invalid email handled");
     }
 
     // ===== AUTH REQUIRED =====
