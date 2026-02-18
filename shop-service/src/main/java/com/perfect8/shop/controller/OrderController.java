@@ -6,6 +6,7 @@ import com.perfect8.shop.dto.CreateOrderRequest;
 import com.perfect8.shop.dto.OrderDTO;
 import com.perfect8.shop.entity.Order;
 import com.perfect8.shop.exception.UnauthorizedAccessException;
+import com.perfect8.shop.service.CustomerService;
 import com.perfect8.shop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,6 +40,7 @@ import java.time.LocalDateTime;
 public class OrderController {
 
     private final OrderService orderService;
+    private final CustomerService customerService;
 
     // ========== HELPER METHODS FOR SECURITY ==========
 
@@ -53,9 +55,23 @@ public class OrderController {
                 return Long.parseLong(customerIdHeader);
             } catch (NumberFormatException e) {
                 log.warn("Invalid X-Auth-Customer-Id header: {}", customerIdHeader);
-                return null;
             }
         }
+
+        // Fallback: lookup by email from X-Auth-User header (set by Gateway)
+        String email = request.getHeader("X-Auth-User");
+        if (email != null) {
+            try {
+                var customer = customerService.getCustomerDTOByEmail(email);
+                if (customer != null) {
+                    log.debug("Resolved customerId {} from email {}", customer.getCustomerId(), email);
+                    return customer.getCustomerId();
+                }
+            } catch (Exception e) {
+                log.warn("Could not lookup customer by email {}: {}", email, e.getMessage());
+            }
+        }
+
         return null;
     }
 
@@ -63,7 +79,12 @@ public class OrderController {
      * Checks if the request is from an admin user.
      */
     private boolean isAdminRequest(HttpServletRequest request) {
-        String role = request.getHeader("X-Auth-Role");
+        // Gateway sets X-User-Roles
+        String role = request.getHeader("X-User-Roles");
+        if (role == null) {
+            // Fallback to legacy header name
+            role = request.getHeader("X-Auth-Role");
+        }
         return role != null && (role.contains("ADMIN") || role.contains("SUPER_ADMIN"));
     }
 
