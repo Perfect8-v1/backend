@@ -1,4 +1,3 @@
-#!/bin/bash
 # Server - bygg och deploy
 # Version: 1.1 - Med felhantering
 

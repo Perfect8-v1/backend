@@ -425,6 +425,12 @@ public class CustomerService {
             throw new IllegalArgumentException("Cannot convert null Customer to DTO");
         }
 
+        List<AddressDTO> addressDTOs = customer.getAddresses() != null
+                ? customer.getAddresses().stream()
+                    .map(this::convertToAddressDTO)
+                    .collect(Collectors.toList())
+                : List.of();
+
         return CustomerDTO.builder()
                 .customerId(customer.getCustomerId())
                 .userId(customer.getUserId())
@@ -441,6 +447,7 @@ public class CustomerService {
                 .createdDate(customer.getCreatedDate())
                 .updatedDate(customer.getUpdatedDate())
                 .lastLoginDate(customer.getLastLoginDate())
+                .addresses(addressDTOs)
                 .build();
     }
 
