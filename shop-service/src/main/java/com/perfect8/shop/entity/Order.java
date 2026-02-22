@@ -99,7 +99,7 @@ public class Order {
     @Column(nullable = false)
     private String shippingPostalCode;
 
-    @Column(nullable = false, length = 2)
+    @Column(nullable = false, length = 100)
     @Builder.Default
     private String shippingCountry = "SE";
 
