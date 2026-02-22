@@ -40,7 +40,15 @@ public class CreateOrderRequest {
     @NotNull(message = "Currency is required")
     private String currency;
 
-    // Addresses
+    // Addresses - individual fields (standard format from Flutter)
+    private String shippingAddressLine1;
+    private String shippingAddressLine2;
+    private String shippingCity;
+    private String shippingState;
+    private String shippingPostalCode;
+    private String shippingCountry;
+
+    // Addresses - legacy comma-separated strings (fallback)
     private String shippingAddress;
     private String billingAddress;
 
@@ -51,10 +59,6 @@ public class CreateOrderRequest {
     // Payment details
     private String paymentMethod;
     private String paymentReference;
-
-    // Promotional codes
-    private String couponCode;
-    private String promoCode;
 
     // Additional information
     private String notes;

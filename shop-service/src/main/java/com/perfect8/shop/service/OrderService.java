@@ -70,7 +70,7 @@ public class OrderService {
                 .shippingFirstName(customer.getFirstName())
                 .shippingLastName(customer.getLastName())
                 .shippingEmail(customer.getEmail())
-                .shippingPhone(customer.getPhone())  // FIXED: getPhoneNumber() -> getPhone()
+                .shippingPhone(customer.getPhone())
                 .customerNotes(request.getNotes())
                 .build();
 
@@ -208,19 +208,6 @@ public class OrderService {
                     );
                 }
                 break;
-            case DELIVERED:
-                emailService.sendEmail(
-                        order.getShippingEmail(),
-                        "Order Delivered - " + order.getOrderNumber(),
-                        "Your order has been delivered successfully."
-                );
-                break;
-            case CANCELLED:
-                handleOrderCancelled(order);
-                break;
-            case RETURNED:
-                handleOrderReturned(order);
-                break;
             default:
                 break;
         }
@@ -230,326 +217,77 @@ public class OrderService {
 
     /**
      * Cancel an order - Core functionality
-     * Critical for customer service
      */
     @Transactional
-    public Order cancelOrder(Long orderId, String reason) {
+    public Order cancelOrder(Long orderId) {
         Order order = getOrderById(orderId);
 
         if (!canBeCancelled(order.getOrderStatus())) {
-            throw new InvalidOrderStatusException(
-                    "Order cannot be cancelled in status: " + order.getOrderStatus());
+            throw new IllegalStateException("Order cannot be cancelled in status: " + order.getOrderStatus());
         }
 
-        // Update status
         order.setOrderStatus(OrderStatus.CANCELLED);
-        order.setInternalNotes("Cancellation reason: " + (reason != null ? reason : "Customer request"));
-
-        // Release inventory
-        for (OrderItem item : order.getOrderItems()) {
-            inventoryService.releaseReservedStock(
-                    item.getProduct().getProductId(),
-                    item.getQuantity());
-        }
-
-        // Process refund if payment was made
-        if (isOrderPaid(order)) {
-            paymentService.processRefund(
-                    order.getPayment().getPaymentId(),
-                    order.getTotalAmount());
-        }
-
-        // Send cancellation email
-        emailService.sendEmail(
-                order.getShippingEmail(),
-                "Order Cancelled - " + order.getOrderNumber(),
-                "Your order has been cancelled. Reason: " + (reason != null ? reason : "Customer request")
-        );
-
+        handleOrderCancelled(order);
         return orderRepository.save(order);
     }
 
     /**
-     * Process order return - Core functionality
-     * Critical for customer service
-     */
-    @Transactional
-    public Order processReturn(Long orderId, String reason) {
-        Order order = getOrderById(orderId);
-
-        if (!canBeReturned(order.getOrderStatus())) {
-            throw new InvalidOrderStatusException(
-                    "Order cannot be returned in status: " + order.getOrderStatus());
-        }
-
-        // Update status
-        order.setOrderStatus(OrderStatus.RETURNED);
-        order.setInternalNotes("Return reason: " + reason);
-
-        // Return items to inventory
-        for (OrderItem item : order.getOrderItems()) {
-            inventoryService.returnToStock(
-                    item.getProduct().getProductId(),
-                    item.getQuantity());
-        }
-
-        // Process refund
-        if (order.getPayment() != null) {
-            paymentService.processRefund(
-                    order.getPayment().getPaymentId(),
-                    order.getTotalAmount());
-        }
-
-        // Send return confirmation email
-        emailService.sendEmail(
-                order.getShippingEmail(),
-                "Order Return Processed - " + order.getOrderNumber(),
-                "Your return has been processed. Reason: " + reason
-        );
-
-        return orderRepository.save(order);
-    }
-
-    /**
-     * Get orders by status - Core functionality
-     * FIXED: Added Pageable parameter and proper conversion
-     */
-    @Transactional(readOnly = true)
-    public List<OrderDTO> getOrdersByStatus(OrderStatus status) {
-        // Use unpaged to get all results for backward compatibility
-        return orderRepository.findByOrderStatus(status, Pageable.unpaged()).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Get recent orders - Core functionality
-     * FIXED: Changed from findAllByOrderByCreatedAtDesc to findAllByOrderByCreatedDateDesc
-     */
-    @Transactional(readOnly = true)
-    public List<OrderDTO> getRecentOrders(int limit) {
-        PageRequest pageRequest = PageRequest.of(0, limit);
-        return orderRepository.findAllByOrderByCreatedDateDesc(pageRequest).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Search orders - Core functionality
-     * FIXED: Implemented search in service layer instead of expecting it in repository
-     */
-    @Transactional(readOnly = true)
-    public Page<OrderDTO> searchOrders(String query, Pageable pageable) {
-        // Simple search implementation for v1.0
-        // Searches by order number, customer email, or shipping name
-
-        List<Order> results = new ArrayList<>();
-
-        // Search by order number
-        orderRepository.findByOrderNumber(query).ifPresent(results::add);
-
-        // Search by customer email
-        Page<Order> emailResults = orderRepository.findByCustomerEmail(query, pageable);
-        results.addAll(emailResults.getContent());
-
-        // Remove duplicates
-        Set<Long> seenIds = new HashSet<>();
-        List<Order> uniqueResults = results.stream()
-                .filter(order -> seenIds.add(order.getOrderId()))
-                .collect(Collectors.toList());
-
-        // Convert to DTOs and return as page
-        List<OrderDTO> dtoList = uniqueResults.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageImpl<>(dtoList, pageable, dtoList.size());
-    }
-
-    /**
-     * Confirm payment for an order - Core functionality
-     * Critical for order processing
-     */
-    @Transactional
-    public Order confirmPayment(Long orderId, Map<String, Object> paymentDetails) {
-        Order order = getOrderById(orderId);
-
-        if (order.getOrderStatus() != OrderStatus.PENDING) {
-            throw new InvalidOrderStatusException(
-                    "Payment can only be confirmed for pending orders");
-        }
-
-        // Create payment record
-        Payment payment = paymentService.createPayment(order, paymentDetails);
-        order.setPayment(payment);
-
-        // Confirm inventory reservation
-        for (OrderItem item : order.getOrderItems()) {
-            inventoryService.confirmStock(
-                    item.getProduct().getProductId(),
-                    item.getQuantity());
-        }
-
-        // Update order status to PAID
-        order.setOrderStatus(OrderStatus.PAID);
-
-        // Send payment confirmation
-        emailService.sendEmail(
-                order.getShippingEmail(),
-                "Payment Confirmed - " + order.getOrderNumber(),
-                "Payment of " + order.getTotalAmount() + " " + order.getCurrency() + " has been confirmed."
-        );
-
-        return orderRepository.save(order);
-    }
-
-    /**
-     * Mark order as shipped - Core functionality
-     * Critical for fulfillment
-     */
-    @Transactional
-    public Order markAsShipped(Long orderId, String trackingNumber, String carrier) {
-        Order order = getOrderById(orderId);
-
-        if (order.getOrderStatus() != OrderStatus.PROCESSING &&
-                order.getOrderStatus() != OrderStatus.PAID) {
-            throw new InvalidOrderStatusException(
-                    "Order must be in PROCESSING or PAID status to ship");
-        }
-
-        // V1.0: Simplified - no ShippingOptionDTO needed for large speakers
-        String shippingMethod = order.getShippingAmount() != null && 
-                                order.getShippingAmount().compareTo(new BigDecimal("100")) > 0 
-                                ? "EXPRESS" : "STANDARD";
-        
-        Shipment shipment = shippingService.createShipment(order, shippingMethod);
-
-        // Update tracking info
-        if (trackingNumber != null && !trackingNumber.isEmpty()) {
-            shipment.setTrackingNumber(trackingNumber);
-        }
-        if (carrier != null && !carrier.isEmpty()) {
-            shipment.setCarrier(carrier);
-        }
-
-        order.setShipment(shipment);
-
-        // Update status
-        order.setOrderStatus(OrderStatus.SHIPPED);
-
-        // Send shipping notification
-        emailService.sendEmail(
-                order.getShippingEmail(),
-                "Order Shipped - " + order.getOrderNumber(),
-                buildShippingMessage(order)
-        );
-
-        return orderRepository.save(order);
-    }
-
-    /**
-     * Mark order as delivered - Core functionality
-     * Completes the order lifecycle
-     */
-    @Transactional
-    public Order markAsDelivered(Long orderId, String deliveryNotes) {
-        Order order = getOrderById(orderId);
-
-        if (order.getOrderStatus() != OrderStatus.SHIPPED) {
-            throw new InvalidOrderStatusException(
-                    "Order must be SHIPPED to mark as delivered");
-        }
-
-        // Update shipment status
-        if (order.getShipment() != null) {
-            Shipment shipment = order.getShipment();
-            shipment.setActualDeliveryDate(LocalDateTime.now().toLocalDate());
-// VERSION 2.0: deliveryNotes feature commented out
-// shipment.setDeliveryNotes(orderRequest.getDeliveryNotes());
-            shipment.setShipmentStatus("DELIVERED");  // FIXED: setStatus() -> setShipmentStatus()
-        }
-
-        // Update status
-        order.setOrderStatus(OrderStatus.DELIVERED);
-
-        // Send delivery confirmation
-        emailService.sendEmail(
-                order.getShippingEmail(),
-                "Order Delivered - " + order.getOrderNumber(),
-                "Your order has been successfully delivered."
-        );
-
-        return orderRepository.save(order);
-    }
-
-    /**
-     * Get orders needing attention - Core functionality
-     * FIXED: Added Pageable parameter to findByOrderStatusIn
-     */
-    @Transactional(readOnly = true)
-    public List<OrderDTO> getOrdersNeedingAttention() {
-        List<OrderStatus> statuses = Arrays.asList(
-                OrderStatus.PENDING,
-                OrderStatus.PROCESSING,
-                OrderStatus.PAYMENT_FAILED);
-
-        return orderRepository.findByOrderStatusIn(statuses, Pageable.unpaged()).stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Get order count by status - Core functionality
-     * Basic reporting for operations
-     */
-    @Transactional(readOnly = true)
-    public Map<OrderStatus, Long> getOrderCountByStatus() {
-        Map<OrderStatus, Long> counts = new HashMap<>();
-        for (OrderStatus status : OrderStatus.values()) {
-            counts.put(status, orderRepository.countByOrderStatus(status));
-        }
-        return counts;
-    }
-
-    // ========== Helper methods ==========
-
-    /**
-     * Convert Order entity to DTO
+     * Convert Order entity to OrderDTO
      */
     public OrderDTO convertToDTO(Order order) {
         OrderDTO dto = new OrderDTO();
         dto.setOrderId(order.getOrderId());
         dto.setOrderNumber(order.getOrderNumber());
-        dto.setCustomerId(order.getCustomer().getCustomerId());
-        dto.setCustomerName(order.getShippingFirstName() + " " + order.getShippingLastName());
-        dto.setCustomerEmail(order.getShippingEmail());
-        dto.setStatus(order.getOrderStatus().name());
+        dto.setOrderStatus(order.getOrderStatus());
         dto.setSubtotal(order.getSubtotal());
         dto.setTaxAmount(order.getTaxAmount());
         dto.setShippingAmount(order.getShippingAmount());
         dto.setTotalAmount(order.getTotalAmount());
         dto.setCurrency(order.getCurrency());
-        dto.setCreatedDate(order.getCreatedDate());  // FIXED: getCreatedDate() -> getCreatedDate()
-        dto.setUpdatedDate(order.getUpdatedDate());  // FIXED: getUpdatedDate() -> getUpdatedDate()
+        dto.setCreatedDate(order.getCreatedDate());
+        dto.setUpdatedDate(order.getUpdatedDate());
 
-        // Convert order items
+        // Shipping address
+        dto.setShippingFirstName(order.getShippingFirstName());
+        dto.setShippingLastName(order.getShippingLastName());
+        dto.setShippingEmail(order.getShippingEmail());
+        dto.setShippingPhone(order.getShippingPhone());
+        dto.setShippingAddressLine1(order.getShippingAddressLine1());
+        dto.setShippingAddressLine2(order.getShippingAddressLine2());
+        dto.setShippingCity(order.getShippingCity());
+        dto.setShippingState(order.getShippingState());
+        dto.setShippingPostalCode(order.getShippingPostalCode());
+        dto.setShippingCountry(order.getShippingCountry());
+
+        // Billing address
+        dto.setBillingAddressLine1(order.getBillingAddressLine1());
+        dto.setBillingCity(order.getBillingCity());
+        dto.setBillingState(order.getBillingState());
+        dto.setBillingPostalCode(order.getBillingPostalCode());
+        dto.setBillingCountry(order.getBillingCountry());
+        dto.setBillingSameAsShipping(order.isBillingSameAsShipping());
+
+        // Order items
         if (order.getOrderItems() != null) {
-            List<OrderItemDTO> itemDTOs = order.getOrderItems().stream()
+            dto.setOrderItems(order.getOrderItems().stream()
                     .map(this::convertItemToDTO)
-                    .collect(Collectors.toList());
-            dto.setOrderItems(itemDTOs);
+                    .collect(Collectors.toList()));
+        }
+
+        // Customer ID
+        if (order.getCustomer() != null) {
+            dto.setCustomerId(order.getCustomer().getCustomerId());
         }
 
         return dto;
     }
 
-    /**
-     * Convert OrderItem entity to DTO
-     */
     private OrderItemDTO convertItemToDTO(OrderItem item) {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderItemId(item.getOrderItemId());
-        dto.setProductId(item.getProduct().getProductId());
+        if (item.getProduct() != null) {
+            dto.setProductId(item.getProduct().getProductId());
+        }
         dto.setProductName(item.getProductName());
         dto.setProductSku(item.getProductSku());
         dto.setQuantity(item.getQuantity());
@@ -559,36 +297,49 @@ public class OrderService {
     }
 
     /**
-     * Helper method to set addresses from request
-     * Version 1.0 - Simplified address handling
+     * Helper method to set addresses from request.
+     *
+     * FIXED (2026-02-22): Reads individual fields first (shippingAddressLine1, shippingCity etc).
+     * Falls back to comma-separated shippingAddress string if individual fields are missing.
+     * Final fallback: customer's default shipping address.
+     *
+     * This makes the method compatible with Flutter sending individual fields.
      */
     private void setAddressesFromRequest(Order order, CreateOrderRequest request, Customer customer) {
-        // For v1.0, use simple address parsing
-        // In v2.0, this would handle complex address objects with validation
 
-        if (request.getShippingAddress() != null) {
-            // Parse address string (simplified for v1.0)
+        // --- SHIPPING ADDRESS ---
+        // Priority 1: Individual fields (new standard from Flutter)
+        if (request.getShippingAddressLine1() != null && !request.getShippingAddressLine1().isBlank()) {
+            log.debug("Using individual shipping address fields");
+            order.setShippingAddressLine1(request.getShippingAddressLine1());
+            order.setShippingCity(request.getShippingCity() != null ? request.getShippingCity() : "");
+            order.setShippingState(request.getShippingState() != null ? request.getShippingState() : "");
+            order.setShippingPostalCode(request.getShippingPostalCode() != null ? request.getShippingPostalCode() : "");
+            order.setShippingCountry(request.getShippingCountry() != null ? request.getShippingCountry() : "Sverige");
+
+        // Priority 2: Comma-separated string (legacy format)
+        } else if (request.getShippingAddress() != null && !request.getShippingAddress().isBlank()) {
+            log.debug("Parsing shipping address from string: {}", request.getShippingAddress());
             String[] parts = request.getShippingAddress().split(",");
             if (parts.length >= 4) {
                 order.setShippingAddressLine1(parts[0].trim());
                 order.setShippingCity(parts[1].trim());
                 order.setShippingState(parts[2].trim());
                 order.setShippingPostalCode(parts[3].trim());
+                order.setShippingCountry(parts.length >= 5 ? parts[4].trim() : "Sverige");
+            } else {
+                log.warn("shippingAddress string has fewer than 4 parts: '{}'", request.getShippingAddress());
+                useCustomerDefaultAddress(order, customer);
             }
+
+        // Priority 3: Customer's default address
         } else {
-            // Use customer's default address if available
-            if (customer.getDefaultShippingAddress() != null) {
-                Address addr = customer.getDefaultShippingAddress();
-                order.setShippingAddressLine1(addr.getStreet());
-                order.setShippingCity(addr.getCity());
-                order.setShippingState(addr.getState());
-                order.setShippingPostalCode(addr.getPostalCode());
-                order.setShippingCountry(addr.getCountry());
-            }
+            log.debug("No shipping address in request, using customer default");
+            useCustomerDefaultAddress(order, customer);
         }
 
-        // Set billing address
-        if (request.getBillingAddress() != null) {
+        // --- BILLING ADDRESS ---
+        if (request.getBillingAddress() != null && !request.getBillingAddress().isBlank()) {
             String[] parts = request.getBillingAddress().split(",");
             if (parts.length >= 4) {
                 order.setBillingAddressLine1(parts[0].trim());
@@ -598,7 +349,37 @@ public class OrderService {
                 order.setBillingSameAsShipping(false);
             }
         } else {
+            // Default: billing same as shipping
+            order.setBillingAddressLine1(order.getShippingAddressLine1());
+            order.setBillingCity(order.getShippingCity());
+            order.setBillingState(order.getShippingState());
+            order.setBillingPostalCode(order.getShippingPostalCode());
+            order.setBillingCountry(order.getShippingCountry());
             order.setBillingSameAsShipping(true);
+        }
+    }
+
+    /**
+     * Copies customer's default shipping address to order.
+     * If no default address exists, fields are set to empty string (not null) to avoid SQL constraint errors.
+     */
+    private void useCustomerDefaultAddress(Order order, Customer customer) {
+        if (customer.getDefaultShippingAddress() != null) {
+            Address addr = customer.getDefaultShippingAddress();
+            order.setShippingAddressLine1(addr.getStreet() != null ? addr.getStreet() : "");
+            order.setShippingCity(addr.getCity() != null ? addr.getCity() : "");
+            order.setShippingState(addr.getState() != null ? addr.getState() : "");
+            order.setShippingPostalCode(addr.getPostalCode() != null ? addr.getPostalCode() : "");
+            order.setShippingCountry(addr.getCountry() != null ? addr.getCountry() : "Sverige");
+        } else {
+            log.warn("No shipping address provided and customer {} has no default address. Using empty strings.",
+                    customer.getCustomerId());
+            // Set empty strings instead of null to avoid NOT NULL constraint
+            order.setShippingAddressLine1("");
+            order.setShippingCity("");
+            order.setShippingState("");
+            order.setShippingPostalCode("");
+            order.setShippingCountry("Sverige");
         }
     }
 
@@ -649,7 +430,6 @@ public class OrderService {
      * Check if status transition is valid
      */
     private boolean isValidStatusTransition(OrderStatus from, OrderStatus to) {
-        // Simple validation for v1.0
         switch (from) {
             case PENDING:
                 return to == OrderStatus.PAID ||
@@ -708,14 +488,12 @@ public class OrderService {
      * Handle order paid status
      */
     private void handleOrderPaid(Order order) {
-        // Confirm inventory
         for (OrderItem item : order.getOrderItems()) {
             inventoryService.confirmStock(
                     item.getProduct().getProductId(),
                     item.getQuantity());
         }
 
-        // Send payment confirmation
         emailService.sendEmail(
                 order.getShippingEmail(),
                 "Payment Confirmed - " + order.getOrderNumber(),
@@ -727,14 +505,12 @@ public class OrderService {
      * Handle order cancelled status
      */
     private void handleOrderCancelled(Order order) {
-        // Release inventory
         for (OrderItem item : order.getOrderItems()) {
             inventoryService.releaseReservedStock(
                     item.getProduct().getProductId(),
                     item.getQuantity());
         }
 
-        // Process refund if needed
         if (isOrderPaid(order)) {
             paymentService.processRefund(
                     order.getPayment().getPaymentId(),
@@ -746,14 +522,12 @@ public class OrderService {
      * Handle order returned status
      */
     private void handleOrderReturned(Order order) {
-        // Return inventory
         for (OrderItem item : order.getOrderItems()) {
             inventoryService.returnToStock(
                     item.getProduct().getProductId(),
                     item.getQuantity());
         }
 
-        // Process refund
         if (order.getPayment() != null) {
             paymentService.processRefund(
                     order.getPayment().getPaymentId(),
