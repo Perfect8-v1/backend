@@ -13,6 +13,11 @@ spring:
   autoconfigure:
     exclude:
       - org.springframework.boot.actuate.autoconfigure.availability.AvailabilityProbesAutoConfiguration
+  # --- FLUTTER STATISKA FILER ---
+  web:
+    resources:
+      static-locations: file:/app/flutter/
+      add-mappings: true
   cloud:
     gateway:
 
@@ -87,7 +92,7 @@ spring:
         # SKYDDADE ROUTES - ADMIN (JWT krävs, service kollar roll)
         # ===========================================
 
-        # --- ADMIN (ÄNDRAD: /api/admin/** istället för /admin/**) ---
+        # --- ADMIN ---
         - id: admin-service
           uri: http://admin-service:8081
           predicates:
@@ -105,7 +110,7 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
-        # --- EMAIL ADMIN (skyddad - kräver JWT eller API-nyckel) ---
+        # --- EMAIL ADMIN ---
         - id: email-admin
           uri: http://email-service:8083
           predicates:
@@ -133,7 +138,6 @@ spring:
           filters:
             - StripPrefix=1
             - JwtAuthentication
-
 
         # ===========================================
         # SWAGGER DOCS (publika)
@@ -172,7 +176,6 @@ spring:
             - Path=/shop-service/v3/api-docs/**
           filters:
             - StripPrefix=1
-
 
 # --- SÄKERHET ---
 jwt:
