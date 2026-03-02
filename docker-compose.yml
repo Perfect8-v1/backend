@@ -171,7 +171,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - IMAGE_API_KEY=${IMAGE_API_KEY}
       - APP_UPLOAD_DIR=/app/uploads
-      - APP_BASE_URL=http://p8.rantila.com
+      - APP_BASE_URL=https://p8.rantila.com
     volumes:
       - imageUploads:/app/uploads
     ports:
