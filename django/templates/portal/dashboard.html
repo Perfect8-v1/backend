@@ -1,0 +1,14 @@
+{% extends "portal/base.html" %}
+{% block title %}- Dashboard{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Välkommen, {{ user_email }}</h2>
+    <p style="color: #666; margin-top: 8px;">Perfect8 Admin Portal v2.0</p>
+</div>
+<div class="card">
+    <h2>Roller</h2>
+    {% for role in user_roles %}
+        <span class="badge {% if role == 'SUPER_ADMIN' %}badge-super{% elif role == 'ADMIN' %}badge-admin{% else %}badge-user{% endif %}" style="margin-right: 6px;">{{ role }}</span>
+    {% endfor %}
+</div>
+{% endblock %}

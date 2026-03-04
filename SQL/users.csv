@@ -1,7 +1,25 @@
-credentials
-"
-TEST CREDENTIALS:
------------------
-Admin:    cmb@p8.se / magnus123
-Customer: customer@p8.se / customer123
-"
+Field,Type,Null,Key,Default,Extra
+image_id,bigint,NO,PRI,NULL,auto_increment
+original_filename,varchar(255),YES,,NULL,
+stored_filename,varchar(255),YES,UNI,NULL,
+mime_type,varchar(255),YES,,NULL,
+image_format,varchar(255),YES,,NULL,
+original_size_bytes,bigint,YES,,NULL,
+original_width,int,YES,,NULL,
+original_height,int,YES,,NULL,
+original_url,varchar(255),YES,,NULL,
+thumbnail_url,varchar(255),YES,,NULL,
+small_url,varchar(255),YES,,NULL,
+medium_url,varchar(255),YES,,NULL,
+large_url,varchar(255),YES,,NULL,
+image_status,varchar(50),NO,MUL,PENDING,
+processing_time_ms,bigint,YES,,NULL,
+error_message,text,YES,,NULL,
+alt_text,varchar(255),YES,,NULL,
+title,varchar(255),YES,,NULL,
+category,varchar(255),YES,MUL,NULL,
+reference_type,varchar(255),YES,MUL,NULL,
+reference_id,bigint,YES,,NULL,
+is_deleted,tinyint(1),NO,MUL,0,
+created_date,datetime,NO,,NULL,
+updated_date,datetime,YES,,NULL,

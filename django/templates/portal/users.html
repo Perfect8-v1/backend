@@ -1,0 +1,40 @@
+{% extends "portal/base.html" %}
+{% block title %}- Användare{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Användare</h2>
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+    {% if users %}
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Roller</th>
+                <th>Aktiv</th>
+                <th>Skapad</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+            <tr>
+                <td>{{ u.userId }}</td>
+                <td>{{ u.email }}</td>
+                <td>
+                    {% for role in u.roles %}
+                        <span class="badge {% if role == 'SUPER_ADMIN' %}badge-super{% elif role == 'ADMIN' %}badge-admin{% else %}badge-user{% endif %}" style="margin-right: 4px;">{{ role }}</span>
+                    {% endfor %}
+                </td>
+                <td>{% if u.active %}✅{% else %}❌{% endif %}</td>
+                <td>{{ u.createdDate|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="color: #999;">Inga användare hittades.</p>
+    {% endif %}
+</div>
+{% endblock %}

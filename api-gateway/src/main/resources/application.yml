@@ -139,6 +139,13 @@ spring:
             - StripPrefix=1
             - JwtAuthentication
 
+
+        # --- DJANGO ADMIN PORTAL ---
+        - id: django-admin
+          uri: http://django-admin:8086
+          predicates:
+            - Path=/django/**
+
         # ===========================================
         # SWAGGER DOCS (publika)
         # ===========================================
