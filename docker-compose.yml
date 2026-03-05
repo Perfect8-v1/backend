@@ -328,6 +328,7 @@ services:
       - SHOP_SERVICE_URL=http://shop-service:8085
       - BLOG_SERVICE_URL=http://blog-service:8082
       - IMAGE_SERVICE_URL=http://image-service:8084
+      - EMAIL_SERVICE_URL=http://email-service:8083
       - JWT_SECRET=${JWT_SECRET}
       - BASE_URL=https://p8.rantila.com
     ports:

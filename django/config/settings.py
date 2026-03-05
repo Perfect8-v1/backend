@@ -25,7 +25,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'admin.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -42,7 +42,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'admin.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {}
 
@@ -61,6 +61,7 @@ ADMIN_SERVICE_URL = os.environ.get('ADMIN_SERVICE_URL', 'http://admin-service:80
 SHOP_SERVICE_URL = os.environ.get('SHOP_SERVICE_URL', 'http://shop-service:8085')
 BLOG_SERVICE_URL = os.environ.get('BLOG_SERVICE_URL', 'http://blog-service:8082')
 IMAGE_SERVICE_URL = os.environ.get('IMAGE_SERVICE_URL', 'http://image-service:8084')
+EMAIL_SERVICE_URL = os.environ.get('EMAIL_SERVICE_URL', 'http://email-service:8083')
 
 JWT_SECRET = os.environ.get('JWT_SECRET', '')
 BASE_URL = os.environ.get('BASE_URL', 'https://p8.rantila.com')
