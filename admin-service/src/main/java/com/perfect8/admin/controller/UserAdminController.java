@@ -64,6 +64,15 @@ public class UserAdminController {
                             "createdAt", "2024-06-10T09:00:00",
                             "lastLogin", "2025-12-08T15:20:00"
                     )
+                    Map.of(
+                            "userId", 4,
+                            "username", "cmb",
+                            "email", "cmb@p8.se",
+                            "role", "ADMIN",
+                            "status", "ACTIVE",
+                            "createdAt", "2025-11-10T09:00:00",
+                            "lastLogin", "2025-12-08T15:20:00"
+                    )
             );
 
             Map<String, Object> data = new HashMap<>();
