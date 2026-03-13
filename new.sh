@@ -51,8 +51,8 @@ docker compose build
 docker compose up -d
 
 echo ""
-echo "=== VÄNTAR 30 SEK ==="
-sleep 30
+echo "=== VÄNTAR 90 SEK ==="
+sleep 90
 
 echo ""
 echo "=== STATUS ==="
